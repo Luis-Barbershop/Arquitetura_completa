@@ -1,12 +1,12 @@
 spring:
   data:
     mongodb:
-      uri: ${MONGODB_DATABASE_URL:mongodb://localhost:27017/cortaai}
+      #      uri: ${MONGODB_DATABASE_URL:mongodb://localhost:27017/cortaai}
       uuid-representation: standard
       auto-index-creation: true
   docker:
     compose:
-      lifecycle-management: start-only
+#      lifecycle-management: start-only
 error:
   handling:
     http-status-in-json-response: true

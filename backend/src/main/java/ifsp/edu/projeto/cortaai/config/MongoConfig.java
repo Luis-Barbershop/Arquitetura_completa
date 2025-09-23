@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.config;
 
+import com.mongodb.client.MongoClient;
 import ifsp.edu.projeto.cortaai.util.MongoOffsetDateTimeReader;
 import ifsp.edu.projeto.cortaai.util.MongoOffsetDateTimeWriter;
 import java.time.OffsetDateTime;
@@ -11,6 +12,7 @@ import org.springframework.data.auditing.DateTimeProvider;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.config.EnableMongoAuditing;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.data.mongodb.core.mapping.event.ValidatingEntityCallback;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
@@ -44,6 +46,12 @@ public class MongoConfig {
                 new MongoOffsetDateTimeWriter(),
                 new MongoOffsetDateTimeReader()
                 ));
+    }
+
+    @Bean
+    public MongoTemplate mongoTemplate(MongoClient mongoClient) {
+        // The database name can be anything, as it's an embedded instance
+        return new MongoTemplate(mongoClient, "cortaai_embedded");
     }
 
 }
