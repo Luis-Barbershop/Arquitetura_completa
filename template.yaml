@@ -16,9 +16,12 @@ Resources:
         Variables:
           SPRING_PROFILES_ACTIVE: prod
           # --- ATENÇÃO: Substitua os valores abaixo pelos do seu RDS ---
-          JDBC_DATABASE_URL: jdbc:mysql://SEU-ENDPOINT-RDS:3306/cortaai?serverTimezone=UTC
-          JDBC_DATABASE_USERNAME: SEU-USUARIO-RDS
-          JDBC_DATABASE_PASSWORD: SUA-SENHA-RDS # Para produção, use o AWS Secrets Manager
+          # Esta é a URL do seu arquivo .env
+          JDBC_DATABASE_URL: jdbc:mysql://cortaai-db.cvkm6au2ib6n.us-east-1.rds.amazonaws.com:3306/corta_ai?serverTimezone=UTC
+          # Este é o seu usuário
+          JDBC_DATABASE_USERNAME: admin
+          # Esta é a sua senha. (Para produção real, use o AWS Secrets Manager)
+          JDBC_DATABASE_PASSWORD: cortaaidb123
       Events:
         ApiProxy:
           Type: Api
@@ -29,4 +32,4 @@ Resources:
 Outputs:
   ApiEndpoint:
     Description: "URL do endpoint do API Gateway para a sua aplicação"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+    Value: !Sub "https://$\{ServerlessRestApi}.execute-api.$\{AWS::Region}.amazonaws.com/Prod"
