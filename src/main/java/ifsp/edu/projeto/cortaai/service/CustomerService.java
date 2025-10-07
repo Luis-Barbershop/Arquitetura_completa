@@ -1,0 +1,26 @@
+package ifsp.edu.projeto.cortaai.service;
+
+import ifsp.edu.projeto.cortaai.dto.CustomerDTO;
+import java.util.List;
+import java.util.UUID;
+
+public interface CustomerService {
+
+    List<CustomerDTO> findAll();
+
+    CustomerDTO get(UUID id);
+
+    UUID create(CustomerDTO customerDTO);
+
+    void update(UUID id, CustomerDTO customerDTO);
+
+    void delete(UUID id);
+
+    boolean tellExists(String tell);
+
+    boolean emailExists(String email);
+
+    boolean documentCPFExists(String documentCPF);
+
+    boolean previousAppointmentExists(String previousAppointment);
+}
