@@ -32,4 +32,4 @@ Resources:
 Outputs:
   ApiEndpoint:
     Description: "URL do endpoint do API Gateway para a sua aplicação"
-    Value: !Sub "https://$\{ServerlessRestApi}.execute-api.$\{AWS::Region}.amazonaws.com/Prod"
+    Value: !Sub 'https://$\{ServerlessRestApi}.execute-api.$\{AWS::Region}.amazonaws.com/Prod'
