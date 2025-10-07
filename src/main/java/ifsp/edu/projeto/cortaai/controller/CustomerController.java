@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.controller;
 
 import ifsp.edu.projeto.cortaai.dto.CustomerDTO;
+import ifsp.edu.projeto.cortaai.service.CustomerService;
 import ifsp.edu.projeto.cortaai.service.impl.CustomerServiceImpl;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
@@ -31,32 +32,32 @@ public class CustomerController {
 
     @GetMapping
     public ResponseEntity<List<CustomerDTO>> getAllCustomers() {
-        return ResponseEntity.ok(customerServiceImpl.findAll());
+        return ResponseEntity.ok(customerService.findAll());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CustomerDTO> getCustomer(@PathVariable(name = "id") final UUID id) {
-        return ResponseEntity.ok(customerServiceImpl.get(id));
+        return ResponseEntity.ok(customerService.get(id));
     }
 
     @PostMapping
     @ApiResponse(responseCode = "201")
     public ResponseEntity<UUID> createCustomer(@RequestBody @Valid final CustomerDTO customerDTO) {
-        final UUID createdId = customerServiceImpl.create(customerDTO);
+        final UUID createdId = customerService.create(customerDTO);
         return new ResponseEntity<>(createdId, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<UUID> updateCustomer(@PathVariable(name = "id") final UUID id,
             @RequestBody @Valid final CustomerDTO customerDTO) {
-        customerServiceImpl.update(id, customerDTO);
+        customerService.update(id, customerDTO);
         return ResponseEntity.ok(id);
     }
 
     @DeleteMapping("/{id}")
     @ApiResponse(responseCode = "204")
     public ResponseEntity<Void> deleteCustomer(@PathVariable(name = "id") final UUID id) {
-        customerServiceImpl.delete(id);
+        customerService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
