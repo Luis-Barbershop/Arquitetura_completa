@@ -24,7 +24,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class Customer {
 
     @Id
-    @Column(nullable = false, updatable = false, columnDefinition = "char(36)")
+    @Column(nullable = false, updatable = false, length = 36)
     @GeneratedValue
     @UuidGenerator
     private UUID id;

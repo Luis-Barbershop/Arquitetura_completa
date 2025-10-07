@@ -27,7 +27,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class Barber {
 
     @Id
-    @Column(nullable = false, updatable = false, columnDefinition = "char(36)")
+    @Column(nullable = false, updatable = false, length = 36)
     @GeneratedValue
     @UuidGenerator
     private UUID id;
@@ -56,7 +56,7 @@ public class Barber {
     @Enumerated(EnumType.STRING)
     private BarberSkills thirdSkill;
 
-    @Column(nullable = false, columnDefinition = "char(36)")
+    @Column(nullable = false, length = 36)
     private UUID barberShop;
 
     @CreatedDate
