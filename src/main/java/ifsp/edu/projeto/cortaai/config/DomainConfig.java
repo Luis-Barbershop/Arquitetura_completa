@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 
 @Configuration
-@EntityScan("ifsp.edu.projeto.cortaai.domain")
+@EntityScan("ifsp.edu.projeto.cortaai.model") // <-- CORRIGIDO AQUI
 @EnableJpaRepositories("ifsp.edu.projeto.cortaai.repository")
 @EnableTransactionManagement
 @EnableJpaAuditing(dateTimeProviderRef = "auditingDateTimeProvider")
