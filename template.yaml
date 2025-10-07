@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  API para a aplicação Cortaai Barber Shop
+
+Resources:
+  CortaaiApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/cortaai-0.0.1-SNAPSHOT.jar
+      Handler: ifsp.edu.projeto.cortaai.StreamLambdaHandler::handleRequest
+      Runtime: java17
+      MemorySize: 1024
+      Timeout: 60
+      Environment:
+        Variables:
+          SPRING_PROFILES_ACTIVE: prod
+          # --- ATENÇÃO: Substitua os valores abaixo pelos do seu RDS ---
+          JDBC_DATABASE_URL: jdbc:mysql://SEU-ENDPOINT-RDS:3306/cortaai?serverTimezone=UTC
+          JDBC_DATABASE_USERNAME: SEU-USUARIO-RDS
+          JDBC_DATABASE_PASSWORD: SUA-SENHA-RDS # Para produção, use o AWS Secrets Manager
+      Events:
+        ApiProxy:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+
+Outputs:
+  ApiEndpoint:
+    Description: "URL do endpoint do API Gateway para a sua aplicação"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"

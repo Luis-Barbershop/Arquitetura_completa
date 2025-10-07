@@ -22,10 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/appointmentss", produces = MediaType.APPLICATION_JSON_VALUE)
 public class AppointmentsController {
 
-    private final AppointmentsServiceImpl appointmentsServiceImpl;
+    private final AppointmentsService appointmentsService;
 
-    public AppointmentsController(final AppointmentsServiceImpl appointmentsServiceImpl) {
-        this.appointmentsServiceImpl = appointmentsServiceImpl;
+    public AppointmentsController(final AppointmentsService appointmentsService) {
+        this.appointmentsService = appointmentsService;
     }
 
     @GetMapping

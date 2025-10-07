@@ -23,10 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/barbers", produces = MediaType.APPLICATION_JSON_VALUE)
 public class BarberController {
 
-    private final BarberServiceImpl barberServiceImpl;
+    private final BarberService barberService; // Use a interface
 
-    public BarberController(final BarberServiceImpl barberServiceImpl) {
-        this.barberServiceImpl = barberServiceImpl;
+    public BarberController(final BarberService barberService) {
+        this.barberService = barberService;
     }
 
     @GetMapping

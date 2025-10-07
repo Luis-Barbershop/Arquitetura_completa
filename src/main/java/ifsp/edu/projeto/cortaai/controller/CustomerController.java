@@ -23,10 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/customers", produces = MediaType.APPLICATION_JSON_VALUE)
 public class CustomerController {
 
-    private final CustomerServiceImpl customerServiceImpl;
+    private final CustomerService customerService;
 
-    public CustomerController(final CustomerServiceImpl customerServiceImpl) {
-        this.customerServiceImpl = customerServiceImpl;
+    public CustomerController(final CustomerService customerService) {
+        this.customerService = customerService;
     }
 
     @GetMapping
