@@ -10,6 +10,7 @@ import ifsp.edu.projeto.cortaai.service.CustomerService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import ifsp.edu.projeto.cortaai.dto.LoginDTO;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,6 +36,23 @@ public class CustomerServiceImpl implements CustomerService {
         return customers.stream()
                 .map(customerMapper::toDTO) // Usa o mapper
                 .toList();
+    }
+
+    @Override
+    public CustomerDTO login(final LoginDTO loginDTO) {
+        final Customer customer = customerRepository.findByEmail(loginDTO.getEmail());
+        if (customer == null) {
+            throw new NotFoundException("Usuário não encontrado");
+        }
+
+        // NOTA: No seu código, a senha não está sendo criptografada.
+        // O ideal é usar uma biblioteca como BCrypt para comparar as senhas.
+        // Por simplicidade, faremos uma comparação de texto plano, mas isso NÃO é seguro.
+        if (!customer.getPassword().equals(loginDTO.getPassword())) {
+            throw new NotFoundException("Senha inválida");
+        }
+
+        return customerMapper.toDTO(customer);
     }
 
     @Override

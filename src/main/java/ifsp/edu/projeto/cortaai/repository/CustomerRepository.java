@@ -15,4 +15,5 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
 
     boolean existsByPreviousAppointmentIgnoreCase(String previousAppointment);
 
+    Customer findByEmail(String email);
 }

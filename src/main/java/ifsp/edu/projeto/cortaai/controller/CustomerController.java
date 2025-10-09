@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import ifsp.edu.projeto.cortaai.dto.LoginDTO;
 
 @RestController
 @RequestMapping(value = "/api/customers", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -45,6 +45,12 @@ public class CustomerController {
     public ResponseEntity<UUID> createCustomer(@RequestBody @Valid final CustomerDTO customerDTO) {
         final UUID createdId = customerService.create(customerDTO);
         return new ResponseEntity<>(createdId, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<CustomerDTO> login(@RequestBody @Valid final LoginDTO loginDTO) {
+        final CustomerDTO customer = customerService.login(loginDTO);
+        return ResponseEntity.ok(customer);
     }
 
     @PutMapping("/{id}")
