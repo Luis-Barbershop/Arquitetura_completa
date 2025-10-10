@@ -15,18 +15,41 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const navigation = useNavigation(); // Hook de navegação do React Navigation
 
-  // Função para simular o login e navegar
-  const handleSubmit = () => {
-    // 1. Evita o e.preventDefault() necessário no React Web
-    // A lógica de validação permanece a mesma
-    if (email === 'admin@email.com' && password === '1234') {
-      // 2. Usa navigation.navigate('NomeDoEcran') para redirecionar
-      navigation.navigate('Home'); 
-    } else {
-      // 3. Usa o componente nativo Alert em vez do alert() do browser
-      Alert.alert('❌ Login Incorreto', 'Tente novamente.'); 
-    }
-  };
+    const [loading, setLoading] = useState(false); // Adicione esta linha no topo do seu componente
+
+    const handleSubmit = async () => {
+        setLoading(true); // Começa a carregar
+
+        // --- SUA LÓGICA FETCH (ADAPTADA) ---
+        try {
+            // O endpoint que você criou no backend é /api/customers/login
+            const response = await fetch('http://ec2-3-237-177-57.compute-1.amazonaws.com:8080/api/customers/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            // 1. Verifica se a resposta foi bem-sucedida (status 200-299)
+            if (response.ok) {
+                // Redireciona para página de sucesso
+                navigation.navigate('Home');
+
+            } else {
+                // 2. Se a resposta não for ok (e.g., 401 Unauthorized, 404 Not Found)
+                const errorData = await response.json(); // Tenta ler o corpo do erro
+                const errorMessage = errorData.message || 'Credenciais inválidas. Tente novamente.';
+
+                Alert.alert('❌ Login Falhou', errorMessage);
+            }
+        } catch (error) {
+            // 3. Lida com erros de rede (e.g., servidor offline, timeout)
+            console.error("Erro na chamada de API:", error);
+            Alert.alert('Erro de Conexão', 'Não foi possível conectar-se ao servidor.');
+        } finally {
+            setLoading(false); // Termina o carregamento, independentemente do sucesso/falha
+        }
+        // ------------------------------------
+    };
 
   //Função abaixo para o spring boot
 
