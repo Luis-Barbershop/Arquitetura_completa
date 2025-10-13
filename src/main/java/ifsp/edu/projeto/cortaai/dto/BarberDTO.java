@@ -1,9 +1,10 @@
 package ifsp.edu.projeto.cortaai.dto;
 
+import ifsp.edu.projeto.cortaai.model.enums.BarberSkills;
 import ifsp.edu.projeto.cortaai.validator.BarberDocumentCPFUnique;
 import ifsp.edu.projeto.cortaai.validator.BarberEmailUnique;
-import ifsp.edu.projeto.cortaai.model.enums.BarberSkills;
 import ifsp.edu.projeto.cortaai.validator.BarberTellUnique;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
@@ -15,6 +16,7 @@ import lombok.Setter;
 @Setter
 public class BarberDTO {
 
+    @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     private UUID id;
 
     @NotNull

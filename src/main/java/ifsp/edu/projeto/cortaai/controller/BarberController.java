@@ -2,7 +2,6 @@ package ifsp.edu.projeto.cortaai.controller;
 
 import ifsp.edu.projeto.cortaai.dto.BarberDTO;
 import ifsp.edu.projeto.cortaai.service.BarberService;
-import ifsp.edu.projeto.cortaai.service.impl.BarberServiceImpl;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -40,7 +39,7 @@ public class BarberController {
         return ResponseEntity.ok(barberService.get(id));
     }
 
-    @PostMapping
+    @PostMapping("/create") // <-- A ALTERAÇÃO FOI FEITA AQUI
     @ApiResponse(responseCode = "201")
     public ResponseEntity<UUID> createBarber(@RequestBody @Valid final BarberDTO barberDTO) {
         final UUID createdId = barberService.create(barberDTO);
@@ -49,7 +48,7 @@ public class BarberController {
 
     @PutMapping("/{id}")
     public ResponseEntity<UUID> updateBarber(@PathVariable(name = "id") final UUID id,
-            @RequestBody @Valid final BarberDTO barberDTO) {
+                                             @RequestBody @Valid final BarberDTO barberDTO) {
         barberService.update(id, barberDTO);
         return ResponseEntity.ok(id);
     }
