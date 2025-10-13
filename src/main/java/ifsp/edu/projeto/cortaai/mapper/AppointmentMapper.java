@@ -6,7 +6,7 @@ import ifsp.edu.projeto.cortaai.model.Barber;
 import ifsp.edu.projeto.cortaai.model.Customer;
 import org.springframework.stereotype.Component;
 
-@Component // Marcamos como um componente para que possa ser injetado, se necessário
+@Component
 public class AppointmentMapper {
 
     public AppointmentsDTO toDTO(Appointments appointments) {

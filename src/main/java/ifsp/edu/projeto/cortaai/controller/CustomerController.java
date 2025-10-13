@@ -2,7 +2,7 @@ package ifsp.edu.projeto.cortaai.controller;
 
 import ifsp.edu.projeto.cortaai.dto.CustomerDTO;
 import ifsp.edu.projeto.cortaai.service.CustomerService;
-import ifsp.edu.projeto.cortaai.service.impl.CustomerServiceImpl;
+import ifsp.edu.projeto.cortaai.dto.CustomerCreateDTO;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -40,12 +40,13 @@ public class CustomerController {
         return ResponseEntity.ok(customerService.get(id));
     }
 
-    @PostMapping
+    @PostMapping("/create")
     @ApiResponse(responseCode = "201")
-    public ResponseEntity<UUID> createCustomer(@RequestBody @Valid final CustomerDTO customerDTO) {
-        final UUID createdId = customerService.create(customerDTO);
+    public ResponseEntity<UUID> createCustomer(@RequestBody @Valid final CustomerCreateDTO customerCreateDTO) {
+        final UUID createdId = customerService.create(customerCreateDTO);
         return new ResponseEntity<>(createdId, HttpStatus.CREATED);
     }
+
 
     @PostMapping("/login")
     public ResponseEntity<CustomerDTO> login(@RequestBody @Valid final LoginDTO loginDTO) {

@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.service.impl;
 
+import ifsp.edu.projeto.cortaai.dto.CustomerCreateDTO;
 import ifsp.edu.projeto.cortaai.dto.CustomerDTO;
 import ifsp.edu.projeto.cortaai.events.BeforeDeleteCustomer;
 import ifsp.edu.projeto.cortaai.exception.NotFoundException;
@@ -63,8 +64,13 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public UUID create(final CustomerDTO customerDTO) {
-        final Customer customer = customerMapper.toEntity(customerDTO);
+    public UUID create(final CustomerCreateDTO customerCreateDTO) {
+        final Customer customer = new Customer();
+        customer.setName(customerCreateDTO.getName());
+        customer.setTell(customerCreateDTO.getTell());
+        customer.setEmail(customerCreateDTO.getEmail());
+        customer.setDocumentCPF(customerCreateDTO.getDocumentCPF());
+        customer.setPassword(customerCreateDTO.getPassword());
         return customerRepository.save(customer).getId();
     }
 

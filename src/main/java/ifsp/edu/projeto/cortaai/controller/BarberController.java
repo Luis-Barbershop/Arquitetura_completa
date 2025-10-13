@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.controller;
 
 import ifsp.edu.projeto.cortaai.dto.BarberDTO;
+import ifsp.edu.projeto.cortaai.dto.CustomerDTO;
 import ifsp.edu.projeto.cortaai.service.BarberService;
 import ifsp.edu.projeto.cortaai.service.impl.BarberServiceImpl;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -28,6 +29,11 @@ public class BarberController {
 
     public BarberController(final BarberService barberService) {
         this.barberService = barberService;
+    }
+
+    @GetMapping("/{id}/customers")
+    public ResponseEntity<List<CustomerDTO>> getCustomerHistory(@PathVariable(name = "id") final UUID id) {
+        return ResponseEntity.ok(barberService.findCustomerHistory(id));
     }
 
     @GetMapping

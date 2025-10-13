@@ -18,7 +18,6 @@ public class CustomerMapper {
         customerDTO.setEmail(customer.getEmail());
         customerDTO.setDocumentCPF(customer.getDocumentCPF());
         customerDTO.setPassword(customer.getPassword());
-        customerDTO.setPreviousAppointment(customer.getPreviousAppointment());
         return customerDTO;
     }
 
@@ -32,7 +31,6 @@ public class CustomerMapper {
         customer.setEmail(customerDTO.getEmail());
         customer.setDocumentCPF(customerDTO.getDocumentCPF());
         customer.setPassword(customerDTO.getPassword());
-        customer.setPreviousAppointment(customerDTO.getPreviousAppointment());
         return customer;
     }
 }

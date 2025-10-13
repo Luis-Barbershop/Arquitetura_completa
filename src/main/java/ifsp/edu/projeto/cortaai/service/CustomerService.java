@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.service;
 
+import ifsp.edu.projeto.cortaai.dto.CustomerCreateDTO;
 import ifsp.edu.projeto.cortaai.dto.CustomerDTO;
 import ifsp.edu.projeto.cortaai.dto.LoginDTO; // Importe o LoginDTO
 import java.util.List;
@@ -11,7 +12,7 @@ public interface CustomerService {
 
     CustomerDTO get(UUID id);
 
-    UUID create(CustomerDTO customerDTO);
+    UUID create(CustomerCreateDTO customerCreateDTO);
 
     void update(UUID id, CustomerDTO customerDTO);
 

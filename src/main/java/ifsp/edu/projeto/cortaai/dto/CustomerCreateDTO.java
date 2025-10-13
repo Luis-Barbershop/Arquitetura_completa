@@ -2,20 +2,16 @@ package ifsp.edu.projeto.cortaai.dto;
 
 import ifsp.edu.projeto.cortaai.validator.CustomerDocumentCPFUnique;
 import ifsp.edu.projeto.cortaai.validator.CustomerEmailUnique;
-import ifsp.edu.projeto.cortaai.validator.CustomerPreviousAppointmentUnique;
 import ifsp.edu.projeto.cortaai.validator.CustomerTellUnique;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
 
 @Getter
 @Setter
-public class CustomerDTO {
-
-    private UUID id;
+public class CustomerCreateDTO {
 
     @NotNull
     @Size(max = 70)
