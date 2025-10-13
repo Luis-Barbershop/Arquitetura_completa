@@ -3,6 +3,7 @@ package ifsp.edu.projeto.cortaai.mapper;
 import ifsp.edu.projeto.cortaai.dto.BarberDTO;
 import ifsp.edu.projeto.cortaai.model.Barber;
 import org.springframework.stereotype.Component;
+import ifsp.edu.projeto.cortaai.dto.CreateBarberDTO;
 
 @Component
 public class BarberMapper {
@@ -37,6 +38,21 @@ public class BarberMapper {
         barber.setSecondSkill(barberDTO.getSecondSkill());
         barber.setThirdSkill(barberDTO.getThirdSkill());
         barber.setBarberShop(barberDTO.getBarberShop());
+        return barber;
+    }
+    public Barber toEntity(CreateBarberDTO createBarberDTO) {
+        if (createBarberDTO == null) {
+            return null;
+        }
+        Barber barber = new Barber();
+        barber.setName(createBarberDTO.getName());
+        barber.setTell(createBarberDTO.getTell());
+        barber.setEmail(createBarberDTO.getEmail());
+        barber.setDocumentCPF(createBarberDTO.getDocumentCPF());
+        barber.setMainSkill(createBarberDTO.getMainSkill());
+        barber.setSecondSkill(createBarberDTO.getSecondSkill());
+        barber.setThirdSkill(createBarberDTO.getThirdSkill());
+        barber.setBarberShop(createBarberDTO.getBarberShop());
         return barber;
     }
 }

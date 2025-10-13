@@ -4,19 +4,15 @@ import ifsp.edu.projeto.cortaai.model.enums.BarberSkills;
 import ifsp.edu.projeto.cortaai.validator.BarberDocumentCPFUnique;
 import ifsp.edu.projeto.cortaai.validator.BarberEmailUnique;
 import ifsp.edu.projeto.cortaai.validator.BarberTellUnique;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
-
 @Getter
 @Setter
-public class BarberDTO {
-
-    private UUID id;
+public class CreateBarberDTO {
 
     @NotNull
     @Size(max = 70)
@@ -46,5 +42,4 @@ public class BarberDTO {
 
     @NotNull
     private UUID barberShop;
-
 }

@@ -1,6 +1,9 @@
 package ifsp.edu.projeto.cortaai.service;
 
 import ifsp.edu.projeto.cortaai.dto.BarberDTO;
+import ifsp.edu.projeto.cortaai.dto.CreateBarberDTO;
+import jakarta.validation.Valid;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -9,8 +12,6 @@ public interface BarberService {
     List<BarberDTO> findAll();
 
     BarberDTO get(UUID id);
-
-    UUID create(BarberDTO barberDTO);
 
     void update(UUID id, BarberDTO barberDTO);
 
@@ -21,4 +22,6 @@ public interface BarberService {
     boolean emailExists(String email);
 
     boolean documentCPFExists(String documentCPF);
+
+    UUID create(@Valid CreateBarberDTO createBarberDTO);
 }

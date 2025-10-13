@@ -1,9 +1,10 @@
 package ifsp.edu.projeto.cortaai.service.impl;
 
 import ifsp.edu.projeto.cortaai.dto.BarberDTO;
+import ifsp.edu.projeto.cortaai.dto.CreateBarberDTO; // Importe o novo DTO
 import ifsp.edu.projeto.cortaai.events.BeforeDeleteBarber;
 import ifsp.edu.projeto.cortaai.exception.NotFoundException;
-import ifsp.edu.projeto.cortaai.mapper.BarberMapper; // Importa o novo Mapper
+import ifsp.edu.projeto.cortaai.mapper.BarberMapper;
 import ifsp.edu.projeto.cortaai.model.Barber;
 import ifsp.edu.projeto.cortaai.repository.BarberRepository;
 import ifsp.edu.projeto.cortaai.service.BarberService;
@@ -19,11 +20,11 @@ public class BarberServiceImpl implements BarberService {
 
     private final BarberRepository barberRepository;
     private final ApplicationEventPublisher publisher;
-    private final BarberMapper barberMapper; // Injeta o Mapper
+    private final BarberMapper barberMapper;
 
     public BarberServiceImpl(final BarberRepository barberRepository,
                              final ApplicationEventPublisher publisher,
-                             final BarberMapper barberMapper) { // Adiciona no construtor
+                             final BarberMapper barberMapper) {
         this.barberRepository = barberRepository;
         this.publisher = publisher;
         this.barberMapper = barberMapper;
@@ -33,20 +34,20 @@ public class BarberServiceImpl implements BarberService {
     public List<BarberDTO> findAll() {
         final List<Barber> barbers = barberRepository.findAll(Sort.by("id"));
         return barbers.stream()
-                .map(barberMapper::toDTO) // Usa o mapper
+                .map(barberMapper::toDTO)
                 .toList();
     }
 
     @Override
     public BarberDTO get(final UUID id) {
         return barberRepository.findById(id)
-                .map(barberMapper::toDTO) // Usa o mapper
+                .map(barberMapper::toDTO)
                 .orElseThrow(NotFoundException::new);
     }
 
     @Override
-    public UUID create(final BarberDTO barberDTO) {
-        final Barber barber = barberMapper.toEntity(barberDTO);
+    public UUID create(final CreateBarberDTO createBarberDTO) {
+        final Barber barber = barberMapper.toEntity(createBarberDTO);
         return barberRepository.save(barber).getId();
     }
 
@@ -55,27 +56,21 @@ public class BarberServiceImpl implements BarberService {
         final Barber barber = barberRepository.findById(id)
                 .orElseThrow(NotFoundException::new);
 
-        // Atualiza a entidade existente com os dados do DTO
         Barber updatedBarber = barberMapper.toEntity(barberDTO);
-        updatedBarber.setId(barber.getId()); // Garante que o ID seja mantido
+        updatedBarber.setId(barber.getId());
 
         barberRepository.save(updatedBarber);
     }
 
     @Override
     public void delete(final UUID id) {
-        // Primeiro, verifica se o barbeiro existe
         final Barber barber = barberRepository.findById(id)
                 .orElseThrow(NotFoundException::new);
 
-        // Dispara o evento ANTES de deletar para que os listeners possam agir
         publisher.publishEvent(new BeforeDeleteBarber(id));
 
-        // Se nenhum listener lançar uma exceção, a exclusão prossegue
         barberRepository.delete(barber);
     }
-
-    // MÉTODOS DE MAPPER FORAM REMOVIDOS DAQUI
 
     @Override
     public boolean tellExists(final String tell) {
