@@ -3,7 +3,6 @@ package ifsp.edu.projeto.cortaai.controller;
 import ifsp.edu.projeto.cortaai.dto.BarberDTO;
 import ifsp.edu.projeto.cortaai.dto.CustomerDTO;
 import ifsp.edu.projeto.cortaai.service.BarberService;
-import ifsp.edu.projeto.cortaai.service.impl.BarberServiceImpl;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -19,6 +18,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ifsp.edu.projeto.cortaai.dto.CreateBarberDTO;
 
 
 @RestController
@@ -46,16 +46,17 @@ public class BarberController {
         return ResponseEntity.ok(barberService.get(id));
     }
 
-    @PostMapping
+    @PostMapping("/create")
     @ApiResponse(responseCode = "201")
-    public ResponseEntity<UUID> createBarber(@RequestBody @Valid final BarberDTO barberDTO) {
-        final UUID createdId = barberService.create(barberDTO);
+    public ResponseEntity<UUID> createBarber(@RequestBody @Valid final CreateBarberDTO createBarberDTO) {
+        final UUID createdId = barberService.create(createBarberDTO);
         return new ResponseEntity<>(createdId, HttpStatus.CREATED);
     }
 
+
     @PutMapping("/{id}")
     public ResponseEntity<UUID> updateBarber(@PathVariable(name = "id") final UUID id,
-            @RequestBody @Valid final BarberDTO barberDTO) {
+                                             @RequestBody @Valid final BarberDTO barberDTO) {
         barberService.update(id, barberDTO);
         return ResponseEntity.ok(id);
     }

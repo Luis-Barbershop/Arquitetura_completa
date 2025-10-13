@@ -18,7 +18,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-
 @Entity
 @Table(name = "Barbers")
 @EntityListeners(AuditingEntityListener.class)
@@ -41,30 +40,29 @@ public class Barber {
     @Column(nullable = false, unique = true, length = 70)
     private String email;
 
-    @Column(nullable = false, unique = true, length = 11)
+    @Column(name = "documentCPF", nullable = false, unique = true, length = 11)
     private String documentCPF;
 
-    @Column(nullable = false)
+    @Column(name = "mainSkill", nullable = false)
     @Enumerated(EnumType.STRING)
     private BarberSkills mainSkill;
 
-    @Column
+    @Column(name = "secondSkill")
     @Enumerated(EnumType.STRING)
     private BarberSkills secondSkill;
 
-    @Column
+    @Column(name = "thirdSkill")
     @Enumerated(EnumType.STRING)
     private BarberSkills thirdSkill;
 
-    @Column(nullable = false, length = 36)
+    @Column(name = "barberShop", nullable = false, length = 36)
     private UUID barberShop;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(name = "dateCreated", nullable = false, updatable = false)
     private OffsetDateTime dateCreated;
 
     @LastModifiedDate
-    @Column(nullable = false)
+    @Column(name = "lastUpdated", nullable = false)
     private OffsetDateTime lastUpdated;
-
 }
