@@ -23,7 +23,7 @@ export default function Login() {
         // --- SUA LÓGICA FETCH (ADAPTADA) ---
         try {
             // O endpoint que você criou no backend é /api/customers/login
-            const response = await fetch('http://ec2-18-204-55-204.compute-1.amazonaws.com/api/customers/login', {
+            const response = await fetch('3.224.37.166/api/customers/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
