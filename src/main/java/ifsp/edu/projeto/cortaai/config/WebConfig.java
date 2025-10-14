@@ -9,9 +9,10 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**") // Permite CORS para todos os endpoints em /api
-                .allowedOrigins("http://ec2-44-201-19-123.compute-1.amazonaws.com")  // A origem do seu front-end
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Métodos permitidos
+        registry.addMapping("/api/**")
+                // 👇 Altere esta linha para o seu domínio principal
+                .allowedOrigins("https://cortaai.oneaction.space") 
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
     }
