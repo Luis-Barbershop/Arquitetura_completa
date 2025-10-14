@@ -23,7 +23,7 @@ export default function Login() {
         // --- SUA LÓGICA FETCH (ADAPTADA) ---
         try {
             // O endpoint que você criou no backend é /api/customers/login
-            const response = await fetch('3.224.37.166/api/customers/login', {
+            const response = await fetch('https://api.cortaai.oneaction.space//api/customers/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
