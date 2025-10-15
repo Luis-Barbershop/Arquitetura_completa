@@ -28,6 +28,18 @@ Resources:
           Properties:
             Path: /{proxy+}
             Method: ANY
+            RestApiId: !Ref ApiGateway # Adiciona esta linha para dar nome ao recurso API Gateway
+            
+# NOVO BLOCO: Configure o CORS na API Gateway
+# Você pode colocar o bloco 'ApiGateway' logo após 'CortaaiApiFunction' ou no final do arquivo.
+  ApiGateway: # Este é o recurso que você referenciou acima
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowOrigin: "'https://cortaai.oneaction.space'" # Seu domínio de frontend
+        AllowMethods: "'*'" # Permite todos os métodos (GET, POST, PUT, DELETE...)
+        AllowHeaders: "'*'" # Permite todos os cabeçalhos
 
 Outputs:
   ApiEndpoint:
