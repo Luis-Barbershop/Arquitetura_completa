@@ -1,9 +1,10 @@
 package ifsp.edu.projeto.cortaai.controller;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.stereotype.Controller;
 
-
+@CrossOrigin
 @Controller
 public class HomeController {
 
