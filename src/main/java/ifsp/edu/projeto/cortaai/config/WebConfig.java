@@ -9,10 +9,11 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // Mapeamento global para cobrir a API, o Swagger e tudo o mais.
+        registry.addMapping("/**")
                 .allowedOrigins(
-                        "https://www.cortaai.oneaction.space", // Domínio principal do seu front-end
-                        "https://api.cortaai.oneaction.space"  // Domínio da própria API (para o Swagger)
+                        "https://www.cortaai.oneaction.space", // Versão com www
+                        "https://cortaai.oneaction.space",   // ADICIONADO: Versão sem www
+                        "https://api.cortaai.oneaction.space"  // Para o Swagger
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
