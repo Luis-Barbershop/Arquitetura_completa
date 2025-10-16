@@ -44,3 +44,6 @@ error:
 
 springdoc:
   pathsToMatch: /, /api/**
+
+server:
+  forward-headers-strategy: native

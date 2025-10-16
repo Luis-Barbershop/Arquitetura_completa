@@ -9,12 +9,13 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // Aplica a configuração a TODAS as rotas
-                // Adicione a URL do seu front-end aqui.
-                // Se tiver uma para desenvolvimento local, adicione também.
-                .allowedOrigins("https://www.cortaai.oneaction.space", "http://localhost:8081")
+        registry.addMapping("/**") // Mapeamento global para cobrir a API, o Swagger e tudo o mais.
+                .allowedOrigins(
+                        "https://www.cortaai.oneaction.space", // Domínio principal do seu front-end
+                        "https://api.cortaai.oneaction.space"  // Domínio da própria API (para o Swagger)
+                )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
-                .allowCredentials(true); // Permite o envio de credenciais (importante para sessões/tokens)
+                .allowCredentials(true);
     }
 }
