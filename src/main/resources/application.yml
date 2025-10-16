@@ -21,6 +21,11 @@ spring:
           new_generator_mappings: true
         type:
           preferred_uuid_jdbc_type: VARCHAR
+  # Bloco PID movido para aqui, diretamente sob 'spring'
+  pid:
+    file: /home/ec2-user/Arquitetura_completa/cortaai-api.pid
+    fail-on-write-error: true
+
 error:
   handling:
     http-status-in-json-response: true
@@ -36,8 +41,6 @@ error:
       CustomerEmailUnique: CUSTOMER_EMAIL_UNIQUE
       CustomerDocumentCPFUnique: CUSTOMER_DOCUMENT_CPFUNIQUE
       CustomerPreviousAppointmentUnique: CUSTOMER_PREVIOUS_APPOINTMENT_UNIQUE
+
 springdoc:
   pathsToMatch: /, /api/**
-  pid:
-    file: /home/ec2-user/Arquitetura_completa/cortaai-api.pid
-    fail-on-write-error: true
