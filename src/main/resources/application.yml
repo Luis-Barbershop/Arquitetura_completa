@@ -38,3 +38,6 @@ error:
       CustomerPreviousAppointmentUnique: CUSTOMER_PREVIOUS_APPOINTMENT_UNIQUE
 springdoc:
   pathsToMatch: /, /api/**
+  pid:
+    file: /home/ec2-user/Arquitetura_completa/cortaai-api.pid
+    fail-on-write-error: true

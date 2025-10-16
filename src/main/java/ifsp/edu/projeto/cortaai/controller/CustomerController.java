@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ifsp.edu.projeto.cortaai.dto.LoginDTO;
 
-@CrossOrigin
 @RestController
 @RequestMapping(value = "/api/customers", produces = MediaType.APPLICATION_JSON_VALUE)
 public class CustomerController {

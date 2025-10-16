@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ifsp.edu.projeto.cortaai.dto.CreateBarberDTO;
 
-@CrossOrigin
 @RestController
 @RequestMapping(value = "/api/barbers", produces = MediaType.APPLICATION_JSON_VALUE)
 public class BarberController {
