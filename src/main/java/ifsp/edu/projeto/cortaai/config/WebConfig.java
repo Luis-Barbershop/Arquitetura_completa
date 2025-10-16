@@ -10,11 +10,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
-                // CORREÇÃO: Liste todas as origens em uma única chamada.
-                .allowedOrigins(
-                    "https://cortaai.oneaction.space", 
-                    "http://cortaai.oneaction.space"
-                )
+                .allowedOrigins("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
