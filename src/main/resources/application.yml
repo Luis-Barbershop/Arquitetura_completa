@@ -7,13 +7,16 @@ spring:
       connection-timeout: 30000
       maximum-pool-size: 10
   jpa:
+    # Alterado para 'validate' para mais segurança em produção
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     open-in-view: false
     properties:
       hibernate:
+        # A propriedade 'format_sql' foi movida para o lugar certo
+        format_sql: true
         jdbc:
           lob:
             non_contextual_creation: true
@@ -21,7 +24,6 @@ spring:
           new_generator_mappings: true
         type:
           preferred_uuid_jdbc_type: VARCHAR
-  # Bloco PID movido para aqui, diretamente sob 'spring'
   pid:
     file: /home/ec2-user/Arquitetura_completa/cortaai-api.pid
     fail-on-write-error: true
@@ -29,7 +31,7 @@ spring:
 error:
   handling:
     http-status-in-json-response: true
-    exception-logging: NO_LOGGING
+    # A linha 'exception-logging: NO_LOGGING' foi REMOVIDA para reativar os logs de erro
     full-stacktrace-http-statuses: 5xx
     log-levels:
       5xx: ERROR
@@ -47,3 +49,13 @@ springdoc:
 
 server:
   forward-headers-strategy: native
+
+# ===============================================
+# CONFIGURAÇÕES DE LOG PARA DEBUG DO HIBERNATE
+# ===============================================
+# (ESSENCIAL) Mostra as queries SQL
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    # (MUITO ÚTIL) Mostra os valores dos parâmetros (?) nas queries
+    org.hibernate.type.descriptor.sql: TRACE
