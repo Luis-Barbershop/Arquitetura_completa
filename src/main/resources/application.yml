@@ -1,0 +1,61 @@
+spring:
+  datasource:
+    url: ${JDBC_DATABASE_URL}
+    username: ${JDBC_DATABASE_USERNAME}
+    password: ${JDBC_DATABASE_PASSWORD}
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
+  jpa:
+    # Alterado para 'validate' para mais segurança em produção
+    hibernate:
+      ddl-auto: validate
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    open-in-view: false
+    properties:
+      hibernate:
+        # A propriedade 'format_sql' foi movida para o lugar certo
+        format_sql: true
+        jdbc:
+          lob:
+            non_contextual_creation: true
+        id:
+          new_generator_mappings: true
+        type:
+          preferred_uuid_jdbc_type: VARCHAR
+  pid:
+    file: /home/ec2-user/Arquitetura_completa/cortaai-api.pid
+    fail-on-write-error: true
+
+error:
+  handling:
+    http-status-in-json-response: true
+    # A linha 'exception-logging: NO_LOGGING' foi REMOVIDA para reativar os logs de erro
+    full-stacktrace-http-statuses: 5xx
+    log-levels:
+      5xx: ERROR
+    codes:
+      BarberTellUnique: BARBER_TELL_UNIQUE
+      BarberEmailUnique: BARBER_EMAIL_UNIQUE
+      BarberDocumentCPFUnique: BARBER_DOCUMENT_CPFUNIQUE
+      CustomerTellUnique: CUSTOMER_TELL_UNIQUE
+      CustomerEmailUnique: CUSTOMER_EMAIL_UNIQUE
+      CustomerDocumentCPFUnique: CUSTOMER_DOCUMENT_CPFUNIQUE
+      CustomerPreviousAppointmentUnique: CUSTOMER_PREVIOUS_APPOINTMENT_UNIQUE
+
+springdoc:
+  pathsToMatch: /, /api/**
+
+server:
+  forward-headers-strategy: native
+
+# ===============================================
+# CONFIGURAÇÕES DE LOG PARA DEBUG DO HIBERNATE
+# ===============================================
+# (ESSENCIAL) Mostra as queries SQL
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    # (MUITO ÚTIL) Mostra os valores dos parâmetros (?) nas queries
+    org.hibernate.type.descriptor.sql: TRACE
