@@ -1,4 +1,4 @@
-package ifsp.edu.projeto.cortaai.model;
+package ifsp.edu.projeto.cortaai.userservice.model;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;

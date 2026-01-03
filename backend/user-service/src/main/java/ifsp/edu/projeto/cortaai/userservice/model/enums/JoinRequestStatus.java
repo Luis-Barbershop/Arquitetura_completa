@@ -1,4 +1,4 @@
-package ifsp.edu.projeto.cortaai.model.enums;
+package ifsp.edu.projeto.cortaai.userservice.model.enums;
 
 public enum JoinRequestStatus {
     PENDING,

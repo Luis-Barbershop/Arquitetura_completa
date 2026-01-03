@@ -1,5 +1,4 @@
-package ifsp.edu.projeto.cortaai.dto;
-
+package ifsp.edu.projeto.cortaai.userservice.dto;
 import ifsp.edu.projeto.cortaai.validator.CustomerDocumentCPFUnique;
 import ifsp.edu.projeto.cortaai.validator.CustomerEmailUnique;
 import ifsp.edu.projeto.cortaai.validator.CustomerTellUnique;

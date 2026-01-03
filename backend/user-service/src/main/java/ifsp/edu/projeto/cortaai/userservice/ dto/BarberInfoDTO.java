@@ -1,4 +1,4 @@
-package ifsp.edu.projeto.cortaai.dto;
+package ifsp.edu.projeto.cortaai.userservice.dto;
 
 import lombok.Getter;
 import lombok.Setter;

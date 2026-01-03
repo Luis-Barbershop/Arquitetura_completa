@@ -1,4 +1,4 @@
-package ifsp.edu.projeto.cortaai.dto;
+package ifsp.edu.projeto.cortaai.userservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import ifsp.edu.projeto.cortaai.validator.BarberDocumentCPFUnique;

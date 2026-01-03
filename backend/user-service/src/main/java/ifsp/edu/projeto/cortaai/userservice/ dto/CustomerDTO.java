@@ -1,4 +1,4 @@
-package ifsp.edu.projeto.cortaai.dto;
+package ifsp.edu.projeto.cortaai.userservice.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
