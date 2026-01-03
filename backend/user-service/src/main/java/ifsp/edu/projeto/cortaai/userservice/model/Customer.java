@@ -1,9 +1,6 @@
 package ifsp.edu.projeto.cortaai.userservice.model;
 
 import jakarta.persistence.*;
-import java.time.OffsetDateTime;
-import java.util.Set;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
@@ -11,6 +8,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "customers")
@@ -40,6 +39,10 @@ public class Customer {
     @Column(nullable = false, length = 255)
     private String password;
 
+    // Sugestão: Adicionar Role para facilitar o JWT depois
+    @Column(length = 20)
+    private String role = "ROLE_CUSTOMER";
+
     @CreatedDate
     @Column(name = "date_created", nullable = false, updatable = false)
     private OffsetDateTime dateCreated;
@@ -48,14 +51,10 @@ public class Customer {
     @Column(name = "last_updated", nullable = false)
     private OffsetDateTime lastUpdated;
 
-    // Relacionamento: 1 Cliente tem N Agendamentos
-    @OneToMany(mappedBy = "customer")
-    private Set<Appointments> appointments;
-
+    // Campos de imagem (Mantidos)
     @Column(name = "image_url", length = 255)
     private String imageUrl;
 
-    @Column(name = "image_url_public_id", length = 255) // NOVA COLUNA
+    @Column(name = "image_url_public_id", length = 255)
     private String imageUrlPublicId;
-
 }

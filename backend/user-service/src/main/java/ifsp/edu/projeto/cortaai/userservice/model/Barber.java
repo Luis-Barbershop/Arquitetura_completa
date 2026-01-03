@@ -1,16 +1,15 @@
 package ifsp.edu.projeto.cortaai.userservice.model;
 
 import jakarta.persistence.*;
-import java.time.OffsetDateTime;
-import java.util.Set;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import java.time.LocalTime;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "barbers")
@@ -43,46 +42,20 @@ public class Barber {
     @Column(name = "is_owner", nullable = false)
     private boolean isOwner = false;
 
-    @Column(name = "work_start_time")
-    private LocalTime workStartTime;
+    // Sugestão: Role explícita (além do isOwner) ajuda na segurança do Spring
+    @Column(length = 20)
+    private String role = "ROLE_BARBER";
 
-    @Column(name = "work_end_time")
-    private LocalTime workEndTime;
-
-    // Relacionamento: N Barbeiros pertencem a 1 Barbearia
-    // É NULLABLE para permitir barbeiros "livres"
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "barbershop_id")
-    private Barbershop barbershop;
+    // NOVO: Referência à Barbearia apenas pelo ID
+    // (Pode ser Null se ele ainda não estiver vinculado a nenhuma barbearia)
+    @Column(name = "barbershop_id")
+    private Long barbershopId; // Ou UUID, se a Barbearia também for usar UUID
 
     @CreatedDate
     @Column(name = "date_created", nullable = false, updatable = false)
     private OffsetDateTime dateCreated;
 
     @LastModifiedDate
-    @Column(name = "last_updated", nullable = false)
+    @Column(name = "last_updated")
     private OffsetDateTime lastUpdated;
-
-    // Relacionamento: 1 Barbeiro tem N Agendamentos
-    @OneToMany(mappedBy = "barber")
-    private Set<Appointments> appointments;
-
-    // Relacionamento: N Barbeiros realizam N Serviços
-    @ManyToMany
-    @JoinTable(
-            name = "barber_activities",
-            joinColumns = @JoinColumn(name = "barber_id"),
-            inverseJoinColumns = @JoinColumn(name = "activity_id")
-    )
-    private Set<Activity> activities;
-
-    // Relacionamento: 1 Barbeiro tem N Pedidos para Entrar
-    @OneToMany(mappedBy = "barber")
-    private Set<BarbershopJoinRequest> joinRequests;
-
-    @Column(name = "image_url", length = 255)
-    private String imageUrl;
-
-    @Column(name = "image_url_public_id", length = 255) // NOVA COLUNA
-    private String imageUrlPublicId;
 }
