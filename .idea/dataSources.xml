@@ -4,7 +4,7 @@
     <data-source source="LOCAL" name="cortaai" uuid="7a7aae94-ff92-481b-ba40-456aa7cd12e7">
       <driver-ref>mysql.8</driver-ref>
       <synchronize>true</synchronize>
-      <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://cortaai-db.cur1obzqkxcc.us-east-1.rds.amazonaws.com:3306/</jdbc-url>
       <jdbc-additional-properties>
         <property name="com.intellij.clouds.kubernetes.db.host.port" />
@@ -16,7 +16,7 @@
     <data-source source="LOCAL" name="old" uuid="3e075c46-98ed-4b7c-b79b-74c69ef715db">
       <driver-ref>mysql.8</driver-ref>
       <synchronize>true</synchronize>
-      <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://cortaai-db.cvkm6au2ib6n.us-east-1.rds.amazonaws.com:3306</jdbc-url>
       <jdbc-additional-properties>
         <property name="com.intellij.clouds.kubernetes.db.host.port" />
