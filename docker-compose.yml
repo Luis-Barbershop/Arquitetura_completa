@@ -1,46 +1,47 @@
 services:
-  # Banco de Dados (Compartilhado para facilitar o setup inicial)
+  # O Banco de dados único com os 3 schemas
   db:
     image: mysql:8.0
     container_name: cortaai-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: cortaai
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql # Executa o script de criação
+      - db_data:/var/lib/mysql
     ports:
       - "3306:3306"
 
-  # 1. Discovery Service (Eureka)
+  # O servidor que regista os outros
   discovery:
     image: eclipse-temurin:17-jdk
     container_name: discovery-service
     working_dir: /app
-    volumes: ["./backend/discovery-service:/app"]
-    # No início, como não tem o jar, usaremos o mvnw para rodar
-    command: "./mvnw spring-boot:run"
+    volumes: ["./backend:/app"]
+    command: "./mvnw spring-boot:run -pl discovery-service"
     ports: ["8761:8761"]
 
-  # 2. API Gateway
+  # A porta de entrada para o Frontend
   gateway:
     image: eclipse-temurin:17-jdk
     container_name: api-gateway
     working_dir: /app
-    volumes: ["./backend/api-gateway:/app"]
-    command: "./mvnw spring-boot:run"
-    ports: ["8080:8080"] 
-    depends_on: ["discovery"]
+    volumes: ["./backend:/app"]
+    command: "./mvnw spring-boot:run -pl api-gateway"
+    ports: ["8080:8080"]
+    depends_on: [discovery]
 
-  # 3. User Service (Autenticação, Clientes e Barbeiros)
+  # Exemplo de um serviço de negócio
   user-service:
     image: eclipse-temurin:17-jdk
     container_name: user-service
     working_dir: /app
-    volumes: ["./backend/user-service:/app"]
-    command: "./mvnw spring-boot:run"
+    volumes: ["./backend:/app"]
+    command: "./mvnw spring-boot:run -pl user-service"
     environment:
-      - JDBC_DATABASE_URL=jdbc:mysql://db:3306/cortaai
-    depends_on: ["db", "discovery"]
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/user_db
+    depends_on: [db, discovery]
 
-  # 4. Frontend (React 19 + Vite 7)
+  # Frontend em React 19
   frontend:
     image: node:20
     container_name: cortaai-web
@@ -48,3 +49,6 @@ services:
     volumes: ["./frontend:/app"]
     ports: ["5173:5173"]
     command: "sh -c 'npm install && npm run dev -- --host'"
+
+volumes:
+  db_data:
