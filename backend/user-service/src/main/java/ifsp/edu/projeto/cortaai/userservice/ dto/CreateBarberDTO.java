@@ -1,9 +1,9 @@
 package ifsp.edu.projeto.cortaai.userservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import ifsp.edu.projeto.cortaai.validator.BarberDocumentCPFUnique;
-import ifsp.edu.projeto.cortaai.validator.BarberEmailUnique;
-import ifsp.edu.projeto.cortaai.validator.BarberTellUnique;
+import ifsp.edu.projeto.cortaai.userservice.validator.BarberDocumentCPFUnique;
+import ifsp.edu.projeto.cortaai.userservice.validator.BarberEmailUnique;
+import ifsp.edu.projeto.cortaai.userservice.validator.BarberTellUnique;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;

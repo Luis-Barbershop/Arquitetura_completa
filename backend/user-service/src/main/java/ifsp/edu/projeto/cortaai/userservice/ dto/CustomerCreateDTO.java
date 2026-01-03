@@ -1,7 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.dto;
-import ifsp.edu.projeto.cortaai.validator.CustomerDocumentCPFUnique;
-import ifsp.edu.projeto.cortaai.validator.CustomerEmailUnique;
-import ifsp.edu.projeto.cortaai.validator.CustomerTellUnique;
+import ifsp.edu.projeto.cortaai.userservice.validator.CustomerDocumentCPFUnique;
+import ifsp.edu.projeto.cortaai.userservice.validator.CustomerEmailUnique;
+import ifsp.edu.projeto.cortaai.userservice.validator.CustomerTellUnique;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;

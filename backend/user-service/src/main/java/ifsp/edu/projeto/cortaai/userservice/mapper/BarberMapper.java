@@ -1,7 +1,7 @@
-package ifsp.edu.projeto.cortaai.mapper;
+package ifsp.edu.projeto.cortaai.userservice.mapper;
 
-import ifsp.edu.projeto.cortaai.dto.BarberDTO;
-import ifsp.edu.projeto.cortaai.model.Barber;
+import ifsp.edu.projeto.cortaai.userservice.dto.BarberDTO;
+import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

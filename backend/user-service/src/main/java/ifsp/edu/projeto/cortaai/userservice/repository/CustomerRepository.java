@@ -1,6 +1,6 @@
 package ifsp.edu.projeto.cortaai.userservice.repository;
 
-import ifsp.edu.projeto.cortaai.model.Customer;
+import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;

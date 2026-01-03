@@ -1,19 +1,19 @@
 package ifsp.edu.projeto.cortaai.userservice.service.impl;
 
-import ifsp.edu.projeto.cortaai.dto.*;
+import ifsp.edu.projeto.cortaai.userservice.dto.*;
 import ifsp.edu.projeto.cortaai.events.BeforeDeleteBarber;
 import ifsp.edu.projeto.cortaai.exception.NotFoundException;
 import ifsp.edu.projeto.cortaai.exception.ReferenceException;
 import ifsp.edu.projeto.cortaai.mapper.ActivityMapper;
-import ifsp.edu.projeto.cortaai.mapper.BarberMapper;
+import ifsp.edu.projeto.cortaai.userservice.mapper.BarberMapper;
 import ifsp.edu.projeto.cortaai.mapper.BarbershopMapper;
-import ifsp.edu.projeto.cortaai.model.*;
+import ifsp.edu.projeto.cortaai.userservice.model.*;
 import org.springframework.transaction.annotation.Transactional;
 import ifsp.edu.projeto.cortaai.model.enums.AppointmentStatus;
 import ifsp.edu.projeto.cortaai.model.enums.JoinRequestStatus;
-import ifsp.edu.projeto.cortaai.repository.*;
-import ifsp.edu.projeto.cortaai.service.BarberService;
-import ifsp.edu.projeto.cortaai.service.JwtTokenService;
+import ifsp.edu.projeto.cortaai.userservice.repository.*;
+import ifsp.edu.projeto.cortaai.userservice.service.BarberService;
+import ifsp.edu.projeto.cortaai.userservice.service.JwtTokenService;
 import ifsp.edu.projeto.cortaai.service.StorageService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;

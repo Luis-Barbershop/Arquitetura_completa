@@ -1,9 +1,9 @@
 package ifsp.edu.projeto.cortaai.userservice.service;
 
-import ifsp.edu.projeto.cortaai.dto.CustomerCreateDTO;
-import ifsp.edu.projeto.cortaai.dto.CustomerDTO;
-import ifsp.edu.projeto.cortaai.dto.LoginDTO;
-import ifsp.edu.projeto.cortaai.dto.LoginResponseDTO; // NOVO IMPORT
+import ifsp.edu.projeto.cortaai.userservice.dto.CustomerCreateDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.CustomerDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.LoginDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.LoginResponseDTO; // NOVO IMPORT
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;

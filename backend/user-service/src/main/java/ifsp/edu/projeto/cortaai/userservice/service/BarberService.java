@@ -1,6 +1,6 @@
 package ifsp.edu.projeto.cortaai.userservice.service;
 
-import ifsp.edu.projeto.cortaai.dto.*;
+import ifsp.edu.projeto.cortaai.userservice.dto.*;
 import jakarta.validation.Valid;
 import ifsp.edu.projeto.cortaai.dto.JoinRequestDTO;
 import ifsp.edu.projeto.cortaai.dto.UpdateBarbershopDTO;

@@ -4,7 +4,7 @@ import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 
-import ifsp.edu.projeto.cortaai.service.impl.BarberServiceImpl;
+import ifsp.edu.projeto.cortaai.userservice.service.impl.BarberServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;

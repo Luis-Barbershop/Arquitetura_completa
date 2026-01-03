@@ -1,6 +1,6 @@
 package ifsp.edu.projeto.cortaai.userservice.repository;
 
-import ifsp.edu.projeto.cortaai.model.Barber;
+import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 
 import java.util.List;
 import java.util.Optional;
