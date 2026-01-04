@@ -1,0 +1,35 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true # Cria rotas automáticas baseadas nos nomes dos serviços
+          lower-case-service-id: true
+      routes:
+        # Rota para o User Service (Login, Cadastro, etc)
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**, /api/auth/** # Ajuste conforme seus endpoints atuais
+
+        # Rota para o Barbershop Service
+        - id: barbershop-service
+          uri: lb://barbershop-service
+          predicates:
+            - Path=/api/barbershops/**
+
+        # Rota para o Schedule Service
+        - id: schedule-service
+          uri: lb://schedule-service
+          predicates:
+            - Path=/api/appointments/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery:8761/eureka/ # Aponta para o container do discovery

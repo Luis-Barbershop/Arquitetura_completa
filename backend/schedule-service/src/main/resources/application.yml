@@ -1,0 +1,24 @@
+server:
+  port: 8083 # Porta única
+
+spring:
+  application:
+    name: schedule-service
+  datasource:
+    url: jdbc:mysql://db:3306/schedule_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery:8761/eureka/
+  instance:
+    prefer-ip-address: true
+

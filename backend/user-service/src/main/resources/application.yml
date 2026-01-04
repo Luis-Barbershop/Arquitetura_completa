@@ -1,77 +1,47 @@
+server:
+  port: 8081 # Porta diferente do Gateway (8080) e Discovery (8761)
+
 spring:
+  application:
+    name: user-service # Nome usado pelo Gateway (lb://user-service) e Eureka
+
   datasource:
-    url: ${JDBC_DATABASE_URL}
-    username: ${JDBC_DATABASE_USERNAME}
-    password: ${JDBC_DATABASE_PASSWORD}
-    hikari:
-      connection-timeout: 30000
-      maximum-pool-size: 10
+    # 'db' é o nome do serviço definido no docker-compose.yml
+    url: jdbc:mysql://db:3306/user_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: root # Senha definida no environment do serviço 'db'
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
-    # Alterado para 'validate' para mais segurança em produção
+    database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
-      ddl-auto: update
-      naming:
-#        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+      ddl-auto: update # Cria/Atualiza as tabelas automaticamente
     open-in-view: false
     properties:
       hibernate:
-        # A propriedade 'format_sql' foi movida para o lugar certo
         format_sql: true
-        jdbc:
-          lob:
-            non_contextual_creation: true
-        id:
-          new_generator_mappings: true
-        type:
-          preferred_uuid_jdbc_type: VARCHAR
-  pid:
-    file: /home/ec2-user/Arquitetura_completa/cortaai-api.pid
-    fail-on-write-error: true
+        show_sql: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+# ==================================================
+# CONFIGURAÇÕES ESPECÍFICAS DA APLICAÇÃO (CORTA AÍ)
+# ==================================================
+app:
+  security:
+    jwt:
+      # Use variável de ambiente ou um valor padrão para dev
+      secret-key: ${JWT_SECRET_KEY:SecretKeySuperSeguraParaDesenvolvimento12345}
+      expiration-ms: 3600000 # 1 hora
 
 error:
   handling:
     http-status-in-json-response: true
-    # A linha 'exception-logging: NO_LOGGING' foi REMOVIDA para reativar os logs de erro
     full-stacktrace-http-statuses: 5xx
-    log-levels:
-      5xx: ERROR
-    codes:
-      BarberTellUnique: BARBER_TELL_UNIQUE
-      BarberEmailUnique: BARBER_EMAIL_UNIQUE
-      BarberDocumentCPFUnique: BARBER_DOCUMENT_CPFUNIQUE
-      CustomerTellUnique: CUSTOMER_TELL_UNIQUE
-      CustomerEmailUnique: CUSTOMER_EMAIL_UNIQUE
-      CustomerDocumentCPFUnique: CUSTOMER_DOCUMENT_CPFUNIQUE
-      CustomerPreviousAppointmentUnique: CUSTOMER_PREVIOUS_APPOINTMENT_UNIQUE
-      CPF: INVALID_CPF
-      CNPJ: INVALID_CNPJ
-
-springdoc:
-  pathsToMatch: /, /api/**
-
-server:
-  forward-headers-strategy: native
-
-# NOVAS CONFIGURAÇÕES
-app:
-  security:
-    jwt:
-      secret-key: ${JWT_SECRET_KEY}
-      expiration-ms: 3600000 # 1 hora
-
-  # NOVA CONFIGURAÇÃO
-  availability:
-    # Intervalo em minutos para sugerir horários (ex: 09:00, 09:15, 09:30)
-    slot-interval-minutes: 15
-
-
-# ===============================================
-# CONFIGURAÇÕES DE LOG PARA DEBUG DO HIBERNATE
-# ===============================================
-# (ESSENCIAL) Mostra as queries SQL
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    # (MUITO ÚTIL) Mostra os valores dos parâmetros (?) nas queries
-    org.hibernate.type.descriptor.sql: TRACE

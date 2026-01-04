@@ -1,0 +1,29 @@
+server:
+  port: 8082 # Porta única
+
+spring:
+  application:
+    name: barbershop-service
+  datasource:
+    url: jdbc:mysql://db:3306/barbershop_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# Configuração do Cloudinary (migrada do monólito)
+cloudinary:
+  cloud_name: ${CLOUDINARY_CLOUD_NAME}
+  api_key: ${CLOUDINARY_API_KEY}
+  api_secret: ${CLOUDINARY_API_SECRET}
