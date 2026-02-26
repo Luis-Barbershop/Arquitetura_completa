@@ -37,15 +37,18 @@ public class AvailabilityServiceImpl implements AvailabilityService {
 
     @Override
     public BarberWorkHoursDTO setWorkHours(UUID barberId, UUID barbershopId, CreateBarberWorkHoursDTO dto) {
-        // Check if work hours already exist for this day
-        workHoursRepository.findByBarberIdAndDayOfWeek(barberId, dto.getDayOfWeek())
-                .ifPresent(existing -> {
-                    existing.setStartTime(dto.getStartTime());
-                    existing.setEndTime(dto.getEndTime());
-                    existing.setActive(true);
-                    workHoursRepository.save(existing);
-                });
+        // Check if work hours already exist for this day and update if so
+        var existingOpt = workHoursRepository.findByBarberIdAndDayOfWeek(barberId, dto.getDayOfWeek());
+        
+        if (existingOpt.isPresent()) {
+            BarberWorkHours existing = existingOpt.get();
+            existing.setStartTime(dto.getStartTime());
+            existing.setEndTime(dto.getEndTime());
+            existing.setActive(true);
+            return workHoursMapper.toDTO(workHoursRepository.save(existing));
+        }
 
+        // Create new work hours if none exist
         BarberWorkHours workHours = workHoursMapper.toEntity(dto);
         workHours.setBarberId(barberId);
         workHours.setBarbershopId(barbershopId);
@@ -116,8 +119,13 @@ public class AvailabilityServiceImpl implements AvailabilityService {
                 barberId, dayStart, dayEnd);
 
         LocalTime current = start;
-        while (current.plusMinutes(slotMinutes).isBefore(end) || current.plusMinutes(slotMinutes).equals(end)) {
+        while (true) {
             LocalTime slotEnd = current.plusMinutes(slotMinutes);
+            
+            // Check if slot end time exceeds work end time
+            if (slotEnd.isAfter(end)) {
+                break;
+            }
             
             OffsetDateTime slotStartDT = date.atTime(current).atZone(ZoneId.systemDefault()).toOffsetDateTime();
             OffsetDateTime slotEndDT = date.atTime(slotEnd).atZone(ZoneId.systemDefault()).toOffsetDateTime();

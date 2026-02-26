@@ -1,6 +1,5 @@
 package ifsp.edu.projeto.cortaai.schedule.dto;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 

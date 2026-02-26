@@ -51,7 +51,7 @@ services:
     ports: ["8081:8081"]
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/user_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
-      - JWT_SECRET_KEY=SecretKeySuperSeguraParaDesenvolvimento12345
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-DefaultDevSecretKeyChangeInProduction123456}
     depends_on:
       db:
         condition: service_healthy

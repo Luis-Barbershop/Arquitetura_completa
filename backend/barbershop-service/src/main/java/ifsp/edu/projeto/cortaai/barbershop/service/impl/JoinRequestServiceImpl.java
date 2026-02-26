@@ -69,8 +69,11 @@ public class JoinRequestServiceImpl implements JoinRequestService {
         request.setStatus(JoinRequestStatus.APPROVED);
         joinRequestRepository.save(request);
 
-        // Note: The user-service will be notified via messaging or Feign client
-        // to update the barber's barbershopId
+        // TODO: Implement inter-service communication to update barber's barbershopId
+        // Options:
+        // 1. Event-driven: Publish event to message broker (RabbitMQ/Kafka)
+        // 2. Synchronous: Call user-service via Feign client
+        // For now, the barber must manually update their profile after approval
     }
 
     @Override

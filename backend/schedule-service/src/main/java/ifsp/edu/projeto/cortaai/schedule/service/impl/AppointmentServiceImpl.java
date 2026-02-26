@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.schedule.service.impl;
 
+import ifsp.edu.projeto.cortaai.schedule.client.BarbershopServiceClient;
 import ifsp.edu.projeto.cortaai.schedule.dto.AppointmentDTO;
 import ifsp.edu.projeto.cortaai.schedule.dto.CreateAppointmentDTO;
 import ifsp.edu.projeto.cortaai.schedule.dto.UpdateAppointmentDTO;
@@ -13,6 +14,7 @@ import ifsp.edu.projeto.cortaai.schedule.repository.AppointmentRepository;
 import ifsp.edu.projeto.cortaai.schedule.service.AppointmentService;
 import ifsp.edu.projeto.cortaai.schedule.service.AvailabilityService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -29,6 +32,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final AppointmentMapper appointmentMapper;
     private final AvailabilityService availabilityService;
+    private final BarbershopServiceClient barbershopServiceClient;
 
     private static final int DEFAULT_DURATION_MINUTES = 30;
 
@@ -179,9 +183,12 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     private boolean isBarbershopOwner(UUID barbershopId, UUID userId) {
-        // In a real implementation, this would call barbershop-service
-        // For now, we'll return true to allow the operation
-        // This should be implemented with Feign client
-        return true;
+        try {
+            var barbershop = barbershopServiceClient.getBarbershopById(barbershopId);
+            return barbershop != null && userId.equals(barbershop.ownerId());
+        } catch (Exception e) {
+            log.warn("Failed to verify barbershop ownership: {}", e.getMessage());
+            return false;
+        }
     }
 }

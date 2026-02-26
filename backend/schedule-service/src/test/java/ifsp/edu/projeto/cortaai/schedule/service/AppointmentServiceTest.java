@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.schedule.service;
 
+import ifsp.edu.projeto.cortaai.schedule.client.BarbershopServiceClient;
 import ifsp.edu.projeto.cortaai.schedule.dto.AppointmentDTO;
 import ifsp.edu.projeto.cortaai.schedule.dto.CreateAppointmentDTO;
 import ifsp.edu.projeto.cortaai.schedule.exception.ConflictException;
@@ -38,6 +39,9 @@ class AppointmentServiceTest {
 
     @Mock
     private AvailabilityService availabilityService;
+
+    @Mock
+    private BarbershopServiceClient barbershopServiceClient;
 
     @InjectMocks
     private AppointmentServiceImpl appointmentService;
