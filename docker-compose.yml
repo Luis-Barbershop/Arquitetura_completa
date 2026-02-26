@@ -10,6 +10,10 @@ services:
       - db_data:/var/lib/mysql
     ports:
       - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
 
   # O servidor que regista os outros
   discovery:
@@ -19,6 +23,11 @@ services:
     volumes: ["./backend:/app"]
     command: "./mvnw spring-boot:run -pl discovery-service"
     ports: ["8761:8761"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   # A porta de entrada para o Frontend
   gateway:
@@ -28,18 +37,61 @@ services:
     volumes: ["./backend:/app"]
     command: "./mvnw spring-boot:run -pl api-gateway"
     ports: ["8080:8080"]
-    depends_on: [discovery]
+    depends_on:
+      discovery:
+        condition: service_started
 
-  # Exemplo de um serviço de negócio
+  # Microserviço de Usuários e Autenticação
   user-service:
     image: eclipse-temurin:17-jdk
     container_name: user-service
     working_dir: /app
     volumes: ["./backend:/app"]
     command: "./mvnw spring-boot:run -pl user-service"
+    ports: ["8081:8081"]
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/user_db
-    depends_on: [db, discovery]
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/user_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - JWT_SECRET_KEY=SecretKeySuperSeguraParaDesenvolvimento12345
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
+
+  # Microserviço de Barbearias
+  barbershop-service:
+    image: eclipse-temurin:17-jdk
+    container_name: barbershop-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "./mvnw spring-boot:run -pl barbershop-service"
+    ports: ["8082:8082"]
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/barbershop_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME:-}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY:-}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
+
+  # Microserviço de Agendamentos
+  schedule-service:
+    image: eclipse-temurin:17-jdk
+    container_name: schedule-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "./mvnw spring-boot:run -pl schedule-service"
+    ports: ["8083:8083"]
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/schedule_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
 
   # Frontend em React 19
   frontend:
