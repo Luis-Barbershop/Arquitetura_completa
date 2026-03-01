@@ -4,6 +4,16 @@ server:
 spring:
   application:
     name: notification-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/notification_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: 5672
@@ -13,6 +23,17 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: 6379
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 eureka:
   client:
@@ -21,12 +42,6 @@ eureka:
   instance:
     prefer-ip-address: true
 
-# Resend (Email transacional)
-resend:
-  api-key: ${RESEND_API_KEY}
-  from-email: noreply@cortaai.com.br
-
-# Firebase Cloud Messaging (Push)
-fcm:
-  credentials-path: ${FCM_CREDENTIALS_PATH:firebase-credentials.json}
+notification:
+  from-email: ${NOTIFICATION_FROM_EMAIL:noreply@cortaai.com.br}
 
