@@ -1,0 +1,233 @@
+services:
+  # ======== INFRAESTRUTURA ========
+
+  db:
+    image: mysql:8.0
+    container_name: cortaai-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - /DATA/cortaai/mysql:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: cortaai-rabbitmq
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: cortaai-redis
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ======== DISCOVERY & GATEWAY ========
+
+  discovery:
+    image: eclipse-temurin:17-jdk
+    container_name: discovery-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl discovery-service'"
+    ports: ["8761:8761"]
+    environment:
+      - EUREKA_HOST=discovery
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  gateway:
+    image: eclipse-temurin:17-jdk
+    container_name: api-gateway
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl api-gateway'"
+    ports: ["8082:8080"]
+    environment:
+      - EUREKA_HOST=discovery
+    depends_on:
+      discovery:
+        condition: service_started
+
+  # ======== MICROSERVIÇOS DE NEGÓCIO ========
+
+  user-service:
+    image: eclipse-temurin:17-jdk
+    container_name: user-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl user-service'"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/user_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - EUREKA_HOST=discovery
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
+
+  barbershop-service:
+    image: eclipse-temurin:17-jdk
+    container_name: barbershop-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl barbershop-service'"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/barbershop_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - EUREKA_HOST=discovery
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  schedule-service:
+    image: eclipse-temurin:17-jdk
+    container_name: schedule-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl schedule-service'"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/schedule_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - EUREKA_HOST=discovery
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - REDIS_HOST=redis
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  payment-service:
+    image: eclipse-temurin:17-jdk
+    container_name: payment-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl payment-service'"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/payment_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - EUREKA_HOST=discovery
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  notification-service:
+    image: eclipse-temurin:17-jdk
+    container_name: notification-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl notification-service'"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/notification_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - EUREKA_HOST=discovery
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - REDIS_HOST=redis
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - NOTIFICATION_FROM_EMAIL=${NOTIFICATION_FROM_EMAIL}
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  product-service:
+    image: eclipse-temurin:17-jdk
+    container_name: product-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl product-service'"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/product_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - EUREKA_HOST=discovery
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  # ======== FRONTEND ========
+
+  frontend:
+    image: node:20
+    container_name: cortaai-web
+    working_dir: /app
+    volumes: ["./frontend:/app"]
+    ports: ["5173:5173"]
+    command: "sh -c 'npm install && npm run dev -- --host'"

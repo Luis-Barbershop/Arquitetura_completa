@@ -11,6 +11,51 @@ spring:
           enabled: true
           lower-case-service-id: true
       routes:
+        # ======== ROTAS DE API-DOCS (Swagger) ========
+        - id: user-service-api-docs
+          uri: lb://user-service
+          predicates:
+            - Path=/v3/api-docs/user-service
+          filters:
+            - RewritePath=/v3/api-docs/user-service, /v3/api-docs
+
+        - id: barbershop-service-api-docs
+          uri: lb://barbershop-service
+          predicates:
+            - Path=/v3/api-docs/barbershop-service
+          filters:
+            - RewritePath=/v3/api-docs/barbershop-service, /v3/api-docs
+
+        - id: schedule-service-api-docs
+          uri: lb://schedule-service
+          predicates:
+            - Path=/v3/api-docs/schedule-service
+          filters:
+            - RewritePath=/v3/api-docs/schedule-service, /v3/api-docs
+
+        - id: payment-service-api-docs
+          uri: lb://payment-service
+          predicates:
+            - Path=/v3/api-docs/payment-service
+          filters:
+            - RewritePath=/v3/api-docs/payment-service, /v3/api-docs
+
+        - id: notification-service-api-docs
+          uri: lb://notification-service
+          predicates:
+            - Path=/v3/api-docs/notification-service
+          filters:
+            - RewritePath=/v3/api-docs/notification-service, /v3/api-docs
+
+        - id: product-service-api-docs
+          uri: lb://product-service
+          predicates:
+            - Path=/v3/api-docs/product-service
+          filters:
+            - RewritePath=/v3/api-docs/product-service, /v3/api-docs
+
+        # ======== ROTAS DE NEGÓCIO ========
+
         # User Service (Auth, Cadastro, Perfil)
         - id: user-service
           uri: lb://user-service
@@ -46,6 +91,13 @@ spring:
           uri: lb://notification-service
           predicates:
             - Path=/api/notifications/**
+
+springdoc:
+  swagger-ui:
+    use-root-path: true
+    urls-primary-name: user-service
+  api-docs:
+    enabled: true
 
 eureka:
   client:
