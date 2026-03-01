@@ -1,17 +1,5 @@
 erDiagram
 
-    %% ============================================================
-    %% CortaAi - Diagrama Entidade-Relacionamento Completo
-    %% Arquitetura de Microservicos (database-per-service)
-    %%
-    %% Linhas tracejadas (..) = referencia cross-service (sem FK real)
-    %% Linhas solidas (--) = FK real dentro do mesmo banco
-    %% ============================================================
-
-    %% =====================================================
-    %% USER-SERVICE  (user_db)
-    %% =====================================================
-
     CUSTOMERS {
         uuid id PK
         varchar name
@@ -43,10 +31,6 @@ erDiagram
         timestamp date_created
         timestamp last_updated
     }
-
-    %% =====================================================
-    %% BARBERSHOP-SERVICE  (barbershop_db)
-    %% =====================================================
 
     BARBERSHOPS {
         uuid id PK
@@ -89,10 +73,6 @@ erDiagram
         varchar image_url_public_id
     }
 
-    %% =====================================================
-    %% SCHEDULE-SERVICE  (schedule_db)
-    %% =====================================================
-
     APPOINTMENTS {
         uuid id PK
         uuid customer_id "ref CUSTOMERS"
@@ -127,10 +107,6 @@ erDiagram
         timestamp date_created
     }
 
-    %% =====================================================
-    %% PAYMENT-SERVICE  (payment_db)
-    %% =====================================================
-
     TRANSACTIONS {
         uuid id PK
         uuid appointment_id "ref APPOINTMENTS"
@@ -152,10 +128,6 @@ erDiagram
         boolean processed
         datetime received_at
     }
-
-    %% =====================================================
-    %% PRODUCT-SERVICE  (product_db)
-    %% =====================================================
 
     PRODUCTS {
         uuid id PK
@@ -199,10 +171,6 @@ erDiagram
         datetime created_at
     }
 
-    %% =====================================================
-    %% NOTIFICATION-SERVICE  (notification_db)
-    %% =====================================================
-
     NOTIFICATIONS {
         uuid id PK
         uuid user_id "ref CUSTOMERS ou BARBERS"
@@ -214,52 +182,33 @@ erDiagram
         datetime created_at
     }
 
-    %% =====================================================
-    %% RELACIONAMENTOS INTERNOS (FK real - mesmo banco)
-    %% =====================================================
-
-    %% barbershop_db
     BARBERSHOPS ||--o{ ACTIVITIES : "oferece"
     BARBERSHOPS ||--o{ BARBERSHOP_JOIN_REQUESTS : "recebe pedido"
     BARBERSHOPS ||--o{ BARBERSHOP_HIGHLIGHTS : "possui destaque"
 
-    %% schedule_db
     APPOINTMENTS ||--o{ APPOINTMENT_ACTIVITIES : "inclui"
 
-    %% product_db
     PRODUCTS ||--o{ ORDER_ITEMS : "compoe"
     PRODUCTS ||--o{ STOCK_MOVEMENTS : "movimenta estoque"
     ORDERS ||--o{ ORDER_ITEMS : "contem"
 
-    %% =====================================================
-    %% RELACIONAMENTOS CROSS-SERVICE (ref logica - sem FK)
-    %% =====================================================
-
-    %% user-service --> barbershop-service
     BARBERS ||..o| BARBERSHOPS : "e dono de"
     BARBERS ||..o{ BARBERSHOP_JOIN_REQUESTS : "solicita entrada"
 
-    %% user-service --> schedule-service
     CUSTOMERS ||..o{ APPOINTMENTS : "agenda"
     BARBERS ||..o{ APPOINTMENTS : "atende"
     BARBERS ||..o{ BARBER_BLOCKS : "bloqueia horario"
 
-    %% user-service --> payment-service
     CUSTOMERS ||..o{ TRANSACTIONS : "paga"
 
-    %% user-service --> product-service
     CUSTOMERS ||..o{ ORDERS : "compra produtos"
 
-    %% user-service --> notification-service
     CUSTOMERS ||..o{ NOTIFICATIONS : "recebe notificacao"
 
-    %% barbershop-service --> schedule-service
     BARBERSHOPS ||..o{ APPOINTMENTS : "local do agendamento"
     ACTIVITIES ||..o{ APPOINTMENT_ACTIVITIES : "servico agendado"
 
-    %% barbershop-service --> product-service
     BARBERSHOPS ||..o{ PRODUCTS : "vende"
     BARBERSHOPS ||..o{ ORDERS : "recebe pedido de produto"
 
-    %% schedule-service --> payment-service
     APPOINTMENTS ||..o| TRANSACTIONS : "gera pagamento"
