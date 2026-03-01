@@ -34,3 +34,8 @@ application-local.yml
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
+
+## Environment / Secrets
+.env
+.env.*
+!.env.example
