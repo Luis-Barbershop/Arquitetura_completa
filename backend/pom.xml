@@ -20,6 +20,9 @@
         <module>user-service</module>
         <module>barbershop-service</module>
         <module>schedule-service</module>
+        <module>payment-service</module>
+        <module>notification-service</module>
+        <module>product-service</module>
     </modules>
 
     <properties>

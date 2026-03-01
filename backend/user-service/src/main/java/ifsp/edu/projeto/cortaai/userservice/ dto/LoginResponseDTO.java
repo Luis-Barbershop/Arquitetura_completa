@@ -1,11 +1,10 @@
 package ifsp.edu.projeto.cortaai.userservice.dto;
 
-import lombok.Builder;
-import lombok.Data;
+import java.util.UUID;
 
-@Data
-@Builder
-public class LoginResponseDTO {
-    private String token;
-    private Object userData; // Usamos Object para poder retornar BarberDTO ou CustomerDTO
-}
+public record LoginResponseDTO(
+        String token,
+        String name,
+        String role,
+        UUID id
+) {}

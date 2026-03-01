@@ -1,17 +1,50 @@
 services:
-  # O Banco de dados único com os 3 schemas
+  # ======== INFRAESTRUTURA ========
+
   db:
     image: mysql:8.0
     container_name: cortaai-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql # Executa o script de criação
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - db_data:/var/lib/mysql
     ports:
       - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # O servidor que regista os outros
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: cortaai-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: cortaai-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ======== DISCOVERY & GATEWAY ========
+
   discovery:
     image: eclipse-temurin:17-jdk
     container_name: discovery-service
@@ -19,8 +52,13 @@ services:
     volumes: ["./backend:/app"]
     command: "./mvnw spring-boot:run -pl discovery-service"
     ports: ["8761:8761"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
-  # A porta de entrada para o Frontend
   gateway:
     image: eclipse-temurin:17-jdk
     container_name: api-gateway
@@ -28,9 +66,12 @@ services:
     volumes: ["./backend:/app"]
     command: "./mvnw spring-boot:run -pl api-gateway"
     ports: ["8080:8080"]
-    depends_on: [discovery]
+    depends_on:
+      discovery:
+        condition: service_started
 
-  # Exemplo de um serviço de negócio
+  # ======== MICROSERVIÇOS DE NEGÓCIO ========
+
   user-service:
     image: eclipse-temurin:17-jdk
     container_name: user-service
@@ -38,10 +79,105 @@ services:
     volumes: ["./backend:/app"]
     command: "./mvnw spring-boot:run -pl user-service"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/user_db
-    depends_on: [db, discovery]
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/user_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
 
-  # Frontend em React 19
+  barbershop-service:
+    image: eclipse-temurin:17-jdk
+    container_name: barbershop-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "./mvnw spring-boot:run -pl barbershop-service"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/barbershop_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  schedule-service:
+    image: eclipse-temurin:17-jdk
+    container_name: schedule-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "./mvnw spring-boot:run -pl schedule-service"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/schedule_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  payment-service:
+    image: eclipse-temurin:17-jdk
+    container_name: payment-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "./mvnw spring-boot:run -pl payment-service"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/payment_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  notification-service:
+    image: eclipse-temurin:17-jdk
+    container_name: notification-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "./mvnw spring-boot:run -pl notification-service"
+    depends_on:
+      discovery:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  product-service:
+    image: eclipse-temurin:17-jdk
+    container_name: product-service
+    working_dir: /app
+    volumes: ["./backend:/app"]
+    command: "./mvnw spring-boot:run -pl product-service"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/product_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+    depends_on:
+      db:
+        condition: service_healthy
+      discovery:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+
+  # ======== FRONTEND ========
+
   frontend:
     image: node:20
     container_name: cortaai-web

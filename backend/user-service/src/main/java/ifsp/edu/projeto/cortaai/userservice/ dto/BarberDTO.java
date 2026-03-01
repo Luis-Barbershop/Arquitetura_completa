@@ -1,44 +1,14 @@
 package ifsp.edu.projeto.cortaai.userservice.dto;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-
-import java.time.LocalTime;
 import java.util.UUID;
-import lombok.Getter;
-import lombok.Setter;
 
-
-@Getter
-@Setter
-public class BarberDTO {
-
-    private UUID id;
-
-    private LocalTime workStartTime;
-    private LocalTime workEndTime;
-
-    @NotNull
-    @Size(max = 70)
-    private String name;
-
-    @NotNull
-    @Size(max = 11)
-    private String tell;
-
-    @NotNull
-    @Size(max = 70)
-    private String email;
-
-    @NotNull
-    @Size(max = 11)
-    private String documentCPF;
-
-    @NotNull
-    private boolean isOwner;
-
-    // ID da barbearia à qual ele está vinculado (pode ser nulo)
-    private UUID barbershopId;
-
-    private String imageUrl;
-}
+// Use record ou class, dependendo de como estava. Se for record:
+public record BarberDTO(
+        UUID id,             // <--- Mudou de Long para UUID
+        String name,
+        String email,
+        String tell,
+        String documentCPF,
+        Boolean isOwner,
+        UUID barbershopId    // <--- Mudou de Long para UUID (se houver esse campo)
+) {}

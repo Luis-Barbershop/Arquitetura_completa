@@ -1,21 +1,21 @@
 package ifsp.edu.projeto.cortaai.userservice.service.impl;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.*;
-import ifsp.edu.projeto.cortaai.userservice.exception.NotFoundException;
 import ifsp.edu.projeto.cortaai.userservice.mapper.BarberMapper;
 import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository;
 import ifsp.edu.projeto.cortaai.userservice.service.BarberService;
 import ifsp.edu.projeto.cortaai.userservice.service.JwtTokenService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,19 +31,23 @@ public class BarberServiceImpl implements BarberService {
 
     @Override
     public BarberDTO createBarber(CreateBarberDTO createBarberDTO) {
-        // Validação básica de senha (pode melhorar depois)
-        if (!createBarberDTO.password().equals(createBarberDTO.confirmPassword())) {
-            throw new IllegalArgumentException("Senhas não conferem");
+        if (barberRepository.existsByEmail(createBarberDTO.email())) {
+            throw new IllegalArgumentException("Email já cadastrado.");
+        }
+        if (barberRepository.existsByDocumentCPF(createBarberDTO.cpf())) {
+            throw new IllegalArgumentException("CPF já cadastrado.");
         }
 
         Barber barber = new Barber();
         barber.setName(createBarberDTO.name());
         barber.setEmail(createBarberDTO.email());
-        barber.setCpf(createBarberDTO.cpf());
-        barber.setPhoneNumber(createBarberDTO.phoneNumber());
+        barber.setDocumentCPF(createBarberDTO.cpf());
+        barber.setTell(createBarberDTO.phoneNumber());
         barber.setPassword(passwordEncoder.encode(createBarberDTO.password()));
 
+        // Padrão
         barber.setRole("ROLE_BARBER");
+        barber.setOwner(false);
 
         Barber savedBarber = barberRepository.save(barber);
         return barberMapper.toDTO(savedBarber);
@@ -51,32 +55,35 @@ public class BarberServiceImpl implements BarberService {
 
     @Override
     public LoginResponseDTO login(LoginDTO loginDTO) {
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
-                new UsernamePasswordAuthenticationToken(loginDTO.email(), loginDTO.password());
+        // Isso invoca o CustomUserDetailsService.loadUserByUsername
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginDTO.email(), loginDTO.password())
+        );
 
-        Authentication authenticate = this.authenticationManager.authenticate(usernamePasswordAuthenticationToken);
-        var barber = (Barber) authenticate.getPrincipal();
+        // Se a autenticação passou, buscamos o usuário para gerar o token
+        Barber barber = barberRepository.findByEmail(loginDTO.email())
+                .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
 
-        String token = jwtTokenService.generateToken(barber);
+        String token = jwtTokenService.generateToken(barber); // Ajuste seu TokenService para aceitar UserDetails
 
         return new LoginResponseDTO(token, barber.getName(), barber.getRole(), barber.getId());
     }
 
     @Override
-    public BarberDTO update(Long id, UpdateBarberDTO dto) {
+    public BarberDTO update(UUID id, UpdateBarberDTO dto) {
         Barber barber = barberRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Barbeiro não encontrado."));
+                .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
 
-        barber.setName(dto.getName());
-        barber.setPhoneNumber(dto.getPhoneNumber());
+        if(dto.getName() != null) barber.setName(dto.getName());
+        if(dto.getPhoneNumber() != null) barber.setTell(dto.getPhoneNumber());
 
         return barberMapper.toDTO(barberRepository.save(barber));
     }
 
     @Override
-    public BarberDTO findById(Long id) {
+    public BarberDTO findById(UUID id) {
         Barber barber = barberRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Barbeiro não encontrado."));
+                .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
         return barberMapper.toDTO(barber);
     }
 
@@ -87,7 +94,8 @@ public class BarberServiceImpl implements BarberService {
                 .collect(Collectors.toList());
     }
 
-    public List<BarberDTO> findByBarbershopId(Long barbershopId) {
+    // Método extra útil para o frontend ou para comunicação entre microsserviços
+    public List<BarberDTO> findByBarbershopId(UUID barbershopId) {
         return barberRepository.findByBarbershopId(barbershopId).stream()
                 .map(barberMapper::toDTO)
                 .collect(Collectors.toList());

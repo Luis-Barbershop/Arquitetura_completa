@@ -1,14 +1,18 @@
 package ifsp.edu.projeto.cortaai.userservice.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -16,12 +20,15 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-public class Barber {
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Barber implements UserDetails {
 
     @Id
-    @Column(nullable = false, updatable = false, length = 36)
     @GeneratedValue
     @UuidGenerator
+    @Column(nullable = false, updatable = false, length = 36)
     private UUID id;
 
     @Column(nullable = false, length = 70)
@@ -36,20 +43,19 @@ public class Barber {
     @Column(name = "document_cpf", nullable = false, unique = true, length = 11)
     private String documentCPF;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String password;
 
-    @Column(name = "is_owner", nullable = false)
+    @Column(name = "is_owner")
     private boolean isOwner = false;
 
-    // Sugestão: Role explícita (além do isOwner) ajuda na segurança do Spring
     @Column(length = 20)
     private String role = "ROLE_BARBER";
 
-    // NOVO: Referência à Barbearia apenas pelo ID
-    // (Pode ser Null se ele ainda não estiver vinculado a nenhuma barbearia)
-    @Column(name = "barbershop_id")
-    private Long barbershopId; // Ou UUID, se a Barbearia também for usar UUID
+    // DESACOPLAMENTO: Apenas o ID da barbearia (que vive em outro banco)
+    // Mudado para UUID pois o banco da barbearia usará UUID
+    @Column(name = "barbershop_id", length = 36)
+    private UUID barbershopId;
 
     @CreatedDate
     @Column(name = "date_created", nullable = false, updatable = false)
@@ -58,4 +64,27 @@ public class Barber {
     @LastModifiedDate
     @Column(name = "last_updated")
     private OffsetDateTime lastUpdated;
+
+    // Métodos do UserDetails para o Spring Security
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (isOwner) {
+            return List.of(new SimpleGrantedAuthority("ROLE_BARBER"), new SimpleGrantedAuthority("ROLE_OWNER"));
+        }
+        return List.of(new SimpleGrantedAuthority("ROLE_BARBER"));
+    }
+
+    @Override
+    public String getUsername() {
+        return this.email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() { return true; }
+    @Override
+    public boolean isAccountNonLocked() { return true; }
+    @Override
+    public boolean isCredentialsNonExpired() { return true; }
+    @Override
+    public boolean isEnabled() { return true; }
 }

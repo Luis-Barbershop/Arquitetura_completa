@@ -8,28 +8,47 @@ spring:
     gateway:
       discovery:
         locator:
-          enabled: true # Cria rotas automáticas baseadas nos nomes dos serviços
+          enabled: true
           lower-case-service-id: true
       routes:
-        # Rota para o User Service (Login, Cadastro, etc)
+        # User Service (Auth, Cadastro, Perfil)
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/users/**, /api/auth/** # Ajuste conforme seus endpoints atuais
+            - Path=/api/customers/**, /api/barbers/**, /api/auth/**
 
-        # Rota para o Barbershop Service
+        # Barbershop Service
         - id: barbershop-service
           uri: lb://barbershop-service
           predicates:
             - Path=/api/barbershops/**
 
-        # Rota para o Schedule Service
+        # Schedule Service
         - id: schedule-service
           uri: lb://schedule-service
           predicates:
             - Path=/api/appointments/**
 
+        # Payment Service
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/payments/**
+
+        # Product Service (e-Commerce)
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/products/**, /api/orders/**
+
+        # Notification Service
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**
+
 eureka:
   client:
     service-url:
-      defaultZone: http://discovery:8761/eureka/ # Aponta para o container do discovery
+      defaultZone: http://discovery:8761/eureka/
+
