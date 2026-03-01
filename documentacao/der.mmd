@@ -1,20 +1,12 @@
-%% ============================================================
-%% CortaAi - Diagrama Entidade-Relacionamento Completo
-%% Arquitetura de Microservicos (database-per-service)
-%%
-%% Legenda de cores (por servico):
-%%   user-service ........... azul
-%%   barbershop-service ..... verde
-%%   schedule-service ....... laranja
-%%   payment-service ........ vermelho
-%%   product-service ........ roxo
-%%   notification-service ... amarelo
-%%
-%% Linhas tracejadas (..) = referencia cross-service (sem FK real)
-%% Linhas solidas (--) = FK real dentro do mesmo banco
-%% ============================================================
-
 erDiagram
+
+    %% ============================================================
+    %% CortaAi - Diagrama Entidade-Relacionamento Completo
+    %% Arquitetura de Microservicos (database-per-service)
+    %%
+    %% Linhas tracejadas (..) = referencia cross-service (sem FK real)
+    %% Linhas solidas (--) = FK real dentro do mesmo banco
+    %% ============================================================
 
     %% =====================================================
     %% USER-SERVICE  (user_db)
