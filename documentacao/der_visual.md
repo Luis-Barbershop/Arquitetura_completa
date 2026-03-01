@@ -3,16 +3,16 @@
 > Diagrama unificado de todas as entidades da plataforma CortaAi.
 > - Linhas **sólidas** (`--`) = FK real (mesmo banco de dados)
 > - Linhas **tracejadas** (`..`) = referência lógica cross-service (sem FK real)
+> - Campos de auditoria (`date_created`, `last_updated`) e imagem omitidos para clareza.
+> - Detalhes completos em [`der.md`](der.md).
 
 ```mermaid
 ---
-title: CortaAi - Diagrama Entidade-Relacionamento Completo
+title: CortaAi - Diagrama Entidade-Relacionamento
 ---
 erDiagram
 
-    %% =====================================================
-    %% USER-SERVICE  (user_db)
-    %% =====================================================
+    %% ── user-service (user_db) ──
 
     CUSTOMERS {
         uuid id PK
@@ -22,10 +22,6 @@ erDiagram
         varchar document_cpf UK
         varchar password
         varchar role
-        timestamp date_created
-        timestamp last_updated
-        varchar image_url
-        varchar image_url_public_id
     }
 
     BARBERS {
@@ -40,15 +36,9 @@ erDiagram
         uuid barbershop_id "ref BARBERSHOPS"
         time work_start_time
         time work_end_time
-        varchar image_url
-        varchar image_url_public_id
-        timestamp date_created
-        timestamp last_updated
     }
 
-    %% =====================================================
-    %% BARBERSHOP-SERVICE  (barbershop_db)
-    %% =====================================================
+    %% ── barbershop-service (barbershop_db) ──
 
     BARBERSHOPS {
         uuid id PK
@@ -56,12 +46,6 @@ erDiagram
         varchar name
         varchar cnpj UK
         varchar address
-        varchar logo_url
-        varchar logo_url_public_id
-        varchar banner_url
-        varchar banner_url_public_id
-        timestamp date_created
-        timestamp last_updated
     }
 
     ACTIVITIES {
@@ -70,30 +54,22 @@ erDiagram
         varchar activity_name
         decimal price
         int duration_minutes
-        varchar image_url
-        varchar image_url_public_id
-        timestamp date_created
-        timestamp last_updated
     }
 
     BARBERSHOP_JOIN_REQUESTS {
         uuid id PK
         uuid barber_id "ref BARBERS"
         uuid barbershop_id FK
-        varchar status "PENDING | ACCEPTED | REJECTED"
-        timestamp date_created
+        varchar status
     }
 
     BARBERSHOP_HIGHLIGHTS {
         uuid id PK
         uuid barbershop_id FK
         varchar image_url
-        varchar image_url_public_id
     }
 
-    %% =====================================================
-    %% SCHEDULE-SERVICE  (schedule_db)
-    %% =====================================================
+    %% ── schedule-service (schedule_db) ──
 
     APPOINTMENTS {
         uuid id PK
@@ -106,9 +82,7 @@ erDiagram
         datetime start_time
         datetime end_time
         decimal total_price
-        varchar status "SCHEDULED | CONFIRMED | CANCELLED | CONCLUDED"
-        timestamp date_created
-        timestamp last_updated
+        varchar status
     }
 
     APPOINTMENT_ACTIVITIES {
@@ -126,24 +100,19 @@ erDiagram
         datetime start_time
         datetime end_time
         varchar reason
-        timestamp date_created
     }
 
-    %% =====================================================
-    %% PAYMENT-SERVICE  (payment_db)
-    %% =====================================================
+    %% ── payment-service (payment_db) ──
 
     TRANSACTIONS {
         uuid id PK
         uuid appointment_id "ref APPOINTMENTS"
         uuid customer_id "ref CUSTOMERS"
         decimal amount
-        varchar status "PENDING | APPROVED | REJECTED | REFUNDED"
+        varchar status
         varchar mp_preference_id UK
         varchar mp_payment_id
         text checkout_url
-        datetime created_at
-        datetime updated_at
     }
 
     WEBHOOK_LOGS {
@@ -152,12 +121,9 @@ erDiagram
         varchar event_type
         text raw_payload
         boolean processed
-        datetime received_at
     }
 
-    %% =====================================================
-    %% PRODUCT-SERVICE  (product_db)
-    %% =====================================================
+    %% ── product-service (product_db) ──
 
     PRODUCTS {
         uuid id PK
@@ -165,21 +131,17 @@ erDiagram
         varchar name
         text description
         decimal price
-        varchar category "HAIR | BEARD | SKINCARE | ACCESSORY | OTHER"
+        varchar category
         int stock_quantity
-        varchar image_url
         boolean active
-        datetime created_at
-        datetime updated_at
     }
 
     ORDERS {
         uuid id PK
         uuid customer_id "ref CUSTOMERS"
         uuid barbershop_id "ref BARBERSHOPS"
-        varchar status "PENDING | CONFIRMED | CANCELLED"
+        varchar status
         decimal total_price
-        datetime created_at
     }
 
     ORDER_ITEMS {
@@ -194,64 +156,51 @@ erDiagram
     STOCK_MOVEMENTS {
         uuid id PK
         uuid product_id "ref PRODUCTS"
-        varchar type "IN | OUT | ADJUSTMENT"
+        varchar type
         int quantity
         uuid order_id "ref ORDERS"
         varchar reason
-        datetime created_at
     }
 
-    %% =====================================================
-    %% NOTIFICATION-SERVICE  (notification_db)
-    %% =====================================================
+    %% ── notification-service (notification_db) ──
 
     NOTIFICATIONS {
         uuid id PK
         uuid user_id "ref CUSTOMERS ou BARBERS"
-        varchar type "APPOINTMENT_CREATED | CANCELLED | PAYMENT_APPROVED"
+        varchar type
         varchar title
         text message
-        varchar channel "IN_APP | EMAIL | PUSH"
+        varchar channel
         boolean is_read
-        datetime created_at
     }
 
-    %% =====================================================
-    %% RELACIONAMENTOS INTERNOS (FK real - mesmo banco)
-    %% =====================================================
-
+    %% ── Relacionamentos: Barbearia ──
+    BARBERS ||..o| BARBERSHOPS : "e dono de"
     BARBERSHOPS ||--o{ ACTIVITIES : "oferece"
     BARBERSHOPS ||--o{ BARBERSHOP_JOIN_REQUESTS : "recebe pedido"
-    BARBERSHOPS ||--o{ BARBERSHOP_HIGHLIGHTS : "possui destaque"
-
-    APPOINTMENTS ||--o{ APPOINTMENT_ACTIVITIES : "inclui"
-
-    PRODUCTS ||--o{ ORDER_ITEMS : "compoe"
-    PRODUCTS ||--o{ STOCK_MOVEMENTS : "movimenta estoque"
-    ORDERS ||--o{ ORDER_ITEMS : "contem"
-
-    %% =====================================================
-    %% RELACIONAMENTOS CROSS-SERVICE (ref logica - sem FK)
-    %% =====================================================
-
-    BARBERS ||..o| BARBERSHOPS : "e dono de"
+    BARBERSHOPS ||--o{ BARBERSHOP_HIGHLIGHTS : "destaque"
     BARBERS ||..o{ BARBERSHOP_JOIN_REQUESTS : "solicita entrada"
 
+    %% ── Relacionamentos: Agendamento ──
     CUSTOMERS ||..o{ APPOINTMENTS : "agenda"
     BARBERS ||..o{ APPOINTMENTS : "atende"
+    BARBERSHOPS ||..o{ APPOINTMENTS : "local"
+    APPOINTMENTS ||--o{ APPOINTMENT_ACTIVITIES : "inclui"
+    ACTIVITIES ||..o{ APPOINTMENT_ACTIVITIES : "servico"
     BARBERS ||..o{ BARBER_BLOCKS : "bloqueia horario"
 
+    %% ── Relacionamentos: Pagamento ──
+    APPOINTMENTS ||..o| TRANSACTIONS : "gera pagamento"
     CUSTOMERS ||..o{ TRANSACTIONS : "paga"
 
-    CUSTOMERS ||..o{ ORDERS : "compra produtos"
-
-    CUSTOMERS ||..o{ NOTIFICATIONS : "recebe notificacao"
-
-    BARBERSHOPS ||..o{ APPOINTMENTS : "local do agendamento"
-    ACTIVITIES ||..o{ APPOINTMENT_ACTIVITIES : "servico agendado"
-
+    %% ── Relacionamentos: Produtos ──
     BARBERSHOPS ||..o{ PRODUCTS : "vende"
-    BARBERSHOPS ||..o{ ORDERS : "recebe pedido produto"
+    PRODUCTS ||--o{ ORDER_ITEMS : "compoe"
+    PRODUCTS ||--o{ STOCK_MOVEMENTS : "movimenta estoque"
+    CUSTOMERS ||..o{ ORDERS : "compra"
+    BARBERSHOPS ||..o{ ORDERS : "recebe pedido"
+    ORDERS ||--o{ ORDER_ITEMS : "contem"
 
-    APPOINTMENTS ||..o| TRANSACTIONS : "gera pagamento"
+    %% ── Relacionamentos: Notificacao ──
+    CUSTOMERS ||..o{ NOTIFICATIONS : "recebe"
 ```
