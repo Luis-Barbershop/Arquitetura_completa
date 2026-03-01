@@ -1,10 +1,10 @@
 package ifsp.edu.projeto.cortaai.userservice.controller;
 
-import ifsp.edu.projeto.cortaai.dto.CustomerDTO;
-import ifsp.edu.projeto.cortaai.dto.LoginResponseDTO;
-import ifsp.edu.projeto.cortaai.service.CustomerService;
-import ifsp.edu.projeto.cortaai.dto.CustomerCreateDTO;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import ifsp.edu.projeto.cortaai.userservice.dto.CustomerDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.LoginResponseDTO;
+import ifsp.edu.projeto.cortaai.userservice.service.CustomerService;
+import ifsp.edu.projeto.cortaai.userservice.dto.CustomerCreateDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.LoginDTO;
 import jakarta.validation.Valid;
 
 import java.io.IOException;
@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ifsp.edu.projeto.cortaai.dto.LoginDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -39,7 +38,6 @@ public class CustomerController {
     }
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @ApiResponse(responseCode = "201")
     public ResponseEntity<UUID> createCustomer(
             @RequestPart("customer") @Valid final CustomerCreateDTO customerCreateDTO,
             @RequestPart(value = "file", required = false) final MultipartFile file) {
@@ -69,8 +67,7 @@ public class CustomerController {
     }
 
     @DeleteMapping("/me") // ROTA ALTERADA
-    @ApiResponse(responseCode = "204")
-    public ResponseEntity<Void> deleteCustomer(Principal principal) { // Usuário autenticado injetado
+    public ResponseEntity<Void> deleteCustomer(Principal principal) {
         customerService.delete(principal.getName()); // Passa o e-mail
         return ResponseEntity.noContent().build();
     }

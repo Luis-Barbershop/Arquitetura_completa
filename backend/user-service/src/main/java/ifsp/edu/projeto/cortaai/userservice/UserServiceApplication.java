@@ -1,27 +1,14 @@
-server:
-port: 8081
+package ifsp.edu.projeto.cortaai.userservice;
 
-spring:
-application:
-name: user-service
-datasource:
-url: jdbc:mysql://db:3306/user_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
-username: root
-password: root
-driver-class-name: com.mysql.cj.jdbc.Driver
-jpa:
-database-platform: org.hibernate.dialect.MySQL8Dialect
-hibernate:
-ddl-auto: update
-show-sql: true
-        open-in-view: false
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
-        eureka:
-        client:
-        service-url:
-        defaultZone: http://discovery:8761/eureka/
+@SpringBootApplication
+@EnableJpaAuditing
+public class UserServiceApplication {
 
-        app:
-        jwt:
-        secret: "SuaChaveSecretaMuitoLongaEComplexaParaSegurancaDoJWT123456" # Troque por env var em prod
-        expiration: 3600000
+    public static void main(String[] args) {
+        SpringApplication.run(UserServiceApplication.class, args);
+    }
+}

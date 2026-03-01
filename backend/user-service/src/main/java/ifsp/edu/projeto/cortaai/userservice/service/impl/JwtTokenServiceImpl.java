@@ -2,7 +2,7 @@ package ifsp.edu.projeto.cortaai.userservice.service.impl;
 
 import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import ifsp.edu.projeto.cortaai.userservice.model.Customer;
-import ifsp.edu.projeto.cortaai.service.JwtTokenService;
+import ifsp.edu.projeto.cortaai.userservice.service.JwtTokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;

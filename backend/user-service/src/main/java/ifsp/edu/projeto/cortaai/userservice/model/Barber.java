@@ -10,6 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -56,6 +57,18 @@ public class Barber implements UserDetails {
     // Mudado para UUID pois o banco da barbearia usará UUID
     @Column(name = "barbershop_id", length = 36)
     private UUID barbershopId;
+
+    @Column(name = "work_start_time")
+    private LocalTime workStartTime;
+
+    @Column(name = "work_end_time")
+    private LocalTime workEndTime;
+
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(name = "image_url_public_id")
+    private String imageUrlPublicId;
 
     @CreatedDate
     @Column(name = "date_created", nullable = false, updatable = false)

@@ -1,6 +1,6 @@
 package ifsp.edu.projeto.cortaai.userservice.config;
 
-import ifsp.edu.projeto.cortaai.service.JwtTokenService;
+import ifsp.edu.projeto.cortaai.userservice.service.JwtTokenService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

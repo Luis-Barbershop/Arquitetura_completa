@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/barbers")
@@ -21,7 +22,7 @@ public class BarberController {
 
     private final BarberService barberService;
 
-    @PostMapping("/signup")
+    @PostMapping("/register")
     public ResponseEntity<BarberDTO> createBarber(@RequestBody @Valid CreateBarberDTO createBarberDTO) {
         BarberDTO createdBarber = barberService.createBarber(createBarberDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdBarber);
@@ -34,17 +35,22 @@ public class BarberController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BarberDTO> updateBarber(@PathVariable Long id, @RequestBody @Valid UpdateBarberDTO updateBarberDTO) {
+    public ResponseEntity<BarberDTO> updateBarber(@PathVariable UUID id, @RequestBody @Valid UpdateBarberDTO updateBarberDTO) {
         return ResponseEntity.ok(barberService.update(id, updateBarberDTO));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BarberDTO> getBarberById(@PathVariable Long id) {
+    public ResponseEntity<BarberDTO> getBarberById(@PathVariable UUID id) {
         return ResponseEntity.ok(barberService.findById(id));
     }
 
     @GetMapping
     public ResponseEntity<List<BarberDTO>> getAllBarbers() {
         return ResponseEntity.ok(barberService.findAll());
+    }
+
+    @GetMapping("/barbershop/{barbershopId}")
+    public ResponseEntity<List<BarberDTO>> getBarbersByBarbershop(@PathVariable UUID barbershopId) {
+        return ResponseEntity.ok(barberService.findByBarbershopId(barbershopId));
     }
 }

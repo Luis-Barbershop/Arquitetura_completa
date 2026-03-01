@@ -44,6 +44,8 @@ public class BarberServiceImpl implements BarberService {
         barber.setDocumentCPF(createBarberDTO.cpf());
         barber.setTell(createBarberDTO.phoneNumber());
         barber.setPassword(passwordEncoder.encode(createBarberDTO.password()));
+        barber.setWorkStartTime(createBarberDTO.workStartTime());
+        barber.setWorkEndTime(createBarberDTO.workEndTime());
 
         // Padrão
         barber.setRole("ROLE_BARBER");
@@ -57,11 +59,11 @@ public class BarberServiceImpl implements BarberService {
     public LoginResponseDTO login(LoginDTO loginDTO) {
         // Isso invoca o CustomUserDetailsService.loadUserByUsername
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginDTO.email(), loginDTO.password())
+                new UsernamePasswordAuthenticationToken(loginDTO.getEmail(), loginDTO.getPassword())
         );
 
         // Se a autenticação passou, buscamos o usuário para gerar o token
-        Barber barber = barberRepository.findByEmail(loginDTO.email())
+        Barber barber = barberRepository.findByEmail(loginDTO.getEmail())
                 .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
 
         String token = jwtTokenService.generateToken(barber); // Ajuste seu TokenService para aceitar UserDetails
@@ -99,5 +101,25 @@ public class BarberServiceImpl implements BarberService {
         return barberRepository.findByBarbershopId(barbershopId).stream()
                 .map(barberMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public BarberDTO get(UUID id) {
+        return findById(id);
+    }
+
+    @Override
+    public boolean emailExists(String email) {
+        return barberRepository.existsByEmailIgnoreCase(email);
+    }
+
+    @Override
+    public boolean documentCPFExists(String documentCPF) {
+        return barberRepository.existsByDocumentCPFIgnoreCase(documentCPF);
+    }
+
+    @Override
+    public boolean tellExists(String tell) {
+        return barberRepository.existsByTellIgnoreCase(tell);
     }
 }

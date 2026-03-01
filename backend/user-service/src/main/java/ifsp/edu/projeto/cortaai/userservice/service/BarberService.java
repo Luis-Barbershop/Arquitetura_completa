@@ -9,6 +9,12 @@ public interface BarberService {
     LoginResponseDTO login(LoginDTO loginDTO);
     BarberDTO update(UUID id, UpdateBarberDTO dto);
     BarberDTO findById(UUID id);
+    BarberDTO get(UUID id);
     List<BarberDTO> findAll();
     List<BarberDTO> findByBarbershopId(UUID barbershopId);
+
+    // Métodos de validação
+    boolean emailExists(String email);
+    boolean documentCPFExists(String documentCPF);
+    boolean tellExists(String tell);
 }

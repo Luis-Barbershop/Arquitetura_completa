@@ -1,102 +1,50 @@
 package ifsp.edu.projeto.cortaai.userservice.service.impl;
 
-import ifsp.edu.projeto.cortaai.userservice.dto.*;
-import ifsp.edu.projeto.cortaai.userservice.mapper.BarberMapper;
 import ifsp.edu.projeto.cortaai.userservice.model.Barber;
+import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository;
-import ifsp.edu.projeto.cortaai.userservice.service.BarberService;
-import ifsp.edu.projeto.cortaai.userservice.service.JwtTokenService;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
+/**
+ * Serviço de autenticação que busca usuários (Customer ou Barber) por email.
+ * Usado pelo Spring Security DaoAuthenticationProvider.
+ */
 @Service
 @RequiredArgsConstructor
-@Transactional
-public class BarberServiceImpl implements BarberService {
+public class CustomUserDetailsService implements UserDetailsService {
 
+    private final CustomerRepository customerRepository;
     private final BarberRepository barberRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtTokenService jwtTokenService;
-    private final AuthenticationManager authenticationManager;
-    private final BarberMapper barberMapper;
 
     @Override
-    public BarberDTO createBarber(CreateBarberDTO createBarberDTO) {
-        if (barberRepository.existsByEmail(createBarberDTO.email())) {
-            throw new IllegalArgumentException("Email já cadastrado.");
-        }
-        if (barberRepository.existsByDocumentCPF(createBarberDTO.cpf())) {
-            throw new IllegalArgumentException("CPF já cadastrado.");
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        // Tenta encontrar como Barber primeiro (implementa UserDetails)
+        Optional<Barber> barber = barberRepository.findByEmail(email);
+        if (barber.isPresent()) {
+            return barber.get(); // Barber já implementa UserDetails
         }
 
-        Barber barber = new Barber();
-        barber.setName(createBarberDTO.name());
-        barber.setEmail(createBarberDTO.email());
-        barber.setDocumentCPF(createBarberDTO.cpf());
-        barber.setTell(createBarberDTO.phoneNumber());
-        barber.setPassword(passwordEncoder.encode(createBarberDTO.password()));
+        // Tenta encontrar como Customer
+        Optional<Customer> customer = customerRepository.findByEmail(email);
+        if (customer.isPresent()) {
+            Customer c = customer.get();
+            return new User(
+                    c.getEmail(),
+                    c.getPassword(),
+                    List.of(new SimpleGrantedAuthority(c.getRole()))
+            );
+        }
 
-        // Padrão
-        barber.setRole("ROLE_BARBER");
-        barber.setOwner(false);
-
-        Barber savedBarber = barberRepository.save(barber);
-        return barberMapper.toDTO(savedBarber);
-    }
-
-    @Override
-    public LoginResponseDTO login(LoginDTO loginDTO) {
-        // Isso invoca o CustomUserDetailsService.loadUserByUsername
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginDTO.email(), loginDTO.password())
-        );
-
-        // Se a autenticação passou, buscamos o usuário para gerar o token
-        Barber barber = barberRepository.findByEmail(loginDTO.email())
-                .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
-
-        String token = jwtTokenService.generateToken(barber); // Ajuste seu TokenService para aceitar UserDetails
-
-        return new LoginResponseDTO(token, barber.getName(), barber.getRole(), barber.getId());
-    }
-
-    @Override
-    public BarberDTO update(UUID id, UpdateBarberDTO dto) {
-        Barber barber = barberRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
-
-        if(dto.getName() != null) barber.setName(dto.getName());
-        if(dto.getPhoneNumber() != null) barber.setTell(dto.getPhoneNumber());
-
-        return barberMapper.toDTO(barberRepository.save(barber));
-    }
-
-    @Override
-    public BarberDTO findById(UUID id) {
-        Barber barber = barberRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
-        return barberMapper.toDTO(barber);
-    }
-
-    @Override
-    public List<BarberDTO> findAll() {
-        return barberRepository.findAll().stream()
-                .map(barberMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    public List<BarberDTO> findByBarbershopId(UUID barbershopId) {
-        return barberRepository.findByBarbershopId(barbershopId).stream()
-                .map(barberMapper::toDTO)
-                .collect(Collectors.toList());
+        throw new UsernameNotFoundException("Usuário não encontrado com email: " + email);
     }
 }

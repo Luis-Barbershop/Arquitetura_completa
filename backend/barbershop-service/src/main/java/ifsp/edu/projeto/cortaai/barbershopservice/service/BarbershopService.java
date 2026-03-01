@@ -1,0 +1,363 @@
+package ifsp.edu.projeto.cortaai.barbershopservice.service;
+
+import ifsp.edu.projeto.cortaai.barbershopservice.dto.*;
+import ifsp.edu.projeto.cortaai.barbershopservice.exception.ForbiddenException;
+import ifsp.edu.projeto.cortaai.barbershopservice.exception.NotFoundException;
+import ifsp.edu.projeto.cortaai.barbershopservice.feign.UserServiceClient;
+import ifsp.edu.projeto.cortaai.barbershopservice.mapper.ActivityMapper;
+import ifsp.edu.projeto.cortaai.barbershopservice.mapper.BarbershopMapper;
+import ifsp.edu.projeto.cortaai.barbershopservice.model.*;
+import ifsp.edu.projeto.cortaai.barbershopservice.model.enums.JoinRequestStatus;
+import ifsp.edu.projeto.cortaai.barbershopservice.repository.*;
+import ifsp.edu.projeto.cortaai.barbershopservice.service.storage.StorageService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class BarbershopService {
+
+    private final BarbershopRepository barbershopRepository;
+    private final ActivityRepository activityRepository;
+    private final BarbershopJoinRequestRepository joinRequestRepository;
+    private final BarbershopHighlightRepository highlightRepository;
+    private final BarbershopMapper barbershopMapper;
+    private final ActivityMapper activityMapper;
+    private final StorageService storageService;
+    private final UserServiceClient userServiceClient;
+
+    // ========== HELPERS ==========
+
+    private UserInfoDTO resolveUser(String email) {
+        UserInfoDTO user = userServiceClient.getUserByEmail(email);
+        if (user == null) throw new NotFoundException("Usuário não encontrado: " + email);
+        return user;
+    }
+
+    private Barbershop findOwnerShop(UUID ownerId) {
+        return barbershopRepository.findByOwnerId(ownerId)
+                .orElseThrow(() -> new NotFoundException("Você não possui uma barbearia cadastrada."));
+    }
+
+    private void assertOwner(UserInfoDTO user) {
+        if (!"BARBER".equals(user.getUserType())) {
+            throw new ForbiddenException("Apenas barbeiros podem gerenciar barbearias.");
+        }
+    }
+
+    // ========== LEITURA PÚBLICA ==========
+
+    @Transactional(readOnly = true)
+    public List<BarbershopDTO> listBarbershops() {
+        return barbershopRepository.findAll().stream()
+                .map(barbershopMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ActivityDTO> listActivities(UUID shopId) {
+        return activityRepository.findByBarbershopId(shopId).stream()
+                .map(activityMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public BarbershopDTO getBarbershop(UUID shopId) {
+        Barbershop shop = barbershopRepository.findById(shopId)
+                .orElseThrow(() -> new NotFoundException("Barbearia não encontrada."));
+        return barbershopMapper.toDTO(shop);
+    }
+
+    // ========== FLUXO 1: GESTÃO DO DONO (OWNER) ==========
+
+    public BarbershopDTO createBarbershop(String ownerEmail, CreateBarbershopDTO dto, MultipartFile logoFile) throws IOException {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        assertOwner(owner);
+
+        if (barbershopRepository.findByOwnerId(owner.getId()).isPresent()) {
+            throw new IllegalStateException("Você já possui uma barbearia.");
+        }
+        if (barbershopRepository.existsByCnpj(dto.getCnpj())) {
+            throw new IllegalArgumentException("CNPJ já cadastrado.");
+        }
+
+        Barbershop shop = barbershopMapper.toEntity(dto);
+        shop.setOwnerId(owner.getId());
+
+        Barbershop saved = barbershopRepository.save(shop);
+
+        // Upload de logo se enviado
+        if (logoFile != null && !logoFile.isEmpty()) {
+            UploadResultDTO result = storageService.uploadFile(logoFile, "barbershop-logos");
+            saved.setLogoUrl(result.getSecureUrl());
+            saved.setLogoUrlPublicId(result.getPublicId());
+            barbershopRepository.save(saved);
+        }
+
+        // Atualiza barbershopId no user-service
+        userServiceClient.updateUserBarbershopId(owner.getId(), saved.getId());
+
+        return barbershopMapper.toDTO(saved);
+    }
+
+    public BarbershopDTO updateBarbershop(String ownerEmail, UpdateBarbershopDTO dto) {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        if (dto.getName() != null) shop.setName(dto.getName());
+        if (dto.getAddress() != null) shop.setAddress(dto.getAddress());
+
+        return barbershopMapper.toDTO(barbershopRepository.save(shop));
+    }
+
+    public ActivityDTO createActivity(String ownerEmail, CreateActivityDTO dto) {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        Activity activity = activityMapper.toEntity(dto);
+        activity.setBarbershop(shop);
+
+        return activityMapper.toDTO(activityRepository.save(activity));
+    }
+
+    public ActivityDTO updateActivity(String ownerEmail, UUID activityId, UpdateActivityDTO dto) {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new NotFoundException("Atividade não encontrada."));
+
+        if (!activity.getBarbershop().getId().equals(shop.getId())) {
+            throw new ForbiddenException("Esta atividade não pertence à sua barbearia.");
+        }
+
+        if (dto.getActivityName() != null) activity.setActivityName(dto.getActivityName());
+        if (dto.getPrice() != null) activity.setPrice(dto.getPrice());
+        if (dto.getDurationMinutes() != null) activity.setDurationMinutes(dto.getDurationMinutes());
+
+        return activityMapper.toDTO(activityRepository.save(activity));
+    }
+
+    public void deleteActivity(String ownerEmail, UUID activityId) {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new NotFoundException("Atividade não encontrada."));
+
+        if (!activity.getBarbershop().getId().equals(shop.getId())) {
+            throw new ForbiddenException("Esta atividade não pertence à sua barbearia.");
+        }
+
+        activityRepository.delete(activity);
+    }
+
+    public void removeBarber(String ownerEmail, UUID barberId) {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        // Remove a associação do barbeiro com a barbearia no user-service
+        userServiceClient.updateUserBarbershopId(barberId, null);
+    }
+
+    public void closeBarbershop(String ownerEmail, CloseBarbershopRequestDTO dto) {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        // Remove a associação do dono
+        userServiceClient.updateUserBarbershopId(owner.getId(), null);
+
+        // Deleta a barbearia (cascade remove activities, highlights, join requests)
+        barbershopRepository.delete(shop);
+    }
+
+    // ========== FLUXO 2: JOIN REQUESTS ==========
+
+    public void requestToJoinBarbershop(String barberEmail, String cnpj) {
+        UserInfoDTO barber = resolveUser(barberEmail);
+        assertOwner(barber); // É barbeiro
+
+        if (barber.getBarbershopId() != null) {
+            throw new IllegalStateException("Você já faz parte de uma barbearia. Saia antes de solicitar entrada em outra.");
+        }
+
+        Barbershop shop = barbershopRepository.findByCnpj(cnpj)
+                .orElseThrow(() -> new NotFoundException("Barbearia com CNPJ " + cnpj + " não encontrada."));
+
+        // Verifica se já existe um pedido pendente
+        joinRequestRepository.findByBarberIdAndBarbershopId(barber.getId(), shop.getId())
+                .ifPresent(req -> {
+                    throw new IllegalStateException("Você já tem uma solicitação para esta barbearia.");
+                });
+
+        BarbershopJoinRequest request = new BarbershopJoinRequest();
+        request.setBarberId(barber.getId());
+        request.setBarbershop(shop);
+        request.setStatus(JoinRequestStatus.PENDING);
+        joinRequestRepository.save(request);
+    }
+
+    @Transactional(readOnly = true)
+    public List<JoinRequestDTO> getPendingJoinRequests(String ownerEmail) {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        List<BarbershopJoinRequest> requests = joinRequestRepository
+                .findByBarbershopIdAndStatus(shop.getId(), JoinRequestStatus.PENDING);
+
+        return requests.stream().map(req -> {
+            JoinRequestDTO dto = new JoinRequestDTO();
+            dto.setRequestId(req.getId());
+            dto.setBarberId(req.getBarberId());
+            dto.setStatus(req.getStatus().name());
+            // Enriquecer com dados do user-service (best-effort)
+            try {
+                UserInfoDTO barberInfo = userServiceClient.getUserById(req.getBarberId());
+                dto.setBarberName(barberInfo.getName());
+                dto.setBarberEmail(barberInfo.getEmail());
+            } catch (Exception e) {
+                dto.setBarberName("(indisponível)");
+                dto.setBarberEmail("(indisponível)");
+            }
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    public void approveJoinRequest(String ownerEmail, UUID requestId) {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        BarbershopJoinRequest request = joinRequestRepository.findById(requestId)
+                .orElseThrow(() -> new NotFoundException("Solicitação não encontrada."));
+
+        if (!request.getBarbershop().getId().equals(shop.getId())) {
+            throw new ForbiddenException("Esta solicitação não pertence à sua barbearia.");
+        }
+
+        request.setStatus(JoinRequestStatus.APPROVED);
+        joinRequestRepository.save(request);
+
+        // Atualiza barbershopId no user-service
+        userServiceClient.updateUserBarbershopId(request.getBarberId(), shop.getId());
+    }
+
+    // ========== FLUXO 3: SAIR DA LOJA ==========
+
+    public void freeBarber(String barberEmail) {
+        UserInfoDTO barber = resolveUser(barberEmail);
+
+        if (barber.getBarbershopId() == null) {
+            throw new IllegalStateException("Você não está associado a nenhuma barbearia.");
+        }
+
+        // Verifica se é o dono — dono não pode sair, tem que fechar
+        Barbershop shop = barbershopRepository.findById(barber.getBarbershopId()).orElse(null);
+        if (shop != null && shop.getOwnerId().equals(barber.getId())) {
+            throw new ForbiddenException("O dono não pode sair da barbearia. Use o endpoint de fechar.");
+        }
+
+        // Remove associação no user-service
+        userServiceClient.updateUserBarbershopId(barber.getId(), null);
+    }
+
+    // ========== FLUXO 4: GESTÃO DE IMAGENS ==========
+
+    public String updateBarbershopLogo(String ownerEmail, MultipartFile file) throws IOException {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        if (shop.getLogoUrlPublicId() != null) {
+            storageService.deleteFile(shop.getLogoUrlPublicId());
+        }
+
+        UploadResultDTO result = storageService.uploadFile(file, "barbershop-logos");
+        shop.setLogoUrl(result.getSecureUrl());
+        shop.setLogoUrlPublicId(result.getPublicId());
+        barbershopRepository.save(shop);
+
+        return result.getSecureUrl();
+    }
+
+    public String updateBarbershopBanner(String ownerEmail, MultipartFile file) throws IOException {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        if (shop.getBannerUrlPublicId() != null) {
+            storageService.deleteFile(shop.getBannerUrlPublicId());
+        }
+
+        UploadResultDTO result = storageService.uploadFile(file, "barbershop-banners");
+        shop.setBannerUrl(result.getSecureUrl());
+        shop.setBannerUrlPublicId(result.getPublicId());
+        barbershopRepository.save(shop);
+
+        return result.getSecureUrl();
+    }
+
+    public String updateActivityPhoto(String ownerEmail, UUID activityId, MultipartFile file) throws IOException {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        Activity activity = activityRepository.findById(activityId)
+                .orElseThrow(() -> new NotFoundException("Atividade não encontrada."));
+
+        if (!activity.getBarbershop().getId().equals(shop.getId())) {
+            throw new ForbiddenException("Esta atividade não pertence à sua barbearia.");
+        }
+
+        if (activity.getImageUrlPublicId() != null) {
+            storageService.deleteFile(activity.getImageUrlPublicId());
+        }
+
+        UploadResultDTO result = storageService.uploadFile(file, "activity-photos");
+        activity.setImageUrl(result.getSecureUrl());
+        activity.setImageUrlPublicId(result.getPublicId());
+        activityRepository.save(activity);
+
+        return result.getSecureUrl();
+    }
+
+    public String addBarbershopHighlight(String ownerEmail, MultipartFile file) throws IOException {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        UploadResultDTO result = storageService.uploadFile(file, "barbershop-highlights");
+
+        BarbershopHighlight highlight = new BarbershopHighlight();
+        highlight.setImageUrl(result.getSecureUrl());
+        highlight.setImageUrlPublicId(result.getPublicId());
+        highlight.setBarbershop(shop);
+        highlightRepository.save(highlight);
+
+        return result.getSecureUrl();
+    }
+
+    public void deleteBarbershopHighlight(String ownerEmail, UUID highlightId) {
+        UserInfoDTO owner = resolveUser(ownerEmail);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        BarbershopHighlight highlight = highlightRepository.findById(highlightId)
+                .orElseThrow(() -> new NotFoundException("Destaque não encontrado."));
+
+        if (!highlight.getBarbershop().getId().equals(shop.getId())) {
+            throw new ForbiddenException("Este destaque não pertence à sua barbearia.");
+        }
+
+        try {
+            storageService.deleteFile(highlight.getImageUrlPublicId());
+        } catch (IOException e) {
+            // Log, mas não impede a exclusão do registro
+        }
+
+        highlightRepository.delete(highlight);
+    }
+}
+

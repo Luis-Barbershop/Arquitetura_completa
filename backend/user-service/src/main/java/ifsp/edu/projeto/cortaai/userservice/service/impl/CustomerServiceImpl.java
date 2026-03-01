@@ -1,14 +1,14 @@
 package ifsp.edu.projeto.cortaai.userservice.service.impl;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.*;
-import ifsp.edu.projeto.cortaai.events.BeforeDeleteCustomer;
-import ifsp.edu.projeto.cortaai.exception.NotFoundException;
+import ifsp.edu.projeto.cortaai.userservice.event.BeforeDeleteCustomer;
+import ifsp.edu.projeto.cortaai.userservice.exception.NotFoundException;
 import ifsp.edu.projeto.cortaai.userservice.mapper.CustomerMapper;
 import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository;
 import ifsp.edu.projeto.cortaai.userservice.service.CustomerService;
 import ifsp.edu.projeto.cortaai.userservice.service.JwtTokenService;
-import ifsp.edu.projeto.cortaai.service.StorageService;
+import ifsp.edu.projeto.cortaai.userservice.service.storage.StorageService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder; // IMPORTANTE

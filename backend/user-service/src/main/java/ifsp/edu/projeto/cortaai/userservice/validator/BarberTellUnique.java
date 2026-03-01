@@ -1,0 +1,57 @@
+package ifsp.edu.projeto.cortaai.userservice.validator;
+
+import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+
+import ifsp.edu.projeto.cortaai.userservice.service.impl.BarberServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Constraint;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
+import jakarta.validation.Payload;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.Map;
+import java.util.UUID;
+import org.springframework.web.servlet.HandlerMapping;
+
+@Target({ FIELD, METHOD, ANNOTATION_TYPE })
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Constraint(validatedBy = BarberTellUnique.BarberTellUniqueValidator.class)
+public @interface BarberTellUnique {
+
+    String message() default "{Exists.barber.tell}";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+
+    class BarberTellUniqueValidator implements ConstraintValidator<BarberTellUnique, String> {
+
+        private final BarberServiceImpl barberServiceImpl;
+        private final HttpServletRequest request;
+
+        public BarberTellUniqueValidator(final BarberServiceImpl barberServiceImpl,
+                final HttpServletRequest request) {
+            this.barberServiceImpl = barberServiceImpl;
+            this.request = request;
+        }
+
+        @Override
+        public boolean isValid(final String value, final ConstraintValidatorContext cvContext) {
+            if (value == null) {
+                return true;
+            }
+            @SuppressWarnings("unchecked") final Map<String, String> pathVariables =
+                    ((Map<String, String>)request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE));
+            final String currentId = pathVariables.get("id");
+            if (currentId != null && value.equalsIgnoreCase(barberServiceImpl.get(UUID.fromString(currentId)).tell())) {
+                return true;
+            }
+            return !barberServiceImpl.tellExists(value);
+        }
+    }
+}
+

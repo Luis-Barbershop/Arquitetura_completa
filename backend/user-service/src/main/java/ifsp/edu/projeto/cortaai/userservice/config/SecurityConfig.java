@@ -35,8 +35,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(req -> req
                         // Endpoints públicos
                         .requestMatchers("/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/barbers/**").permitAll() // Permitir ver perfil público
+                        .requestMatchers(HttpMethod.POST, "/api/customers/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/customers/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/barbers/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/barbers/register", "/api/barbers/login").permitAll()
+                        // Endpoints internos (inter-serviço) — protegidos por header X-Internal-Token
+                        .requestMatchers("/api/internal/**").permitAll()
                         // Qualquer outro requer autenticação
                         .anyRequest().authenticated()
                 )

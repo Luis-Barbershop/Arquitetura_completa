@@ -12,6 +12,9 @@ import java.util.UUID;
 public interface BarberRepository extends JpaRepository<Barber, UUID> {
     Optional<Barber> findByEmail(String email);
     boolean existsByEmail(String email);
+    boolean existsByEmailIgnoreCase(String email);
     boolean existsByDocumentCPF(String documentCPF);
+    boolean existsByDocumentCPFIgnoreCase(String documentCPF);
+    boolean existsByTellIgnoreCase(String tell);
     List<Barber> findByBarbershopId(UUID barbershopId);
 }
