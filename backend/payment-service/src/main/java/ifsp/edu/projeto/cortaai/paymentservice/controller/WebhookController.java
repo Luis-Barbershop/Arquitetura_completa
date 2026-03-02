@@ -1,6 +1,10 @@
 package ifsp.edu.projeto.cortaai.paymentservice.controller;
 
 import ifsp.edu.projeto.cortaai.paymentservice.service.PaymentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +20,7 @@ import java.util.Map;
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Webhooks", description = "NOVO: Endpoints públicos para recebimento de notificações assíncronas de plataformas externas (Mercado Pago)")
 public class WebhookController {
 
     private final PaymentService paymentService;
@@ -24,8 +29,13 @@ public class WebhookController {
      * Recebe notificação (webhook) do Mercado Pago.
      * Formato: { "action": "payment.created", "data": { "id": "12345" }, "type": "payment" }
      */
+    @Operation(summary = "Receber notificação do Mercado Pago", description = "Endpoint público (sem auth) chamado automaticamente pelo Mercado Pago quando há atualização no status de um pagamento.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Webhook processado ou ignorado com sucesso (retorna 200 sempre para evitar retentativas infinitas do MP)")
+    })
     @PostMapping("/webhook")
-    public ResponseEntity<Void> handleWebhook(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<Void> handleWebhook(
+            @RequestBody Map<String, Object> payload) {
         log.info("Webhook recebido: {}", payload);
 
         try {

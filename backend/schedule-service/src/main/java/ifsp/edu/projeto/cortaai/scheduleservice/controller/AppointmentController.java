@@ -2,6 +2,11 @@ package ifsp.edu.projeto.cortaai.scheduleservice.controller;
 
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.*;
 import ifsp.edu.projeto.cortaai.scheduleservice.service.AppointmentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -18,65 +23,85 @@ import java.util.UUID;
 @RestController
 @RequestMapping(value = "/api/appointments", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
+@Tag(name = "Appointments", description = "Endpoints para gerenciamento de agendamentos, cancelamentos e consultas de agenda")
 public class AppointmentController {
 
     private final AppointmentService appointmentService;
 
+    @Operation(summary = "Criar agendamento", description = "Cria um novo agendamento. Na arquitetura de microserviços, os dados do cliente e da barbearia/barbeiro são validados via comunicação inter-serviços (Feign Client) e salvos como snapshot (desnormalizados).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Agendamento criado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Erro de validação ou horário indisponível")
+    })
     @PostMapping
     public ResponseEntity<AppointmentDTO> createAppointment(
-            Principal principal,
-            @RequestBody @Valid CreateAppointmentDTO dto) {
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "Dados para criação do agendamento") @RequestBody @Valid CreateAppointmentDTO dto) {
         AppointmentDTO created = appointmentService.createAppointment(principal.getName(), dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Buscar agendamento por ID", description = "Retorna os detalhes de um agendamento específico.")
     @GetMapping("/{id}")
-    public ResponseEntity<AppointmentDTO> getAppointment(@PathVariable UUID id) {
+    public ResponseEntity<AppointmentDTO> getAppointment(
+            @Parameter(description = "UUID do agendamento") @PathVariable UUID id) {
         return ResponseEntity.ok(appointmentService.getAppointmentById(id));
     }
 
+    @Operation(summary = "Listar meus agendamentos", description = "Retorna todos os agendamentos vinculados ao usuário logado, independentemente de ser um Customer ou Barber.")
     @GetMapping("/my-appointments")
-    public ResponseEntity<List<AppointmentDTO>> getMyAppointments(Principal principal) {
+    public ResponseEntity<List<AppointmentDTO>> getMyAppointments(@Parameter(hidden = true) Principal principal) {
         return ResponseEntity.ok(appointmentService.getMyAppointments(principal.getName()));
     }
 
+    @Operation(summary = "Consultar agenda do barbeiro", description = "Retorna a agenda de um barbeiro específico. A consulta agora exige obrigatoriamente um filtro por data para evitar sobrecarga de dados.")
     @GetMapping("/barber/{barberId}")
     public ResponseEntity<List<AppointmentDTO>> getBarberSchedule(
-            @PathVariable UUID barberId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @Parameter(description = "UUID do barbeiro") @PathVariable UUID barberId,
+            @Parameter(description = "Data do filtro (formato ISO: YYYY-MM-DD)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(appointmentService.getBarberSchedule(barberId, date));
     }
 
+    @Operation(summary = "Consultar agenda da barbearia", description = "Retorna todos os agendamentos de uma barbearia. Exige obrigatoriamente um filtro por data.")
     @GetMapping("/barbershop/{shopId}")
     public ResponseEntity<List<AppointmentDTO>> getBarbershopSchedule(
-            @PathVariable UUID shopId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @Parameter(description = "UUID da barbearia") @PathVariable UUID shopId,
+            @Parameter(description = "Data do filtro (formato ISO: YYYY-MM-DD)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(appointmentService.getBarbershopSchedule(shopId, date));
     }
 
+    @Operation(summary = "Cancelar agendamento", description = "Cancela um agendamento existente de forma explícita e segura (substitui o antigo update genérico do monolito).")
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<Void> cancelAppointment(Principal principal, @PathVariable UUID id) {
+    public ResponseEntity<Void> cancelAppointment(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "UUID do agendamento") @PathVariable UUID id) {
         appointmentService.cancelAppointment(principal.getName(), id);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Concluir agendamento", description = "Marca um agendamento como concluído de forma explícita e segura.")
     @PutMapping("/{id}/conclude")
-    public ResponseEntity<Void> concludeAppointment(Principal principal, @PathVariable UUID id) {
+    public ResponseEntity<Void> concludeAppointment(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "UUID do agendamento") @PathVariable UUID id) {
         appointmentService.concludeAppointment(principal.getName(), id);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Confirmar agendamento", description = "Marca um agendamento pendente como confirmado.")
     @PutMapping("/{id}/confirm")
-    public ResponseEntity<Void> confirmAppointment(Principal principal, @PathVariable UUID id) {
+    public ResponseEntity<Void> confirmAppointment(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "UUID do agendamento") @PathVariable UUID id) {
         appointmentService.confirmAppointment(principal.getName(), id);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Consultar horários disponíveis", description = "Verifica os horários (slots) que ainda estão livres para agendamento com um barbeiro específico numa determinada data.")
     @GetMapping("/availability")
     public ResponseEntity<List<TimeSlotDTO>> getAvailability(
-            @RequestParam UUID barberId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @Parameter(description = "UUID do barbeiro") @RequestParam UUID barberId,
+            @Parameter(description = "Data para consulta (formato ISO: YYYY-MM-DD)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(appointmentService.getAvailability(barberId, date));
     }
 }
-
