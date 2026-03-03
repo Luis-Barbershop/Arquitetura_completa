@@ -184,4 +184,38 @@ public class BarbershopController {
         }
     }
 
-    @Operation(summary = "Faz o upload da foto de um serviço", description = "
+    @Operation(summary = "Faz o upload da foto de um serviço", description = "Atualiza a imagem associada a um serviço/atividade específico na barbearia.")
+    @PostMapping(value = "/my-shop/activities/{activityId}/upload-photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> uploadActivityPhoto(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "UUID da atividade") @PathVariable UUID activityId,
+            @Parameter(description = "Arquivo da foto do serviço") @RequestParam("file") MultipartFile file) {
+        try {
+            return ResponseEntity.ok(barbershopService.updateActivityPhoto(principal.getName(), activityId, file));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Falha no upload: " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Adiciona uma imagem aos destaques", description = "Faz o upload de uma nova imagem para o carrossel de destaques/portfólio da barbearia.")
+    @PostMapping(value = "/my-shop/highlights", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> addHighlight(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "Arquivo da imagem destaque") @RequestParam("file") MultipartFile file) {
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(
+                    barbershopService.addBarbershopHighlight(principal.getName(), file));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Falha no upload: " + e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Deleta uma imagem de destaque", description = "Remove uma imagem específica do carrossel de destaques da barbearia.")
+    @DeleteMapping("/my-shop/highlights/{highlightId}")
+    public ResponseEntity<Void> deleteHighlight(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "UUID do destaque a ser removido") @PathVariable UUID highlightId) {
+        barbershopService.deleteBarbershopHighlight(principal.getName(), highlightId);
+        return ResponseEntity.noContent().build();
+    }
+}
