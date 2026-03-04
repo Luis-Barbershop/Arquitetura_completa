@@ -104,3 +104,8 @@ eureka:
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
 
+# ==================================================
+# FIREBASE AUTHENTICATION
+# ==================================================
+firebase:
+  service-account-json: ${FIREBASE_SERVICE_ACCOUNT_JSON:}

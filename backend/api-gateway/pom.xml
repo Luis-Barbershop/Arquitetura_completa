@@ -17,6 +17,12 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
+        <!-- Firebase Admin SDK (valida ID Tokens no Gateway) -->
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>9.3.0</version>
+        </dependency>
         <!-- SpringDoc OpenAPI (Swagger UI) - WebFlux para Gateway reativo -->
         <dependency>
             <groupId>org.springdoc</groupId>

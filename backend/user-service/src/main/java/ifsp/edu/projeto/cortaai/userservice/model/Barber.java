@@ -41,15 +41,27 @@ public class Barber implements UserDetails {
     @Column(nullable = false, unique = true, length = 70)
     private String email;
 
-    @Column(name = "document_cpf", nullable = false, unique = true, length = 11)
+    @Column(name = "document_cpf", unique = true, length = 11)
     private String documentCPF;
 
-    @Column(nullable = false)
+    @Column
     private String password;
 
+    // ======== Firebase Auth ========
+    /** UID único emitido pelo Firebase Authentication (Google, Facebook, Apple, GitHub…) */
+    @Column(name = "firebase_uid", unique = true, length = 128)
+    private String firebaseUid;
+
+    /** Provedor de autenticação: EMAIL, GOOGLE, FACEBOOK, APPLE, GITHUB, TWITTER */
+    @Builder.Default
+    @Column(name = "auth_provider", length = 30)
+    private String authProvider = "EMAIL";
+
+    @Builder.Default
     @Column(name = "is_owner")
     private boolean isOwner = false;
 
+    @Builder.Default
     @Column(length = 20)
     private String role = "ROLE_BARBER";
 

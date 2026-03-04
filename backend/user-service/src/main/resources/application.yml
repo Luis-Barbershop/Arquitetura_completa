@@ -31,14 +31,12 @@ eureka:
     prefer-ip-address: true
 
 # ==================================================
-# CONFIGURAÇÕES ESPECÍFICAS DA APLICAÇÃO (CORTA AÍ)
+# FIREBASE AUTHENTICATION
 # ==================================================
-app:
-  security:
-    jwt:
-      # Use variável de ambiente ou um valor padrão para dev
-      secret-key: ${JWT_SECRET_KEY:SecretKeySuperSeguraParaDesenvolvimento12345}
-      expiration-ms: 3600000 # 1 hora
+firebase:
+  # JSON completo da Service Account (para produção via Docker / env var)
+  # Deixe vazio para usar GOOGLE_APPLICATION_CREDENTIALS (arquivo montado como volume)
+  service-account-json: ${FIREBASE_SERVICE_ACCOUNT_JSON:}
 
 error:
   handling:

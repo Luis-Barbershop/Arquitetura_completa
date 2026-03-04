@@ -1,9 +1,6 @@
 package ifsp.edu.projeto.cortaai.userservice.service;
 
-import ifsp.edu.projeto.cortaai.userservice.dto.CustomerCreateDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CustomerDTO;
-import ifsp.edu.projeto.cortaai.userservice.dto.LoginDTO;
-import ifsp.edu.projeto.cortaai.userservice.dto.LoginResponseDTO; // NOVO IMPORT
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -16,22 +13,17 @@ public interface CustomerService {
 
     CustomerDTO get(UUID id);
 
-    UUID create(CustomerCreateDTO customerCreateDTO, MultipartFile file) throws IOException;
+    /** Atualiza perfil identificando o customer pelo firebaseUid. */
+    void updateByFirebaseUid(String firebaseUid, CustomerDTO customerDTO);
 
-    void update(String email, CustomerDTO customerDTO);
+    /** Exclui a conta do customer identificado pelo firebaseUid. */
+    void deleteByFirebaseUid(String firebaseUid);
 
-    void delete(String email);
+    /** Atualiza a foto de perfil do customer identificado pelo firebaseUid. */
+    String updateProfilePhotoByFirebaseUid(String firebaseUid, MultipartFile file) throws IOException;
 
-    LoginResponseDTO login(LoginDTO loginDTO); // TIPO DE RETORNO ALTERADO
-
-    // --- Métodos de validação ---
+    // Métodos de validação
     boolean tellExists(String tell);
-
     boolean emailExists(String email);
-
     boolean documentCPFExists(String documentCPF);
-
-    // NOVO MÉTODO
-    String updateProfilePhoto(String email, MultipartFile file) throws IOException;
-
 }

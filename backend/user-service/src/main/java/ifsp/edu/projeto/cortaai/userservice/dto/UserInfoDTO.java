@@ -11,6 +11,7 @@ public record UserInfoDTO(
         UUID id,
         String name,
         String email,
+        String firebaseUid,
         String userType,
         String role,
         UUID barbershopId,
@@ -18,4 +19,5 @@ public record UserInfoDTO(
         LocalTime workEndTime,
         String imageUrl
 ) {}
+
 

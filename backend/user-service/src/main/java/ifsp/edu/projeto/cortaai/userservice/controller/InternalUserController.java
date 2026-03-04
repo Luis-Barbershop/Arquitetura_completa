@@ -15,7 +15,6 @@ import java.util.UUID;
 /**
  * Endpoints internos para comunicação inter-serviço.
  * NÃO devem ser expostos pelo API Gateway.
- * Protegidos pelo header X-Internal-Token.
  */
 @RestController
 @RequestMapping("/api/internal/users")
@@ -25,42 +24,38 @@ public class InternalUserController {
     private final CustomerRepository customerRepository;
     private final BarberRepository barberRepository;
 
-    /**
-     * Busca usuário por ID (pode ser Customer ou Barber).
-     */
+    /** Busca usuário por ID (Customer ou Barber). */
     @GetMapping("/{id}")
     public ResponseEntity<UserInfoDTO> getUserById(@PathVariable UUID id) {
-        // Tenta encontrar como Customer
         Optional<Customer> customer = customerRepository.findById(id);
-        if (customer.isPresent()) {
-            return ResponseEntity.ok(toUserInfoDTO(customer.get()));
-        }
+        if (customer.isPresent()) return ResponseEntity.ok(toUserInfoDTO(customer.get()));
 
-        // Tenta encontrar como Barber
         Optional<Barber> barber = barberRepository.findById(id);
-        if (barber.isPresent()) {
-            return ResponseEntity.ok(toUserInfoDTO(barber.get()));
-        }
+        if (barber.isPresent()) return ResponseEntity.ok(toUserInfoDTO(barber.get()));
 
         return ResponseEntity.notFound().build();
     }
 
-    /**
-     * Busca usuário por email (pode ser Customer ou Barber).
-     */
+    /** Busca usuário por e-mail (Customer ou Barber). */
     @GetMapping("/by-email/{email}")
     public ResponseEntity<UserInfoDTO> getUserByEmail(@PathVariable String email) {
-        // Tenta encontrar como Customer
         Optional<Customer> customer = customerRepository.findByEmail(email);
-        if (customer.isPresent()) {
-            return ResponseEntity.ok(toUserInfoDTO(customer.get()));
-        }
+        if (customer.isPresent()) return ResponseEntity.ok(toUserInfoDTO(customer.get()));
 
-        // Tenta encontrar como Barber
         Optional<Barber> barber = barberRepository.findByEmail(email);
-        if (barber.isPresent()) {
-            return ResponseEntity.ok(toUserInfoDTO(barber.get()));
-        }
+        if (barber.isPresent()) return ResponseEntity.ok(toUserInfoDTO(barber.get()));
+
+        return ResponseEntity.notFound().build();
+    }
+
+    /** Busca usuário pelo Firebase UID (Customer ou Barber). */
+    @GetMapping("/by-firebase-uid/{uid}")
+    public ResponseEntity<UserInfoDTO> getUserByFirebaseUid(@PathVariable String uid) {
+        Optional<Customer> customer = customerRepository.findByFirebaseUid(uid);
+        if (customer.isPresent()) return ResponseEntity.ok(toUserInfoDTO(customer.get()));
+
+        Optional<Barber> barber = barberRepository.findByFirebaseUid(uid);
+        if (barber.isPresent()) return ResponseEntity.ok(toUserInfoDTO(barber.get()));
 
         return ResponseEntity.notFound().build();
     }
@@ -75,29 +70,27 @@ public class InternalUserController {
             @RequestBody UUID barbershopId) {
 
         Optional<Barber> barber = barberRepository.findById(id);
-        if (barber.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
+        if (barber.isEmpty()) return ResponseEntity.notFound().build();
 
         Barber b = barber.get();
         b.setBarbershopId(barbershopId);
         barberRepository.save(b);
-
         return ResponseEntity.ok().build();
     }
 
-    // --- Métodos auxiliares de conversão ---
+    // ── conversores ──────────────────────────────────────────────────────────
 
     private UserInfoDTO toUserInfoDTO(Customer customer) {
         return new UserInfoDTO(
                 customer.getId(),
                 customer.getName(),
                 customer.getEmail(),
+                customer.getFirebaseUid(),
                 "CUSTOMER",
                 customer.getRole(),
-                null, // Customer não tem barbershopId
-                null, // Customer não tem workStartTime
-                null, // Customer não tem workEndTime
+                null,
+                null,
+                null,
                 customer.getImageUrl()
         );
     }
@@ -107,6 +100,7 @@ public class InternalUserController {
                 barber.getId(),
                 barber.getName(),
                 barber.getEmail(),
+                barber.getFirebaseUid(),
                 "BARBER",
                 barber.getRole(),
                 barber.getBarbershopId(),

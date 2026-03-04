@@ -1,70 +1,115 @@
 package ifsp.edu.projeto.cortaai.userservice.config;
 
-import ifsp.edu.projeto.cortaai.userservice.service.impl.CustomUserDetailsService;
-import lombok.RequiredArgsConstructor;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.web.filter.OncePerRequestFilter;
 
+import java.io.IOException;
+import java.util.List;
+
+/**
+ * Configuração de segurança do user-service com autenticação Firebase.
+ *
+ * <p>O API Gateway já valida o Firebase ID Token e injeta os headers
+ * {@code X-User-UID}, {@code X-User-Email} e {@code X-User-Type}.
+ * O filtro {@link #firebaseHeaderFilter()} lê esses headers e popula
+ * o {@link SecurityContextHolder} para que os controllers possam usar
+ * {@code @RequestHeader("X-User-UID")} ou {@link java.security.Principal}.
+ *
+ * <p>A rota {@code POST /api/auth/verify} é pública pois o token Firebase
+ * vai no corpo da requisição — não no header.
+ */
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthorizationFilter jwtAuthorizationFilter;
-    private final CustomUserDetailsService customUserDetailsService;
+    // ──────────────────────────────────────────────────────────────────────────
+    // Filter chain
+    // ──────────────────────────────────────────────────────────────────────────
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(AbstractHttpConfigurer::disable) // Configure CORS adequadamente em produção
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(req -> req
-                        // Endpoints públicos
-                        .requestMatchers("/api/auth/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/customers/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/customers/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/barbers/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/barbers/register", "/api/barbers/login").permitAll()
-                        // Endpoints internos (inter-serviço) — protegidos por header X-Internal-Token
-                        .requestMatchers("/api/internal/**").permitAll()
-                        // Qualquer outro requer autenticação
-                        .anyRequest().authenticated()
-                )
-                .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(AbstractHttpConfigurer::disable)
+            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(req -> req
+                // Swagger / Actuator
+                .requestMatchers(
+                        "/swagger-ui/**", "/swagger-ui.html",
+                        "/v3/api-docs/**", "/v3/api-docs.yaml",
+                        "/actuator/**"
+                ).permitAll()
+                // Auth público — token no body
+                .requestMatchers(HttpMethod.POST, "/api/auth/verify").permitAll()
+                // Endpoints internos (Feign inter-serviço)
+                .requestMatchers("/api/internal/**").permitAll()
+                // Listagem pública de barbeiros
+                .requestMatchers(HttpMethod.GET, "/api/barbers", "/api/barbers/**").permitAll()
+                // Todo o resto exige UID injetado pelo Gateway
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(firebaseHeaderFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(customUserDetailsService); // Importante para o Login funcionar
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
+    // ──────────────────────────────────────────────────────────────────────────
+    // Filtro: lê X-User-UID do header injetado pelo Gateway e seta o SecurityContext
+    // ──────────────────────────────────────────────────────────────────────────
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+    public OncePerRequestFilter firebaseHeaderFilter() {
+        return new OncePerRequestFilter() {
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+            private final Logger log = LoggerFactory.getLogger("FirebaseHeaderFilter");
+
+            @Override
+            protected void doFilterInternal(HttpServletRequest request,
+                                            HttpServletResponse response,
+                                            FilterChain filterChain)
+                    throws ServletException, IOException {
+
+                String uid      = request.getHeader("X-User-UID");
+                String email    = request.getHeader("X-User-Email");
+                String userType = request.getHeader("X-User-Type");
+
+                if (uid != null && !uid.isBlank()
+                        && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                    String role = "ROLE_" + (userType != null ? userType.toUpperCase() : "CUSTOMER");
+
+                    UsernamePasswordAuthenticationToken auth =
+                            new UsernamePasswordAuthenticationToken(
+                                    uid,    // principal = firebaseUid
+                                    email,  // credentials = email
+                                    List.of(new SimpleGrantedAuthority(role))
+                            );
+                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+
+                    log.debug("SecurityContext populado — uid={} role={}", uid, role);
+                }
+
+                filterChain.doFilter(request, response);
+            }
+        };
     }
 }

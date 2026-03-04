@@ -11,8 +11,10 @@ import java.util.UUID;
 @Repository
 public interface BarberRepository extends JpaRepository<Barber, UUID> {
     Optional<Barber> findByEmail(String email);
+    Optional<Barber> findByFirebaseUid(String firebaseUid);
     boolean existsByEmail(String email);
     boolean existsByEmailIgnoreCase(String email);
+    boolean existsByFirebaseUid(String firebaseUid);
     boolean existsByDocumentCPF(String documentCPF);
     boolean existsByDocumentCPFIgnoreCase(String documentCPF);
     boolean existsByTellIgnoreCase(String tell);
