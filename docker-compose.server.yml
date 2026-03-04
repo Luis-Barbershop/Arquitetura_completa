@@ -8,7 +8,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-      - /DATA/cortaai/mysql:/var/lib/mysql # Mantive o seu volume local apontado pro ZimaOS
+      - /DATA/cortaai/mysql:/var/lib/mysql
     ports:
       - "3307:3306"
     healthcheck:
@@ -19,7 +19,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 600M
+          cpus: "1.0"
+          memory: 512M
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -38,6 +39,7 @@ services:
     deploy:
       resources:
         limits:
+          cpus: "0.5"
           memory: 256M
 
   redis:
@@ -53,6 +55,7 @@ services:
     deploy:
       resources:
         limits:
+          cpus: "0.2"
           memory: 64M
 
   # ======== DISCOVERY & GATEWAY ========
@@ -66,7 +69,7 @@ services:
     ports: ["8761:8761"]
     environment:
       - EUREKA_HOST=discovery
-      - JAVA_TOOL_OPTIONS=-Xms256m -Xmx512m
+      - JAVA_TOOL_OPTIONS=-Xms64m -Xmx128m -XX:+UseSerialGC
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
       interval: 15s
@@ -76,7 +79,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 800M
+          cpus: "0.5"
+          memory: 300M
 
   gateway:
     image: eclipse-temurin:17-jdk
@@ -88,14 +92,15 @@ services:
     environment:
       - EUREKA_HOST=discovery
       - FIREBASE_SERVICE_ACCOUNT_JSON=${FIREBASE_SERVICE_ACCOUNT_JSON}
-      - JAVA_TOOL_OPTIONS=-Xms256m -Xmx512m
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       discovery:
         condition: service_started
     deploy:
       resources:
         limits:
-          memory: 800M
+          cpus: "0.8"
+          memory: 512M
 
   # ======== MICROSERVIÇOS DE NEGÓCIO ========
 
@@ -114,7 +119,7 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-      - JAVA_TOOL_OPTIONS=-Xms256m -Xmx512m
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       db:
         condition: service_healthy
@@ -123,7 +128,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 800M
+          cpus: "0.8"
+          memory: 512M
 
   barbershop-service:
     image: eclipse-temurin:17-jdk
@@ -142,7 +148,7 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-      - JAVA_TOOL_OPTIONS=-Xms256m -Xmx512m
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       db:
         condition: service_healthy
@@ -153,7 +159,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 800M
+          cpus: "0.8"
+          memory: 512M
 
   schedule-service:
     image: eclipse-temurin:17-jdk
@@ -170,7 +177,7 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - REDIS_HOST=redis
-      - JAVA_TOOL_OPTIONS=-Xms256m -Xmx512m
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       db:
         condition: service_healthy
@@ -183,7 +190,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 800M
+          cpus: "0.8"
+          memory: 512M
 
   payment-service:
     image: eclipse-temurin:17-jdk
@@ -200,7 +208,7 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
-      - JAVA_TOOL_OPTIONS=-Xms256m -Xmx512m
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       db:
         condition: service_healthy
@@ -211,7 +219,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 800M
+          cpus: "0.8"
+          memory: 512M
 
   notification-service:
     image: eclipse-temurin:17-jdk
@@ -233,7 +242,7 @@ services:
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - NOTIFICATION_FROM_EMAIL=${NOTIFICATION_FROM_EMAIL}
-      - JAVA_TOOL_OPTIONS=-Xms256m -Xmx512m
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       db:
         condition: service_healthy
@@ -246,7 +255,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 800M
+          cpus: "0.8"
+          memory: 512M
 
   product-service:
     image: eclipse-temurin:17-jdk
@@ -262,7 +272,7 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
-      - JAVA_TOOL_OPTIONS=-Xms256m -Xmx512m
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       db:
         condition: service_healthy
@@ -273,7 +283,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 800M
+          cpus: "0.8"
+          memory: 512M
 
   # ======== FRONTEND ========
 
@@ -287,4 +298,5 @@ services:
     deploy:
       resources:
         limits:
+          cpus: "0.5"
           memory: 128M
