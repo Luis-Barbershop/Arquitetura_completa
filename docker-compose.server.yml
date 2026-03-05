@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ======== INFRAESTRUTURA ========
 
@@ -38,7 +36,7 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
-      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: 0.6
+      # REMOVIDO: VM_MEMORY_HIGH_WATERMARK (causava erro exited 1)
     healthcheck:
       test: ["CMD", "rabbitmqctl", "status"]
       interval: 10s
@@ -48,7 +46,7 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: 300M # Ajustado: 192M causa o erro 'exited (1)' no ZimaOS
+          memory: 300M 
 
   redis:
     image: redis:7-alpine
@@ -87,7 +85,7 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: 256M # Dieta Spring JRE
+          memory: 256M
 
   gateway:
     build:
@@ -98,7 +96,7 @@ services:
     ports: ["8082:8080"]
     environment:
       - EUREKA_HOST=discovery
-      - FIREBASE_SERVICE_ACCOUNT_JSON=${FIREBASE_SERVICE_ACCOUNT_JSON}
+      - FIREBASE_SERVICE_ACCOUNT_JSON=${FIREBASE_SERVICE_ACCOUNT_JSON:-}
     depends_on:
       discovery:
         condition: service_started
@@ -119,6 +117,10 @@ services:
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EUREKA_HOST=discovery
+      - FIREBASE_SERVICE_ACCOUNT_JSON=${FIREBASE_SERVICE_ACCOUNT_JSON:-}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
     depends_on:
       db: { condition: service_healthy }
       discovery: { condition: service_started }
@@ -136,6 +138,11 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EUREKA_HOST=discovery
       - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -153,6 +160,8 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EUREKA_HOST=discovery
       - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
       - REDIS_HOST=redis
     depends_on:
       db: { condition: service_healthy }
@@ -172,6 +181,9 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EUREKA_HOST=discovery
       - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -189,6 +201,14 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EUREKA_HOST=discovery
       - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - REDIS_HOST=redis
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - NOTIFICATION_FROM_EMAIL=${NOTIFICATION_FROM_EMAIL}
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -206,6 +226,8 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EUREKA_HOST=discovery
       - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
