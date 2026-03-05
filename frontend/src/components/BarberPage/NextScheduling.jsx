@@ -5,7 +5,7 @@ function NextScheduling() {
         <div className={Styles.containerNextScheduling}>
             <div className={Styles.nextSchedulingTitleContent}>
                 <h3>Próximos Agendamentos</h3>
-                <h5>Ver Todos</h5>
+                <h5>Ver Todos →</h5>
             </div>
 
             <div className={Styles.nextSchedulingbackground}>
