@@ -53,8 +53,8 @@ eureka:
 # FIREBASE AUTHENTICATION
 # ==================================================
 firebase:
-  # JSON completo da Service Account (para produção via Docker / env var)
-  # Deixe vazio para usar GOOGLE_APPLICATION_CREDENTIALS (arquivo montado como volume)
+  # Deixe vazio — o Firebase é carregado via GOOGLE_APPLICATION_CREDENTIALS
+  # (arquivo firebase-service-account.json montado como volume no Docker)
   service-account-json: ${FIREBASE_SERVICE_ACCOUNT_JSON:}
 
 error:

@@ -94,9 +94,11 @@ services:
     image: cortaai/api-gateway:latest
     container_name: api-gateway
     ports: ["8082:8080"]
+    volumes:
+      - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     environment:
       - EUREKA_HOST=discovery
-      - FIREBASE_SERVICE_ACCOUNT_JSON=${FIREBASE_SERVICE_ACCOUNT_JSON:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/firebase-service-account.json
     depends_on:
       discovery:
         condition: service_started
@@ -112,12 +114,14 @@ services:
     build: { context: ./backend, dockerfile: user-service/Dockerfile }
     image: cortaai/user-service:latest
     container_name: user-service
+    volumes:
+      - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/user_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EUREKA_HOST=discovery
-      - FIREBASE_SERVICE_ACCOUNT_JSON=${FIREBASE_SERVICE_ACCOUNT_JSON:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/firebase-service-account.json
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
