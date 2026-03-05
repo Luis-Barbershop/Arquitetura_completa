@@ -35,7 +35,6 @@ ENTRYPOINT ["java", \
   "-XX:MaxRAMPercentage=75.0", \
   "-XX:+TieredCompilation", \
   "-XX:TieredStopAtLevel=1", \
-  "-XX:+UseStringDeduplication", \
   "-Xss256k", \
   "-XX:MaxMetaspaceSize=128m", \
   "-XX:ReservedCodeCacheSize=32m", \

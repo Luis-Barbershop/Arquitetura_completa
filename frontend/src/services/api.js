@@ -1,11 +1,12 @@
-// src/services/api.js
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: '/api',
+    // Em dev: http://localhost:8080/api
+    // Em produção (Docker): usa o IP/domínio do servidor na porta do gateway
+    // A variável VITE_API_URL pode ser definida em .env ou .env.production
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api', 
 });
 
-// Interceptador para adicionar o Token JWT em toda requisição
 api.interceptors.request.use(async (config) => {
     const token = localStorage.getItem('token');
     if (token) {

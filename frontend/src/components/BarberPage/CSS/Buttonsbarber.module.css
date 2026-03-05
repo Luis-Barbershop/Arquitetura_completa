@@ -1,0 +1,70 @@
+.containerButtons{
+    position: relative;
+    width: 100%;
+    height: auto;
+    margin-top: 15px;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    justify-content: center;
+    padding: 5px 0px;
+}
+
+.button{
+    background-color: #404040;
+    color: white;
+    height: 90%;
+    width: 50%;
+    padding: 15px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-family: "Space Grotesk", sans-serif;
+}
+
+.button:hover{
+    transition: 0.5s;
+    background-color: #999896dc;
+}
+
+.iconReport{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 30px;
+    background-color: #b68809ab;
+    
+}
+
+.iconReport img{
+    width: 40px;
+    height: 40px;
+}
+
+.iconscheduling{
+    width: 60px;
+    height: 60px;
+     display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 30px;
+    background-color: #22c55e83;
+}
+
+.iconscheduling img{
+    width: 40px;
+    height: 40px;
+}
+
+.button div{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 90px;
+}
+
+.button h3{
+    margin-top: 15px;
+}

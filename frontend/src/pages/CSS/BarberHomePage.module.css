@@ -1,0 +1,170 @@
+*{
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+}
+
+.pageContainer {
+    background-color: #333;
+    min-height: 100vh;
+    width: 100%;
+    color: white;
+    padding: 20px;
+    padding-bottom: 80px;
+    overflow-x: hidden;
+}
+
+.contentWrapper {
+    max-width: 100%;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.loadingContainer {
+    color: white;
+    text-align: center;
+    padding: 50px;
+}
+
+.headerTitle{
+    color: #D4AF37;
+}
+
+.notificationButton{
+    height: 35px;
+    width: 35px;
+
+}
+
+.notificationButton img{
+    width: 100%;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 30px;
+    font-family: "Space Grotesk", sans-serif;
+}
+
+.headerSpacer {
+    flex: 1;
+}
+
+.headerCenter {
+    text-align: center;
+    flex: 2;
+}
+
+.headerTitle {
+    margin: 0;
+}
+
+.headerWelcome {
+    margin: 10px 0;
+}
+
+.headerShopName {
+    color: #D4AF37;
+    font-weight: bold;
+}
+
+.headerRight {
+    display: flex;
+    flex: 1;
+    text-align: left;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+.logoutButton {
+    background: transparent;
+    border: 1px solid #F44336;
+    color: #F44336;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.logoutButton:hover {
+    background-color: #F44336;
+    color: white;
+}
+
+/* No Barbershop Panel */
+.noBarbershopPanel {
+    text-align: center;
+    padding: 40px;
+    background: #2A2A2A;
+    border-radius: 10px;
+}
+
+.noBarbershopTitle {
+    color: #D4AF37;
+}
+
+.noBarbershopSubtitle {
+    margin-bottom: 30px;
+    color: #ccc;
+}
+
+.noBarbershopActions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.createShopButton {
+    padding: 15px 30px;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: #D4AF37;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.createShopButton:hover {
+    background-color: #c9a42f;
+}
+
+.joinShopButton {
+    padding: 15px 30px;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: transparent;
+    border: 2px solid #D4AF37;
+    color: #D4AF37;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.joinShopButton:hover {
+    background-color: #D4AF37;
+    color: #1E1E1E;
+}
+
+/* Agenda Button */
+.agendaButton {
+    width: 100%;
+    padding: 15px;
+    background-color: #D4AF37;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+}
+
+.agendaButton:hover {
+    background-color: #c9a42f;
+}
