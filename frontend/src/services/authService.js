@@ -37,8 +37,30 @@ export const loginUser = async (email, password, userType = 'customer') => {
 
 // Função de Cadastro (Cliente)
 export const registerCustomer = async (userData) => {
-    // 4. CORREÇÃO DE ROTA: O Controller espera /register no final
-    const response = await api.post('/customers/register', userData);
+    const formData = new FormData();
+
+    // 1. Limpeza de caracteres especiais (CPF e Telefone)
+    const cleanCPF = userData.documentCPF ? userData.documentCPF.replace(/\D/g, '') : '';
+    const cleanTell = userData.tell ? userData.tell.replace(/\D/g, '') : '';
+
+    // 2. Monta o objeto JSON
+    const customerJson = JSON.stringify({
+        name: userData.name,
+        email: userData.email,
+        password: userData.password,
+        documentCPF: cleanCPF,
+        tell: cleanTell
+    });
+
+    // 3. Adiciona o JSON como Blob (Obrigatório para @RequestPart do Java)
+    const jsonBlob = new Blob([customerJson], { type: 'application/json' });
+    formData.append('customer', jsonBlob);
+
+    // 4. Se tiver arquivo de foto no futuro, adicione aqui:
+    // if (userData.file) formData.append('file', userData.file);
+
+    // 5. Envia para o endpoint correto
+    const response = await api.post('/customers/register', formData);
     return response.data;
 };
 
