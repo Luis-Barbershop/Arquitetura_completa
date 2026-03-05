@@ -11,7 +11,7 @@ function ServicesHomeBarber() {
     <div className={styles.container}>
         <div className={styles.header}>
             <h2 className={styles.title}>Serviços</h2>
-            <button className={styles.seeMoreButton}>Ver Todos →</button>
+            <button className={styles.seeMoreButton}>Ver Todos</button>
         </div>
 
         <div className={styles.cardsRow}>

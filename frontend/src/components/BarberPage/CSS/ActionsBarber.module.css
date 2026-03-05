@@ -1,0 +1,22 @@
+.ActionsBarber{
+    width: 100%;
+    height: auto;
+    margin-top: 25px;
+    ;
+}
+
+.ActionsBarberTitle{
+    width: 100%;
+    font-family: "Space Grotesk", sans-serif;
+    color: white;
+    height: 40px;
+}
+
+.ActionsBarberContent{
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
