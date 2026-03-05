@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # ======== INFRAESTRUTURA ========
 
@@ -16,15 +18,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # Tuning MySQL para baixo consumo de RAM
     command: >
       --innodb-buffer-pool-size=128M
       --innodb-log-buffer-size=8M
       --max-connections=50
-      --table-open-cache=200
-      --tmp-table-size=16M
-      --max-heap-table-size=16M
-      --key-buffer-size=8M
       --performance-schema=OFF
     deploy:
       resources:
@@ -41,7 +38,6 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
-      # Limita consumo interno do RabbitMQ
       RABBITMQ_VM_MEMORY_HIGH_WATERMARK: 0.6
     healthcheck:
       test: ["CMD", "rabbitmqctl", "status"]
@@ -52,7 +48,7 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: 192M
+          memory: 300M # Ajustado: 192M causa o erro 'exited (1)' no ZimaOS
 
   redis:
     image: redis:7-alpine
@@ -87,12 +83,11 @@ services:
       interval: 15s
       timeout: 5s
       retries: 10
-      start_period: 40s
     deploy:
       resources:
         limits:
           cpus: "0.5"
-          memory: 200M
+          memory: 256M # Dieta Spring JRE
 
   gateway:
     build:
@@ -116,9 +111,7 @@ services:
   # ======== MICROSERVIÇOS DE NEGÓCIO ========
 
   user-service:
-    build:
-      context: ./backend
-      dockerfile: user-service/Dockerfile
+    build: { context: ./backend, dockerfile: user-service/Dockerfile }
     image: cortaai/user-service:latest
     container_name: user-service
     environment:
@@ -126,25 +119,15 @@ services:
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EUREKA_HOST=discovery
-      - FIREBASE_SERVICE_ACCOUNT_JSON=${FIREBASE_SERVICE_ACCOUNT_JSON}
-      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
     depends_on:
-      db:
-        condition: service_healthy
-      discovery:
-        condition: service_started
+      db: { condition: service_healthy }
+      discovery: { condition: service_started }
     deploy:
       resources:
-        limits:
-          cpus: "0.8"
-          memory: 300M
+        limits: { cpus: "0.8", memory: 300M }
 
   barbershop-service:
-    build:
-      context: ./backend
-      dockerfile: barbershop-service/Dockerfile
+    build: { context: ./backend, dockerfile: barbershop-service/Dockerfile }
     image: cortaai/barbershop-service:latest
     container_name: barbershop-service
     environment:
@@ -153,28 +136,15 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EUREKA_HOST=discovery
       - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_USER=${RABBITMQ_USER}
-      - RABBITMQ_PASS=${RABBITMQ_PASS}
-      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
     depends_on:
-      db:
-        condition: service_healthy
-      discovery:
-        condition: service_started
-      rabbitmq:
-        condition: service_healthy
+      db: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
     deploy:
       resources:
-        limits:
-          cpus: "0.8"
-          memory: 300M
+        limits: { cpus: "0.8", memory: 300M }
 
   schedule-service:
-    build:
-      context: ./backend
-      dockerfile: schedule-service/Dockerfile
+    build: { context: ./backend, dockerfile: schedule-service/Dockerfile }
     image: cortaai/schedule-service:latest
     container_name: schedule-service
     environment:
@@ -183,28 +153,17 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EUREKA_HOST=discovery
       - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_USER=${RABBITMQ_USER}
-      - RABBITMQ_PASS=${RABBITMQ_PASS}
       - REDIS_HOST=redis
     depends_on:
-      db:
-        condition: service_healthy
-      discovery:
-        condition: service_started
-      rabbitmq:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      db: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      redis: { condition: service_healthy }
     deploy:
       resources:
-        limits:
-          cpus: "0.8"
-          memory: 300M
+        limits: { cpus: "0.8", memory: 300M }
 
   payment-service:
-    build:
-      context: ./backend
-      dockerfile: payment-service/Dockerfile
+    build: { context: ./backend, dockerfile: payment-service/Dockerfile }
     image: cortaai/payment-service:latest
     container_name: payment-service
     environment:
@@ -213,26 +172,15 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EUREKA_HOST=discovery
       - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_USER=${RABBITMQ_USER}
-      - RABBITMQ_PASS=${RABBITMQ_PASS}
-      - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
     depends_on:
-      db:
-        condition: service_healthy
-      discovery:
-        condition: service_started
-      rabbitmq:
-        condition: service_healthy
+      db: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
     deploy:
       resources:
-        limits:
-          cpus: "0.8"
-          memory: 300M
+        limits: { cpus: "0.8", memory: 300M }
 
   notification-service:
-    build:
-      context: ./backend
-      dockerfile: notification-service/Dockerfile
+    build: { context: ./backend, dockerfile: notification-service/Dockerfile }
     image: cortaai/notification-service:latest
     container_name: notification-service
     environment:
@@ -241,33 +189,15 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EUREKA_HOST=discovery
       - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_USER=${RABBITMQ_USER}
-      - RABBITMQ_PASS=${RABBITMQ_PASS}
-      - REDIS_HOST=redis
-      - MAIL_HOST=${MAIL_HOST}
-      - MAIL_PORT=${MAIL_PORT}
-      - MAIL_USERNAME=${MAIL_USERNAME}
-      - MAIL_PASSWORD=${MAIL_PASSWORD}
-      - NOTIFICATION_FROM_EMAIL=${NOTIFICATION_FROM_EMAIL}
     depends_on:
-      db:
-        condition: service_healthy
-      discovery:
-        condition: service_started
-      rabbitmq:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      db: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
     deploy:
       resources:
-        limits:
-          cpus: "0.8"
-          memory: 300M
+        limits: { cpus: "0.8", memory: 300M }
 
   product-service:
-    build:
-      context: ./backend
-      dockerfile: product-service/Dockerfile
+    build: { context: ./backend, dockerfile: product-service/Dockerfile }
     image: cortaai/product-service:latest
     container_name: product-service
     environment:
@@ -276,22 +206,12 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - EUREKA_HOST=discovery
       - RABBITMQ_HOST=rabbitmq
-      - RABBITMQ_USER=${RABBITMQ_USER}
-      - RABBITMQ_PASS=${RABBITMQ_PASS}
     depends_on:
-      db:
-        condition: service_healthy
-      discovery:
-        condition: service_started
-      rabbitmq:
-        condition: service_healthy
+      db: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
     deploy:
       resources:
-        limits:
-          cpus: "0.8"
-          memory: 256M
-
-  # ======== FRONTEND ========
+        limits: { cpus: "0.8", memory: 256M }
 
   frontend:
     image: node:20-alpine
