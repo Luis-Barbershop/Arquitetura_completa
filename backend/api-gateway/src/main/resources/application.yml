@@ -8,6 +8,11 @@ spring:
     lazy-initialization: true
   cloud:
     gateway:
+      # Desabilita o filtro JSON-to-gRPC que causa ClassNotFoundException
+      # (Firebase traz grpc-api transitivo mas não grpc-netty)
+      filter:
+        json-to-grpc:
+          enabled: false
       discovery:
         locator:
           enabled: true
