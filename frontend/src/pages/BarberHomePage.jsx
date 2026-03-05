@@ -7,6 +7,8 @@ import NoBarbershopPanel from '../components/BarberPage/NoBarbershopPanel';
 import ManageServices from '../components/BarberPage/ManageServices';
 import ManageMySkills from '../components/BarberPage/ManageMySkills';
 import styles from './CSS/BarberHomePage.module.css';
+import Invoicing from '../components/BarberPage/Invoicing';
+import Buttonsbarber from '../components/BarberPage/Buttonsbarber';
 
 function BarberHomePage() {
   const [barber, setBarber] = useState(null);
@@ -59,18 +61,24 @@ function BarberHomePage() {
             onJoinShop={handleJoinShop}
           />
         ) : (
-          <div>
-            <button
-              onClick={() => navigate('/meus-agendamentos')}
-              className={styles.agendaButton}
-            >
-              Ver Minha Agenda
-            </button>
+            <>
+            <Invoicing />
+            <Buttonsbarber />
+            </>
 
-            <ManageMySkills shopId={barber.barbershopId} />
 
-            {barber.owner && <ManageServices />}
-          </div>
+        //   <div>
+        //     <button
+        //       onClick={() => navigate('/meus-agendamentos')}
+        //       className={styles.agendaButton}
+        //     >
+        //       Ver Minha Agenda
+        //     </button>
+
+        //     <ManageMySkills shopId={barber.barbershopId} />
+
+        //     {barber.owner && <ManageServices />}
+        //   </div>
         )}
       </div>
     </div>
