@@ -9,6 +9,7 @@ import ManageMySkills from '../components/BarberPage/ManageMySkills';
 import styles from './CSS/BarberHomePage.module.css';
 import Invoicing from '../components/BarberPage/Invoicing';
 import Buttonsbarber from '../components/BarberPage/Buttonsbarber';
+import NextScheduling from '../components/BarberPage/NextScheduling';
 
 function BarberHomePage() {
   const [barber, setBarber] = useState(null);
@@ -64,6 +65,7 @@ function BarberHomePage() {
             <>
             <Invoicing />
             <Buttonsbarber />
+            <NextScheduling/>
             </>
 
 
