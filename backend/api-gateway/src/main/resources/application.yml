@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: api-gateway
+  main:
+    lazy-initialization: true
   cloud:
     gateway:
       discovery:

@@ -1,25 +1,44 @@
 server:
-  port: 8081 # Porta diferente do Gateway (8080) e Discovery (8761)
+  port: 8081
+  # Reduz threads do Tomcat para economizar RAM (~1MB por thread)
+  tomcat:
+    threads:
+      max: 20
+      min-spare: 2
+    max-connections: 100
 
 spring:
   application:
-    name: user-service # Nome usado pelo Gateway (lb://user-service) e Eureka
+    name: user-service
+  main:
+    lazy-initialization: true
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/user_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    # HikariCP - pool menor para reduzir RAM
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 300000
+      max-lifetime: 600000
 
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
-      ddl-auto: update # Cria/Atualiza as tabelas automaticamente
+      ddl-auto: update
     open-in-view: false
     properties:
       hibernate:
-        format_sql: true
-        show_sql: true
+        format_sql: false
+        show_sql: false
+        # Reduz tamanho do batch em memória
+        jdbc:
+          batch_size: 10
+        order_inserts: true
+        order_updates: true
 
 eureka:
   client:

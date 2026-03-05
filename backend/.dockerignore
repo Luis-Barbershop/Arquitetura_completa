@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings
+
+# Build output (cada Dockerfile faz o build internamente)
+**/target/
+!**/target/*.jar
+
+# Documentação
+analises/
+documentacao/
+imagemDocumentacao/
+*.md
+*.tex
+
+# Frontend (não é necessário no build do backend)
+frontend/
+
+# Docker
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Outros
+*.log
+*.tmp
+.env
+.env.example
+deploy-server.sh

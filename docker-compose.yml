@@ -54,6 +54,7 @@ services:
     ports: ["8761:8761"]
     environment:
       - EUREKA_HOST=discovery
+      - JAVA_TOOL_OPTIONS=-Xms64m -Xmx128m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -XX:MaxMetaspaceSize=96m -XX:ReservedCodeCacheSize=32m
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
       interval: 15s
@@ -71,6 +72,7 @@ services:
     environment:
       - EUREKA_HOST=discovery
       - FIREBASE_SERVICE_ACCOUNT_JSON=${FIREBASE_SERVICE_ACCOUNT_JSON}
+      - JAVA_TOOL_OPTIONS=-Xms64m -Xmx192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m
     depends_on:
       discovery:
         condition: service_started
@@ -92,6 +94,7 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - JAVA_TOOL_OPTIONS=-Xms64m -Xmx192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m
     depends_on:
       db:
         condition: service_healthy
@@ -115,6 +118,7 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - JAVA_TOOL_OPTIONS=-Xms64m -Xmx192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m
     depends_on:
       db:
         condition: service_healthy
@@ -138,6 +142,7 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - REDIS_HOST=redis
+      - JAVA_TOOL_OPTIONS=-Xms64m -Xmx192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m
     depends_on:
       db:
         condition: service_healthy
@@ -163,6 +168,7 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
+      - JAVA_TOOL_OPTIONS=-Xms64m -Xmx192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m
     depends_on:
       db:
         condition: service_healthy
@@ -191,6 +197,7 @@ services:
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - NOTIFICATION_FROM_EMAIL=${NOTIFICATION_FROM_EMAIL}
+      - JAVA_TOOL_OPTIONS=-Xms64m -Xmx192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m
     depends_on:
       db:
         condition: service_healthy
@@ -215,6 +222,7 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - JAVA_TOOL_OPTIONS=-Xms64m -Xmx192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m
     depends_on:
       db:
         condition: service_healthy

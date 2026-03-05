@@ -28,9 +28,16 @@ if [ ! -f .env ]; then
 fi
 echo "  ✅ .env encontrado"
 
-# 3. Subir infraestrutura
+# 3. Build das imagens (multi-stage com JRE)
 echo ""
-echo "[3/7] Subindo infraestrutura (MySQL, RabbitMQ, Redis)..."
+echo "[3/8] Construindo imagens Docker otimizadas (JRE + JAR)..."
+echo "  ⏳ Isso pode levar alguns minutos na primeira vez..."
+docker compose build --parallel
+echo "  ✅ Imagens construídas com sucesso"
+
+# 4. Subir infraestrutura
+echo ""
+echo "[4/8] Subindo infraestrutura (MySQL, RabbitMQ, Redis)..."
 docker compose up -d db rabbitmq redis
 echo "  Aguardando serviços ficarem healthy..."
 sleep 15
@@ -41,9 +48,9 @@ for svc in db rabbitmq redis; do
     docker compose ps $svc --format "{{.Status}}"
 done
 
-# 4. Criar notification_db se não existir (MySQL já existente não roda init.sql)
+# 5. Criar notification_db se não existir (MySQL já existente não roda init.sql)
 echo ""
-echo "[4/7] Garantindo que notification_db existe..."
+echo "[5/8] Garantindo que notification_db existe..."
 docker exec cortaai-mysql mysql -uroot -p"$(grep MYSQL_ROOT_PASSWORD .env | cut -d= -f2)" \
     -e "CREATE DATABASE IF NOT EXISTS notification_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>/dev/null \
     && echo "  ✅ notification_db OK" \
@@ -55,25 +62,25 @@ docker exec cortaai-mysql mysql -uroot -p"$(grep MYSQL_ROOT_PASSWORD .env | cut 
     -e "CREATE DATABASE IF NOT EXISTS notification_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" 2>/dev/null \
     && echo "  ✅ notification_db confirmado"
 
-# 5. Subir Discovery Service
+# 6. Subir Discovery Service
 echo ""
-echo "[5/7] Subindo Discovery Service..."
+echo "[6/8] Subindo Discovery Service..."
 docker compose up -d discovery
-echo "  Aguardando Eureka iniciar (pode levar ~60s)..."
-sleep 60
+echo "  Aguardando Eureka iniciar (pode levar ~30s com JAR otimizado)..."
+sleep 40
 
 echo -n "  discovery: "
 docker compose ps discovery --format "{{.Status}}"
 
-# 6. Subir Gateway
+# 7. Subir Gateway
 echo ""
-echo "[6/7] Subindo API Gateway..."
+echo "[7/8] Subindo API Gateway..."
 docker compose up -d gateway
 sleep 10
 
-# 7. Subir microserviços de negócio + frontend
+# 8. Subir microserviços de negócio + frontend
 echo ""
-echo "[7/7] Subindo microserviços e frontend..."
+echo "[8/8] Subindo microserviços e frontend..."
 docker compose up -d user-service barbershop-service schedule-service payment-service notification-service product-service frontend
 echo "  Aguardando serviços iniciarem..."
 sleep 30

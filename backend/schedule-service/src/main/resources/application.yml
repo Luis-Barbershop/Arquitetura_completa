@@ -1,19 +1,38 @@
 server:
   port: 8083
+  tomcat:
+    threads:
+      max: 20
+      min-spare: 2
+    max-connections: 100
 
 spring:
   application:
     name: schedule-service
+  main:
+    lazy-initialization: true
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/schedule_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 300000
+      max-lifetime: 600000
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          batch_size: 10
+        order_inserts: true
+        order_updates: true
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: 5672

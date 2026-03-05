@@ -16,11 +16,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    # Tuning MySQL para baixo consumo de RAM
+    command: >
+      --innodb-buffer-pool-size=128M
+      --innodb-log-buffer-size=8M
+      --max-connections=50
+      --table-open-cache=200
+      --tmp-table-size=16M
+      --max-heap-table-size=16M
+      --key-buffer-size=8M
+      --performance-schema=OFF
     deploy:
       resources:
         limits:
           cpus: "1.0"
-          memory: 512M
+          memory: 384M
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -31,6 +41,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+      # Limita consumo interno do RabbitMQ
+      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: 0.6
     healthcheck:
       test: ["CMD", "rabbitmqctl", "status"]
       interval: 10s
@@ -40,13 +52,14 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: 256M
+          memory: 192M
 
   redis:
     image: redis:7-alpine
     container_name: cortaai-redis
     ports:
       - "6380:6379"
+    command: redis-server --maxmemory 32mb --maxmemory-policy allkeys-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -56,43 +69,41 @@ services:
       resources:
         limits:
           cpus: "0.2"
-          memory: 64M
+          memory: 48M
 
   # ======== DISCOVERY & GATEWAY ========
 
   discovery:
-    image: eclipse-temurin:17-jdk
+    build:
+      context: ./backend
+      dockerfile: discovery-service/Dockerfile
+    image: cortaai/discovery-service:latest
     container_name: discovery-service
-    working_dir: /app
-    volumes: ["./backend:/app"]
-    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl discovery-service'"
     ports: ["8761:8761"]
     environment:
       - EUREKA_HOST=discovery
-      - JAVA_TOOL_OPTIONS=-Xms64m -Xmx128m -XX:+UseSerialGC
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8761/actuator/health"]
       interval: 15s
       timeout: 5s
       retries: 10
-      start_period: 30s
+      start_period: 40s
     deploy:
       resources:
         limits:
           cpus: "0.5"
-          memory: 300M
+          memory: 200M
 
   gateway:
-    image: eclipse-temurin:17-jdk
+    build:
+      context: ./backend
+      dockerfile: api-gateway/Dockerfile
+    image: cortaai/api-gateway:latest
     container_name: api-gateway
-    working_dir: /app
-    volumes: ["./backend:/app"]
-    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl api-gateway'"
     ports: ["8082:8080"]
     environment:
       - EUREKA_HOST=discovery
       - FIREBASE_SERVICE_ACCOUNT_JSON=${FIREBASE_SERVICE_ACCOUNT_JSON}
-      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       discovery:
         condition: service_started
@@ -100,16 +111,16 @@ services:
       resources:
         limits:
           cpus: "0.8"
-          memory: 512M
+          memory: 300M
 
   # ======== MICROSERVIÇOS DE NEGÓCIO ========
 
   user-service:
-    image: eclipse-temurin:17-jdk
+    build:
+      context: ./backend
+      dockerfile: user-service/Dockerfile
+    image: cortaai/user-service:latest
     container_name: user-service
-    working_dir: /app
-    volumes: ["./backend:/app"]
-    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl user-service'"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/user_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
@@ -119,7 +130,6 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       db:
         condition: service_healthy
@@ -129,14 +139,14 @@ services:
       resources:
         limits:
           cpus: "0.8"
-          memory: 512M
+          memory: 300M
 
   barbershop-service:
-    image: eclipse-temurin:17-jdk
+    build:
+      context: ./backend
+      dockerfile: barbershop-service/Dockerfile
+    image: cortaai/barbershop-service:latest
     container_name: barbershop-service
-    working_dir: /app
-    volumes: ["./backend:/app"]
-    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl barbershop-service'"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/barbershop_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
@@ -148,7 +158,6 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       db:
         condition: service_healthy
@@ -160,14 +169,14 @@ services:
       resources:
         limits:
           cpus: "0.8"
-          memory: 512M
+          memory: 300M
 
   schedule-service:
-    image: eclipse-temurin:17-jdk
+    build:
+      context: ./backend
+      dockerfile: schedule-service/Dockerfile
+    image: cortaai/schedule-service:latest
     container_name: schedule-service
-    working_dir: /app
-    volumes: ["./backend:/app"]
-    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl schedule-service'"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/schedule_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
@@ -177,7 +186,6 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - REDIS_HOST=redis
-      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       db:
         condition: service_healthy
@@ -191,14 +199,14 @@ services:
       resources:
         limits:
           cpus: "0.8"
-          memory: 512M
+          memory: 300M
 
   payment-service:
-    image: eclipse-temurin:17-jdk
+    build:
+      context: ./backend
+      dockerfile: payment-service/Dockerfile
+    image: cortaai/payment-service:latest
     container_name: payment-service
-    working_dir: /app
-    volumes: ["./backend:/app"]
-    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl payment-service'"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/payment_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
@@ -208,7 +216,6 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
-      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       db:
         condition: service_healthy
@@ -220,14 +227,14 @@ services:
       resources:
         limits:
           cpus: "0.8"
-          memory: 512M
+          memory: 300M
 
   notification-service:
-    image: eclipse-temurin:17-jdk
+    build:
+      context: ./backend
+      dockerfile: notification-service/Dockerfile
+    image: cortaai/notification-service:latest
     container_name: notification-service
-    working_dir: /app
-    volumes: ["./backend:/app"]
-    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl notification-service'"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/notification_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
@@ -242,7 +249,6 @@ services:
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - NOTIFICATION_FROM_EMAIL=${NOTIFICATION_FROM_EMAIL}
-      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       db:
         condition: service_healthy
@@ -256,14 +262,14 @@ services:
       resources:
         limits:
           cpus: "0.8"
-          memory: 512M
+          memory: 300M
 
   product-service:
-    image: eclipse-temurin:17-jdk
+    build:
+      context: ./backend
+      dockerfile: product-service/Dockerfile
+    image: cortaai/product-service:latest
     container_name: product-service
-    working_dir: /app
-    volumes: ["./backend:/app"]
-    command: "sh -c 'chmod +x mvnw && ./mvnw spring-boot:run -pl product-service'"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/product_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
@@ -272,7 +278,6 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
-      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m -XX:+UseSerialGC
     depends_on:
       db:
         condition: service_healthy
@@ -284,12 +289,12 @@ services:
       resources:
         limits:
           cpus: "0.8"
-          memory: 512M
+          memory: 256M
 
   # ======== FRONTEND ========
 
   frontend:
-    image: node:20
+    image: node:20-alpine
     container_name: cortaai-web
     working_dir: /app
     volumes: ["./frontend:/app"]

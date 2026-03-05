@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: discovery-service
+  main:
+    lazy-initialization: true
 
 eureka:
   client:
@@ -11,4 +13,13 @@ eureka:
     fetch-registry: false
   server:
     enable-self-preservation: false
+    # Reduz frequência de evicção (menos CPU/RAM)
+    eviction-interval-timer-in-ms: 10000
+    response-cache-update-interval-ms: 5000
+
+logging:
+  level:
+    root: WARN
+    com.netflix: WARN
+    org.springframework: WARN
 
