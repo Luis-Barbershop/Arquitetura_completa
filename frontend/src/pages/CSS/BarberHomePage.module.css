@@ -11,14 +11,14 @@
     width: 100%;
     color: white;
     padding: 20px;
-    padding-bottom: 80px;
+    padding-bottom: 110px;
     overflow-x: hidden;
 }
 
 .contentWrapper {
     max-width: 100%;
     margin: 0 auto;
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
 .loadingContainer {
