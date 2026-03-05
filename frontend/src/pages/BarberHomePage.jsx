@@ -10,10 +10,12 @@ import styles from './CSS/BarberHomePage.module.css';
 import Invoicing from '../components/BarberPage/Invoicing';
 import Buttonsbarber from '../components/BarberPage/Buttonsbarber';
 import NextScheduling from '../components/BarberPage/NextScheduling';
+import BarberNavbar from '../components/BarberPage/BarberNavbar';
 
 function BarberHomePage() {
   const [barber, setBarber] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('inicio');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -83,6 +85,7 @@ function BarberHomePage() {
         //   </div>
         )}
       </div>
+      <BarberNavbar activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 }

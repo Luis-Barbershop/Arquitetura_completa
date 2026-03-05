@@ -30,12 +30,12 @@ function NextScheduling() {
                 <div className={Styles.nextScheduling}>
 
                     <div className={Styles.nextSchedulingHour}>
-                        <h2>09:00</h2>
+                        <h2>12:00</h2>
                     </div>
 
                     <div className={Styles.nextSchedulingInfo}>
-                        <h2>João Silva</h2>
-                        <p>Corte Masculino</p>
+                        <h2>Matheus Daleffi</h2>
+                        <p>Barba Terapia</p>
                     </div>
 
                     <div className={Styles.nextSchedulingActions}>
@@ -47,12 +47,12 @@ function NextScheduling() {
                 <div className={Styles.nextScheduling}>
 
                     <div className={Styles.nextSchedulingHour}>
-                        <h2>09:00</h2>
+                        <h2>17:00</h2>
                     </div>
 
                     <div className={Styles.nextSchedulingInfo}>
-                        <h2>João Silva</h2>
-                        <p>Corte Masculino</p>
+                        <h2>Pedro Manuel</h2>
+                        <p>Corte Social</p>
                     </div>
 
                     <div className={Styles.nextSchedulingActions}>
