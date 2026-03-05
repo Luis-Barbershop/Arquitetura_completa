@@ -1,4 +1,4 @@
-import Styles from "./MenuNavBar.module.css"
+import Styles from "./MenuNavbar.module.css"
 import { useNavigate } from 'react-router-dom';
 
 function MenuNavBar() {
