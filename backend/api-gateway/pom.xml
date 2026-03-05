@@ -14,10 +14,11 @@
             <artifactId>spring-cloud-starter-gateway</artifactId>
         </dependency>
         <!-- Necessário para que o GrpcSslConfigurer do Spring Cloud Gateway
-             consiga ser introspectado sem ClassNotFoundException -->
+             consiga ser introspectado sem ClassNotFoundException.
+             grpc-netty (NÃO shaded) fornece io.grpc.netty.NettyChannelBuilder -->
         <dependency>
             <groupId>io.grpc</groupId>
-            <artifactId>grpc-netty-shaded</artifactId>
+            <artifactId>grpc-netty</artifactId>
             <version>1.62.2</version>
             <scope>runtime</scope>
         </dependency>
