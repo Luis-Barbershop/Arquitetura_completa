@@ -13,6 +13,18 @@ spring:
       filter:
         json-to-grpc:
           enabled: false
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
       discovery:
         locator:
           enabled: true
