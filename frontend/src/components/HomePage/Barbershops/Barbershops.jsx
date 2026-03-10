@@ -1,6 +1,6 @@
 import Container_Barbericons from "./Container_Barbericons"
 import Styles from "./CSS/Barbershops.module.css"
-import { getAllBarbershops } from "../../../services/barbershopService"
+import { getAllBarbershops, getShopServices } from "../../../services/barbershopService"
 import { useEffect, useState, useMemo } from "react"
 
 
@@ -10,8 +10,16 @@ function Barbershops({ searchTerm }) {
 
   useEffect(() => {
     const fetchAllBarbershops = async () => {
-      const data = await getAllBarbershops();
-      setBarbershops(data);
+      const shops = await getAllBarbershops();
+
+      const shopsWithServices = await Promise.all(
+        shops.map(async (shop) => {
+          const services = await getShopServices(shop.id);
+          return { ...shop, services };
+        })
+      );
+
+      setBarbershops(shopsWithServices);
       setLoading(false);
     }
 
@@ -38,7 +46,8 @@ function Barbershops({ searchTerm }) {
           name={shop.name}
           address={shop.address}
           image={shop.logoUrl || "./barbershop.jpg"}
-          id={shop.id} />
+          id={shop.id}
+          services={shop.services || []} />
         ))
       ) : (
         <p>Nenhuma barbearia encontrada.</p>
