@@ -6,7 +6,9 @@
     align-items: center;
     justify-content: center;
     color: white;
-    font-family: Roboto;
+    font-size: 1.2rem;
+    font-family: "Space Grotesk", sans-serif;
+    padding: 10px 0px;
 }
 
 .navbar_container div{

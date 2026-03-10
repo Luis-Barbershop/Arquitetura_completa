@@ -1,10 +1,10 @@
 import Container_Barbericons from "./Container_Barbericons"
 import Styles from "./CSS/Barbershops.module.css"
 import { getAllBarbershops } from "../../../services/barbershopService"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 
 
-function Barbershops() {
+function Barbershops({ searchTerm }) {
   const [barbershops, setBarbershops] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,13 +18,21 @@ function Barbershops() {
     fetchAllBarbershops()
   }, []);
 
+  const filtered = useMemo(() => {
+    if (!searchTerm) return barbershops;
+    const term = searchTerm.toLowerCase();
+    return barbershops.filter((shop) =>
+      shop.name.toLowerCase().includes(term)
+    );
+  }, [barbershops, searchTerm]);
+
 
   return (
     <div className={Styles.barbershops_container}>
       {loading ? (
         <p>Carregando Barbearias...</p>
-      ) : barbershops.length > 0 ? (
-        barbershops.map((shop) => (
+      ) : filtered.length > 0 ? (
+        filtered.map((shop) => (
           <Container_Barbericons 
           key={shop.id}
           name={shop.name}

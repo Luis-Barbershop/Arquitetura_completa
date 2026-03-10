@@ -29,10 +29,14 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configure(http)) // ADICIONADO: Habilita CORS
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(authorize -> authorize
+                        // 0. PERMITIR TODAS AS REQUISIÇÕES OPTIONS (CORS Preflight)
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         // 1. Endpoints PÚBLICOS (Registro, Login, Swagger, Listagens)
                         .requestMatchers(
                                 "/api/customers/register",

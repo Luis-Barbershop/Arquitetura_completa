@@ -24,7 +24,7 @@ const MeusAgendamentosPage = () => {
             setAppointments(sorted);
         } catch (error) {
             console.error("Erro ao buscar agendamentos:", error);
-            alert("Não foi possível carregar sua agenda.");
+            // alert("Não foi possível carregar sua agenda.");
         } finally {
             setLoading(false);
         }

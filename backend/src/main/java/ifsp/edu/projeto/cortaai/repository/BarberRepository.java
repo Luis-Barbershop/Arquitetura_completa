@@ -23,6 +23,6 @@ public interface BarberRepository extends JpaRepository<Barber, UUID> {
      Essencial para o "Fluxo 4: Agendamento pelo Cliente".*/
     List<Barber> findByBarbershopId(UUID barbershopId);
 
-    Optional<Barber> findByEmail(String email);
+    Optional<Barber> findByEmailIgnoreCase(String email);
 
 }

@@ -86,7 +86,7 @@ public class BarberServiceImpl implements BarberService {
 
     // MÉTODO AUXILIAR NOVO
     private Barber findBarberByEmail(String email) {
-        return barberRepository.findByEmail(email)
+        return barberRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new NotFoundException("Barbeiro (usuário autenticado) não encontrado"));
     }
 
@@ -100,7 +100,7 @@ public class BarberServiceImpl implements BarberService {
     @Override
     @Transactional(readOnly = true)
     public LoginResponseDTO login(final LoginDTO loginDTO) { // TIPO DE RETORNO ALTERADO
-        final Barber barber = barberRepository.findByEmail(loginDTO.getEmail())
+        final Barber barber = barberRepository.findByEmailIgnoreCase(loginDTO.getEmail())
                 .orElseThrow(() -> new NotFoundException("Usuário ou senha inválidos"));
 
         if (!passwordEncoder.matches(loginDTO.getPassword(), barber.getPassword())) {

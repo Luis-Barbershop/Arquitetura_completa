@@ -18,11 +18,14 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins(
                         "https://www.cortaai.oneaction.space", // Versão com www
                         "https://cortaai.oneaction.space",   // ADICIONADO: Versão sem www
-                        "https://api.cortaai.oneaction.space"  // Para o Swagger
+                        "https://api.cortaai.oneaction.space",  // Para o Swagger
+                        "http://localhost:5173" // localhost (sem barra no final)
                 )
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD")
                 .allowedHeaders("*")
-                .allowCredentials(true);
+                .exposedHeaders("Authorization", "Content-Type")
+                .allowCredentials(true)
+                .maxAge(3600); // Cache preflight por 1 hora
     }
 
     @Override

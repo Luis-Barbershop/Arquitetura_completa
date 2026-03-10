@@ -52,7 +52,7 @@ public class AppointmentsServiceImpl implements AppointmentsService {
     }
 
     private Barber findBarberByEmail(String email) {
-        return barberRepository.findByEmail(email)
+        return barberRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new NotFoundException("Barbeiro (usuário autenticado) não encontrado"));
     }
 
@@ -302,7 +302,7 @@ public class AppointmentsServiceImpl implements AppointmentsService {
         final Appointments appointments = appointmentsRepository.findById(id)
                 .orElseThrow(NotFoundException::new);
 
-        final Barber barber = barberRepository.findByEmail(userEmail).orElse(null);
+        final Barber barber = barberRepository.findByEmailIgnoreCase(userEmail).orElse(null);
         boolean isOwner = (barber != null && barber.isOwner() && barber.getBarbershop() != null);
 
         // Apenas o dono da barbearia pode deletar fisicamente
@@ -320,7 +320,7 @@ public class AppointmentsServiceImpl implements AppointmentsService {
                 .orElseThrow(NotFoundException::new);
 
         final Customer customer = customerRepository.findByEmail(userEmail).orElse(null);
-        final Barber barber = barberRepository.findByEmail(userEmail).orElse(null);
+        final Barber barber = barberRepository.findByEmailIgnoreCase(userEmail).orElse(null);
 
         boolean isOwner = (barber != null && barber.isOwner() && barber.getBarbershop() != null);
         boolean isCustomer = (customer != null);
