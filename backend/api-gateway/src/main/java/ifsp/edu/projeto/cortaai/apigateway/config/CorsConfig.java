@@ -1,5 +1,7 @@
 package ifsp.edu.projeto.cortaai.apigateway.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,42 +11,33 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
-import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Configuração centralizada de CORS para toda a aplicação.
- *
- * <p>Intercepta todos os requests e aplica CORS apenas quando o header
- * {@code Origin} está presente. Requests sem Origin (ex: proxy interno,
- * curl, serviço a serviço) passam sem verificação CORS.
- */
 @Configuration
 public class CorsConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(CorsConfig.class);
 
     @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:3000,http://localhost:8080}")
     private String allowedOriginsRaw;
 
     @Bean
-    @Order(-200) // Roda ANTES do FirebaseTokenGatewayFilter (-100)
+    @Order(-200)
     public WebFilter corsFilter() {
         return (ServerWebExchange exchange, WebFilterChain chain) -> {
             String origin = exchange.getRequest().getHeaders().getFirst(HttpHeaders.ORIGIN);
 
-            // Se não tem header Origin, NÃO é request CORS — deixa passar
             if (origin == null || origin.isBlank()) {
                 return chain.filter(exchange);
             }
 
-            // Verifica se a origin é permitida
             List<String> allowedOrigins = Arrays.asList(allowedOriginsRaw.split(","));
             boolean originAllowed = allowedOrigins.stream()
                     .map(String::trim)
                     .anyMatch(allowed -> {
                         if (allowed.contains("*")) {
-                            // Pattern match simples: http://localhost:* → http://localhost:XXXX
                             String regex = allowed.replace(".", "\\.").replace("*", ".*");
                             return origin.matches(regex);
                         }
@@ -52,11 +45,14 @@ public class CorsConfig {
                     });
 
             if (!originAllowed) {
+                // 👇 LOG ADICIONADO PARA DESCOBRIR A URL QUE ESTÁ SENDO BLOQUEADA 👇
+                log.warn("🚫 CORS BLOQUEADO! O navegador enviou a Origem: '{}'. Origens permitidas são: {}", origin, allowedOriginsRaw);
                 exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
                 return exchange.getResponse().setComplete();
             }
 
-            // Adiciona headers CORS na resposta
+            log.debug("✅ CORS PERMITIDO para a origem: '{}'", origin);
+
             HttpHeaders responseHeaders = exchange.getResponse().getHeaders();
             responseHeaders.set("Access-Control-Allow-Origin", origin);
             responseHeaders.set("Access-Control-Allow-Credentials", "true");
@@ -67,7 +63,6 @@ public class CorsConfig {
                     "Authorization, X-User-UID, X-User-Email, X-User-Type, Content-Disposition");
             responseHeaders.set("Access-Control-Max-Age", "600");
 
-            // Preflight OPTIONS — responde direto sem encaminhar
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequest().getMethod().name())) {
                 exchange.getResponse().setStatusCode(HttpStatus.NO_CONTENT);
                 return exchange.getResponse().setComplete();
