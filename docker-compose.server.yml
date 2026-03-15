@@ -24,7 +24,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1.0"
+          cpus: "1"
           memory: 384M
 
   rabbitmq:
@@ -45,7 +45,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"
+          cpus: "1"
           memory: 300M 
 
   redis:
@@ -62,7 +62,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.2"
+          cpus: "1"
           memory: 48M
 
   # ======== DISCOVERY & GATEWAY ========
@@ -84,7 +84,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"
+          cpus: "1"
           memory: 256M
 
   gateway:
@@ -106,7 +106,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.8"
+          cpus: "1"
           memory: 300M
 
   # ======== MICROSERVIÇOS DE NEGÓCIO ========
@@ -131,7 +131,7 @@ services:
       discovery: { condition: service_started }
     deploy:
       resources:
-        limits: { cpus: "0.8", memory: 300M }
+        limits: { cpus: "1", memory: 300M }
 
   barbershop-service:
     build: { context: ./backend, dockerfile: barbershop-service/Dockerfile }
@@ -153,7 +153,7 @@ services:
       rabbitmq: { condition: service_healthy }
     deploy:
       resources:
-        limits: { cpus: "0.8", memory: 300M }
+        limits: { cpus: "1", memory: 300M }
 
   schedule-service:
     build: { context: ./backend, dockerfile: schedule-service/Dockerfile }
@@ -174,7 +174,7 @@ services:
       redis: { condition: service_healthy }
     deploy:
       resources:
-        limits: { cpus: "0.8", memory: 300M }
+        limits: { cpus: "1", memory: 300M }
 
   payment-service:
     build: { context: ./backend, dockerfile: payment-service/Dockerfile }
@@ -194,7 +194,7 @@ services:
       rabbitmq: { condition: service_healthy }
     deploy:
       resources:
-        limits: { cpus: "0.8", memory: 300M }
+        limits: { cpus: "1", memory: 300M }
 
   notification-service:
     build: { context: ./backend, dockerfile: notification-service/Dockerfile }
@@ -219,7 +219,7 @@ services:
       rabbitmq: { condition: service_healthy }
     deploy:
       resources:
-        limits: { cpus: "0.8", memory: 300M }
+        limits: { cpus: "1", memory: 300M }
 
   product-service:
     build: { context: ./backend, dockerfile: product-service/Dockerfile }
@@ -238,7 +238,7 @@ services:
       rabbitmq: { condition: service_healthy }
     deploy:
       resources:
-        limits: { cpus: "0.8", memory: 256M }
+        limits: { cpus: "1", memory: 256M }
 
   frontend:
     build:
@@ -255,5 +255,5 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.2"
+          cpus: "1"
           memory: 32M
