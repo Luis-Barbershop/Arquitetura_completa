@@ -16,6 +16,18 @@ spring:
       # Remove CORS headers duplicados (gateway + service downstream)
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials Access-Control-Allow-Methods Access-Control-Allow-Headers, RETAIN_FIRST
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
       discovery:
         locator:
           enabled: true
@@ -70,37 +82,37 @@ spring:
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/customers/**, /api/barbers/**, /api/auth/**
+            - Path=/api/customers, /api/customers/**, /api/barbers, /api/barbers/**, /api/auth, /api/auth/**
 
         # Barbershop Service
         - id: barbershop-service
           uri: lb://barbershop-service
           predicates:
-            - Path=/api/barbershops/**
+            - Path=/api/barbershops, /api/barbershops/**
 
         # Schedule Service
         - id: schedule-service
           uri: lb://schedule-service
           predicates:
-            - Path=/api/appointments/**
+            - Path=/api/appointments, /api/appointments/**
 
         # Payment Service
         - id: payment-service
           uri: lb://payment-service
           predicates:
-            - Path=/api/payments/**
+            - Path=/api/payments, /api/payments/**
 
         # Product Service (e-Commerce)
         - id: product-service
           uri: lb://product-service
           predicates:
-            - Path=/api/products/**, /api/orders/**
+            - Path=/api/products, /api/products/**, /api/orders, /api/orders/**
 
         # Notification Service
         - id: notification-service
           uri: lb://notification-service
           predicates:
-            - Path=/api/notifications/**
+            - Path=/api/notifications, /api/notifications/**
 
 springdoc:
   swagger-ui:
