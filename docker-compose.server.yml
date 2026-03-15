@@ -245,7 +245,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=/api
+        # ATENÇÃO: Use o domínio público da sua API com HTTPS
+        - VITE_API_URL=https://api.cortaai.shop/api
     image: cortaai/frontend:latest
     container_name: cortaai-web
     ports: ["5173:80"]
