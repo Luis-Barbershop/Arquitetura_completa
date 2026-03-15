@@ -1,5 +1,5 @@
 import React from 'react'
-import Styles from "./CSS/invoicing.module.css"
+import Styles from "./CSS/Invoicing.module.css"
 
 function Invoicing() {
   return (

@@ -1,5 +1,5 @@
 import { useState } from "react"
-import Carousel_barbershops from "./Carousel_barbershops"
+import Carousel_barbershops from "./carousel_barbershops"
 import Styles from "./CSS/Favorite_barbershops.module.css"
 
 function Favorite_barbershops() {

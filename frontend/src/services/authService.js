@@ -1,106 +1,139 @@
 import api from './api';
+import { auth } from './firebase';
+import {
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signInWithPopup,
+    GoogleAuthProvider,
+    signOut,
+} from 'firebase/auth';
 
-// Login Genérico (aceita 'customer' ou 'barber')
-export const loginUser = async (email, password, userType = 'customer') => {
-    let url = '';
-    
-    // 1. Define a URL correta baseada no Back-end (CustomerController ou BarberController)
-    if (userType === 'barber') {
-        url = '/barbers/login'; 
-    } else {
-        url = '/customers/login'; 
-    }
+// ─────────────────────────────────────────────────────────────
+// Helpers internos
+// ─────────────────────────────────────────────────────────────
 
-    const response = await api.post(url, { email, password });
-    
-    // 2. Salva os dados se o login der certo
-    if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        
-        // 3. CORREÇÃO CRÍTICA: O Back-end não manda a 'role' explícita no DTO.
-        // Precisamos definir manualmente para o appointmentService funcionar.
-        const roleName = userType === 'barber' ? 'ROLE_BARBER' : 'ROLE_CUSTOMER';
-        localStorage.setItem('role', roleName); 
+/**
+ * Após autenticar no Firebase (email/senha, Google, etc.),
+ * envia o idToken para o backend verificar e auto-provisionar.
+ *
+ * Backend: POST /api/auth/verify  { idToken, userType }
+ * Resposta: AuthResponseDTO { id, name, email, phone, photoUrl, userType, authProvider, profileComplete, role }
+ */
+const verifyWithBackend = async (firebaseUser, userType) => {
+    const idToken = await firebaseUser.getIdToken();
+    const response = await api.post('/auth/verify', { idToken, userType });
+    const data = response.data;
 
-        // O userData vem dentro de response.data
-        if (response.data.userData) {
-             localStorage.setItem('userName', response.data.userData.name);
-             localStorage.setItem('userId', response.data.userData.id);
-             // Salva o objeto completo caso precise depois
-             localStorage.setItem('user', JSON.stringify(response.data.userData));
-        }
-    }
-    
-    // Retorna o objeto combinado para a tela usar
-    return { ...response.data, role: localStorage.getItem('role') };
+    // Persiste dados essenciais para componentes que ainda leem do localStorage
+    localStorage.setItem('userId', data.id);
+    localStorage.setItem('userName', data.name || '');
+    localStorage.setItem('role', data.role);          // ROLE_CUSTOMER | ROLE_BARBER | ROLE_OWNER
+    localStorage.setItem('userType', data.userType);  // CUSTOMER | BARBER
+    localStorage.setItem('user', JSON.stringify(data));
+
+    return data;
 };
 
-// Função de Cadastro (Cliente)
+// ─────────────────────────────────────────────────────────────
+// Login com e-mail e senha
+// ─────────────────────────────────────────────────────────────
+
+export const loginUser = async (email, password, userType = 'CUSTOMER') => {
+    // 1. Autentica no Firebase
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+
+    // 2. Verifica no backend e auto-provisiona
+    const data = await verifyWithBackend(credential.user, userType.toUpperCase());
+
+    return data; // { id, name, email, role, profileComplete, ... }
+};
+
+// ─────────────────────────────────────────────────────────────
+// Login com Google
+// ─────────────────────────────────────────────────────────────
+
+export const loginWithGoogle = async (userType = 'CUSTOMER') => {
+    const provider = new GoogleAuthProvider();
+    const credential = await signInWithPopup(auth, provider);
+
+    const data = await verifyWithBackend(credential.user, userType.toUpperCase());
+    return data;
+};
+
+// ─────────────────────────────────────────────────────────────
+// Registro de Cliente
+// ─────────────────────────────────────────────────────────────
+
 export const registerCustomer = async (userData) => {
-    const formData = new FormData();
+    // 1. Cria conta no Firebase
+    const credential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
 
-    // 1. Limpeza de caracteres especiais (CPF e Telefone)
-    const cleanCPF = userData.documentCPF ? userData.documentCPF.replace(/\D/g, '') : '';
-    const cleanTell = userData.tell ? userData.tell.replace(/\D/g, '') : '';
+    // 2. Verifica no backend (auto-provisiona como CUSTOMER)
+    const data = await verifyWithBackend(credential.user, 'CUSTOMER');
 
-    // 2. Monta o objeto JSON
-    const customerJson = JSON.stringify({
-        name: userData.name,
-        email: userData.email,
-        password: userData.password,
+    // 3. Completa perfil com CPF e telefone
+    const cleanCPF = (userData.documentCPF || '').replace(/\D/g, '');
+    const cleanTell = (userData.tell || '').replace(/\D/g, '');
+
+    const completeResponse = await api.post('/auth/customers/complete-profile', {
+        tell: cleanTell,
         documentCPF: cleanCPF,
-        tell: cleanTell
+        name: userData.name,
     });
 
-    // 3. Adiciona o JSON como Blob (Obrigatório para @RequestPart do Java)
-    const jsonBlob = new Blob([customerJson], { type: 'application/json' });
-    formData.append('customer', jsonBlob);
-
-    // 4. Se tiver arquivo de foto no futuro, adicione aqui:
-    // if (userData.file) formData.append('file', userData.file);
-
-    // 5. Envia para o endpoint correto
-    const response = await api.post('/customers/register', formData);
-    return response.data;
+    return completeResponse.data;
 };
 
-// Função de Logout
-export const logoutUser = () => {
-    localStorage.clear(); // Limpa tudo de uma vez
-    window.location.href = '/login';
-};
+// ─────────────────────────────────────────────────────────────
+// Registro de Barbeiro
+// ─────────────────────────────────────────────────────────────
 
 export const registerBarber = async (barberData) => {
-    const formData = new FormData();
-    
-    // 1. Limpeza de caracteres especiais (CPF e Telefone)
-    // O backend usa @CPF e @Size(max=11), então espera apenas números.
-    const cleanCPF = barberData.documentCPF ? barberData.documentCPF.replace(/\D/g, '') : '';
-    const cleanTell = barberData.tell ? barberData.tell.replace(/\D/g, '') : '';
+    // 1. Cria conta no Firebase
+    const credential = await createUserWithEmailAndPassword(auth, barberData.email, barberData.password);
 
-    // 2. Monta o objeto JSON
-    // NOTA: Removemos a função formatTime que adicionava ":00".
-    // O HTML input type="time" já retorna "09:00", que é exatamente o que o teu @JsonFormat pede.
-    const barberJson = JSON.stringify({
+    // 2. Verifica no backend (auto-provisiona como BARBER)
+    const data = await verifyWithBackend(credential.user, 'BARBER');
+
+    // 3. Completa perfil com CPF, telefone e horários
+    const cleanCPF = (barberData.documentCPF || '').replace(/\D/g, '');
+    const cleanTell = (barberData.tell || '').replace(/\D/g, '');
+
+    const completeResponse = await api.post('/auth/barbers/complete-profile', {
+        tell: cleanTell,
+        documentCPF: cleanCPF,
         name: barberData.name,
-        email: barberData.email,
-        password: barberData.password,
-        documentCPF: cleanCPF,       
-        tell: cleanTell,             
-        workStartTime: barberData.workStartTime, // Envia "09:00"
-        workEndTime: barberData.workEndTime      // Envia "18:00"
+        workStartTime: barberData.workStartTime,
+        workEndTime: barberData.workEndTime,
+        isOwner: barberData.isOwner || false,
     });
 
-    // 3. Adiciona o JSON como Blob com o Content-Type EXPLICITO de application/json
-    // Isso é obrigatório para o @RequestPart("barber") do Java funcionar.
-    const jsonBlob = new Blob([barberJson], { type: 'application/json' });
-    formData.append('barber', jsonBlob);
+    return completeResponse.data;
+};
 
-    // Se tiver arquivo de foto no futuro, adicionas aqui:
-    // if (barberData.file) formData.append('file', barberData.file);
+// ─────────────────────────────────────────────────────────────
+// Buscar dados do usuário logado
+// ─────────────────────────────────────────────────────────────
 
-    // 4. Envia SEM o header Content-Type manual (o axios gera o boundary sozinho)
-    const response = await api.post('/barbers/register', formData);
+export const getMe = async () => {
+    const response = await api.get('/auth/me');
+    const data = response.data;
 
-    return response.data;
+    localStorage.setItem('userId', data.id);
+    localStorage.setItem('userName', data.name || '');
+    localStorage.setItem('role', data.role);
+    localStorage.setItem('userType', data.userType);
+    localStorage.setItem('user', JSON.stringify(data));
+
+    return data;
+};
+
+// ─────────────────────────────────────────────────────────────
+// Logout
+// ─────────────────────────────────────────────────────────────
+
+export const logoutUser = async () => {
+    await signOut(auth);
+    localStorage.clear();
+    window.location.href = '/login';
 };

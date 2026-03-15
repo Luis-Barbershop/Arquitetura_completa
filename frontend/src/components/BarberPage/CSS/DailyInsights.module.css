@@ -1,0 +1,70 @@
+.container{
+    display: flex;
+    flex-direction: column;
+    width: 49.5%;
+    height: 220px;
+    background-color: #1f1e2e;
+    border-radius: 10px;
+    font-family: "Space Grotesk", sans-serif;
+    border: #5553a1 1px solid;
+}
+
+.dailyInsightIcon{
+    width: 50px;
+    height: 50px;
+    background-color: #5553a1;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dailyInsightIcon img{
+    width: 80%;
+}
+
+.headerDailyInsights{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 20px;
+    gap: 10px;
+}
+
+.headerDailyInsights p{
+    color: #6d76cf;
+    font-weight: bold;
+}
+
+.content{
+    padding-left: 20px;
+}
+
+.footer{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 55%;
+    margin-top: 35px;
+}
+
+.footer p{
+    color: #a5b4ef;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.seeMoreButton{
+    background: transparent;
+    color: #6d76cf;
+    font-weight: bold;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.9rem ;
+    cursor: pointer;
+}
+
+.seeMoreButton:hover{
+    color: #a5b4ef;
+    transition: 0.3s;
+}

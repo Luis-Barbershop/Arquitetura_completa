@@ -28,10 +28,10 @@ const AgendamentoPage = () => {
 
  
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) {
       alert("Você precisa estar logado para fazer um agendamento.");
-      navigate("/login"); // Ou "/signin" dependendo da sua rota de login de cliente
+      navigate("/login");
     }
   }, [navigate]);
 
@@ -42,8 +42,8 @@ const AgendamentoPage = () => {
         const servicesResponse = await api.get(`/barbershops/${barbershopId}/activities`);
         setServicesList(servicesResponse.data);
 
-        // 2. Barbeiros da Barbearia
-        const barbersResponse = await api.get(`/barbershops/${barbershopId}/barbers`);
+        // 2. Barbeiros da Barbearia (rota no user-service via gateway)
+        const barbersResponse = await api.get(`/barbers/barbershop/${barbershopId}`);
         setBarbersList(barbersResponse.data);
 
       } catch (error) {
@@ -68,10 +68,10 @@ const AgendamentoPage = () => {
       const totalDuration = selectedServices.reduce((acc, curr) => acc + curr.durationMinutes, 0);
 
       try {
-        const response = await api.get(`/barbers/${selectedBarber}/availability`, {
+        const response = await api.get('/appointments/availability', {
           params: {
-            date: selectedDate,    
-            duration: totalDuration 
+            barberId: selectedBarber,
+            date: selectedDate,
           }
         });
         setAvailableSlots(response.data);

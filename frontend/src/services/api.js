@@ -1,16 +1,16 @@
 import axios from 'axios';
+import { auth } from './firebase';
 
 const api = axios.create({
-    // Em dev: http://localhost:8080/api
-    // Em produção (Docker): usa o IP/domínio do servidor na porta do gateway
-    // A variável VITE_API_URL pode ser definida em .env ou .env.production
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api', 
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
 });
 
+// Interceptor: injeta o Firebase ID Token atualizado em cada requisição
 api.interceptors.request.use(async (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+    const user = auth.currentUser;
+    if (user) {
+        const idToken = await user.getIdToken();
+        config.headers.Authorization = `Bearer ${idToken}`;
     }
     return config;
 });

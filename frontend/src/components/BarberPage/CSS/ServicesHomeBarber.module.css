@@ -1,0 +1,83 @@
+.container {
+    width: 100%;
+    margin-top: 20px;
+    font-family: "Space Grotesk", sans-serif;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.title {
+    color: white;
+    font-size: 1.3rem;
+}
+
+.seeMoreButton {
+    background: transparent;
+    border: none;
+    color: #D4AF37;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.seeMoreButton:hover {
+    text-decoration: underline;
+}
+
+.cardsRow {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding-top: 15px;
+}
+
+.card {
+    min-width: 160px;
+    flex: 1;
+    background: linear-gradient(145deg, #4a4a4a, #363636);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid transparent;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    border-color: #D4AF37;
+}
+
+.cardEmoji {
+    font-size: 2rem;
+    margin-bottom: 4px;
+}
+
+.cardName {
+    color: white;
+    font-size: 0.95rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.cardDuration {
+    color: #999;
+    font-size: 0.8rem;
+}
+
+.cardPrice {
+    color: #D4AF37;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-top: 4px;
+}
