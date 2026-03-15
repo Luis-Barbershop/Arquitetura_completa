@@ -29,10 +29,10 @@ import java.util.List;
  *
  * <p>Após validação bem-sucedida, injeta os seguintes headers para os serviços downstream:
  * <ul>
- *   <li>{@code X-User-UID}   — UID único do Firebase</li>
- *   <li>{@code X-User-Email} — e-mail do usuário</li>
- *   <li>{@code X-User-Name}  — nome de exibição</li>
- *   <li>{@code X-User-Type}  — hint do tipo (CUSTOMER | BARBER), enviado pelo cliente como query param ou header</li>
+ * <li>{@code X-User-UID}   — UID único do Firebase</li>
+ * <li>{@code X-User-Email} — e-mail do usuário</li>
+ * <li>{@code X-User-Name}  — nome de exibição</li>
+ * <li>{@code X-User-Type}  — hint do tipo (CUSTOMER | BARBER), enviado pelo cliente como query param ou header</li>
  * </ul>
  */
 @Component
@@ -42,7 +42,11 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
 
     /** Rotas que NÃO exigem autenticação Firebase. */
     private static final List<String> PUBLIC_PATHS = List.of(
-            "/api/auth/verify",          // login/registro via Firebase token
+            "/api/auth/verify", "/api/auth/verify/",
+            "/api/customers/login", "/api/customers/login/",
+            "/api/barbers/login", "/api/barbers/login/",
+            "/api/customers/register", "/api/customers/register/",
+            "/api/barbers/register", "/api/barbers/register/",
             "/api/auth/social/**",        // compatibilidade futura
             "/v3/api-docs/**",
             "/swagger-ui/**",
@@ -50,9 +54,7 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             "/webjars/**",
             "/actuator/**",
             "/api/barbers",              // listagem pública de barbeiros
-            "/api/barbers/**",           // detalhes públicos de barbeiro
-            "/api/barbershops",          // listagem pública de barbearias
-            "/api/barbershops/*/activities" // listagem pública de serviços
+            "/api/barbers/**"            // detalhes públicos de barbeiro
     );
 
     private final FirebaseAuth firebaseAuth;

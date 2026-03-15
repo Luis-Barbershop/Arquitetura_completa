@@ -57,8 +57,14 @@ public class SecurityConfig {
                         "/v3/api-docs/**", "/v3/api-docs.yaml",
                         "/actuator/**"
                 ).permitAll()
-                // Auth público — token no body
-                .requestMatchers(HttpMethod.POST, "/api/auth/verify").permitAll()
+                // Auth público — TODAS as rotas de login e registro
+                .requestMatchers(HttpMethod.POST, 
+                        "/api/auth/verify", "/api/auth/verify/",
+                        "/api/customers/login", "/api/customers/login/",
+                        "/api/barbers/login", "/api/barbers/login/",
+                        "/api/customers/register", "/api/customers/register/",
+                        "/api/barbers/register", "/api/barbers/register/"
+                ).permitAll()
                 // Endpoints internos (Feign inter-serviço)
                 .requestMatchers("/api/internal/**").permitAll()
                 // Listagem pública de barbeiros
