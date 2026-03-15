@@ -3,10 +3,9 @@ package ifsp.edu.projeto.cortaai.apigateway.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.reactive.CorsWebFilter;
-import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
@@ -29,6 +28,7 @@ public class CorsConfig {
     private String allowedOriginsRaw;
 
     @Bean
+    @Order(-200) // Roda ANTES do FirebaseTokenGatewayFilter (-100)
     public WebFilter corsFilter() {
         return (ServerWebExchange exchange, WebFilterChain chain) -> {
             String origin = exchange.getRequest().getHeaders().getFirst(HttpHeaders.ORIGIN);
@@ -52,7 +52,7 @@ public class CorsConfig {
                     });
 
             if (!originAllowed) {
-                exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.FORBIDDEN);
+                exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
                 return exchange.getResponse().setComplete();
             }
 
@@ -69,7 +69,7 @@ public class CorsConfig {
 
             // Preflight OPTIONS — responde direto sem encaminhar
             if ("OPTIONS".equalsIgnoreCase(exchange.getRequest().getMethod().name())) {
-                exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.NO_CONTENT);
+                exchange.getResponse().setStatusCode(HttpStatus.NO_CONTENT);
                 return exchange.getResponse().setComplete();
             }
 
