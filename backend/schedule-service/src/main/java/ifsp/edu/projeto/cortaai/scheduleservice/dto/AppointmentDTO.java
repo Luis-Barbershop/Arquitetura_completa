@@ -5,7 +5,6 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,6 +23,5 @@ public class AppointmentDTO {
     private BigDecimal totalPrice;
     private String status;
     private List<AppointmentActivityDTO> activities;
-    private OffsetDateTime dateCreated;
+    private LocalDateTime dateCreated;
 }
-

@@ -11,7 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalTime;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -66,7 +66,6 @@ public class Barber implements UserDetails {
     private String role = "ROLE_BARBER";
 
     // DESACOPLAMENTO: Apenas o ID da barbearia (que vive em outro banco)
-    // Mudado para UUID pois o banco da barbearia usará UUID
     @Column(name = "barbershop_id", length = 36)
     private UUID barbershopId;
 
@@ -84,11 +83,11 @@ public class Barber implements UserDetails {
 
     @CreatedDate
     @Column(name = "date_created", nullable = false, updatable = false)
-    private OffsetDateTime dateCreated;
+    private LocalDateTime dateCreated;
 
     @LastModifiedDate
     @Column(name = "last_updated")
-    private OffsetDateTime lastUpdated;
+    private LocalDateTime lastUpdated;
 
     // Métodos do UserDetails para o Spring Security
     @Override

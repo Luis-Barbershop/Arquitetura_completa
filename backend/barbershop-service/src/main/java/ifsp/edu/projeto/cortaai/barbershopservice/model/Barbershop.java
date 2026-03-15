@@ -8,7 +8,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -52,11 +52,11 @@ public class Barbershop {
 
     @CreatedDate
     @Column(name = "date_created", nullable = false, updatable = false)
-    private OffsetDateTime dateCreated;
+    private LocalDateTime dateCreated;
 
     @LastModifiedDate
     @Column(name = "last_updated", nullable = false)
-    private OffsetDateTime lastUpdated;
+    private LocalDateTime lastUpdated;
 
     // Relacionamento: 1 Barbearia tem N Serviços
     @OneToMany(mappedBy = "barbershop", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -70,4 +70,3 @@ public class Barbershop {
     @OneToMany(mappedBy = "barbershop", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<BarbershopHighlight> highlights;
 }
-

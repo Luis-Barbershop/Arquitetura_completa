@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Getter
@@ -15,6 +14,5 @@ public class BarberBlockDTO {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private String reason;
-    private OffsetDateTime dateCreated;
+    private LocalDateTime dateCreated;
 }
-
