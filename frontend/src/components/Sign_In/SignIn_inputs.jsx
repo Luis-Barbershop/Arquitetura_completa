@@ -92,6 +92,60 @@ function SignIn_inputs() {
     };
 
 
+    // --- GOOGLE LOGIN & MODAL LOGIC ---
+    const [showModal, setShowModal] = useState(false);
+    // Dados temporários do Google
+    const [googleUser, setGoogleUser] = useState(null);
+
+    // Função para login com Google
+    const handleGoogleSignIn = async (e) => {
+        e.preventDefault();
+        setError(null);
+        setLoading(true);
+        try {
+            const data = await signInWithGoogle();
+            if (data.profileComplete) {
+                // Login normal
+                if (data.userType === 'BARBER') {
+                    navigate('/barberHome');
+                } else {
+                    navigate('/homepage');
+                }
+            } else {
+                // Perfil incompleto: abrir modal
+                setGoogleUser(data);
+                setShowModal(true);
+            }
+        } catch (err) {
+            setError('Erro ao autenticar com Google.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Função para salvar dados do modal
+    const handleSaveCompleteProfile = async (profileData) => {
+        setError(null);
+        setLoading(true);
+        try {
+            await completeProfile(googleUser.userType, {
+                ...profileData,
+                id: googleUser.id,
+                email: googleUser.email,
+            });
+            setShowModal(false);
+            if (googleUser.userType === 'BARBER') {
+                navigate('/barberHome');
+            } else {
+                navigate('/homepage');
+            }
+        } catch (err) {
+            setError('Erro ao completar perfil.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className={Styles.SignIn_inputs_container}>
 
