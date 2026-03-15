@@ -35,7 +35,8 @@ public class Barber implements UserDetails {
     @Column(nullable = false, length = 70)
     private String name;
 
-    @Column(nullable = false, unique = true, length = 11)
+    // CORREÇÃO: O telefone agora é opcional (removido o nullable = false)
+    @Column(unique = true, length = 11)
     private String tell;
 
     @Column(nullable = false, unique = true, length = 70)
@@ -65,7 +66,7 @@ public class Barber implements UserDetails {
     @Column(length = 20)
     private String role = "ROLE_BARBER";
 
-    // DESACOPLAMENTO: Apenas o ID da barbearia (que vive em outro banco)
+    // DESACOPLAMENTO: Apenas o ID da barbearia (que vive noutro banco)
     @Column(name = "barbershop_id", length = 36)
     private UUID barbershopId;
 

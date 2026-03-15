@@ -24,25 +24,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Configuração de segurança do user-service com autenticação Firebase.
- *
- * <p>O API Gateway já valida o Firebase ID Token e injeta os headers
- * {@code X-User-UID}, {@code X-User-Email} e {@code X-User-Type}.
- * O filtro {@link #firebaseHeaderFilter()} lê esses headers e popula
- * o {@link SecurityContextHolder} para que os controllers possam usar
- * {@code @RequestHeader("X-User-UID")} ou {@link java.security.Principal}.
- *
- * <p>A rota {@code POST /api/auth/verify} é pública pois o token Firebase
- * vai no corpo da requisição — não no header.
- */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Filter chain
-    // ──────────────────────────────────────────────────────────────────────────
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -52,7 +36,10 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(req -> req
                 // Permite requisições de preflight CORS
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // <-- ADICIONE ESTA LINHA
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() 
+                
+                // CORREÇÃO: Liberta a rota de erro para não dar um falso 403
+                .requestMatchers("/error").permitAll()
                 
                 // Swagger / Actuator
                 .requestMatchers(
@@ -60,7 +47,7 @@ public class SecurityConfig {
                         "/v3/api-docs/**", "/v3/api-docs.yaml",
                         "/actuator/**"
                 ).permitAll()
-                // Auth público — TODAS as rotas de login e registro
+                // Auth público — TODAS as rotas de login e registo
                 .requestMatchers(HttpMethod.POST, 
                         "/api/auth/verify", "/api/auth/verify/",
                         "/api/customers/login", "/api/customers/login/",
@@ -79,10 +66,6 @@ public class SecurityConfig {
 
         return http.build();
     }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // Filtro: lê X-User-UID do header injetado pelo Gateway e seta o SecurityContext
-    // ──────────────────────────────────────────────────────────────────────────
 
     @Bean
     public OncePerRequestFilter firebaseHeaderFilter() {

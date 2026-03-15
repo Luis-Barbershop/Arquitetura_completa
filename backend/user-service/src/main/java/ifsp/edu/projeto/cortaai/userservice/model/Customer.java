@@ -27,7 +27,8 @@ public class Customer {
     @Column(nullable = false, length = 70)
     private String name;
 
-    @Column(nullable = false, unique = true, length = 11)
+    // CORREÇÃO: O telefone agora é opcional (removido o nullable = false)
+    @Column(unique = true, length = 11)
     private String tell;
 
     @Column(nullable = false, unique = true, length = 70)
@@ -60,7 +61,7 @@ public class Customer {
     @Column(name = "last_updated", nullable = false)
     private LocalDateTime lastUpdated;
 
-    // Campos de imagem (Mantidos)
+    // Campos de imagem
     @Column(name = "image_url", length = 255)
     private String imageUrl;
 
