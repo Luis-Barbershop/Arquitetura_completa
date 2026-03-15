@@ -1,3 +1,53 @@
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+
+export const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const idToken = await result.user.getIdToken();
+        // Envia o token para o backend verificar/provisionar
+        const response = await api.post('/api/auth/verify', { token: idToken });
+        // Retorna o objeto completo do backend (contendo isProfileComplete, userType, etc)
+        return response.data;
+    } catch (error) {
+        console.error("Erro no login social:", error);
+        throw error;
+    }
+};
+
+export const completeProfile = async (type, data) => {
+    const endpoint = type === 'BARBER' ? '/api/auth/complete-profile/barber' : '/api/auth/complete-profile/customer';
+    return await api.post(endpoint, data);
+};
+// ─────────────────────────────────────────────────────────────
+// Login Google (novo padrão: retorna objeto completo do backend)
+// ─────────────────────────────────────────────────────────────
+export const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const idToken = await result.user.getIdToken();
+        // Envia o token para o backend verificar/provisionar
+        const response = await api.post('/api/auth/verify', { token: idToken });
+        // Retorna o objeto completo do backend (contendo isProfileComplete, userType, etc)
+        return response.data;
+    } catch (error) {
+        console.error("Erro no login Google:", error);
+        throw error;
+    }
+};
+
+// ─────────────────────────────────────────────────────────────
+// Completar perfil após login social
+// ─────────────────────────────────────────────────────────────
+export const completeProfile = async (userData) => {
+    // Detecta se é barbeiro ou cliente para usar a rota certa
+    const endpoint = userData.role === 'BARBER'
+        ? '/api/auth/complete-profile/barber'
+        : '/api/auth/complete-profile/customer';
+    const response = await api.post(endpoint, userData);
+    return response.data;
+};
 import api from './api';
 import { auth } from './firebase';
 import {

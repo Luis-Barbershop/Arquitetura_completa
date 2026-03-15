@@ -1,9 +1,10 @@
 import Styles from "./CSS/SignIn_inputs.module.css"
 import { useState } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { registerCustomer, registerBarber, loginWithGoogle } from "../../services/authService"
+import { registerCustomer, registerBarber, loginWithGoogle, completeProfile, signInWithGoogle } from "../../services/authService"
 
 function SignIn_inputs() {
+
 
     // Estados do formulário
     const [step, setStep] = useState(1); // <<< controla o progresso
@@ -21,6 +22,11 @@ function SignIn_inputs() {
 
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
+
+
+
+
+
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -221,29 +227,9 @@ function SignIn_inputs() {
             </div>
 
             {/* Botão Google */}
+
             <button
-                onClick={async () => {
-                    setError(null);
-                    setLoading(true);
-                    try {
-                        const data = await loginWithGoogle(userType);
-                        // Se perfil incompleto e veio do Google, precisa completar
-                        if (!data.profileComplete) {
-                            alert("Complete seus dados para continuar.");
-                            // Mantém na tela de registro para preencher CPF/telefone
-                            return;
-                        }
-                        alert("Cadastro via Google realizado!");
-                        navigate(userType === "customer" ? "/homepage" : "/barberHome");
-                    } catch (err) {
-                        console.error(err);
-                        if (err.code !== 'auth/popup-closed-by-user') {
-                            setError("Falha ao cadastrar com Google.");
-                        }
-                    } finally {
-                        setLoading(false);
-                    }
-                }}
+                onClick={handleGoogleSignIn}
                 disabled={loading}
                 style={{
                     width: '100%',
@@ -271,6 +257,56 @@ function SignIn_inputs() {
                 </svg>
                 {loading ? "Aguarde..." : "Cadastrar com Google"}
             </button>
+
+            {/* Modal para completar perfil (exemplo simples) */}
+            {showModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+                    <div style={{ background: '#fff', padding: 32, borderRadius: 12, minWidth: 320 }}>
+                        <h3>Complete seu perfil</h3>
+                        <form onSubmit={e => { e.preventDefault(); handleSaveCompleteProfile({ cpf: e.target.cpf.value, phone: e.target.phone.value }); }}>
+                            <label>CPF:<br /><input name="cpf" type="text" required /></label><br />
+                            <label>Telefone:<br /><input name="phone" type="text" required /></label><br />
+                            <button type="submit">Salvar</button>
+                            <button type="button" onClick={() => setShowModal(false)} style={{ marginLeft: 8 }}>Cancelar</button>
+                        </form>
+                    </div>
+                </div>
+            )}
+    // Função para login Google (permite clique sem inputs)
+    async function handleGoogleSignIn() {
+        setError(null);
+        setLoading(true);
+        try {
+            const data = await signInWithGoogle(); // deve retornar { user, isProfileComplete, ... }
+            if (!data.isProfileComplete) {
+                setTempUser(data.user);
+                setShowModal(true);
+            } else {
+                localStorage.setItem('user', JSON.stringify(data.user));
+                navigate(data.user.role === 'BARBER' ? '/barber-home' : '/home');
+            }
+        } catch (error) {
+            alert("Falha na autenticação com Google.");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // Função chamada ao salvar dados complementares no modal
+    async function handleSaveCompleteProfile(extraData) {
+        try {
+            const finalData = {
+                ...tempUser,
+                documentCPF: extraData.cpf,
+                tell: extraData.phone
+            };
+            await completeProfile(finalData); // Chama função do authService
+            localStorage.setItem('user', JSON.stringify(finalData));
+            navigate(finalData.role === 'BARBER' ? '/barber-home' : '/home');
+        } catch (error) {
+            alert("Erro ao salvar dados complementares.");
+        }
+    }
 
             <p className={Styles.login_link}>Já possui conta? Entrar</p>
         </div>
