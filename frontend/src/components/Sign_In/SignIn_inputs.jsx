@@ -271,42 +271,12 @@ function SignIn_inputs() {
                         </form>
                     </div>
                 </div>
-            )}
-    // Função para login Google (permite clique sem inputs)
-    async function handleGoogleSignIn() {
-        setError(null);
-        setLoading(true);
-        try {
-            const data = await signInWithGoogle(); // deve retornar { user, isProfileComplete, ... }
-            if (!data.isProfileComplete) {
-                setTempUser(data.user);
-                setShowModal(true);
-            } else {
-                localStorage.setItem('user', JSON.stringify(data.user));
-                navigate(data.user.role === 'BARBER' ? '/barber-home' : '/home');
-            }
-        } catch (error) {
-            alert("Falha na autenticação com Google.");
-        } finally {
-            setLoading(false);
-        }
-    }
 
-    // Função chamada ao salvar dados complementares no modal
-    async function handleSaveCompleteProfile(extraData) {
-        try {
-            const finalData = {
-                ...tempUser,
-                documentCPF: extraData.cpf,
-                tell: extraData.phone
-            };
-            await completeProfile(finalData); // Chama função do authService
-            localStorage.setItem('user', JSON.stringify(finalData));
-            navigate(finalData.role === 'BARBER' ? '/barber-home' : '/home');
-        } catch (error) {
-            alert("Erro ao salvar dados complementares.");
-        }
-    }
+            )}
+
+// Funções devem estar dentro do componente, antes do return:
+// Função para login Google (permite clique sem inputs)
+// (mover para cima do return, dentro do componente)
 
             <p className={Styles.login_link}>Já possui conta? Entrar</p>
         </div>
