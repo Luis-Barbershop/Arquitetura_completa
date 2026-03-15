@@ -29,15 +29,7 @@ export const completeProfile = async (type, data) => {
     const endpoint = type === 'BARBER' ? '/api/auth/complete-profile/barber' : '/api/auth/complete-profile/customer';
     return await api.post(endpoint, data);
 };
-import api from './api';
-import { auth } from './firebase';
-import {
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signInWithPopup,
-    GoogleAuthProvider,
-    signOut,
-} from 'firebase/auth';
+
 
 // ─────────────────────────────────────────────────────────────
 // Helpers internos
