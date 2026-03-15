@@ -51,6 +51,9 @@ public class SecurityConfig {
             .cors(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(req -> req
+                // Permite requisições de preflight CORS
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // <-- ADICIONE ESTA LINHA
+                
                 // Swagger / Actuator
                 .requestMatchers(
                         "/swagger-ui/**", "/swagger-ui.html",
