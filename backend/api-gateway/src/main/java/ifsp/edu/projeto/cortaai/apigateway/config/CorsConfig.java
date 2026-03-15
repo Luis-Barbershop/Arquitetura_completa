@@ -3,9 +3,14 @@ package ifsp.edu.projeto.cortaai.apigateway.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
 import java.util.List;
@@ -13,18 +18,9 @@ import java.util.List;
 /**
  * Configuração centralizada de CORS para toda a aplicação.
  *
- * <p>Este bean {@link CorsWebFilter} é registrado no contexto reativo do Gateway
- * e intercepta <b>todos</b> os requests (inclusive preflight OPTIONS) antes de
- * qualquer filtro de roteamento. Isso garante que:
- * <ul>
- *   <li>Requisições preflight (OPTIONS) recebam os headers corretos e retornem 200</li>
- *   <li>O header {@code Access-Control-Allow-Origin} reflita a origin da requisição</li>
- *   <li>Credenciais (Bearer token) sejam permitidas</li>
- * </ul>
- *
- * <p>As origens permitidas são configuráveis via variável de ambiente
- * {@code CORS_ALLOWED_ORIGINS} (separadas por vírgula). Em desenvolvimento,
- * o padrão permite {@code http://localhost:*}.
+ * <p>Intercepta todos os requests e aplica CORS apenas quando o header
+ * {@code Origin} está presente. Requests sem Origin (ex: proxy interno,
+ * curl, serviço a serviço) passam sem verificação CORS.
  */
 @Configuration
 public class CorsConfig {
@@ -33,58 +29,51 @@ public class CorsConfig {
     private String allowedOriginsRaw;
 
     @Bean
-    public CorsWebFilter corsWebFilter() {
-        CorsConfiguration config = new CorsConfiguration();
+    public WebFilter corsFilter() {
+        return (ServerWebExchange exchange, WebFilterChain chain) -> {
+            String origin = exchange.getRequest().getHeaders().getFirst(HttpHeaders.ORIGIN);
 
-        // ── Origens permitidas ──────────────────────────────────────────
-        // Suporta patterns com wildcard (ex: http://localhost:*)
-        List<String> origins = Arrays.asList(allowedOriginsRaw.split(","));
-        for (String origin : origins) {
-            String trimmed = origin.trim();
-            if (trimmed.contains("*")) {
-                config.addAllowedOriginPattern(trimmed);
-            } else {
-                config.addAllowedOrigin(trimmed);
+            // Se não tem header Origin, NÃO é request CORS — deixa passar
+            if (origin == null || origin.isBlank()) {
+                return chain.filter(exchange);
             }
-        }
 
-        // ── Métodos HTTP permitidos ─────────────────────────────────────
-        config.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"
-        ));
+            // Verifica se a origin é permitida
+            List<String> allowedOrigins = Arrays.asList(allowedOriginsRaw.split(","));
+            boolean originAllowed = allowedOrigins.stream()
+                    .map(String::trim)
+                    .anyMatch(allowed -> {
+                        if (allowed.contains("*")) {
+                            // Pattern match simples: http://localhost:* → http://localhost:XXXX
+                            String regex = allowed.replace(".", "\\.").replace("*", ".*");
+                            return origin.matches(regex);
+                        }
+                        return allowed.equals(origin);
+                    });
 
-        // ── Headers permitidos na requisição ────────────────────────────
-        config.setAllowedHeaders(Arrays.asList(
-                "Authorization",
-                "Content-Type",
-                "Accept",
-                "Origin",
-                "X-Requested-With",
-                "X-User-UID",
-                "X-User-Email",
-                "X-User-Type",
-                "X-User-Name",
-                "Cache-Control"
-        ));
+            if (!originAllowed) {
+                exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.FORBIDDEN);
+                return exchange.getResponse().setComplete();
+            }
 
-        // ── Headers expostos ao navegador na resposta ───────────────────
-        config.setExposedHeaders(Arrays.asList(
-                "Authorization",
-                "X-User-UID",
-                "X-User-Email",
-                "X-User-Type",
-                "Content-Disposition"
-        ));
+            // Adiciona headers CORS na resposta
+            HttpHeaders responseHeaders = exchange.getResponse().getHeaders();
+            responseHeaders.set("Access-Control-Allow-Origin", origin);
+            responseHeaders.set("Access-Control-Allow-Credentials", "true");
+            responseHeaders.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD");
+            responseHeaders.set("Access-Control-Allow-Headers",
+                    "Authorization, Content-Type, Accept, Origin, X-Requested-With, X-User-UID, X-User-Email, X-User-Type, X-User-Name, Cache-Control");
+            responseHeaders.set("Access-Control-Expose-Headers",
+                    "Authorization, X-User-UID, X-User-Email, X-User-Type, Content-Disposition");
+            responseHeaders.set("Access-Control-Max-Age", "600");
 
-        // ── Permitir credenciais (Bearer token, cookies) ────────────────
-        config.setAllowCredentials(true);
+            // Preflight OPTIONS — responde direto sem encaminhar
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequest().getMethod().name())) {
+                exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.NO_CONTENT);
+                return exchange.getResponse().setComplete();
+            }
 
-        // ── Cache da resposta preflight (10 min) ────────────────────────
-        config.setMaxAge(600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return new CorsWebFilter(source);
+            return chain.filter(exchange);
+        };
     }
 }
