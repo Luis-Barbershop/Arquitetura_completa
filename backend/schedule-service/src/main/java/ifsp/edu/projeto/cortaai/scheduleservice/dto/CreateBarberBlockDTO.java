@@ -1,6 +1,8 @@
 package ifsp.edu.projeto.cortaai.scheduleservice.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,6 +22,8 @@ public class CreateBarberBlockDTO {
     @NotNull
     private LocalDateTime endTime;
 
+    @Size(max = 255)
+    @Pattern(regexp = "^[\\p{L}\\p{M}\\p{N}\\s,.!?\\-]*$", message = "Motivo contém caracteres inválidos")
     private String reason;
 }
 

@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.dto;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
 import lombok.Getter;
@@ -14,18 +15,22 @@ public class CustomerDTO {
 
     @NotNull
     @Size(max = 70)
+    @Pattern(regexp = "^[\\p{L}\\p{M}\\s'.\\-]+$", message = "Nome contém caracteres inválidos")
     private String name;
 
     @NotNull
-    @Size(max = 11)
+    @Size(max = 15)
+    @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Formato de telefone inválido")
     private String tell;
 
     @NotNull
     @Size(max = 70)
+    @Pattern(regexp = "^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$", message = "Formato de e-mail inválido")
     private String email;
 
     @NotNull
-    @Size(max = 11)
+    @Size(min = 11, max = 11)
+    @Pattern(regexp = "^[0-9]{11}$", message = "CPF deve conter exatamente 11 dígitos numéricos")
     private String documentCPF;
 
     private String imageUrl;

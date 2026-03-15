@@ -50,7 +50,9 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             "/webjars/**",
             "/actuator/**",
             "/api/barbers",              // listagem pública de barbeiros
-            "/api/barbers/**"            // detalhes públicos de barbeiro
+            "/api/barbers/**",           // detalhes públicos de barbeiro
+            "/api/barbershops",          // listagem pública de barbearias
+            "/api/barbershops/*/activities" // listagem pública de serviços
     );
 
     private final FirebaseAuth firebaseAuth;

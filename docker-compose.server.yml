@@ -99,6 +99,7 @@ services:
     environment:
       - EUREKA_HOST=discovery
       - GOOGLE_APPLICATION_CREDENTIALS=/app/firebase-service-account.json
+      - CORS_ALLOWED_ORIGINS=http://192.168.0.205:5173,http://localhost:5173,http://localhost:3000,https://cortaai.shop
     depends_on:
       discovery:
         condition: service_started
