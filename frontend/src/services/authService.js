@@ -78,7 +78,7 @@ export const register = async (email, password, userData, type) => {
 };
 
 // Logout
-export const logout = async () => {
+export const logoutUser = async () => {
     try {
         await signOut(auth);
         localStorage.removeItem('token');
