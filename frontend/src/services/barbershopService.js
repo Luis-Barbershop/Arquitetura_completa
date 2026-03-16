@@ -1,5 +1,23 @@
 import api from "./api"
 
+const getStoredUserId = () => {
+    const legacyUserId = localStorage.getItem('userId');
+    if (legacyUserId) return legacyUserId;
+
+    try {
+        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+        if (storedUser?.id) {
+            const parsedId = String(storedUser.id);
+            localStorage.setItem('userId', parsedId);
+            return parsedId;
+        }
+    } catch (error) {
+        console.error('Erro ao ler usuario salvo:', error);
+    }
+
+    return null;
+};
+
 // GET /api/barbershops
 export const getAllBarbershops = async () => {
     try {
@@ -107,7 +125,7 @@ export const deleteService = async (serviceId) => {
 // Por enquanto, usa workaround: busca todas activities da shop e filtra no frontend
 export const getMyAssignedActivities = async () => {
     try {
-        const userId = localStorage.getItem('userId');
+        const userId = getStoredUserId();
         if (!userId) return [];
 
         const barberResponse = await api.get(`/barbers/${userId}`);

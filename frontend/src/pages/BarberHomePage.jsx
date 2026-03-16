@@ -20,8 +20,27 @@ function BarberHomePage() {
   const [activeTab, setActiveTab] = useState('inicio');
   const navigate = useNavigate();
 
+  const getLoggedUserId = () => {
+    const legacyUserId = localStorage.getItem('userId');
+    if (legacyUserId) return legacyUserId;
+
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      if (storedUser?.id) {
+        const parsedId = String(storedUser.id);
+        // Backfill the legacy key to avoid breaking older service calls.
+        localStorage.setItem('userId', parsedId);
+        return parsedId;
+      }
+    } catch (error) {
+      console.error('Erro ao ler usuario do localStorage:', error);
+    }
+
+    return null;
+  };
+
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
+    const userId = getLoggedUserId();
     if (!userId) { navigate('/identificacao'); return; }
 
     api.get(`/barbers/${userId}`)

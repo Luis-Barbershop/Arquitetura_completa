@@ -100,6 +100,9 @@ const Login_Inputs = ({ role }) => {
     const finalizeLogin = (data) => {
         localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('userType', data.userType);
+        if (data?.user?.id) {
+            localStorage.setItem('userId', String(data.user.id));
+        }
         if (data.userType === 'BARBER') {
             navigate('/barberHome');
         } else {
