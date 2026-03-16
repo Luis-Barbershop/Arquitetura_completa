@@ -50,6 +50,8 @@ public class SecurityConfig {
                 // Auth público — TODAS as rotas de login e registo
                 .requestMatchers(HttpMethod.POST, 
                         "/api/auth/verify", "/api/auth/verify/",
+                        "/api/auth/customers/complete-profile", "/api/auth/customers/complete-profile/",
+                        "/api/auth/barbers/complete-profile", "/api/auth/barbers/complete-profile/",
                         "/api/customers/login", "/api/customers/login/",
                         "/api/barbers/login", "/api/barbers/login/",
                         "/api/customers/register", "/api/customers/register/",

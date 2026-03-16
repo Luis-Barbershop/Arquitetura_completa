@@ -105,8 +105,8 @@ function SignIn_inputs() {
     };
 
     const finalizeLogin = (data) => {
-        localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('userType', data.userType);
         if (data.userType === 'BARBER') {
             navigate('/barberHome');
         } else {

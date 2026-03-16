@@ -15,12 +15,26 @@ export const signInWithGoogle = async () => {
         const result = await signInWithPopup(auth, provider);
         const idToken = await result.user.getIdToken();
 
-        // Envia o token para o Backend verificar e provisionar o utilizador
-        // NÃO prefixar /api aqui pois o baseURL do axios já inclui /api
-        const response = await api.post('/auth/verify', { token: idToken });
+        // Backend espera { idToken, userType } conforme FirebaseAuthRequestDTO
+        const response = await api.post('/auth/verify', { idToken, userType: null });
         
-        // Retorna o objeto completo { token, user, profileComplete, userType }
-        return response.data;
+        // AuthResponseDTO retorna: { id, name, email, phone, photoUrl, userType, authProvider, profileComplete, role }
+        // Normalizamos para o formato que os componentes esperam
+        const data = response.data;
+        return {
+            user: {
+                id: data.id,
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                photoUrl: data.photoUrl,
+                firebaseUid: result.user.uid,
+            },
+            userType: data.userType,
+            profileComplete: data.profileComplete,
+            role: data.role,
+            authProvider: data.authProvider,
+        };
     } catch (error) {
         console.error("Erro no login com Google:", error);
         throw error;
@@ -50,8 +64,25 @@ export const login = async (email, password) => {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const idToken = await userCredential.user.getIdToken();
         
-        const response = await api.post('/auth/verify', { token: idToken });
-        return response.data; 
+        // Backend espera { idToken, userType } conforme FirebaseAuthRequestDTO
+        const response = await api.post('/auth/verify', { idToken, userType: null });
+        
+        // Normaliza a resposta do AuthResponseDTO
+        const data = response.data;
+        return {
+            user: {
+                id: data.id,
+                name: data.name,
+                email: data.email,
+                phone: data.phone,
+                photoUrl: data.photoUrl,
+                firebaseUid: userCredential.user.uid,
+            },
+            userType: data.userType,
+            profileComplete: data.profileComplete,
+            role: data.role,
+            authProvider: data.authProvider,
+        };
     } catch (error) {
         console.error("Erro no login:", error);
         throw error;

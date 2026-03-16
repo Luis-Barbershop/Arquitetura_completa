@@ -13,21 +13,11 @@ spring:
       filter:
         json-to-grpc:
           enabled: false
+      # CORS é gerenciado pelo CorsConfig.java (WebFilter) — NÃO usar globalcors aqui
+      # para evitar headers duplicados e conflitos
       # Remove CORS headers duplicados (gateway + service downstream)
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials Access-Control-Allow-Methods Access-Control-Allow-Headers, RETAIN_FIRST
-      globalcors:
-        corsConfigurations:
-          '[/**]':
-            allowedOrigins: "*"
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
-              - PATCH
-            allowedHeaders: "*"
       discovery:
         locator:
           enabled: true
