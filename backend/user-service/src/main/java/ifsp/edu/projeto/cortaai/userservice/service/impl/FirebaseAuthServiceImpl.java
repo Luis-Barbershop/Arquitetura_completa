@@ -75,7 +75,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         customer.setTell(dto.tell());
         customer.setDocumentCPF(dto.documentCPF());
 
-        customerRepository.save(customer);
+        customerRepository.saveAndFlush(customer);
         return toAuthResponse(customer);
     }
 
@@ -94,7 +94,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         barber.setWorkEndTime(dto.workEndTime());
         barber.setOwner(dto.isOwner());
 
-        barberRepository.save(barber);
+        barberRepository.saveAndFlush(barber);
         return toAuthResponse(barber);
     }
 
