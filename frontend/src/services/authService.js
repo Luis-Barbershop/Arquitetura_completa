@@ -37,6 +37,9 @@ export const signInWithGoogle = async () => {
         };
     } catch (error) {
         console.error("Erro no login com Google:", error);
+        if (error.response) {
+            console.error("Status:", error.response.status, "Body:", JSON.stringify(error.response.data));
+        }
         throw error;
     }
 };
@@ -60,6 +63,9 @@ export const completeProfileApi = async (type, data, firebaseUserInfo = {}) => {
         return response.data;
     } catch (error) {
         console.error("Erro ao completar o perfil:", error);
+        if (error.response) {
+            console.error("Status:", error.response.status, "Body:", JSON.stringify(error.response.data));
+        }
         throw error;
     }
 };
