@@ -71,9 +71,11 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         }
 
         // Tenta por e-mail (migração de conta antiga)
+        // Verifica com existsById para evitar StaleStateException em registros fantasmas
         if (email != null) {
             Optional<Barber> barberByEmail = barberRepository.findByEmail(email);
-            if (barberByEmail.isPresent()) {
+            if (barberByEmail.isPresent() && barberByEmail.get().getId() != null
+                    && barberRepository.existsById(barberByEmail.get().getId())) {
                 Barber existing = barberByEmail.get();
                 existing.setFirebaseUid(uid);
                 existing.setAuthProvider(provider);
@@ -81,7 +83,8 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 return toAuthResponse(barberRepository.saveAndFlush(existing));
             }
             Optional<Customer> customerByEmail = customerRepository.findByEmail(email);
-            if (customerByEmail.isPresent()) {
+            if (customerByEmail.isPresent() && customerByEmail.get().getId() != null
+                    && customerRepository.existsById(customerByEmail.get().getId())) {
                 Customer existing = customerByEmail.get();
                 existing.setFirebaseUid(uid);
                 existing.setAuthProvider(provider);

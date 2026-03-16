@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -71,6 +72,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
         log.warn("Argumento inválido: {}", ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    // ─── 409 — Registro inconsistente (StaleState / OptimisticLocking) ────────
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, Object>> handleStaleState(ObjectOptimisticLockingFailureException ex) {
+        log.warn("Registro inconsistente (possível dado de migração corrompido): {}", ex.getMessage());
+        return buildResponse(HttpStatus.CONFLICT,
+                "Registro inconsistente no banco de dados. O administrador precisa limpar os dados corrompidos.");
     }
 
     // ─── 500 — Qualquer outra exceção ─────────────────────────────────────────
