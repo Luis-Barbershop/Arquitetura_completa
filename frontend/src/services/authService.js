@@ -42,15 +42,21 @@ export const signInWithGoogle = async () => {
 };
 
 // NOVA FUNÇÃO PARA COMPLETAR O PERFIL (FALTAVA ESTA EXPORTAÇÃO!)
-export const completeProfileApi = async (type, data) => {
+export const completeProfileApi = async (type, data, firebaseUserInfo = {}) => {
     try {
         // Backend: /api/auth/customers/complete-profile ou /api/auth/barbers/complete-profile
         // baseURL já inclui /api, então usamos apenas /auth/...
         const endpoint = type === 'BARBER' 
             ? '/auth/barbers/complete-profile' 
             : '/auth/customers/complete-profile';
+        
+        // Envia também o nome do Firebase para o backend salvar junto
+        const payload = { ...data };
+        if (firebaseUserInfo.name && !payload.name) {
+            payload.name = firebaseUserInfo.name;
+        }
             
-        const response = await api.post(endpoint, data);
+        const response = await api.post(endpoint, payload);
         return response.data;
     } catch (error) {
         console.error("Erro ao completar o perfil:", error);

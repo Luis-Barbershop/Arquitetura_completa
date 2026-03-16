@@ -50,30 +50,94 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
 
         log.info("Firebase auth OK — uid={} provider={} userType={}", uid, provider, request.userType());
 
-        // 2. Determina o tipo de usuário
-        String userType = resolveUserType(request.userType(), uid, email);
+        // 2. Verifica se o usuário JÁ EXISTE no banco (por UID ou e-mail)
+        //    Se existe e tem perfil completo, retorna direto.
+        //    Se existe mas perfil incompleto, retorna com profileComplete=false.
+        //    Se NÃO existe, retorna dados do Firebase com profileComplete=false
+        //    SEM criar nada no banco — só salva quando o complete-profile for chamado.
 
-        // 3. Auto-provisiona ou recupera o usuário
-        if ("BARBER".equalsIgnoreCase(userType)) {
-            Barber barber = findOrCreateBarber(uid, email, name, photoUrl, provider);
+        // Tenta como Barber primeiro (por UID)
+        Optional<Barber> barberByUid = barberRepository.findByFirebaseUid(uid);
+        if (barberByUid.isPresent()) {
+            Barber barber = syncBarberFromFirebase(barberByUid.get(), photoUrl, provider);
             return toAuthResponse(barber);
-        } else {
-            Customer customer = findOrCreateCustomer(uid, email, name, photoUrl, provider);
+        }
+
+        // Tenta como Customer (por UID)
+        Optional<Customer> customerByUid = customerRepository.findByFirebaseUid(uid);
+        if (customerByUid.isPresent()) {
+            Customer customer = syncCustomerFromFirebase(customerByUid.get(), name, photoUrl, provider);
             return toAuthResponse(customer);
         }
+
+        // Tenta por e-mail (migração de conta antiga)
+        if (email != null) {
+            Optional<Barber> barberByEmail = barberRepository.findByEmail(email);
+            if (barberByEmail.isPresent()) {
+                Barber existing = barberByEmail.get();
+                existing.setFirebaseUid(uid);
+                existing.setAuthProvider(provider);
+                if (photoUrl != null && existing.getImageUrl() == null) existing.setImageUrl(photoUrl);
+                return toAuthResponse(barberRepository.saveAndFlush(existing));
+            }
+            Optional<Customer> customerByEmail = customerRepository.findByEmail(email);
+            if (customerByEmail.isPresent()) {
+                Customer existing = customerByEmail.get();
+                existing.setFirebaseUid(uid);
+                existing.setAuthProvider(provider);
+                if (photoUrl != null && existing.getImageUrl() == null) existing.setImageUrl(photoUrl);
+                return toAuthResponse(customerRepository.saveAndFlush(existing));
+            }
+        }
+
+        // Usuário NOVO — NÃO salva no banco ainda!
+        // Retorna um DTO provisório com profileComplete=false para o frontend mostrar o modal.
+        log.info("Usuário novo (não existe no banco). uid={} — aguardando complete-profile para salvar.", uid);
+        return new AuthResponseDTO(
+                null,                        // sem ID (ainda não foi salvo)
+                name != null ? name : "Usuário",
+                email,
+                null,                        // sem telefone
+                photoUrl,
+                request.userType() != null ? request.userType().toUpperCase() : "CUSTOMER",
+                provider,
+                false,                       // perfil NÃO completo
+                "ROLE_CUSTOMER"
+        );
     }
 
     @Override
     @Transactional
     public AuthResponseDTO completeCustomerProfile(String firebaseUid, CompleteProfileCustomerDTO dto) {
+        // Busca customer existente ou cria um novo (o verify NÃO salva no banco para usuários novos)
         Customer customer = customerRepository.findByFirebaseUid(firebaseUid)
-                .orElseThrow(() -> new NotFoundException("Customer não encontrado para o UID: " + firebaseUid));
+                .orElseGet(() -> {
+                    log.info("Customer não encontrado para UID={}, criando novo registro no complete-profile.", firebaseUid);
+                    Customer novo = new Customer();
+                    novo.setFirebaseUid(firebaseUid);
+                    return novo;
+                });
 
         if (dto.name() != null && !dto.name().isBlank()) {
             customer.setName(dto.name());
         }
+        // Se o customer é novo, precisamos garantir que o e-mail foi setado
+        // O gateway injeta X-User-Email — vamos buscar do SecurityContext ou do próprio Firebase
+        if (customer.getEmail() == null || customer.getEmail().isBlank()) {
+            // Tenta extrair e-mail do Firebase token via SecurityContext
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getCredentials() instanceof String emailFromHeader) {
+                customer.setEmail(emailFromHeader);
+            } else {
+                customer.setEmail(firebaseUid + "@firebase.local");
+            }
+        }
+        if (customer.getName() == null || customer.getName().isBlank()) {
+            customer.setName("Usuário");
+        }
         customer.setTell(dto.tell());
         customer.setDocumentCPF(dto.documentCPF());
+        customer.setAuthProvider(customer.getAuthProvider() != null ? customer.getAuthProvider() : "GOOGLE");
 
         customerRepository.saveAndFlush(customer);
         return toAuthResponse(customer);
@@ -82,17 +146,37 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
     @Override
     @Transactional
     public AuthResponseDTO completeBarberProfile(String firebaseUid, CompleteProfileBarberDTO dto) {
+        // Busca barber existente ou cria um novo
         Barber barber = barberRepository.findByFirebaseUid(firebaseUid)
-                .orElseThrow(() -> new NotFoundException("Barbeiro não encontrado para o UID: " + firebaseUid));
+                .orElseGet(() -> {
+                    log.info("Barber não encontrado para UID={}, criando novo registro no complete-profile.", firebaseUid);
+                    return Barber.builder()
+                            .firebaseUid(firebaseUid)
+                            .role("ROLE_BARBER")
+                            .isOwner(false)
+                            .build();
+                });
 
         if (dto.name() != null && !dto.name().isBlank()) {
             barber.setName(dto.name());
+        }
+        if (barber.getEmail() == null || barber.getEmail().isBlank()) {
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getCredentials() instanceof String emailFromHeader) {
+                barber.setEmail(emailFromHeader);
+            } else {
+                barber.setEmail(firebaseUid + "@firebase.local");
+            }
+        }
+        if (barber.getName() == null || barber.getName().isBlank()) {
+            barber.setName("Barbeiro");
         }
         barber.setTell(dto.tell());
         barber.setDocumentCPF(dto.documentCPF());
         barber.setWorkStartTime(dto.workStartTime());
         barber.setWorkEndTime(dto.workEndTime());
         barber.setOwner(dto.isOwner());
+        barber.setAuthProvider(barber.getAuthProvider() != null ? barber.getAuthProvider() : "GOOGLE");
 
         barberRepository.saveAndFlush(barber);
         return toAuthResponse(barber);
@@ -130,28 +214,6 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
     }
 
     /**
-     * Se o cliente não informou userType, tenta descobrir pela existência do registro.
-     * Retorna "CUSTOMER" como padrão se nenhum registro for encontrado.
-     */
-    private String resolveUserType(String requested, String uid, String email) {
-        if (requested != null && !requested.isBlank()) {
-            return requested.toUpperCase();
-        }
-
-        if (barberRepository.existsByFirebaseUid(uid)) return "BARBER";
-        if (customerRepository.existsByFirebaseUid(uid)) return "CUSTOMER";
-
-        // Tenta por e-mail (usuário que tinha conta antes da migração)
-        if (email != null) {
-            if (barberRepository.existsByEmailIgnoreCase(email)) return "BARBER";
-            if (customerRepository.existsByEmailIgnoreCase(email)) return "CUSTOMER";
-        }
-
-        // Padrão
-        return "CUSTOMER";
-    }
-
-    /**
      * Determina o auth provider a partir dos claims do token Firebase.
      * Ex.: google.com → GOOGLE, password → EMAIL, etc.
      */
@@ -180,54 +242,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         return "EMAIL";
     }
 
-    // ─── Customer provisioning ────────────────────────────────────────────────
-
-    private Customer findOrCreateCustomer(String uid, String email, String name,
-                                          String photoUrl, String provider) {
-        // 1. Busca por UID
-        Optional<Customer> byUid = customerRepository.findByFirebaseUid(uid);
-        if (byUid.isPresent()) {
-            return syncCustomerFromFirebase(byUid.get(), name, photoUrl, provider);
-        }
-
-        // 2. Busca por e-mail (migração de conta antiga)
-        if (email != null) {
-            Optional<Customer> byEmail = customerRepository.findByEmail(email);
-            if (byEmail.isPresent()) {
-                Customer existing = byEmail.get();
-                try {
-                    existing.setFirebaseUid(uid);
-                    existing.setAuthProvider(provider);
-                    if (photoUrl != null && existing.getImageUrl() == null) {
-                        existing.setImageUrl(photoUrl);
-                    }
-                    return customerRepository.saveAndFlush(existing);
-                } catch (Exception e) {
-                    log.warn("Falha ao vincular Firebase UID ao customer existente (email={}): {}. Criando novo registro.",
-                            email, e.getMessage());
-                    // Se falhar (ex.: registro fantasma, schema antigo), cria um novo
-                    // Mas antes, remove o registro inconsistente se possível
-                    try {
-                        customerRepository.delete(existing);
-                        customerRepository.flush();
-                    } catch (Exception deleteEx) {
-                        log.warn("Não foi possível remover registro inconsistente: {}", deleteEx.getMessage());
-                    }
-                }
-            }
-        }
-
-        // 3. Cria novo customer
-        Customer newCustomer = new Customer();
-        newCustomer.setFirebaseUid(uid);
-        newCustomer.setEmail(email != null ? email : uid + "@firebase.local");
-        newCustomer.setName(name != null ? name : "Usuário");
-        newCustomer.setImageUrl(photoUrl);
-        newCustomer.setAuthProvider(provider);
-        // tell e documentCPF ficam null — perfil incompleto até o usuário completar
-        log.info("Novo customer provisionado via Firebase: uid={}", uid);
-        return customerRepository.saveAndFlush(newCustomer);
-    }
+    // ─── Sync helpers (atualiza dados do Firebase em registros existentes) ─────
 
     private Customer syncCustomerFromFirebase(Customer customer, String name, String photoUrl, String provider) {
         boolean changed = false;
@@ -243,56 +258,6 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         }
 
         return changed ? customerRepository.saveAndFlush(customer) : customer;
-    }
-
-    // ─── Barber provisioning ──────────────────────────────────────────────────
-
-    private Barber findOrCreateBarber(String uid, String email, String name,
-                                      String photoUrl, String provider) {
-        // 1. Busca por UID
-        Optional<Barber> byUid = barberRepository.findByFirebaseUid(uid);
-        if (byUid.isPresent()) {
-            return syncBarberFromFirebase(byUid.get(), photoUrl, provider);
-        }
-
-        // 2. Busca por e-mail (migração de conta antiga)
-        if (email != null) {
-            Optional<Barber> byEmail = barberRepository.findByEmail(email);
-            if (byEmail.isPresent()) {
-                Barber existing = byEmail.get();
-                try {
-                    existing.setFirebaseUid(uid);
-                    existing.setAuthProvider(provider);
-                    if (photoUrl != null && existing.getImageUrl() == null) {
-                        existing.setImageUrl(photoUrl);
-                    }
-                    return barberRepository.saveAndFlush(existing);
-                } catch (Exception e) {
-                    log.warn("Falha ao vincular Firebase UID ao barbeiro existente (email={}): {}. Criando novo registro.",
-                            email, e.getMessage());
-                    try {
-                        barberRepository.delete(existing);
-                        barberRepository.flush();
-                    } catch (Exception deleteEx) {
-                        log.warn("Não foi possível remover registro inconsistente: {}", deleteEx.getMessage());
-                    }
-                }
-            }
-        }
-
-        // 3. Cria novo barbeiro
-        Barber newBarber = Barber.builder()
-                .firebaseUid(uid)
-                .email(email != null ? email : uid + "@firebase.local")
-                .name(name != null ? name : "Barbeiro")
-                .imageUrl(photoUrl)
-                .authProvider(provider)
-                .role("ROLE_BARBER")
-                .isOwner(false)
-                .build();
-
-        log.info("Novo barbeiro provisionado via Firebase: uid={}", uid);
-        return barberRepository.saveAndFlush(newBarber);
     }
 
     private Barber syncBarberFromFirebase(Barber barber, String photoUrl, String provider) {

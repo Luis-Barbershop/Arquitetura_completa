@@ -53,8 +53,27 @@ const Login_Inputs = () => {
                 documentCPF: extraData.cpf,
                 tell: extraData.phone,
             };
-            await completeProfileApi(tempAuthData.userType, payload);
-            const finalData = { ...tempAuthData, profileComplete: true };
+            // Envia dados para criar/completar o registro no banco
+            const result = await completeProfileApi(
+                tempAuthData.userType, 
+                payload,
+                { name: tempAuthData.user?.name }
+            );
+            // O backend agora retorna o AuthResponseDTO completo após salvar
+            const finalData = {
+                user: {
+                    id: result.id,
+                    name: result.name,
+                    email: result.email,
+                    phone: result.phone,
+                    photoUrl: result.photoUrl,
+                    firebaseUid: tempAuthData.user?.firebaseUid,
+                },
+                userType: result.userType,
+                profileComplete: result.profileComplete,
+                role: result.role,
+                authProvider: result.authProvider,
+            };
             finalizeLogin(finalData);
         } catch (err) {
             console.error(err);
