@@ -16,7 +16,8 @@ export const signInWithGoogle = async () => {
         const idToken = await result.user.getIdToken();
 
         // Envia o token para o Backend verificar e provisionar o utilizador
-        const response = await api.post('/api/auth/verify', { token: idToken });
+        // NÃO prefixar /api aqui pois o baseURL do axios já inclui /api
+        const response = await api.post('/auth/verify', { token: idToken });
         
         // Retorna o objeto completo { token, user, profileComplete, userType }
         return response.data;
@@ -29,9 +30,11 @@ export const signInWithGoogle = async () => {
 // NOVA FUNÇÃO PARA COMPLETAR O PERFIL (FALTAVA ESTA EXPORTAÇÃO!)
 export const completeProfileApi = async (type, data) => {
     try {
+        // Backend: /api/auth/customers/complete-profile ou /api/auth/barbers/complete-profile
+        // baseURL já inclui /api, então usamos apenas /auth/...
         const endpoint = type === 'BARBER' 
-            ? '/api/auth/complete-profile/barber' 
-            : '/api/auth/complete-profile/customer';
+            ? '/auth/barbers/complete-profile' 
+            : '/auth/customers/complete-profile';
             
         const response = await api.post(endpoint, data);
         return response.data;
@@ -47,7 +50,7 @@ export const login = async (email, password) => {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const idToken = await userCredential.user.getIdToken();
         
-        const response = await api.post('/api/auth/verify', { token: idToken });
+        const response = await api.post('/auth/verify', { token: idToken });
         return response.data; 
     } catch (error) {
         console.error("Erro no login:", error);
@@ -62,7 +65,8 @@ export const register = async (email, password, userData, type) => {
         const idToken = await userCredential.user.getIdToken(); // Token de verificação
 
         // Consoante o tipo, envia para a rota certa do backend
-        const endpoint = type === 'BARBER' ? '/api/barbers/register' : '/api/customers/register';
+        // baseURL já inclui /api, então usamos apenas /barbers/register ou /customers/register
+        const endpoint = type === 'BARBER' ? '/barbers/register' : '/customers/register';
         
         // Passa o UID do Firebase e os dados digitados para o Java
         const response = await api.post(endpoint, { 

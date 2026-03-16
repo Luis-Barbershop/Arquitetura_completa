@@ -1,15 +1,35 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInWithGoogle, completeProfileApi } from '../../services/authService';
+import { login, signInWithGoogle, completeProfileApi } from '../../services/authService';
 import styles from './CSS/Login_inputs.module.css';
 
 const Login_Inputs = () => {
     const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [tempAuthData, setTempAuthData] = useState(null);
     const [extraData, setExtraData] = useState({ cpf: '', phone: '' });
 
-    // LOGIN / CADASTRO COM GOOGLE
+    // LOGIN COM EMAIL/SENHA
+    const handleEmailLogin = async (e) => {
+        e.preventDefault();
+        setError(null);
+        setLoading(true);
+        try {
+            const data = await login(email, password);
+            finalizeLogin(data);
+        } catch (err) {
+            console.error(err);
+            setError('Email ou senha inválidos.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // LOGIN COM GOOGLE
     const handleGoogleSignIn = async () => {
         try {
             const data = await signInWithGoogle();
@@ -49,14 +69,41 @@ const Login_Inputs = () => {
     const finalizeLogin = (data) => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        navigate(data.userType === 'BARBER' ? '/barber-home' : '/home');
+        if (data.userType === 'BARBER') {
+            navigate('/barberHome');
+        } else {
+            navigate('/homepage');
+        }
     };
 
     return (
         <div className={styles.container}>
-            {/* Aqui ficaria o formulário manual de cadastro se você ainda usar */}
-            <button onClick={handleGoogleSignIn} className={styles.googleBtn}>
-                Cadastrar com Google
+            {/* Formulário de login com email/senha */}
+            <form onSubmit={handleEmailLogin} className={styles.form}>
+                <input 
+                    type="email" 
+                    placeholder="Email" 
+                    value={email} 
+                    onChange={(e) => setEmail(e.target.value)} 
+                    required 
+                />
+                <input 
+                    type="password" 
+                    placeholder="Senha" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    required 
+                />
+                {error && <p className={styles.error}>{error}</p>}
+                <button type="submit" disabled={loading} className={styles.submitBtn}>
+                    {loading ? 'Entrando...' : 'Entrar'}
+                </button>
+            </form>
+
+            <div className={styles.divider}>ou</div>
+
+            <button onClick={handleGoogleSignIn} className={styles.googleBtn} type="button" disabled={loading}>
+                Entrar com Google
             </button>
 
             {/* MODAL DE CONCLUSÃO DE CADASTRO */}

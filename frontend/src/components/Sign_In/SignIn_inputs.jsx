@@ -72,7 +72,11 @@ function SignIn_inputs() {
     const finalizeLogin = (data) => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        navigate(data.userType === 'BARBER' ? '/barber-home' : '/home');
+        if (data.userType === 'BARBER') {
+            navigate('/barberHome');
+        } else {
+            navigate('/homepage');
+        }
     };
 
     return (
