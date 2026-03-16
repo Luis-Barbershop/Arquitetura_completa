@@ -71,25 +71,20 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         }
 
         // Tenta por e-mail (migração de conta antiga)
-        // Verifica com existsById para evitar StaleStateException em registros fantasmas
+        // Apenas LEITURA — não tenta atualizar registros antigos aqui.
+        // O complete-profile vai criar/atualizar corretamente depois.
         if (email != null) {
             Optional<Barber> barberByEmail = barberRepository.findByEmail(email);
-            if (barberByEmail.isPresent() && barberByEmail.get().getId() != null
-                    && barberRepository.existsById(barberByEmail.get().getId())) {
+            if (barberByEmail.isPresent()) {
                 Barber existing = barberByEmail.get();
-                existing.setFirebaseUid(uid);
-                existing.setAuthProvider(provider);
-                if (photoUrl != null && existing.getImageUrl() == null) existing.setImageUrl(photoUrl);
-                return toAuthResponse(barberRepository.saveAndFlush(existing));
+                log.info("Encontrado barber existente por email={} (migração). Retornando dados sem atualizar.", email);
+                return toAuthResponse(existing);
             }
             Optional<Customer> customerByEmail = customerRepository.findByEmail(email);
-            if (customerByEmail.isPresent() && customerByEmail.get().getId() != null
-                    && customerRepository.existsById(customerByEmail.get().getId())) {
+            if (customerByEmail.isPresent()) {
                 Customer existing = customerByEmail.get();
-                existing.setFirebaseUid(uid);
-                existing.setAuthProvider(provider);
-                if (photoUrl != null && existing.getImageUrl() == null) existing.setImageUrl(photoUrl);
-                return toAuthResponse(customerRepository.saveAndFlush(existing));
+                log.info("Encontrado customer existente por email={} (migração). Retornando dados sem atualizar.", email);
+                return toAuthResponse(existing);
             }
         }
 
