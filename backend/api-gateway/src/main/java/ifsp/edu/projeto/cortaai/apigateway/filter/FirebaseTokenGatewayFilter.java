@@ -72,6 +72,11 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        // Preflight CORS (OPTIONS) — NUNCA bloquear; o CorsConfig cuida disso
+        if ("OPTIONS".equalsIgnoreCase(exchange.getRequest().getMethod().name())) {
+            return chain.filter(exchange);
+        }
+
         String path = exchange.getRequest().getURI().getPath();
 
         // Rotas públicas — deixa passar sem validação

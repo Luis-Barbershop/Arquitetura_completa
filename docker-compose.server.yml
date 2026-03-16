@@ -245,8 +245,9 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        # ATENÇÃO: Use o domínio público da sua API com HTTPS
-        - VITE_API_URL=https://api.cortaai.shop/api
+        # Usa caminho relativo — Nginx faz proxy reverso para o gateway
+        # Evita CORS cross-origin (web.cortaai.shop → api.cortaai.shop)
+        - VITE_API_URL=/api
     image: cortaai/frontend:latest
     container_name: cortaai-web
     ports: ["5173:80"]
