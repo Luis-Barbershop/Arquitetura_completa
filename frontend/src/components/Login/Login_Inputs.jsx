@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login, signInWithGoogle, completeProfileApi } from '../../services/authService';
-import styles from './CSS/Login_inputs.module.css';
+import Styles from './CSS/Login_inputs.module.css';
 
 const Login_Inputs = () => {
     const navigate = useNavigate();
@@ -13,7 +13,6 @@ const Login_Inputs = () => {
     const [tempAuthData, setTempAuthData] = useState(null);
     const [extraData, setExtraData] = useState({ cpf: '', phone: '' });
 
-    // LOGIN COM EMAIL/SENHA
     const handleEmailLogin = async (e) => {
         e.preventDefault();
         setError(null);
@@ -23,46 +22,46 @@ const Login_Inputs = () => {
             finalizeLogin(data);
         } catch (err) {
             console.error(err);
-            setError('Email ou senha inválidos.');
+            setError('Email ou senha invalidos.');
         } finally {
             setLoading(false);
         }
     };
 
-    // LOGIN COM GOOGLE
     const handleGoogleSignIn = async () => {
+        setLoading(true);
         try {
             const data = await signInWithGoogle();
-            
             if (!data.profileComplete) {
-                // Se o Java disse que falta CPF/Telefone, abre o modal
                 setTempAuthData(data);
                 setShowModal(true);
             } else {
-                // Se está completo, salva e entra
                 finalizeLogin(data);
             }
-        } catch (error) {
-            console.error(error);
-            alert("Erro ao entrar com Google.");
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao entrar com Google.');
+        } finally {
+            setLoading(false);
         }
     };
 
-    // SALVAR DADOS DO MODAL
     const handleSaveProfile = async () => {
+        setLoading(true);
         try {
             const payload = {
                 uid: tempAuthData.user.firebaseUid,
                 documentCPF: extraData.cpf,
-                tell: extraData.phone
+                tell: extraData.phone,
             };
-            
             await completeProfileApi(tempAuthData.userType, payload);
-            
             const finalData = { ...tempAuthData, profileComplete: true };
             finalizeLogin(finalData);
-        } catch (error) {
-            alert("Erro ao salvar dados complementares.");
+        } catch (err) {
+            console.error(err);
+            alert('Erro ao salvar dados complementares.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -77,49 +76,43 @@ const Login_Inputs = () => {
     };
 
     return (
-        <div className={styles.container}>
-            {/* Formulário de login com email/senha */}
-            <form onSubmit={handleEmailLogin} className={styles.form}>
-                <input 
-                    type="email" 
-                    placeholder="Email" 
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
-                    required 
-                />
-                <input 
-                    type="password" 
-                    placeholder="Senha" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    required 
-                />
-                {error && <p className={styles.error}>{error}</p>}
-                <button type="submit" disabled={loading} className={styles.submitBtn}>
-                    {loading ? 'Entrando...' : 'Entrar'}
-                </button>
+        <div className={Styles.Login_Inputs_container}>
+            <form onSubmit={handleEmailLogin}>
+                <label>
+                    <p className={Styles.label_input}>E-mail:</p>
+                    <input id={Styles.email_input} type="email" placeholder="seuemail@exemplo.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                </label>
+                <label>
+                    <p className={Styles.label_input}>Senha:</p>
+                    <input id={Styles.password_input} type="password" placeholder="********" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                    <p className={Styles.forgot_password_text}>Esqueceu a senha?</p>
+                </label>
+                {error && <p style={{ color: '#ff4444', fontSize: '14px', marginTop: '8px' }}>{error}</p>}
+                <button className={Styles.Login_button} type="submit" disabled={loading}>{loading ? 'Entrando...' : 'Entrar'}</button>
             </form>
 
-            <div className={styles.divider}>ou</div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '20px 0', width: '60%' }}>
+                <div style={{ flex: 1, height: '1px', backgroundColor: '#555' }}></div>
+                <span style={{ padding: '0 12px', color: '#999', fontSize: '13px' }}>ou entre com</span>
+                <div style={{ flex: 1, height: '1px', backgroundColor: '#555' }}></div>
+            </div>
 
-            <button onClick={handleGoogleSignIn} className={styles.googleBtn} type="button" disabled={loading}>
-                Entrar com Google
+            <button onClick={handleGoogleSignIn} disabled={loading} type="button" style={{ width: '60%', padding: '12px 20px', borderRadius: '8px', border: '1px solid #555', backgroundColor: '#fff', color: '#333', fontSize: '15px', fontWeight: '600', cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', opacity: loading ? 0.6 : 1, transition: 'all 0.2s', marginTop: '5px' }}>
+                <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                {loading ? 'Aguarde...' : 'Entrar com Google'}
             </button>
 
-            {/* MODAL DE CONCLUSÃO DE CADASTRO */}
             {showModal && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modal}>
-                        <h3>Complete seus dados</h3>
-                        <input 
-                            placeholder="CPF" 
-                            onChange={(e) => setExtraData({...extraData, cpf: e.target.value})}
-                        />
-                        <input 
-                            placeholder="Telefone" 
-                            onChange={(e) => setExtraData({...extraData, phone: e.target.value})}
-                        />
-                        <button onClick={handleSaveProfile}>Finalizar Cadastro</button>
+                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+                    <div style={{ background: '#2a2a2a', padding: '32px', borderRadius: '12px', minWidth: '320px', color: '#fff', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <h3 style={{ margin: 0, color: '#c19006' }}>Complete seu perfil</h3>
+                        <p style={{ fontSize: '14px', color: '#ccc', margin: 0 }}>Precisamos do seu CPF e telefone para finalizar o cadastro.</p>
+                        <input placeholder="CPF (somente numeros)" value={extraData.cpf} onChange={(e) => setExtraData({ ...extraData, cpf: e.target.value })} style={{ padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#4F4F4F', color: '#fff', fontSize: '15px' }} />
+                        <input placeholder="Telefone (11999999999)" value={extraData.phone} onChange={(e) => setExtraData({ ...extraData, phone: e.target.value })} style={{ padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#4F4F4F', color: '#fff', fontSize: '15px' }} />
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                            <button onClick={handleSaveProfile} disabled={loading} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#c19006', color: '#333', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>{loading ? 'Salvando...' : 'Finalizar Cadastro'}</button>
+                            <button onClick={() => setShowModal(false)} type="button" style={{ padding: '12px 20px', borderRadius: '8px', border: '1px solid #555', backgroundColor: 'transparent', color: '#ccc', cursor: 'pointer', fontSize: '14px' }}>Cancelar</button>
+                        </div>
                     </div>
                 </div>
             )}
