@@ -37,7 +37,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
     // ──────────────────────────────────────────────────────────────────────────
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public AuthResponseDTO verifyAndProvision(FirebaseAuthRequestDTO request) {
         // 1. Valida o token Firebase
         FirebaseToken decoded = verifyToken(request.idToken());
@@ -59,15 +59,15 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         // Tenta como Barber primeiro (por UID)
         Optional<Barber> barberByUid = barberRepository.findByFirebaseUid(uid);
         if (barberByUid.isPresent()) {
-            Barber barber = syncBarberFromFirebase(barberByUid.get(), photoUrl, provider);
-            return toAuthResponse(barber);
+            log.info("Barber encontrado por UID={}", uid);
+            return toAuthResponse(barberByUid.get());
         }
 
         // Tenta como Customer (por UID)
         Optional<Customer> customerByUid = customerRepository.findByFirebaseUid(uid);
         if (customerByUid.isPresent()) {
-            Customer customer = syncCustomerFromFirebase(customerByUid.get(), name, photoUrl, provider);
-            return toAuthResponse(customer);
+            log.info("Customer encontrado por UID={}", uid);
+            return toAuthResponse(customerByUid.get());
         }
 
         // Tenta por e-mail (migração de conta antiga)
@@ -91,16 +91,20 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         // Usuário NOVO — NÃO salva no banco ainda!
         // Retorna um DTO provisório com profileComplete=false para o frontend mostrar o modal.
         log.info("Usuário novo (não existe no banco). uid={} — aguardando complete-profile para salvar.", uid);
+        String resolvedType = (request.userType() != null && !request.userType().isBlank())
+                ? request.userType().toUpperCase()
+                : "CUSTOMER";
+        String resolvedRole = "BARBER".equals(resolvedType) ? "ROLE_BARBER" : "ROLE_CUSTOMER";
         return new AuthResponseDTO(
                 null,                        // sem ID (ainda não foi salvo)
                 name != null ? name : "Usuário",
                 email,
                 null,                        // sem telefone
                 photoUrl,
-                request.userType() != null ? request.userType().toUpperCase() : "CUSTOMER",
+                resolvedType,
                 provider,
                 false,                       // perfil NÃO completo
-                "ROLE_CUSTOMER"
+                resolvedRole
         );
     }
 
@@ -238,39 +242,6 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             log.debug("Não foi possível extrair o provider do token: {}", e.getMessage());
         }
         return "EMAIL";
-    }
-
-    // ─── Sync helpers (atualiza dados do Firebase em registros existentes) ─────
-
-    private Customer syncCustomerFromFirebase(Customer customer, String name, String photoUrl, String provider) {
-        boolean changed = false;
-
-        // Atualiza foto apenas se o usuário não tem uma foto própria (não do Cloudinary)
-        if (photoUrl != null && customer.getImageUrl() == null) {
-            customer.setImageUrl(photoUrl);
-            changed = true;
-        }
-        if (!provider.equals(customer.getAuthProvider())) {
-            customer.setAuthProvider(provider);
-            changed = true;
-        }
-
-        return changed ? customerRepository.saveAndFlush(customer) : customer;
-    }
-
-    private Barber syncBarberFromFirebase(Barber barber, String photoUrl, String provider) {
-        boolean changed = false;
-
-        if (photoUrl != null && barber.getImageUrl() == null) {
-            barber.setImageUrl(photoUrl);
-            changed = true;
-        }
-        if (!provider.equals(barber.getAuthProvider())) {
-            barber.setAuthProvider(provider);
-            changed = true;
-        }
-
-        return changed ? barberRepository.saveAndFlush(barber) : barber;
     }
 
     // ─── Conversão para AuthResponseDTO ──────────────────────────────────────

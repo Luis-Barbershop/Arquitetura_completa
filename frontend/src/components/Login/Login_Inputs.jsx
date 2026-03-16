@@ -11,7 +11,7 @@ const Login_Inputs = () => {
     const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [tempAuthData, setTempAuthData] = useState(null);
-    const [extraData, setExtraData] = useState({ cpf: '', phone: '' });
+    const [extraData, setExtraData] = useState({ cpf: '', phone: '', workStart: '09:00', workEnd: '18:00' });
 
     const handleEmailLogin = async (e) => {
         e.preventDefault();
@@ -19,7 +19,12 @@ const Login_Inputs = () => {
         setLoading(true);
         try {
             const data = await login(email, password);
-            finalizeLogin(data);
+            if (!data.profileComplete) {
+                setTempAuthData(data);
+                setShowModal(true);
+            } else {
+                finalizeLogin(data);
+            }
         } catch (err) {
             console.error(err);
             setError('Email ou senha invalidos.');
@@ -49,10 +54,17 @@ const Login_Inputs = () => {
     const handleSaveProfile = async () => {
         setLoading(true);
         try {
+            const isBarberProfile = tempAuthData.userType === 'BARBER';
             const payload = {
                 documentCPF: extraData.cpf,
                 tell: extraData.phone,
             };
+            // Se for barbeiro, inclui campos obrigatórios de horário de trabalho
+            if (isBarberProfile) {
+                payload.workStartTime = extraData.workStart;
+                payload.workEndTime = extraData.workEnd;
+                payload.isOwner = false;
+            }
             // Envia dados para criar/completar o registro no banco
             const result = await completeProfileApi(
                 tempAuthData.userType, 
@@ -122,11 +134,21 @@ const Login_Inputs = () => {
 
             {showModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-                    <div style={{ background: '#2a2a2a', padding: '32px', borderRadius: '12px', minWidth: '320px', color: '#fff', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ background: '#2a2a2a', padding: '32px', borderRadius: '12px', minWidth: '320px', maxWidth: '400px', color: '#fff', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <h3 style={{ margin: 0, color: '#c19006' }}>Complete seu perfil</h3>
-                        <p style={{ fontSize: '14px', color: '#ccc', margin: 0 }}>Precisamos do seu CPF e telefone para finalizar o cadastro.</p>
+                        <p style={{ fontSize: '14px', color: '#ccc', margin: 0 }}>
+                            Precisamos de alguns dados para finalizar o cadastro.
+                        </p>
                         <input placeholder="CPF (somente numeros)" value={extraData.cpf} onChange={(e) => setExtraData({ ...extraData, cpf: e.target.value })} style={{ padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#4F4F4F', color: '#fff', fontSize: '15px' }} />
                         <input placeholder="Telefone (11999999999)" value={extraData.phone} onChange={(e) => setExtraData({ ...extraData, phone: e.target.value })} style={{ padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#4F4F4F', color: '#fff', fontSize: '15px' }} />
+                        {tempAuthData?.userType === 'BARBER' && (
+                            <>
+                                <label style={{ fontSize: '14px', color: '#ccc', margin: 0 }}>Início de Expediente:</label>
+                                <input type="time" value={extraData.workStart} onChange={(e) => setExtraData({ ...extraData, workStart: e.target.value })} style={{ padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#4F4F4F', color: '#fff', fontSize: '15px' }} />
+                                <label style={{ fontSize: '14px', color: '#ccc', margin: 0 }}>Fim de Expediente:</label>
+                                <input type="time" value={extraData.workEnd} onChange={(e) => setExtraData({ ...extraData, workEnd: e.target.value })} style={{ padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#4F4F4F', color: '#fff', fontSize: '15px' }} />
+                            </>
+                        )}
                         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
                             <button onClick={handleSaveProfile} disabled={loading} style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', backgroundColor: '#c19006', color: '#333', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>{loading ? 'Salvando...' : 'Finalizar Cadastro'}</button>
                             <button onClick={() => setShowModal(false)} type="button" style={{ padding: '12px 20px', borderRadius: '8px', border: '1px solid #555', backgroundColor: 'transparent', color: '#ccc', cursor: 'pointer', fontSize: '14px' }}>Cancelar</button>
