@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { login, signInWithGoogle, completeProfileApi } from '../../services/authService';
 import Styles from './CSS/Login_inputs.module.css';
 
-const Login_Inputs = () => {
+const Login_Inputs = ({ role }) => {
     const navigate = useNavigate();
+    const isBarber = role === 'barber';
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
@@ -36,7 +37,8 @@ const Login_Inputs = () => {
     const handleGoogleSignIn = async () => {
         setLoading(true);
         try {
-            const data = await signInWithGoogle();
+            const type = isBarber ? 'BARBER' : 'CUSTOMER';
+            const data = await signInWithGoogle(type);
             if (!data.profileComplete) {
                 setTempAuthData(data);
                 setShowModal(true);
