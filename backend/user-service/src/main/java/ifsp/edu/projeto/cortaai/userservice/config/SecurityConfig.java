@@ -50,13 +50,16 @@ public class SecurityConfig {
                 // Auth público — TODAS as rotas de login e registo
                 .requestMatchers(HttpMethod.POST, 
                         "/api/auth/verify", "/api/auth/verify/",
-                        "/api/auth/customers/complete-profile", "/api/auth/customers/complete-profile/",
-                        "/api/auth/barbers/complete-profile", "/api/auth/barbers/complete-profile/",
                         "/api/customers/login", "/api/customers/login/",
                         "/api/barbers/login", "/api/barbers/login/",
                         "/api/customers/register", "/api/customers/register/",
                         "/api/barbers/register", "/api/barbers/register/"
                 ).permitAll()
+                // Complete-profile exige autenticação (Gateway injeta X-User-UID)
+                .requestMatchers(HttpMethod.POST,
+                        "/api/auth/customers/complete-profile", "/api/auth/customers/complete-profile/",
+                        "/api/auth/barbers/complete-profile", "/api/auth/barbers/complete-profile/"
+                ).authenticated()
                 // Endpoints internos (Feign inter-serviço)
                 .requestMatchers("/api/internal/**").permitAll()
                 // Listagem pública de barbeiros

@@ -195,12 +195,25 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             Optional<Customer> byEmail = customerRepository.findByEmail(email);
             if (byEmail.isPresent()) {
                 Customer existing = byEmail.get();
-                existing.setFirebaseUid(uid);
-                existing.setAuthProvider(provider);
-                if (photoUrl != null && existing.getImageUrl() == null) {
-                    existing.setImageUrl(photoUrl);
+                try {
+                    existing.setFirebaseUid(uid);
+                    existing.setAuthProvider(provider);
+                    if (photoUrl != null && existing.getImageUrl() == null) {
+                        existing.setImageUrl(photoUrl);
+                    }
+                    return customerRepository.saveAndFlush(existing);
+                } catch (Exception e) {
+                    log.warn("Falha ao vincular Firebase UID ao customer existente (email={}): {}. Criando novo registro.",
+                            email, e.getMessage());
+                    // Se falhar (ex.: registro fantasma, schema antigo), cria um novo
+                    // Mas antes, remove o registro inconsistente se possível
+                    try {
+                        customerRepository.delete(existing);
+                        customerRepository.flush();
+                    } catch (Exception deleteEx) {
+                        log.warn("Não foi possível remover registro inconsistente: {}", deleteEx.getMessage());
+                    }
                 }
-                return customerRepository.save(existing);
             }
         }
 
@@ -213,7 +226,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         newCustomer.setAuthProvider(provider);
         // tell e documentCPF ficam null — perfil incompleto até o usuário completar
         log.info("Novo customer provisionado via Firebase: uid={}", uid);
-        return customerRepository.save(newCustomer);
+        return customerRepository.saveAndFlush(newCustomer);
     }
 
     private Customer syncCustomerFromFirebase(Customer customer, String name, String photoUrl, String provider) {
@@ -229,7 +242,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             changed = true;
         }
 
-        return changed ? customerRepository.save(customer) : customer;
+        return changed ? customerRepository.saveAndFlush(customer) : customer;
     }
 
     // ─── Barber provisioning ──────────────────────────────────────────────────
@@ -247,12 +260,23 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             Optional<Barber> byEmail = barberRepository.findByEmail(email);
             if (byEmail.isPresent()) {
                 Barber existing = byEmail.get();
-                existing.setFirebaseUid(uid);
-                existing.setAuthProvider(provider);
-                if (photoUrl != null && existing.getImageUrl() == null) {
-                    existing.setImageUrl(photoUrl);
+                try {
+                    existing.setFirebaseUid(uid);
+                    existing.setAuthProvider(provider);
+                    if (photoUrl != null && existing.getImageUrl() == null) {
+                        existing.setImageUrl(photoUrl);
+                    }
+                    return barberRepository.saveAndFlush(existing);
+                } catch (Exception e) {
+                    log.warn("Falha ao vincular Firebase UID ao barbeiro existente (email={}): {}. Criando novo registro.",
+                            email, e.getMessage());
+                    try {
+                        barberRepository.delete(existing);
+                        barberRepository.flush();
+                    } catch (Exception deleteEx) {
+                        log.warn("Não foi possível remover registro inconsistente: {}", deleteEx.getMessage());
+                    }
                 }
-                return barberRepository.save(existing);
             }
         }
 
@@ -268,7 +292,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 .build();
 
         log.info("Novo barbeiro provisionado via Firebase: uid={}", uid);
-        return barberRepository.save(newBarber);
+        return barberRepository.saveAndFlush(newBarber);
     }
 
     private Barber syncBarberFromFirebase(Barber barber, String photoUrl, String provider) {
@@ -283,7 +307,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             changed = true;
         }
 
-        return changed ? barberRepository.save(barber) : barber;
+        return changed ? barberRepository.saveAndFlush(barber) : barber;
     }
 
     // ─── Conversão para AuthResponseDTO ──────────────────────────────────────
