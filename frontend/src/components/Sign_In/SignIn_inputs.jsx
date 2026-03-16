@@ -89,7 +89,6 @@ function SignIn_inputs() {
         setLoading(true);
         try {
             const payload = {
-                uid: tempAuthData.user.firebaseUid,
                 documentCPF: extraData.cpf,
                 tell: extraData.phone,
             };

@@ -50,7 +50,6 @@ const Login_Inputs = () => {
         setLoading(true);
         try {
             const payload = {
-                uid: tempAuthData.user.firebaseUid,
                 documentCPF: extraData.cpf,
                 tell: extraData.phone,
             };
