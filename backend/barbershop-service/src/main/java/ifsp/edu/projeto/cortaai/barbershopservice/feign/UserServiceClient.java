@@ -13,7 +13,11 @@ import java.util.UUID;
  * Feign Client para comunicação com o user-service.
  * Usa os endpoints internos (/api/internal/users).
  */
-@FeignClient(name = "user-service", path = "/api/internal/users")
+@FeignClient(
+        name = "user-service",
+        path = "/api/internal/users",
+        fallbackFactory = UserServiceClientFallbackFactory.class
+)
 public interface UserServiceClient {
 
     @GetMapping("/{id}")

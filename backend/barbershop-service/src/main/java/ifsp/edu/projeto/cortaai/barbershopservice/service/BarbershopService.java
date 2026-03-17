@@ -1,8 +1,10 @@
 package ifsp.edu.projeto.cortaai.barbershopservice.service;
 
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.*;
+import ifsp.edu.projeto.cortaai.barbershopservice.exception.DomainConflictException;
 import ifsp.edu.projeto.cortaai.barbershopservice.exception.ForbiddenException;
 import ifsp.edu.projeto.cortaai.barbershopservice.exception.NotFoundException;
+import ifsp.edu.projeto.cortaai.barbershopservice.exception.UserServiceUnavailableException;
 import ifsp.edu.projeto.cortaai.barbershopservice.feign.UserServiceClient;
 import ifsp.edu.projeto.cortaai.barbershopservice.mapper.ActivityMapper;
 import ifsp.edu.projeto.cortaai.barbershopservice.mapper.BarbershopMapper;
@@ -11,6 +13,7 @@ import ifsp.edu.projeto.cortaai.barbershopservice.model.enums.JoinRequestStatus;
 import ifsp.edu.projeto.cortaai.barbershopservice.repository.*;
 import ifsp.edu.projeto.cortaai.barbershopservice.service.storage.StorageService;
 import lombok.RequiredArgsConstructor;
+import feign.FeignException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,9 +40,37 @@ public class BarbershopService {
     // ========== HELPERS ==========
 
     private UserInfoDTO resolveUser(String email) {
-        UserInfoDTO user = userServiceClient.getUserByEmail(email);
+        UserInfoDTO user;
+        try {
+            user = userServiceClient.getUserByEmail(email);
+        } catch (FeignException.NotFound ex) {
+            throw new NotFoundException("Usuário não encontrado: " + email);
+        } catch (Exception ex) {
+            throw new UserServiceUnavailableException("Não foi possível consultar dados do usuário no momento.");
+        }
         if (user == null) throw new NotFoundException("Usuário não encontrado: " + email);
         return user;
+    }
+
+    private UserInfoDTO resolveUser(UUID userId) {
+        UserInfoDTO user;
+        try {
+            user = userServiceClient.getUserById(userId);
+        } catch (FeignException.NotFound ex) {
+            throw new NotFoundException("Usuário não encontrado: " + userId);
+        } catch (Exception ex) {
+            throw new UserServiceUnavailableException("Não foi possível consultar dados do usuário no momento.");
+        }
+        if (user == null) throw new NotFoundException("Usuário não encontrado: " + userId);
+        return user;
+    }
+
+    private void updateUserBarbershop(UUID userId, UUID barbershopId) {
+        try {
+            userServiceClient.updateUserBarbershopId(userId, barbershopId);
+        } catch (Exception ex) {
+            throw new UserServiceUnavailableException("Não foi possível atualizar o vínculo da barbearia no serviço de usuários.");
+        }
     }
 
     private Barbershop findOwnerShop(UUID ownerId) {
@@ -83,10 +114,10 @@ public class BarbershopService {
         assertOwner(owner);
 
         if (barbershopRepository.findByOwnerId(owner.getId()).isPresent()) {
-            throw new IllegalStateException("Você já possui uma barbearia.");
+            throw new DomainConflictException("Você já possui uma barbearia.");
         }
         if (barbershopRepository.existsByCnpj(dto.getCnpj())) {
-            throw new IllegalArgumentException("CNPJ já cadastrado.");
+            throw new DomainConflictException("CNPJ já cadastrado.");
         }
 
         Barbershop shop = barbershopMapper.toEntity(dto);
@@ -103,7 +134,7 @@ public class BarbershopService {
         }
 
         // Atualiza barbershopId no user-service
-        userServiceClient.updateUserBarbershopId(owner.getId(), saved.getId());
+        updateUserBarbershop(owner.getId(), saved.getId());
 
         return barbershopMapper.toDTO(saved);
     }
@@ -165,7 +196,7 @@ public class BarbershopService {
         Barbershop shop = findOwnerShop(owner.getId());
 
         // Remove a associação do barbeiro com a barbearia no user-service
-        userServiceClient.updateUserBarbershopId(barberId, null);
+        updateUserBarbershop(barberId, null);
     }
 
     public void closeBarbershop(String ownerEmail, CloseBarbershopRequestDTO dto) {
@@ -173,7 +204,7 @@ public class BarbershopService {
         Barbershop shop = findOwnerShop(owner.getId());
 
         // Remove a associação do dono
-        userServiceClient.updateUserBarbershopId(owner.getId(), null);
+        updateUserBarbershop(owner.getId(), null);
 
         // Deleta a barbearia (cascade remove activities, highlights, join requests)
         barbershopRepository.delete(shop);
@@ -186,7 +217,7 @@ public class BarbershopService {
         assertOwner(barber); // É barbeiro
 
         if (barber.getBarbershopId() != null) {
-            throw new IllegalStateException("Você já faz parte de uma barbearia. Saia antes de solicitar entrada em outra.");
+            throw new DomainConflictException("Você já faz parte de uma barbearia. Saia antes de solicitar entrada em outra.");
         }
 
         Barbershop shop = barbershopRepository.findByCnpj(cnpj)
@@ -195,7 +226,7 @@ public class BarbershopService {
         // Verifica se já existe um pedido pendente
         joinRequestRepository.findByBarberIdAndBarbershopId(barber.getId(), shop.getId())
                 .ifPresent(req -> {
-                    throw new IllegalStateException("Você já tem uma solicitação para esta barbearia.");
+                    throw new DomainConflictException("Você já tem uma solicitação para esta barbearia.");
                 });
 
         BarbershopJoinRequest request = new BarbershopJoinRequest();
@@ -220,7 +251,7 @@ public class BarbershopService {
             dto.setStatus(req.getStatus().name());
             // Enriquecer com dados do user-service (best-effort)
             try {
-                UserInfoDTO barberInfo = userServiceClient.getUserById(req.getBarberId());
+                UserInfoDTO barberInfo = resolveUser(req.getBarberId());
                 dto.setBarberName(barberInfo.getName());
                 dto.setBarberEmail(barberInfo.getEmail());
             } catch (Exception e) {
@@ -246,7 +277,7 @@ public class BarbershopService {
         joinRequestRepository.save(request);
 
         // Atualiza barbershopId no user-service
-        userServiceClient.updateUserBarbershopId(request.getBarberId(), shop.getId());
+        updateUserBarbershop(request.getBarberId(), shop.getId());
     }
 
     // ========== FLUXO 3: SAIR DA LOJA ==========
@@ -255,7 +286,7 @@ public class BarbershopService {
         UserInfoDTO barber = resolveUser(barberEmail);
 
         if (barber.getBarbershopId() == null) {
-            throw new IllegalStateException("Você não está associado a nenhuma barbearia.");
+            throw new DomainConflictException("Você não está associado a nenhuma barbearia.");
         }
 
         // Verifica se é o dono — dono não pode sair, tem que fechar
@@ -265,7 +296,7 @@ public class BarbershopService {
         }
 
         // Remove associação no user-service
-        userServiceClient.updateUserBarbershopId(barber.getId(), null);
+        updateUserBarbershop(barber.getId(), null);
     }
 
     // ========== FLUXO 4: GESTÃO DE IMAGENS ==========

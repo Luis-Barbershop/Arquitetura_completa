@@ -9,6 +9,10 @@ server:
 spring:
   application:
     name: barbershop-service
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
   main:
     lazy-initialization: true
   datasource:
