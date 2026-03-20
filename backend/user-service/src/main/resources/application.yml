@@ -56,6 +56,8 @@ firebase:
   # Deixe vazio — o Firebase é carregado via GOOGLE_APPLICATION_CREDENTIALS
   # (arquivo firebase-service-account.json montado como volume no Docker)
   service-account-json: ${FIREBASE_SERVICE_ACCOUNT_JSON:}
+  # API key web do projeto Firebase (necessaria para signInWithPassword)
+  web-api-key: ${FIREBASE_WEB_API_KEY:}
 
 error:
   handling:

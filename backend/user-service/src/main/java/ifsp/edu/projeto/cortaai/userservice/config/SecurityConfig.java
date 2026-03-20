@@ -50,6 +50,8 @@ public class SecurityConfig {
                 // Auth público — TODAS as rotas de login e registo
                 .requestMatchers(HttpMethod.POST, 
                         "/api/auth/verify", "/api/auth/verify/",
+                        "/api/auth/firebase-test/sign-in-email", "/api/auth/firebase-test/sign-in-email/",
+                        "/api/auth/firebase-test/verify-id-token", "/api/auth/firebase-test/verify-id-token/",
                         "/api/customers/login", "/api/customers/login/",
                         "/api/barbers/login", "/api/barbers/login/",
                         "/api/customers/register", "/api/customers/register/",

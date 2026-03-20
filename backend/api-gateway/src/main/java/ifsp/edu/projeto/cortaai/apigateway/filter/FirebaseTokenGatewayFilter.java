@@ -43,6 +43,8 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
     /** Rotas que NÃO exigem autenticação Firebase. */
     private static final List<String> PUBLIC_PATHS = List.of(
             "/api/auth/verify", "/api/auth/verify/",
+            "/api/auth/firebase-test/sign-in-email", "/api/auth/firebase-test/sign-in-email/",
+            "/api/auth/firebase-test/verify-id-token", "/api/auth/firebase-test/verify-id-token/",
             "/api/customers/login", "/api/customers/login/",
             "/api/barbers/login", "/api/barbers/login/",
             "/api/customers/register", "/api/customers/register/",
