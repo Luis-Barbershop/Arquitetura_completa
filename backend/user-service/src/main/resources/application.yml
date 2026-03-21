@@ -68,3 +68,19 @@ cloudinary:
   cloud_name: ${CLOUDINARY_CLOUD_NAME:}
   api_key: ${CLOUDINARY_API_KEY:}
   api_secret: ${CLOUDINARY_API_SECRET:}
+
+# ==================================================
+# SPRINGDOC / SWAGGER UI
+# ==================================================
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    servers-order: first
+  api-docs:
+    path: /v3/api-docs
+  servers:
+    # Swagger "Try it out" envia as requests pelo gateway, não direto para a porta 8081
+    - url: ${SPRINGDOC_SERVER_URL:http://localhost:8080}
+      description: API Gateway (local dev)
+    - url: https://api.cortaai.shop
+      description: API Gateway (produção)
