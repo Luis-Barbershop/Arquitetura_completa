@@ -52,6 +52,7 @@ public class SecurityConfig {
                         "/api/auth/verify", "/api/auth/verify/",
                         "/api/auth/firebase-test/sign-in-email", "/api/auth/firebase-test/sign-in-email/",
                         "/api/auth/firebase-test/verify-id-token", "/api/auth/firebase-test/verify-id-token/",
+                        "/api/auth/firebase-test/register-email", "/api/auth/firebase-test/register-email/",
                         "/api/customers/login", "/api/customers/login/",
                         "/api/barbers/login", "/api/barbers/login/",
                         "/api/customers/register", "/api/customers/register/",

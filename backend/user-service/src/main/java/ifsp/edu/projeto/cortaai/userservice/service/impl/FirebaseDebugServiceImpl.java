@@ -5,9 +5,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import ifsp.edu.projeto.cortaai.userservice.dto.AuthResponseDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileBarberDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileCustomerDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseAuthRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseTokenDebugResponseDTO;
+import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseDebugService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +26,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 @Service
@@ -28,6 +37,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
     private final FirebaseAuth firebaseAuth;
+    private final FirebaseAuthService firebaseAuthService;
     private final ObjectMapper objectMapper;
 
     @Value("${firebase.web-api-key:}")
@@ -95,6 +105,97 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
         } catch (FirebaseAuthException e) {
             throw new SecurityException("Token Firebase inválido ou expirado: " + e.getMessage());
         }
+    }
+
+    @Override
+    public FirebaseEmailRegisterResponseDTO registerWithEmailPassword(FirebaseEmailRegisterRequestDTO request) {
+        if (firebaseWebApiKey == null || firebaseWebApiKey.isBlank()) {
+            throw new IllegalArgumentException("A propriedade firebase.web-api-key não está configurada.");
+        }
+
+        try {
+            // ── 1. Criar usuário no Firebase via Identity Toolkit REST ─────────
+            Map<String, Object> signUpPayload = Map.of(
+                    "email", request.email(),
+                    "password", request.password(),
+                    "returnSecureToken", true
+            );
+
+            String signUpBody = objectMapper.writeValueAsString(signUpPayload);
+            HttpRequest signUpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create("https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=" + firebaseWebApiKey))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(signUpBody))
+                    .build();
+
+            HttpResponse<String> signUpResponse = HTTP_CLIENT.send(signUpRequest, HttpResponse.BodyHandlers.ofString());
+            JsonNode signUpRoot = objectMapper.readTree(signUpResponse.body());
+
+            if (signUpResponse.statusCode() >= 400) {
+                throw new SecurityException(extractRegisterError(signUpRoot));
+            }
+
+            String idToken   = text(signUpRoot, "idToken");
+            String localId   = text(signUpRoot, "localId");
+            String refreshToken = text(signUpRoot, "refreshToken");
+            String expiresIn = text(signUpRoot, "expiresIn");
+
+            // ── 2. Provisionar no backend (verify) ────────────────────────────
+            String userType = request.userType() == null ? "CUSTOMER" : request.userType().toUpperCase();
+            firebaseAuthService.verifyAndProvision(new FirebaseAuthRequestDTO(idToken, userType));
+
+            // ── 3. Completar o perfil ─────────────────────────────────────────
+            // O gateway injeta X-User-UID a partir do token, mas aqui estamos dentro do
+            // próprio user-service. Portanto chamamos o service diretamente com o UID.
+            AuthResponseDTO profile;
+            if ("BARBER".equals(userType)) {
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm");
+                LocalTime start = request.workStartTime() != null
+                        ? LocalTime.parse(request.workStartTime(), fmt) : LocalTime.of(9, 0);
+                LocalTime end   = request.workEndTime() != null
+                        ? LocalTime.parse(request.workEndTime(), fmt)   : LocalTime.of(18, 0);
+                boolean isOwner = Boolean.TRUE.equals(request.isOwner());
+
+                profile = firebaseAuthService.completeBarberProfile(localId,
+                        new CompleteProfileBarberDTO(
+                                request.tell(),
+                                request.documentCPF(),
+                                request.name(),
+                                start,
+                                end,
+                                isOwner
+                        ));
+            } else {
+                profile = firebaseAuthService.completeCustomerProfile(localId,
+                        new CompleteProfileCustomerDTO(
+                                request.tell(),
+                                request.documentCPF(),
+                                request.name()
+                        ));
+            }
+
+            return new FirebaseEmailRegisterResponseDTO(idToken, refreshToken, expiresIn, localId, profile);
+
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Requisicao ao Firebase foi interrompida.", ex);
+        } catch (IOException ex) {
+            throw new RuntimeException("Falha ao comunicar com o Firebase Authentication: " + ex.getMessage(), ex);
+        }
+    }
+
+    private String extractRegisterError(JsonNode root) {
+        String code = root.path("error").path("message").asText();
+        if (code == null || code.isBlank()) {
+            return "Falha ao cadastrar no Firebase.";
+        }
+        return switch (code) {
+            case "EMAIL_EXISTS" -> "Este e-mail já está cadastrado no Firebase.";
+            case "WEAK_PASSWORD : Password should be at least 6 characters" -> "Senha muito curta (mínimo 6 caracteres).";
+            case "INVALID_EMAIL" -> "E-mail inválido.";
+            case "OPERATION_NOT_ALLOWED" -> "Cadastro por e-mail/senha desabilitado no Firebase.";
+            default -> "Erro Firebase: " + code;
+        };
     }
 
     private String extractFirebaseError(JsonNode root) {

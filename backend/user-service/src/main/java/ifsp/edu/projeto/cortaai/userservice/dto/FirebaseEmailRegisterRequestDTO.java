@@ -1,0 +1,49 @@
+package ifsp.edu.projeto.cortaai.userservice.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+/**
+ * Dados para criar um novo usuário no Firebase Authentication via e-mail/senha
+ * e já completar o perfil no backend em uma única chamada de teste.
+ *
+ * <p>Usado exclusivamente pelo {@code FirebaseTestController} (Swagger / debug).
+ */
+public record FirebaseEmailRegisterRequestDTO(
+
+        @NotBlank(message = "email é obrigatório")
+        @Email(message = "email inválido")
+        String email,
+
+        @NotBlank(message = "password é obrigatório")
+        @Size(min = 6, message = "password deve ter no mínimo 6 caracteres")
+        String password,
+
+        /**
+         * Tipo do usuário: {@code CUSTOMER} ou {@code BARBER}.
+         * Determina qual endpoint de complete-profile será chamado.
+         */
+        @NotBlank(message = "userType é obrigatório (CUSTOMER ou BARBER)")
+        String userType,
+
+        // ── Campos comuns ──────────────────────────────────────────────────────
+        @NotBlank(message = "name é obrigatório")
+        String name,
+
+        @NotBlank(message = "tell é obrigatório")
+        String tell,
+
+        @NotBlank(message = "documentCPF é obrigatório")
+        String documentCPF,
+
+        // ── Campos exclusivos de BARBER (ignorados para CUSTOMER) ──────────────
+        /** Horário de início no formato {@code HH:mm} (ex.: "09:00"). Obrigatório para BARBER. */
+        String workStartTime,
+
+        /** Horário de término no formato {@code HH:mm} (ex.: "18:00"). Obrigatório para BARBER. */
+        String workEndTime,
+
+        /** Se o barbeiro é também dono da barbearia. Default {@code false}. */
+        Boolean isOwner
+) {}

@@ -1,5 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.controller;
 
+import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseTokenDebugRequestDTO;
@@ -56,6 +58,34 @@ public class FirebaseTestController {
 	public ResponseEntity<FirebaseTokenDebugResponseDTO> verifyIdToken(
 			@RequestBody @Valid FirebaseTokenDebugRequestDTO request) {
 		return ResponseEntity.ok(firebaseDebugService.verifyToken(request.idToken()));
+	}
+
+	@Operation(
+			summary = "Cadastro Firebase por email/senha + complete-profile",
+			description = """
+					Fluxo completo de cadastro para testes via Swagger:
+					1. Cria o usuário no Firebase Authentication (signUp).
+					2. Provisiona no backend via `/api/auth/verify`.
+					3. Completa o perfil via `/api/auth/{customers|barbers}/complete-profile`.
+
+					**Campos obrigatórios para CUSTOMER**: email, password, userType="CUSTOMER", name, tell, documentCPF.
+
+					**Campos obrigatórios para BARBER**: todos acima + workStartTime (HH:mm), workEndTime (HH:mm).
+					isOwner é opcional (default false).
+
+					O `idToken` retornado pode ser usado no botão **Authorize** do Swagger para testar rotas protegidas.
+					"""
+	)
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Cadastro e perfil criados com sucesso"),
+			@ApiResponse(responseCode = "400", description = "Corpo inválido ou e-mail já cadastrado"),
+			@ApiResponse(responseCode = "500", description = "Erro ao comunicar com Firebase")
+	})
+	@SecurityRequirements
+	@PostMapping("/register-email")
+	public ResponseEntity<FirebaseEmailRegisterResponseDTO> registerWithEmail(
+			@RequestBody @Valid FirebaseEmailRegisterRequestDTO request) {
+		return ResponseEntity.ok(firebaseDebugService.registerWithEmailPassword(request));
 	}
 }
 
