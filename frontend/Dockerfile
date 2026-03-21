@@ -3,7 +3,8 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm install
+# Limpa cache corrompido e instala com ci (reproduzível via lock file)
+RUN npm cache clean --force && npm ci --prefer-offline || npm ci
 
 COPY . .
 
