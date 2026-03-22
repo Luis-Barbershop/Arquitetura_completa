@@ -58,11 +58,16 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             "/actuator/**",
             "/api/barbers",              // listagem pública de barbeiros
             "/api/barbers/**",           // detalhes públicos de barbeiro
-            "/api/barbershops",          // listagem pública de barbearias
-            "/api/barbershops/**",       // detalhes públicos de barbearia
             "/api/payments/webhook",     // webhook do Mercado Pago (sem autenticação)
             "/api/payments/webhook/",
             "/api/internal/**"           // endpoints internos (Feign inter-serviço)
+    );
+
+    /** Endpoints públicos de leitura de barbearia (somente GET). */
+    private static final List<String> PUBLIC_BARBERSHOP_GET_PATHS = List.of(
+            "/api/barbershops",
+            "/api/barbershops/*",
+            "/api/barbershops/*/activities"
     );
 
     private final FirebaseAuth firebaseAuth;
@@ -80,15 +85,17 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        String method = exchange.getRequest().getMethod().name();
+
         // Preflight CORS (OPTIONS) — NUNCA bloquear; o CorsConfig cuida disso
-        if ("OPTIONS".equalsIgnoreCase(exchange.getRequest().getMethod().name())) {
+        if ("OPTIONS".equalsIgnoreCase(method)) {
             return chain.filter(exchange);
         }
 
         String path = exchange.getRequest().getURI().getPath();
 
         // Rotas públicas — deixa passar sem validação
-        if (isPublicPath(path)) {
+        if (isPublicPath(path) || isPublicBarbershopGet(path, method)) {
             return chain.filter(exchange);
         }
 
@@ -121,6 +128,13 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
 
     private boolean isPublicPath(String path) {
         return PUBLIC_PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
+    }
+
+    private boolean isPublicBarbershopGet(String path, String method) {
+        if (!"GET".equalsIgnoreCase(method)) {
+            return false;
+        }
+        return PUBLIC_BARBERSHOP_GET_PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
     /**

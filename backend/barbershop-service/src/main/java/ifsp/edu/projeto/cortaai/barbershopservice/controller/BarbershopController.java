@@ -62,6 +62,9 @@ public class BarbershopController {
             @Parameter(hidden = true) Principal principal,
             @Parameter(description = "Dados da barbearia") @RequestPart("shop") @Valid CreateBarbershopDTO dto,
             @Parameter(description = "Arquivo de logo (opcional)") @RequestPart(value = "file", required = false) MultipartFile file) {
+        if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         try {
             BarbershopDTO created = barbershopService.createBarbershop(principal.getName(), dto, file);
             return new ResponseEntity<>(created, HttpStatus.CREATED);
