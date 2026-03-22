@@ -126,6 +126,7 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
     depends_on:
       db: { condition: service_healthy }
       discovery: { condition: service_started }
@@ -148,6 +149,7 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -168,6 +170,7 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - REDIS_HOST=redis
+      - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -189,6 +192,7 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - MP_ACCESS_TOKEN=${MP_ACCESS_TOKEN}
+      - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -214,6 +218,7 @@ services:
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - NOTIFICATION_FROM_EMAIL=${NOTIFICATION_FROM_EMAIL}
+      - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -233,6 +238,7 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
+      - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
