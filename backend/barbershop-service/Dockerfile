@@ -15,17 +15,26 @@ COPY payment-service/pom.xml payment-service/pom.xml
 COPY notification-service/pom.xml notification-service/pom.xml
 COPY product-service/pom.xml product-service/pom.xml
 
-RUN chmod +x mvnw && ./mvnw dependency:go-offline -pl barbershop-service -am -q -B
+RUN chmod +x mvnw \
+ && rm -rf /root/.m2/repository/org/apache/tomcat/embed /root/.m2/repository/net/bytebuddy \
+ && ./mvnw -U dependency:go-offline -pl barbershop-service -am -B
 
 COPY barbershop-service/src barbershop-service/src
 
-RUN ./mvnw package -pl barbershop-service -am -DskipTests -q -B
+RUN ./mvnw -U clean package -pl barbershop-service -am -DskipTests -B \
+ && JAR_PATH="$(find /build/barbershop-service/target -maxdepth 1 -type f -name '*.jar' ! -name '*.original' | head -n 1)" \
+ && test -n "$JAR_PATH" \
+ && jar tf "$JAR_PATH" | grep -q 'BOOT-INF/lib/tomcat-embed-core-' \
+ && jar tf "$JAR_PATH" | grep -q 'BOOT-INF/lib/byte-buddy-'
 
 # ===== STAGE 2: Runtime =====
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-COPY --from=builder /build/barbershop-service/target/*.jar app.jar
+COPY --from=builder /build/barbershop-service/target/barbershop-service-*.jar /app/
+
+RUN JAR_PATH="$(find /app -maxdepth 1 -type f -name 'barbershop-service-*.jar' ! -name '*.original' | head -n 1)" \
+ && mv "$JAR_PATH" /app/app.jar
 
 EXPOSE 8082
 
