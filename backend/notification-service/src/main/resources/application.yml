@@ -64,3 +64,17 @@ eureka:
 notification:
   from-email: ${NOTIFICATION_FROM_EMAIL:noreply@cortaai.com.br}
 
+# ==================================================
+# SPRINGDOC / SWAGGER UI
+# ==================================================
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+  servers:
+    - url: ${SPRINGDOC_SERVER_URL:http://localhost:8080}
+      description: API Gateway (local dev)
+    - url: https://api.cortaai.shop
+      description: API Gateway (produção)
+
