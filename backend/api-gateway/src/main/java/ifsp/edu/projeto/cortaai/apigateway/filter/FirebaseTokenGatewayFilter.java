@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Filtro global do API Gateway.
@@ -85,24 +86,27 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        String method = exchange.getRequest().getMethod().name();
+        String correlationId = resolveCorrelationId(exchange.getRequest().getHeaders().getFirst("X-Correlation-Id"));
+        ServerWebExchange exchangeWithCorrelation = withCorrelationId(exchange, correlationId);
+
+        String method = exchangeWithCorrelation.getRequest().getMethod().name();
 
         // Preflight CORS (OPTIONS) — NUNCA bloquear; o CorsConfig cuida disso
         if ("OPTIONS".equalsIgnoreCase(method)) {
-            return chain.filter(exchange);
+            return chain.filter(exchangeWithCorrelation);
         }
 
-        String path = exchange.getRequest().getURI().getPath();
+        String path = exchangeWithCorrelation.getRequest().getURI().getPath();
 
         // Rotas públicas — deixa passar sem validação
         if (isPublicPath(path) || isPublicBarbershopGet(path, method)) {
-            return chain.filter(exchange);
+            return chain.filter(exchangeWithCorrelation);
         }
 
         // Extrai o token do header Authorization: Bearer <token>
-        String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        String authHeader = exchangeWithCorrelation.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return unauthorized(exchange, "Token de autenticação ausente ou malformado.");
+            return unauthorized(exchangeWithCorrelation, "Token de autenticação ausente ou malformado.", correlationId);
         }
 
         String idToken = authHeader.substring(7);
@@ -111,16 +115,16 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
         return Mono.fromCallable(() -> firebaseAuth.verifyIdToken(idToken))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(decodedToken -> {
-                    ServerHttpRequest mutatedRequest = buildMutatedRequest(exchange, decodedToken);
-                    return chain.filter(exchange.mutate().request(mutatedRequest).build());
+                    ServerHttpRequest mutatedRequest = buildMutatedRequest(exchangeWithCorrelation, decodedToken, correlationId);
+                    return chain.filter(exchangeWithCorrelation.mutate().request(mutatedRequest).build());
                 })
                 .onErrorResume(FirebaseAuthException.class, ex -> {
-                    log.warn("Token Firebase inválido ou expirado: {}", ex.getMessage());
-                    return unauthorized(exchange, "Token inválido ou expirado.");
+                    log.warn("event=gateway-firebase-invalid-token correlationId={} message={}", correlationId, ex.getMessage());
+                    return unauthorized(exchangeWithCorrelation, "Token inválido ou expirado.", correlationId);
                 })
                 .onErrorResume(Exception.class, ex -> {
-                    log.error("Erro ao validar token Firebase", ex);
-                    return unauthorized(exchange, "Erro de autenticação.");
+                    log.error("event=gateway-firebase-auth-error correlationId={} message={}", correlationId, ex.getMessage(), ex);
+                    return unauthorized(exchangeWithCorrelation, "Erro de autenticação.", correlationId);
                 });
     }
 
@@ -141,7 +145,7 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
      * Constrói a requisição mutada com headers de identidade injetados.
      * Headers anteriores de identidade (X-User-*) são removidos para evitar spoofing.
      */
-    private ServerHttpRequest buildMutatedRequest(ServerWebExchange exchange, FirebaseToken token) {
+    private ServerHttpRequest buildMutatedRequest(ServerWebExchange exchange, FirebaseToken token, String correlationId) {
         // Tenta obter o tipo do usuário a partir do header enviado pelo cliente
         String userType = exchange.getRequest().getHeaders().getFirst("X-User-Type");
         if (userType == null) {
@@ -155,19 +159,43 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
                     headers.remove("X-User-Email");
                     headers.remove("X-User-Name");
                     headers.remove("X-User-Type");
+                    headers.remove("X-Correlation-Id");
                 })
                 .header("X-User-UID", token.getUid())
                 .header("X-User-Email", token.getEmail() != null ? token.getEmail() : "")
                 .header("X-User-Name",  token.getName()  != null ? token.getName()  : "")
                 .header("X-User-Type",  userType)
+                .header("X-Correlation-Id", correlationId)
                 .build();
     }
 
-    private Mono<Void> unauthorized(ServerWebExchange exchange, String message) {
+    private Mono<Void> unauthorized(ServerWebExchange exchange, String message, String correlationId) {
         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
-        String body = "{\"error\":\"Unauthorized\",\"message\":\"" + message + "\"}";
+        exchange.getResponse().getHeaders().set("X-Correlation-Id", correlationId);
+        String body = "{\"error\":\"Unauthorized\",\"message\":\"" + message + "\",\"correlationId\":\"" + correlationId + "\"}";
         var buffer = exchange.getResponse().bufferFactory().wrap(body.getBytes());
         return exchange.getResponse().writeWith(Mono.just(buffer));
+    }
+
+    private ServerWebExchange withCorrelationId(ServerWebExchange exchange, String correlationId) {
+        ServerHttpRequest request = exchange.getRequest().mutate()
+                .headers(headers -> {
+                    headers.remove("X-Correlation-Id");
+                    headers.add("X-Correlation-Id", correlationId);
+                })
+                .build();
+
+        ServerWebExchange mutated = exchange.mutate().request(request).build();
+        mutated.getAttributes().put("correlationId", correlationId);
+        mutated.getResponse().getHeaders().set("X-Correlation-Id", correlationId);
+        return mutated;
+    }
+
+    private String resolveCorrelationId(String incomingCorrelationId) {
+        if (incomingCorrelationId == null || incomingCorrelationId.isBlank()) {
+            return UUID.randomUUID().toString();
+        }
+        return incomingCorrelationId;
     }
 }

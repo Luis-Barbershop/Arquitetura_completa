@@ -14,6 +14,8 @@ import ifsp.edu.projeto.cortaai.barbershopservice.repository.*;
 import ifsp.edu.projeto.cortaai.barbershopservice.service.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import feign.FeignException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +29,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class BarbershopService {
+
+    private static final Logger log = LoggerFactory.getLogger(BarbershopService.class);
 
     private final BarbershopRepository barbershopRepository;
     private final ActivityRepository activityRepository;
@@ -68,8 +72,30 @@ public class BarbershopService {
     private void updateUserBarbershop(UUID userId, UUID barbershopId) {
         try {
             userServiceClient.updateUserBarbershopId(userId, barbershopId);
+        } catch (FeignException.NotFound ex) {
+            log.warn("event=user-service-link-update-not-found userId={} barbershopId={} httpStatus={} error={} message={}",
+                    userId, barbershopId, ex.status(), ex.getClass().getSimpleName(), ex.getMessage());
+            throw new NotFoundException("Barbeiro não encontrado no serviço de usuários: " + userId);
+        } catch (FeignException ex) {
+            log.error("event=user-service-link-update-feign-failure userId={} barbershopId={} httpStatus={} error={} message={}",
+                    userId, barbershopId, ex.status(), ex.getClass().getSimpleName(), ex.getMessage(), ex);
+            String detail = ex.status() > 0 ? " (HTTP " + ex.status() + ")" : "";
+            throw new UserServiceUnavailableException(
+                    "Não foi possível atualizar o vínculo da barbearia no serviço de usuários." + detail
+            );
+        } catch (UserServiceUnavailableException ex) {
+            log.error("event=user-service-link-update-fallback-failure userId={} barbershopId={} error={} message={}",
+                    userId, barbershopId, ex.getClass().getSimpleName(), ex.getMessage(), ex);
+            throw ex;
         } catch (Exception ex) {
-            throw new UserServiceUnavailableException("Não foi possível atualizar o vínculo da barbearia no serviço de usuários.");
+            log.error("event=user-service-link-update-unexpected-failure userId={} barbershopId={} error={} message={}",
+                    userId, barbershopId, ex.getClass().getSimpleName(), ex.getMessage(), ex);
+            String detail = (ex.getMessage() != null && !ex.getMessage().isBlank())
+                    ? " Causa: " + ex.getMessage()
+                    : "";
+            throw new UserServiceUnavailableException(
+                    "Não foi possível atualizar o vínculo da barbearia no serviço de usuários." + detail
+            );
         }
     }
 

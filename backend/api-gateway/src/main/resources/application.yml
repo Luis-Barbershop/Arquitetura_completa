@@ -32,6 +32,7 @@ spring:
               - "X-User-UID"
               - "X-User-Email"
               - "X-User-Type"
+              - "X-Correlation-Id"
               - "Content-Disposition"
             allowCredentials: true
             maxAge: 600
