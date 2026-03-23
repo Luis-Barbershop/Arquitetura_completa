@@ -15,21 +15,16 @@ import java.util.List;
 @Configuration
 public class OpenApiConfig {
 
-    @Value("${springdoc.server-relative-url:/}")
-    private String relativeServerUrl;
-
-    @Value("${SPRINGDOC_SERVER_URL:}")
+    // URL pública do gateway (ex: https://api.cortaai.shop) injetada via env SPRINGDOC_SERVER_URL
+    @Value("${SPRINGDOC_SERVER_URL:http://localhost:8080}")
     private String publicServerUrl;
 
     @Bean
     public OpenAPI customOpenAPI() {
         List<Server> servers = new ArrayList<>();
-        // Default to same-origin to avoid browser calls to Docker-internal IPs.
-        servers.add(new Server().url(relativeServerUrl).description("Same origin"));
 
-        if (StringUtils.hasText(publicServerUrl)) {
-            servers.add(new Server().url(publicServerUrl).description("Public gateway"));
-        }
+        // Gateway sempre primeiro — Swagger "Try it out" usa o primeiro servidor da lista
+        servers.add(new Server().url(publicServerUrl).description("API Gateway"));
 
         return new OpenAPI()
                 .servers(servers)
