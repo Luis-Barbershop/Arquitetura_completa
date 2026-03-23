@@ -2,6 +2,7 @@ package ifsp.edu.projeto.cortaai.barbershopservice.controller;
 
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.*;
 import ifsp.edu.projeto.cortaai.barbershopservice.service.BarbershopService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -30,6 +33,7 @@ import java.util.UUID;
 public class BarbershopController {
 
     private final BarbershopService barbershopService;
+    private final ObjectMapper objectMapper;
 
     // ========== LEITURA PÚBLICA ==========
 
@@ -74,21 +78,43 @@ public class BarbershopController {
             @ApiResponse(responseCode = "500", description = "Erro interno ao processar o upload do arquivo")
     })
     @PostMapping(value = "/register-my-shop")
-    public ResponseEntity<BarbershopDTO> createBarbershop(
+    public ResponseEntity<?> createBarbershop(
             @Parameter(hidden = true) Principal principal,
-            @Parameter(description = "Dados da barbearia (JSON)") @RequestPart(value = "shop", required = false) @Valid CreateBarbershopDTO dto,
-            @Parameter(description = "Arquivo de logo (opcional)") @RequestPart(value = "file", required = false) MultipartFile file) {
-        if (dto == null) {
-            return ResponseEntity.badRequest().build();
-        }
+            HttpServletRequest request) {
         if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         try {
+            CreateBarbershopDTO dto = null;
+            MultipartFile file = null;
+
+            if (request instanceof MultipartHttpServletRequest multipart) {
+                // Request arrived as multipart (normal path via gateway)
+                String shopJson = multipart.getParameter("shop");
+                if (shopJson == null || shopJson.isBlank()) {
+                    return ResponseEntity.badRequest().body("Parte 'shop' ausente ou vazia");
+                }
+                dto = objectMapper.readValue(shopJson, CreateBarbershopDTO.class);
+                file = multipart.getFile("file");
+            } else {
+                // Fallback: try to read body as plain JSON (non-multipart)
+                String contentType = request.getContentType();
+                if (contentType != null && contentType.contains(MediaType.APPLICATION_JSON_VALUE)) {
+                    dto = objectMapper.readValue(request.getInputStream(), CreateBarbershopDTO.class);
+                } else {
+                    return ResponseEntity.badRequest().body("Content-Type inválido. Use multipart/form-data com parte 'shop' em JSON.");
+                }
+            }
+
+            if (dto == null || dto.getName() == null || dto.getName().isBlank()) {
+                return ResponseEntity.badRequest().body("Dados da barbearia inválidos ou ausentes.");
+            }
+
             BarbershopDTO created = barbershopService.createBarbershop(principal.getName(), dto, file);
             return new ResponseEntity<>(created, HttpStatus.CREATED);
         } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao processar requisição: " + e.getMessage());
         }
     }
 
