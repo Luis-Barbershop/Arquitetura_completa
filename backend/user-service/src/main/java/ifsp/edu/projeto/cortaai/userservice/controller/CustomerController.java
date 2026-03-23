@@ -1,9 +1,12 @@
 package ifsp.edu.projeto.cortaai.userservice.controller;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.CustomerDTO;
+import ifsp.edu.projeto.cortaai.userservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.userservice.service.CustomerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -43,6 +46,11 @@ public class CustomerController {
     }
 
     @Operation(summary = "Busca um cliente por ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Cliente encontrado"),
+            @ApiResponse(responseCode = "404", description = "Cliente não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @GetMapping("/{id}")
     public ResponseEntity<CustomerDTO> getCustomer(
             @Parameter(description = "UUID do cliente") @PathVariable UUID id) {
@@ -72,7 +80,10 @@ public class CustomerController {
     @Operation(summary = "Upload/atualização da foto de perfil do cliente")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Upload realizado com sucesso (retorna a URL da imagem)"),
-            @ApiResponse(responseCode = "500", description = "Erro interno ao fazer o upload")
+            @ApiResponse(responseCode = "400", description = "Arquivo ausente ou inválido",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Erro interno ao fazer o upload",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @PostMapping(value = "/me/upload-photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> uploadCustomerPhoto(

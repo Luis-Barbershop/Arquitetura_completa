@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.barbershopservice.controller;
 
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.*;
+import ifsp.edu.projeto.cortaai.barbershopservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.barbershopservice.service.BarbershopService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,6 +53,11 @@ public class BarbershopController {
     }
 
     @Operation(summary = "Busca uma barbearia por ID", description = "Retorna os detalhes públicos de uma barbearia específica.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Barbearia encontrada"),
+            @ApiResponse(responseCode = "404", description = "Barbearia não encontrada",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @GetMapping("/{shopId}")
     public ResponseEntity<BarbershopDTO> getBarbershop(
             @Parameter(description = "UUID da barbearia") @PathVariable UUID shopId) {
@@ -81,9 +87,14 @@ public class BarbershopController {
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Barbearia criada com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos ou parte 'shop' ausente"),
-            @ApiResponse(responseCode = "401", description = "Token inválido ou ausente"),
-            @ApiResponse(responseCode = "500", description = "Erro interno ao processar o upload do arquivo")
+            @ApiResponse(responseCode = "400", description = "Dados inválidos ou parte 'shop' ausente",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Token inválido ou ausente",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "CNPJ ou dados duplicados",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Erro interno ao processar o upload do arquivo",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @PostMapping(value = "/register-my-shop")
     public ResponseEntity<?> createBarbershop(
@@ -127,6 +138,17 @@ public class BarbershopController {
     }
 
     @Operation(summary = "Atualiza os dados da própria barbearia", description = "Edita as informações da barbearia do dono autenticado (baseado no token JWT).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Barbearia atualizada"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Token inválido ou ausente",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Sem permissão para alterar esta barbearia",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Barbearia não encontrada",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @PutMapping("/my-shop")
     public ResponseEntity<BarbershopDTO> updateBarbershop(
             @Parameter(hidden = true) Principal principal,

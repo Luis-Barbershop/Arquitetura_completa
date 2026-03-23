@@ -2,9 +2,12 @@ package ifsp.edu.projeto.cortaai.userservice.controller;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.BarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.UpdateBarberDTO;
+import ifsp.edu.projeto.cortaai.userservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.userservice.service.BarberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,8 +36,10 @@ public class BarberController {
                description = "Atualização parcial (patch-like). Envie somente os campos que deseja alterar.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Perfil atualizado com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
-            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado")
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @PutMapping("/{id}")
     public ResponseEntity<BarberDTO> updateBarber(
@@ -46,7 +51,8 @@ public class BarberController {
     @Operation(summary = "Busca um barbeiro por ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Barbeiro encontrado"),
-            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado")
+            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @GetMapping("/{id}")
     public ResponseEntity<BarberDTO> getBarberById(

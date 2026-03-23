@@ -174,7 +174,15 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
         exchange.getResponse().getHeaders().set("X-Correlation-Id", correlationId);
-        String body = "{\"error\":\"Unauthorized\",\"message\":\"" + message + "\",\"correlationId\":\"" + correlationId + "\"}";
+        String path = exchange.getRequest().getURI().getPath();
+        String body = String.format(
+                "{\"timestamp\":\"%s\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"%s\","
+                + "\"cause\":\"FirebaseAuthException\",\"origin\":\"api-gateway\","
+                + "\"path\":\"%s\",\"correlationId\":\"%s\"}",
+                java.time.Instant.now().toString(),
+                message.replace("\"", "\\\""),
+                path != null ? path.replace("\"", "\\\"") : "",
+                correlationId);
         var buffer = exchange.getResponse().bufferFactory().wrap(body.getBytes());
         return exchange.getResponse().writeWith(Mono.just(buffer));
     }

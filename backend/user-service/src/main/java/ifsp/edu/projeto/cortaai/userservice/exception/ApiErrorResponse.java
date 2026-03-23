@@ -1,4 +1,4 @@
-package ifsp.edu.projeto.cortaai.barbershopservice.exception;
+package ifsp.edu.projeto.cortaai.userservice.exception;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,16 +25,16 @@ public class ApiErrorResponse {
     @Schema(description = "Razão HTTP (ex: Not Found)", example = "Not Found")
     private final String error;
 
-    @Schema(description = "Mensagem legível explicando o erro", example = "Barbearia não encontrada.")
+    @Schema(description = "Mensagem legível explicando o erro", example = "Usuário não encontrado.")
     private final String message;
 
     @Schema(description = "Classe da exceção que originou o erro", example = "NotFoundException")
     private final String cause;
 
-    @Schema(description = "Microserviço que gerou o erro", example = "barbershop-service")
+    @Schema(description = "Microserviço que gerou o erro", example = "user-service")
     private final String origin;
 
-    @Schema(description = "URI que causou o erro", example = "/api/barbershops/123")
+    @Schema(description = "URI que causou o erro", example = "/api/barbers/123")
     private final String path;
 
     @Schema(description = "ID de correlação para rastreio entre serviços", example = "a1b2c3d4-e5f6-7890-abcd-ef1234567890")
@@ -85,4 +85,3 @@ public class ApiErrorResponse {
             String message
     ) {}
 }
-
