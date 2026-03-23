@@ -21,7 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -71,7 +73,10 @@ public class BarbershopService {
 
     private void updateUserBarbershop(UUID userId, UUID barbershopId) {
         try {
-            userServiceClient.updateUserBarbershopId(userId, barbershopId);
+            Map<String, String> body = new HashMap<>();
+            body.put("barbershopId", barbershopId != null ? barbershopId.toString() : null);
+            log.info("event=user-service-link-update-request userId={} barbershopId={} body={}", userId, barbershopId, body);
+            userServiceClient.updateUserBarbershopId(userId, body);
         } catch (FeignException.NotFound ex) {
             log.warn("event=user-service-link-update-not-found userId={} barbershopId={} httpStatus={} error={} message={}",
                     userId, barbershopId, ex.status(), ex.getClass().getSimpleName(), ex.getMessage());

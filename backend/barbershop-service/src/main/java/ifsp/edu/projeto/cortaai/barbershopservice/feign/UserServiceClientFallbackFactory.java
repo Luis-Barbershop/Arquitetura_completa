@@ -5,6 +5,7 @@ import ifsp.edu.projeto.cortaai.barbershopservice.exception.UserServiceUnavailab
 import org.springframework.cloud.openfeign.FallbackFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -24,7 +25,7 @@ public class UserServiceClientFallbackFactory implements FallbackFactory<UserSer
             }
 
             @Override
-            public void updateUserBarbershopId(UUID id, UUID barbershopId) {
+            public void updateUserBarbershopId(UUID id, Map<String, String> body) {
                 throw unavailable(cause);
             }
         };

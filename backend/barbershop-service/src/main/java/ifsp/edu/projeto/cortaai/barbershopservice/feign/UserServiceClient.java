@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -27,6 +28,6 @@ public interface UserServiceClient {
     UserInfoDTO getUserByEmail(@PathVariable("email") String email);
 
     @PutMapping("/{id}/barbershop")
-    void updateUserBarbershopId(@PathVariable("id") UUID id, @RequestBody UUID barbershopId);
+    void updateUserBarbershopId(@PathVariable("id") UUID id, @RequestBody Map<String, String> body);
 }
 
