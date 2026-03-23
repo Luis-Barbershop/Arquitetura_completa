@@ -9,6 +9,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.hibernate.annotations.JdbcTypeCode;
+import java.sql.Types;
 
 import java.time.LocalTime;
 import java.time.LocalDateTime;
@@ -29,6 +31,7 @@ public class Barber implements UserDetails {
     @Id
     @GeneratedValue
     @UuidGenerator
+    @JdbcTypeCode(Types.VARCHAR)
     @Column(nullable = false, updatable = false, length = 36)
     private UUID id;
 

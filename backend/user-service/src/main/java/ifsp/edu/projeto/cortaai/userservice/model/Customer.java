@@ -3,10 +3,14 @@ package ifsp.edu.projeto.cortaai.userservice.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.hibernate.annotations.JdbcTypeCode;
+import java.sql.Types;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -21,6 +25,7 @@ public class Customer {
     @Id
     @Column(nullable = false, updatable = false, length = 36)
     @GeneratedValue
+    @JdbcTypeCode(Types.VARCHAR)
     @UuidGenerator
     private UUID id;
 
