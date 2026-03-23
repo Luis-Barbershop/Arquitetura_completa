@@ -4,6 +4,9 @@ import ifsp.edu.projeto.cortaai.barbershopservice.dto.*;
 import ifsp.edu.projeto.cortaai.barbershopservice.service.BarbershopService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -52,16 +55,32 @@ public class BarbershopController {
 
     // ========== FLUXO 1: GESTÃO DO DONO (OWNER) ==========
 
-    @Operation(summary = "Registra uma nova barbearia", description = "Cria uma nova barbearia associada ao usuário autenticado. Permite o upload da logo junto com os dados de registro.")
+    @Operation(
+        summary = "Registra uma nova barbearia",
+        description = "Cria uma nova barbearia associada ao usuário autenticado. Permite o upload da logo junto com os dados de registro.",
+        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true,
+            content = @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                schema = @Schema(implementation = CreateBarbershopDTO.class),
+                encoding = @Encoding(name = "shop", contentType = "application/json")
+            )
+        )
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Barbearia criada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos ou parte 'shop' ausente"),
+            @ApiResponse(responseCode = "401", description = "Token inválido ou ausente"),
             @ApiResponse(responseCode = "500", description = "Erro interno ao processar o upload do arquivo")
     })
     @PostMapping(value = "/register-my-shop", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BarbershopDTO> createBarbershop(
             @Parameter(hidden = true) Principal principal,
-            @Parameter(description = "Dados da barbearia") @RequestPart("shop") @Valid CreateBarbershopDTO dto,
+            @Parameter(description = "Dados da barbearia (JSON)") @RequestPart(value = "shop", required = false) @Valid CreateBarbershopDTO dto,
             @Parameter(description = "Arquivo de logo (opcional)") @RequestPart(value = "file", required = false) MultipartFile file) {
+        if (dto == null) {
+            return ResponseEntity.badRequest().build();
+        }
         if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
