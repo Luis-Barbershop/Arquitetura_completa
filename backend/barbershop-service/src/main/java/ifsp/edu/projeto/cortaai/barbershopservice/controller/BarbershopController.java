@@ -27,13 +27,21 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping(value = "/api/barbershops", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/barbershops")
 @RequiredArgsConstructor
 @Tag(name = "Barbershops", description = "Endpoints para gerenciamento de barbearias, serviços, equipe e solicitações de vínculo")
 public class BarbershopController {
 
     private final BarbershopService barbershopService;
     private final ObjectMapper objectMapper;
+
+    // ========== DIAGNÓSTICO ==========
+
+    @Operation(summary = "Health check do controller", description = "Verifica se o controller está registrado e o código novo está rodando.")
+    @GetMapping("/ping")
+    public ResponseEntity<String> ping() {
+        return ResponseEntity.ok("{\"status\":\"ok\",\"version\":\"cd28fd0-httpservletrequest\",\"timestamp\":\"" + java.time.Instant.now() + "\"}");
+    }
 
     // ========== LEITURA PÚBLICA ==========
 
@@ -209,7 +217,7 @@ public class BarbershopController {
     // ========== FLUXO 4: GESTÃO DE IMAGENS ==========
 
     @Operation(summary = "Faz o upload da logo da barbearia", description = "Atualiza a foto de logo da barbearia do dono logado.")
-    @PostMapping(value = "/my-shop/upload-logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/my-shop/upload-logo")
     public ResponseEntity<String> uploadLogo(
             @Parameter(hidden = true) Principal principal,
             @Parameter(description = "Arquivo da imagem da logo") @RequestParam("file") MultipartFile file) {
@@ -221,7 +229,7 @@ public class BarbershopController {
     }
 
     @Operation(summary = "Faz o upload do banner da barbearia", description = "Atualiza a imagem de capa (banner) da barbearia do dono logado.")
-    @PostMapping(value = "/my-shop/upload-banner", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/my-shop/upload-banner")
     public ResponseEntity<String> uploadBanner(
             @Parameter(hidden = true) Principal principal,
             @Parameter(description = "Arquivo da imagem do banner") @RequestParam("file") MultipartFile file) {
@@ -233,7 +241,7 @@ public class BarbershopController {
     }
 
     @Operation(summary = "Faz o upload da foto de um serviço", description = "Atualiza a imagem associada a um serviço/atividade específico na barbearia.")
-    @PostMapping(value = "/my-shop/activities/{activityId}/upload-photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/my-shop/activities/{activityId}/upload-photo")
     public ResponseEntity<String> uploadActivityPhoto(
             @Parameter(hidden = true) Principal principal,
             @Parameter(description = "UUID da atividade") @PathVariable UUID activityId,
@@ -246,7 +254,7 @@ public class BarbershopController {
     }
 
     @Operation(summary = "Adiciona uma imagem aos destaques", description = "Faz o upload de uma nova imagem para o carrossel de destaques/portfólio da barbearia.")
-    @PostMapping(value = "/my-shop/highlights", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/my-shop/highlights")
     public ResponseEntity<String> addHighlight(
             @Parameter(hidden = true) Principal principal,
             @Parameter(description = "Arquivo da imagem destaque") @RequestParam("file") MultipartFile file) {

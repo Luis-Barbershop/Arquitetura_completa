@@ -67,6 +67,7 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
     /** Endpoints públicos de leitura de barbearia (somente GET). */
     private static final List<String> PUBLIC_BARBERSHOP_GET_PATHS = List.of(
             "/api/barbershops",
+            "/api/barbershops/ping",
             "/api/barbershops/*",
             "/api/barbershops/*/activities"
     );
