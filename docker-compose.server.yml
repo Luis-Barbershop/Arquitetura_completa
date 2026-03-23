@@ -93,7 +93,7 @@ services:
       dockerfile: api-gateway/Dockerfile
     image: cortaai/api-gateway:latest
     container_name: api-gateway
-    ports: ["8080:8080"]
+    ports: ["8082:8080"]
     volumes:
       - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     environment:
