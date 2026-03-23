@@ -78,7 +78,7 @@
 .redirection_button_exit{
     width: 80%;
     height: 7vh;
-    background-color: #333333;
+    background-color: #0f0f0f333;
     border: 1px solid rgba(255, 255, 255, 0.589);
     color: rgba(255, 255, 255, 0.589);
     font-size: 15px;

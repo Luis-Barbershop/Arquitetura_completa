@@ -158,7 +158,7 @@ function AgendamentoPage() {
                                                 padding: '10px',
                                                 borderRadius: '5px',
                                                 border: selectedTime === slot ? '2px solid #D4AF37' : '1px solid #444',
-                                                backgroundColor: selectedTime === slot ? '#D4AF37' : '#333',
+                                                backgroundColor: selectedTime === slot ? '#D4AF37' : '#0f0f0f',
                                                 color: selectedTime === slot ? '#000' : '#fff',
                                                 cursor: 'pointer',
                                                 fontWeight: 'bold'

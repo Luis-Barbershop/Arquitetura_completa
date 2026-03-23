@@ -1,0 +1,34 @@
+.services{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    height: 400px;
+    padding: 4rem 0;
+    background-color: aquamarine;
+}
+
+.titleContainer{
+    width: 100%;
+    height: 90px;
+    display: flex;
+    align-items: center;
+}
+
+.titleContainer::before{
+    content: '';
+    width: 6px;
+    height: 64px;
+    background-color: #c19006;
+    margin-left: 18px;
+    margin-right: 14px;
+    border-radius: 2px;
+}
+
+.title{
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: white;
+    margin-left: 15px;
+}

@@ -13,7 +13,7 @@
 
 .title {
     color: #c19006;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #0f0f0f;
     padding-bottom: 15px;
     margin-bottom: 25px;
     text-align: center;
@@ -27,7 +27,7 @@
 
 .card {
     background-color: #1E1E1E;
-    border: 1px solid #333;
+    border: 1px solid #0f0f0f;
     border-radius: 10px;
     padding: 20px;
     display: flex;
