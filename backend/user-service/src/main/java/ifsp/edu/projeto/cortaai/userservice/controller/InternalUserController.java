@@ -5,6 +5,13 @@ import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository;
 import ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +29,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/internal/users")
 @RequiredArgsConstructor
+@Tag(name = "Internal - Users", description = "Endpoints internos para comunicação inter-serviço (NÃO expostos pelo Gateway)")
 public class InternalUserController {
 
     private static final Logger log = LoggerFactory.getLogger(InternalUserController.class);
@@ -30,8 +38,15 @@ public class InternalUserController {
     private final BarberRepository barberRepository;
 
     /** Busca usuário por ID (Customer ou Barber). */
+    @Operation(summary = "Busca usuário por ID", description = "Retorna o UserInfoDTO de um Customer ou Barber pelo UUID.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usuário encontrado",
+                    content = @Content(schema = @Schema(implementation = UserInfoDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<UserInfoDTO> getUserById(@PathVariable UUID id) {
+    public ResponseEntity<UserInfoDTO> getUserById(
+            @Parameter(description = "UUID do usuário") @PathVariable UUID id) {
         Optional<Customer> customer = customerRepository.findById(id);
         if (customer.isPresent()) return ResponseEntity.ok(toUserInfoDTO(customer.get()));
 
@@ -42,8 +57,15 @@ public class InternalUserController {
     }
 
     /** Busca usuário por e-mail (Customer ou Barber). */
+    @Operation(summary = "Busca usuário por e-mail", description = "Retorna o UserInfoDTO de um Customer ou Barber pelo endereço de e-mail.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usuário encontrado",
+                    content = @Content(schema = @Schema(implementation = UserInfoDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+    })
     @GetMapping("/by-email/{email}")
-    public ResponseEntity<UserInfoDTO> getUserByEmail(@PathVariable String email) {
+    public ResponseEntity<UserInfoDTO> getUserByEmail(
+            @Parameter(description = "E-mail do usuário") @PathVariable String email) {
         Optional<Customer> customer = customerRepository.findByEmail(email);
         if (customer.isPresent()) return ResponseEntity.ok(toUserInfoDTO(customer.get()));
 
@@ -54,8 +76,15 @@ public class InternalUserController {
     }
 
     /** Busca usuário pelo Firebase UID (Customer ou Barber). */
+    @Operation(summary = "Busca usuário por Firebase UID", description = "Retorna o UserInfoDTO de um Customer ou Barber pelo UID do Firebase.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usuário encontrado",
+                    content = @Content(schema = @Schema(implementation = UserInfoDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+    })
     @GetMapping("/by-firebase-uid/{uid}")
-    public ResponseEntity<UserInfoDTO> getUserByFirebaseUid(@PathVariable String uid) {
+    public ResponseEntity<UserInfoDTO> getUserByFirebaseUid(
+            @Parameter(description = "UID do Firebase") @PathVariable String uid) {
         Optional<Customer> customer = customerRepository.findByFirebaseUid(uid);
         if (customer.isPresent()) return ResponseEntity.ok(toUserInfoDTO(customer.get()));
 
@@ -73,9 +102,24 @@ public class InternalUserController {
      *   - JSON object: {"barbershopId": "uuid-string"} 
      *   - JSON object com null: {"barbershopId": null}  (para desvincular)
      */
+    @Operation(
+            summary = "Atualiza o barbershopId de um barbeiro",
+            description = "Vincula ou desvincula um barbeiro de uma barbearia. Envie `{\"barbershopId\": \"uuid\"}` para vincular ou `{\"barbershopId\": null}` para desvincular."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "barbershopId atualizado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado")
+    })
     @PutMapping("/{id}/barbershop")
     public ResponseEntity<Void> updateUserBarbershopId(
-            @PathVariable UUID id,
+            @Parameter(description = "UUID do barbeiro") @PathVariable UUID id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "JSON com o campo barbershopId (UUID string ou null)",
+                    required = true,
+                    content = @Content(schema = @Schema(
+                            example = "{\"barbershopId\": \"d5face7e-4b81-4681-b80f-673b2c59a312\"}"
+                    ))
+            )
             @RequestBody Map<String, String> body) {
 
         log.info("PUT /api/internal/users/{}/barbershop — body={}", id, body);

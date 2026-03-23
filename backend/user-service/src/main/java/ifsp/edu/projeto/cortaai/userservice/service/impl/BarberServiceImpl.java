@@ -28,8 +28,9 @@ public class BarberServiceImpl implements BarberService {
         Barber barber = barberRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
 
-        if (dto.getName() != null)        barber.setName(dto.getName());
-        if (dto.getPhoneNumber() != null) barber.setTell(dto.getPhoneNumber());
+        if (dto.getName() != null)  barber.setName(dto.getName());
+        if (dto.getTell() != null)  barber.setTell(dto.getTell());
+        if (dto.getEmail() != null) barber.setEmail(dto.getEmail());
 
         return barberMapper.toDTO(barberRepository.save(barber));
     }

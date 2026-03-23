@@ -5,6 +5,8 @@ import ifsp.edu.projeto.cortaai.userservice.dto.UpdateBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.service.BarberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +29,13 @@ public class BarberController {
 
     private final BarberService barberService;
 
-    @Operation(summary = "Atualiza o perfil de um barbeiro")
+    @Operation(summary = "Atualiza o perfil de um barbeiro",
+               description = "Atualização parcial (patch-like). Envie somente os campos que deseja alterar.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Perfil atualizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<BarberDTO> updateBarber(
             @Parameter(description = "UUID do barbeiro") @PathVariable UUID id,
@@ -36,6 +44,10 @@ public class BarberController {
     }
 
     @Operation(summary = "Busca um barbeiro por ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Barbeiro encontrado"),
+            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<BarberDTO> getBarberById(
             @Parameter(description = "UUID do barbeiro") @PathVariable UUID id) {
