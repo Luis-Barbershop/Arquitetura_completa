@@ -33,8 +33,6 @@ EXPOSE 8080
 ENTRYPOINT ["java", \
   "-XX:+UseSerialGC", \
   "-XX:MaxRAMPercentage=75.0", \
-  "-XX:+TieredCompilation", \
-  "-XX:TieredStopAtLevel=1", \
   "-Xss256k", \
   "-XX:MaxMetaspaceSize=128m", \
   "-XX:ReservedCodeCacheSize=32m", \
