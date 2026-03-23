@@ -6,6 +6,8 @@ spring:
     name: api-gateway
   main:
     lazy-initialization: true
+  codec:
+    max-in-memory-size: 20MB
   cloud:
     gateway:
       # Desabilita o filtro JSON-to-gRPC que causa ClassNotFoundException

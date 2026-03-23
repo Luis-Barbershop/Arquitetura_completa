@@ -73,7 +73,7 @@ public class BarbershopController {
             @ApiResponse(responseCode = "401", description = "Token inválido ou ausente"),
             @ApiResponse(responseCode = "500", description = "Erro interno ao processar o upload do arquivo")
     })
-    @PostMapping(value = "/register-my-shop", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/register-my-shop")
     public ResponseEntity<BarbershopDTO> createBarbershop(
             @Parameter(hidden = true) Principal principal,
             @Parameter(description = "Dados da barbearia (JSON)") @RequestPart(value = "shop", required = false) @Valid CreateBarbershopDTO dto,

@@ -15,6 +15,11 @@ spring:
         enabled: true
   main:
     lazy-initialization: false
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 15MB
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/barbershop_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false}
     username: ${SPRING_DATASOURCE_USERNAME:root}
@@ -81,4 +86,10 @@ springdoc:
       description: API Gateway (local dev)
     - url: https://api.cortaai.shop
       description: API Gateway (produção)
+
+logging:
+  level:
+    org.springframework.web.servlet.DispatcherServlet: DEBUG
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE
+    org.springframework.security: DEBUG
 
