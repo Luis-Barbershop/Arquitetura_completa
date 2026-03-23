@@ -1,9 +1,12 @@
 package ifsp.edu.projeto.cortaai.notificationservice.controller;
 
 import ifsp.edu.projeto.cortaai.notificationservice.dto.NotificationDTO;
+import ifsp.edu.projeto.cortaai.notificationservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.notificationservice.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,7 +47,10 @@ public class NotificationController {
     @Operation(summary = "Marcar notificação como lida", description = "Atualiza o status de uma notificação específica para 'lida'.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Notificação atualizada com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Notificação não encontrada ou não pertence ao usuário")
+            @ApiResponse(responseCode = "400", description = "Header X-User-Id ausente",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Notificação não encontrada ou não pertence ao usuário",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @PutMapping("/{id}/read")
     public ResponseEntity<NotificationDTO> markAsRead(

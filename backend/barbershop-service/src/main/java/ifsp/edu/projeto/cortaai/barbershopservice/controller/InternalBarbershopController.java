@@ -2,12 +2,15 @@ package ifsp.edu.projeto.cortaai.barbershopservice.controller;
 
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.ActivityInfoDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.BarbershopInfoDTO;
+import ifsp.edu.projeto.cortaai.barbershopservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.barbershopservice.model.Activity;
 import ifsp.edu.projeto.cortaai.barbershopservice.model.Barbershop;
 import ifsp.edu.projeto.cortaai.barbershopservice.repository.ActivityRepository;
 import ifsp.edu.projeto.cortaai.barbershopservice.repository.BarbershopRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,7 +40,8 @@ public class InternalBarbershopController {
     @Operation(summary = "Busca barbearia por ID", description = "Retorna dados resumidos de uma barbearia pelo UUID.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Barbearia encontrada"),
-            @ApiResponse(responseCode = "404", description = "Barbearia não encontrada")
+            @ApiResponse(responseCode = "404", description = "Barbearia não encontrada",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @GetMapping("/{id}")
     public ResponseEntity<BarbershopInfoDTO> getBarbershopById(

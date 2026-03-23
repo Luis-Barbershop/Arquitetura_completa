@@ -1,9 +1,9 @@
 package ifsp.edu.projeto.cortaai.scheduleservice.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
-@ResponseStatus(HttpStatus.CONFLICT)
+/**
+ * Exceção lançada quando há conflito (ex: horário já ocupado).
+ * O status HTTP 409 é definido pelo GlobalExceptionHandler.
+ */
 public class ConflictException extends RuntimeException {
     public ConflictException() { super(); }
     public ConflictException(String message) { super(message); }

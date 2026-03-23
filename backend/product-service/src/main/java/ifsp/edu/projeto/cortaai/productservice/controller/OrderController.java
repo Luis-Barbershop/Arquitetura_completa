@@ -2,10 +2,13 @@ package ifsp.edu.projeto.cortaai.productservice.controller;
 
 import ifsp.edu.projeto.cortaai.productservice.dto.CreateOrderDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.OrderDTO;
+import ifsp.edu.projeto.cortaai.productservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.productservice.model.OrderStatus;
 import ifsp.edu.projeto.cortaai.productservice.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,7 +38,13 @@ public class OrderController {
      */
     @Operation(summary = "Criar pedido", description = "Registra um novo pedido de produtos feito por um cliente autenticado.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Pedido criado com sucesso")
+            @ApiResponse(responseCode = "201", description = "Pedido criado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos ou header X-User-Id ausente",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Produto não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Erro interno",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @PostMapping
     public ResponseEntity<OrderDTO> createOrder(
@@ -69,6 +78,13 @@ public class OrderController {
      * Atualiza o status de um pedido.
      */
     @Operation(summary = "Atualizar status do pedido", description = "Muda o estado atual do pedido (ex: PENDING → PAID → PREPARING → READY → DELIVERED).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Status atualizado"),
+            @ApiResponse(responseCode = "404", description = "Pedido não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Transição de status inválida",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @PutMapping("/{id}/status")
     public ResponseEntity<OrderDTO> updateOrderStatus(
             @Parameter(description = "UUID do pedido") @PathVariable UUID id,

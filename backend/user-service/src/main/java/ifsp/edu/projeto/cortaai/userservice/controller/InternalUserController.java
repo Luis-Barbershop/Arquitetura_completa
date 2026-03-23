@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.controller;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.UserInfoDTO;
+import ifsp.edu.projeto.cortaai.userservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository;
@@ -42,7 +43,8 @@ public class InternalUserController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Usuário encontrado",
                     content = @Content(schema = @Schema(implementation = UserInfoDTO.class))),
-            @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @GetMapping("/{id}")
     public ResponseEntity<UserInfoDTO> getUserById(
@@ -61,7 +63,8 @@ public class InternalUserController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Usuário encontrado",
                     content = @Content(schema = @Schema(implementation = UserInfoDTO.class))),
-            @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @GetMapping("/by-email/{email}")
     public ResponseEntity<UserInfoDTO> getUserByEmail(
@@ -80,7 +83,8 @@ public class InternalUserController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Usuário encontrado",
                     content = @Content(schema = @Schema(implementation = UserInfoDTO.class))),
-            @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @GetMapping("/by-firebase-uid/{uid}")
     public ResponseEntity<UserInfoDTO> getUserByFirebaseUid(
@@ -108,7 +112,8 @@ public class InternalUserController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "barbershopId atualizado com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado")
+            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @PutMapping("/{id}/barbershop")
     public ResponseEntity<Void> updateUserBarbershopId(

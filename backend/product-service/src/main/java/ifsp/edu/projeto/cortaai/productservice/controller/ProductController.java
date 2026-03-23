@@ -3,9 +3,12 @@ package ifsp.edu.projeto.cortaai.productservice.controller;
 import ifsp.edu.projeto.cortaai.productservice.dto.CreateProductDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.ProductDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.UpdateProductDTO;
+import ifsp.edu.projeto.cortaai.productservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.productservice.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,7 +38,11 @@ public class ProductController {
      */
     @Operation(summary = "Criar produto", description = "Adiciona um novo produto ao catálogo da barbearia.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Produto criado com sucesso")
+            @ApiResponse(responseCode = "201", description = "Produto criado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "Erro interno",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @PostMapping
     public ResponseEntity<ProductDTO> createProduct(
@@ -58,6 +65,11 @@ public class ProductController {
      * Busca um produto por ID.
      */
     @Operation(summary = "Buscar produto por ID", description = "Retorna os detalhes de um produto específico através do seu ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Produto encontrado"),
+            @ApiResponse(responseCode = "404", description = "Produto não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @GetMapping("/{id}")
     public ResponseEntity<ProductDTO> getById(
             @Parameter(description = "UUID do produto") @PathVariable UUID id) {
@@ -68,6 +80,13 @@ public class ProductController {
      * Atualiza um produto.
      */
     @Operation(summary = "Atualizar produto", description = "Atualiza as informações de um produto existente.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Produto atualizado"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Produto não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @PutMapping("/{id}")
     public ResponseEntity<ProductDTO> updateProduct(
             @Parameter(description = "UUID do produto") @PathVariable UUID id,
@@ -79,6 +98,11 @@ public class ProductController {
      * Desativa (soft delete) um produto.
      */
     @Operation(summary = "Desativar produto", description = "Realiza um soft delete no produto, ocultando-o das listagens, mas mantendo seu histórico para os pedidos antigos.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Produto desativado"),
+            @ApiResponse(responseCode = "404", description = "Produto não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(
             @Parameter(description = "UUID do produto") @PathVariable UUID id) {

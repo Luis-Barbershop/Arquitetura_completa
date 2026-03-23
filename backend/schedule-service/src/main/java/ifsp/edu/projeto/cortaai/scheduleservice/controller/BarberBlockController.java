@@ -2,9 +2,12 @@ package ifsp.edu.projeto.cortaai.scheduleservice.controller;
 
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.BarberBlockDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.CreateBarberBlockDTO;
+import ifsp.edu.projeto.cortaai.scheduleservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.scheduleservice.service.BarberBlockService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,7 +34,11 @@ public class BarberBlockController {
 
     @Operation(summary = "Criar bloqueio de agenda", description = "Adiciona um bloqueio em um ou mais horários na agenda do barbeiro, impedindo novos agendamentos naquele intervalo.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Bloqueio criado com sucesso")
+            @ApiResponse(responseCode = "201", description = "Bloqueio criado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Conflito de horário",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @PostMapping
     public ResponseEntity<BarberBlockDTO> createBlock(
@@ -50,6 +57,11 @@ public class BarberBlockController {
     }
 
     @Operation(summary = "Remover bloqueio", description = "Exclui um bloqueio de agenda previamente configurado pelo barbeiro ou dono da barbearia.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Bloqueio removido"),
+            @ApiResponse(responseCode = "404", description = "Bloqueio não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBlock(
             @Parameter(hidden = true) Principal principal,
