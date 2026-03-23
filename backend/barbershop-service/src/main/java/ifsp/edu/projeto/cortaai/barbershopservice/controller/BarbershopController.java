@@ -3,16 +3,13 @@ package ifsp.edu.projeto.cortaai.barbershopservice.controller;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.*;
 import ifsp.edu.projeto.cortaai.barbershopservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.barbershopservice.service.BarbershopService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.io.IOException;
 import java.security.Principal;
@@ -34,7 +30,6 @@ import java.util.UUID;
 public class BarbershopController {
 
     private final BarbershopService barbershopService;
-    private final ObjectMapper objectMapper;
 
     // ========== DIAGNÓSTICO ==========
 
@@ -75,66 +70,25 @@ public class BarbershopController {
 
     @Operation(
         summary = "Registra uma nova barbearia",
-        description = "Cria uma nova barbearia associada ao usuário autenticado. Permite o upload da logo junto com os dados de registro.",
-        requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            required = true,
-            content = @Content(
-                mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                schema = @Schema(implementation = CreateBarbershopDTO.class),
-                encoding = @Encoding(name = "shop", contentType = "application/json")
-            )
-        )
+        description = "Cria uma nova barbearia associada ao usuário autenticado. Envie os dados como JSON. Para adicionar logo, use o endpoint POST /my-shop/upload-logo após o cadastro."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Barbearia criada com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Dados inválidos ou parte 'shop' ausente",
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
             @ApiResponse(responseCode = "401", description = "Token inválido ou ausente",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
             @ApiResponse(responseCode = "409", description = "CNPJ ou dados duplicados",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
-            @ApiResponse(responseCode = "500", description = "Erro interno ao processar o upload do arquivo",
+            @ApiResponse(responseCode = "500", description = "Erro interno",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
-    @PostMapping(value = "/register-my-shop")
-    public ResponseEntity<?> createBarbershop(
+    @PostMapping(value = "/register-my-shop", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<BarbershopDTO> createBarbershop(
             @Parameter(hidden = true) Principal principal,
-            HttpServletRequest request) {
-        if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        try {
-            CreateBarbershopDTO dto = null;
-            MultipartFile file = null;
-
-            if (request instanceof MultipartHttpServletRequest multipart) {
-                // Request arrived as multipart (normal path via gateway)
-                String shopJson = multipart.getParameter("shop");
-                if (shopJson == null || shopJson.isBlank()) {
-                    return ResponseEntity.badRequest().body("Parte 'shop' ausente ou vazia");
-                }
-                dto = objectMapper.readValue(shopJson, CreateBarbershopDTO.class);
-                file = multipart.getFile("file");
-            } else {
-                // Fallback: try to read body as plain JSON (non-multipart)
-                String contentType = request.getContentType();
-                if (contentType != null && contentType.contains(MediaType.APPLICATION_JSON_VALUE)) {
-                    dto = objectMapper.readValue(request.getInputStream(), CreateBarbershopDTO.class);
-                } else {
-                    return ResponseEntity.badRequest().body("Content-Type inválido. Use multipart/form-data com parte 'shop' em JSON.");
-                }
-            }
-
-            if (dto == null || dto.getName() == null || dto.getName().isBlank()) {
-                return ResponseEntity.badRequest().body("Dados da barbearia inválidos ou ausentes.");
-            }
-
-            BarbershopDTO created = barbershopService.createBarbershop(principal.getName(), dto, file);
-            return new ResponseEntity<>(created, HttpStatus.CREATED);
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro ao processar requisição: " + e.getMessage());
-        }
+            @RequestBody @Valid CreateBarbershopDTO dto) throws IOException {
+        BarbershopDTO created = barbershopService.createBarbershop(principal.getName(), dto, null);
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @Operation(summary = "Atualiza os dados da própria barbearia", description = "Edita as informações da barbearia do dono autenticado (baseado no token JWT).")
