@@ -27,6 +27,9 @@ public interface UserServiceClient {
     @GetMapping("/by-email/{email}")
     UserInfoDTO getUserByEmail(@PathVariable("email") String email);
 
+    @GetMapping("/by-firebase-uid/{uid}")
+    UserInfoDTO getUserByFirebaseUid(@PathVariable("uid") String uid);
+
     @PutMapping("/{id}/barbershop")
     void updateUserBarbershopId(@PathVariable("id") UUID id, @RequestBody Map<String, String> body);
 }

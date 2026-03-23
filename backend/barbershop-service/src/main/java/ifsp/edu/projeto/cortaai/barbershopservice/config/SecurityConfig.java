@@ -64,13 +64,14 @@ public class SecurityConfig {
                                             FilterChain filterChain) throws ServletException, IOException {
 
                 String uid = request.getHeader("X-User-UID");
-                String email = request.getHeader("X-User-Email");
                 String userType = request.getHeader("X-User-Type");
 
                 if (StringUtils.hasText(uid)
                         && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                    String principalName = StringUtils.hasText(email) ? email : uid;
+                    // Always use Firebase UID as the principal name — email may be empty
+                    // when the Firebase token does not carry the email claim.
+                    String principalName = uid;
                     String role = "ROLE_" + (StringUtils.hasText(userType) ? userType.toUpperCase() : "CUSTOMER");
 
                     UsernamePasswordAuthenticationToken auth =

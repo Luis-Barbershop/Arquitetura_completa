@@ -58,6 +58,19 @@ public class BarbershopService {
         return user;
     }
 
+    private UserInfoDTO resolveUserByUid(String firebaseUid) {
+        UserInfoDTO user;
+        try {
+            user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        } catch (FeignException.NotFound ex) {
+            throw new NotFoundException("Usuário não encontrado para o UID: " + firebaseUid);
+        } catch (Exception ex) {
+            throw new UserServiceUnavailableException("Não foi possível consultar dados do usuário no momento.");
+        }
+        if (user == null) throw new NotFoundException("Usuário não encontrado para o UID: " + firebaseUid);
+        return user;
+    }
+
     private UserInfoDTO resolveUser(UUID userId) {
         UserInfoDTO user;
         try {
@@ -140,8 +153,8 @@ public class BarbershopService {
 
     // ========== FLUXO 1: GESTÃO DO DONO (OWNER) ==========
 
-    public BarbershopDTO createBarbershop(String ownerEmail, CreateBarbershopDTO dto, MultipartFile logoFile) throws IOException {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public BarbershopDTO createBarbershop(String ownerUid, CreateBarbershopDTO dto, MultipartFile logoFile) throws IOException {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         assertOwner(owner);
 
         if (barbershopRepository.findByOwnerId(owner.getId()).isPresent()) {
@@ -170,8 +183,8 @@ public class BarbershopService {
         return barbershopMapper.toDTO(saved);
     }
 
-    public BarbershopDTO updateBarbershop(String ownerEmail, UpdateBarbershopDTO dto) {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public BarbershopDTO updateBarbershop(String ownerUid, UpdateBarbershopDTO dto) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
         if (dto.getName() != null) shop.setName(dto.getName());
@@ -180,8 +193,8 @@ public class BarbershopService {
         return barbershopMapper.toDTO(barbershopRepository.save(shop));
     }
 
-    public ActivityDTO createActivity(String ownerEmail, CreateActivityDTO dto) {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public ActivityDTO createActivity(String ownerUid, CreateActivityDTO dto) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
         Activity activity = activityMapper.toEntity(dto);
@@ -190,8 +203,8 @@ public class BarbershopService {
         return activityMapper.toDTO(activityRepository.save(activity));
     }
 
-    public ActivityDTO updateActivity(String ownerEmail, UUID activityId, UpdateActivityDTO dto) {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public ActivityDTO updateActivity(String ownerUid, UUID activityId, UpdateActivityDTO dto) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
         Activity activity = activityRepository.findById(activityId)
@@ -208,8 +221,8 @@ public class BarbershopService {
         return activityMapper.toDTO(activityRepository.save(activity));
     }
 
-    public void deleteActivity(String ownerEmail, UUID activityId) {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public void deleteActivity(String ownerUid, UUID activityId) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
         Activity activity = activityRepository.findById(activityId)
@@ -222,16 +235,16 @@ public class BarbershopService {
         activityRepository.delete(activity);
     }
 
-    public void removeBarber(String ownerEmail, UUID barberId) {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public void removeBarber(String ownerUid, UUID barberId) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
         // Remove a associação do barbeiro com a barbearia no user-service
         updateUserBarbershop(barberId, null);
     }
 
-    public void closeBarbershop(String ownerEmail, CloseBarbershopRequestDTO dto) {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public void closeBarbershop(String ownerUid, CloseBarbershopRequestDTO dto) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
         // Remove a associação do dono
@@ -243,8 +256,8 @@ public class BarbershopService {
 
     // ========== FLUXO 2: JOIN REQUESTS ==========
 
-    public void requestToJoinBarbershop(String barberEmail, String cnpj) {
-        UserInfoDTO barber = resolveUser(barberEmail);
+    public void requestToJoinBarbershop(String barberUid, String cnpj) {
+        UserInfoDTO barber = resolveUserByUid(barberUid);
         assertOwner(barber); // É barbeiro
 
         if (barber.getBarbershopId() != null) {
@@ -268,8 +281,8 @@ public class BarbershopService {
     }
 
     @Transactional(readOnly = true)
-    public List<JoinRequestDTO> getPendingJoinRequests(String ownerEmail) {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public List<JoinRequestDTO> getPendingJoinRequests(String ownerUid) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
         List<BarbershopJoinRequest> requests = joinRequestRepository
@@ -293,8 +306,8 @@ public class BarbershopService {
         }).collect(Collectors.toList());
     }
 
-    public void approveJoinRequest(String ownerEmail, UUID requestId) {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public void approveJoinRequest(String ownerUid, UUID requestId) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
         BarbershopJoinRequest request = joinRequestRepository.findById(requestId)
@@ -313,8 +326,8 @@ public class BarbershopService {
 
     // ========== FLUXO 3: SAIR DA LOJA ==========
 
-    public void freeBarber(String barberEmail) {
-        UserInfoDTO barber = resolveUser(barberEmail);
+    public void freeBarber(String barberUid) {
+        UserInfoDTO barber = resolveUserByUid(barberUid);
 
         if (barber.getBarbershopId() == null) {
             throw new DomainConflictException("Você não está associado a nenhuma barbearia.");
@@ -332,8 +345,8 @@ public class BarbershopService {
 
     // ========== FLUXO 4: GESTÃO DE IMAGENS ==========
 
-    public String updateBarbershopLogo(String ownerEmail, MultipartFile file) throws IOException {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public String updateBarbershopLogo(String ownerUid, MultipartFile file) throws IOException {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
         if (shop.getLogoUrlPublicId() != null) {
@@ -348,8 +361,8 @@ public class BarbershopService {
         return result.getSecureUrl();
     }
 
-    public String updateBarbershopBanner(String ownerEmail, MultipartFile file) throws IOException {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public String updateBarbershopBanner(String ownerUid, MultipartFile file) throws IOException {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
         if (shop.getBannerUrlPublicId() != null) {
@@ -364,8 +377,8 @@ public class BarbershopService {
         return result.getSecureUrl();
     }
 
-    public String updateActivityPhoto(String ownerEmail, UUID activityId, MultipartFile file) throws IOException {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public String updateActivityPhoto(String ownerUid, UUID activityId, MultipartFile file) throws IOException {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
         Activity activity = activityRepository.findById(activityId)
@@ -387,8 +400,8 @@ public class BarbershopService {
         return result.getSecureUrl();
     }
 
-    public String addBarbershopHighlight(String ownerEmail, MultipartFile file) throws IOException {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public String addBarbershopHighlight(String ownerUid, MultipartFile file) throws IOException {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
         UploadResultDTO result = storageService.uploadFile(file, "barbershop-highlights");
@@ -402,8 +415,8 @@ public class BarbershopService {
         return result.getSecureUrl();
     }
 
-    public void deleteBarbershopHighlight(String ownerEmail, UUID highlightId) {
-        UserInfoDTO owner = resolveUser(ownerEmail);
+    public void deleteBarbershopHighlight(String ownerUid, UUID highlightId) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
         BarbershopHighlight highlight = highlightRepository.findById(highlightId)

@@ -25,6 +25,11 @@ public class UserServiceClientFallbackFactory implements FallbackFactory<UserSer
             }
 
             @Override
+            public UserInfoDTO getUserByFirebaseUid(String uid) {
+                throw unavailable(cause);
+            }
+
+            @Override
             public void updateUserBarbershopId(UUID id, Map<String, String> body) {
                 throw unavailable(cause);
             }
