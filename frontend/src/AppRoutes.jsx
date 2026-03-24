@@ -15,8 +15,7 @@ import Site from './pages/Site';
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/site" element={<Site/>} />
-      <Route path="/" element={<StartPage />} />
+      <Route path="/" element={<Site/>} />
       <Route path="/identificacao" element={<RedirectionPage/>} />
       <Route path="/login" element= {<LoginPage/>}/>
       <Route path="/SignIn" element={<SignInPage/>}/>

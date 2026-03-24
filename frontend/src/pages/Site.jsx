@@ -5,6 +5,9 @@ import Services from '../components/Site/Services/index'
 import AboutUs from '../components/Site/AboutUs/index'
 import Tutorial from '../components/Site/Tutorial/index'
 import Mockup from '../components/Site/Mockup/index'
+import Faq from '../components/Site/Faq/index'
+import CTAStats from '../components/Site/CTAStats/index'
+import Footer from '../components/Site/Footer/index'
 
 function Site() {
   return (
@@ -15,6 +18,9 @@ function Site() {
       <AboutUs />
       <Tutorial/>
       <Services />
+      <Faq />
+      <CTAStats />
+      <Footer />
       
     </div>
   )

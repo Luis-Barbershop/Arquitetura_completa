@@ -1,7 +1,13 @@
 import Styles from './Header.module.css'
 import logo from '../../../../public/CortaAiLogo.png'
+import { useNavigate } from 'react-router-dom';
 
 function HeaderSite() {
+ const navigate = useNavigate();
+  const handleNavigation = (action) => {
+    navigate('/identificacao', { state: { mode: action } });
+  };
+
   return (
     <div className={Styles.header}>
         <div className={Styles.logo}>
@@ -20,8 +26,12 @@ function HeaderSite() {
         </div>
 
         <div className={Styles.buttons}>
-            <button className={Styles.registerButton}>Cadastro</button>
-            <button className={Styles.loginButton}>Login</button>
+            <button className={Styles.registerButton} onClick={() => handleNavigation('register')}>
+                Cadastro
+            </button>
+            <button className={Styles.loginButton} onClick={() => handleNavigation('login')}>
+                Login
+            </button>
         </div>
     </div>
   )
