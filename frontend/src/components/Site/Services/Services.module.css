@@ -4,9 +4,9 @@
     align-items: center;
     justify-content: center;
     gap: 2rem;
-    height: 400px;
-    padding: 4rem 0;
-    background-color: aquamarine;
+    height: auto;
+    padding: 4rem 0 8rem 0;
+    
 }
 
 .titleContainer{
@@ -31,4 +31,65 @@
     font-weight: bold;
     color: white;
     margin-left: 15px;
+}
+
+.mainContent{
+    display: flex;
+    width: 100%;
+    height: 300px;
+    align-items: center;
+    justify-content: space-evenly;
+    margin-top: 3rem;
+}
+
+.card1{
+    width: 48%;
+    height: auto;
+    padding-bottom: 1.5rem;
+    background-color: #1b1b1b;
+}
+
+.iconContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+}
+
+.iconContainer img{
+    margin-left: 15px;
+    width: 50px;
+    height: 50px;
+}
+
+.card2{
+    width: 48%;
+    height: auto;
+    padding-bottom: 1.5rem;
+    background-color: #1b1b1b;
+}
+
+.titleCard{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: start;
+    gap: 5px;
+    margin-top: 15px;
+    color: white;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.15rem;
+}
+
+.servicesList{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+    color: white;
+    font-weight: lighter;
+    font-size: 1.05rem;
+    width: 85%;
+    margin-left: 55px;
+    font-family: 'Roboto', sans-serif;
 }

@@ -14,6 +14,7 @@ function HeaderSite() {
                     <li>INICIO</li>
                     <li>SOBRE NÓS</li>
                     <li>NOSSOS SERVIÇOS</li>
+                    <li>COMO FUNCIONA</li>
                 </ul>
             
         </div>

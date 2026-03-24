@@ -1,0 +1,42 @@
+.Container{
+    width: 100%;
+    height: auto;
+    padding: 4rem 0 4rem 0;
+    display: flex;
+}
+
+.ImageContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 50%;
+    height: 400px;
+}
+
+.ImageContainer img{
+    width: 80%;
+    height: 80%;
+}
+
+.DescriptionContainer{
+    display: flex;
+    justify-content: center;
+    align-items: start;
+    margin-top: 3rem;
+    width: 50%;
+    flex-direction: column;
+}
+
+.DescriptionContainer h3{
+    font-size: 2rem;
+    color: #c19006;
+    font-family: "Space grotesk", sans-serif;
+    
+}
+
+.DescriptionContainer p{
+    font-size: 1.2rem;
+    color: white;
+    margin-top: 1rem;
+    width: 90%;
+}

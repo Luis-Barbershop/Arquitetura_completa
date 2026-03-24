@@ -5,6 +5,7 @@
     justify-content: center;
     gap: 2rem;
     height: auto;
+    margin-top: 2rem;
     padding: 4rem 0 8rem 0;
     
 }
@@ -40,6 +41,7 @@
     height: 300px;
     align-items: center;
     justify-content: space-evenly;
+    margin-top: 2rem;
 }
 
 .content{
