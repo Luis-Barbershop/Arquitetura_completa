@@ -1,21 +1,48 @@
 import Login_Inputs from "../components/Login/Login_Inputs"
 import Styles from "./CSS/LoginPage.module.css"
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 function LoginPage() {
+    const location = useLocation();
+    const role = location.state?.role || "customer";
+    const roleLabel = role === "barber" ? "Barbeiro" : "Cliente";
+
     return (
-        <div className={Styles.LoginPage_container}>
-            <div className={Styles.content_container}>
-                <div className={Styles.logo_container}>
-                     <img src="./Icons/cortaAi.jpg" alt="Logo APP" />
-                </div>
-                <h1 className={Styles.title_login}>Acesse sua Conta</h1>
-            </div>
+        <div className={Styles.loginStage}>
+            <div className={Styles.loginShell}>
+                <aside className={Styles.brandPanel}>
+                    <div className={Styles.brandBadge}>
+                        <img src="/Icons/scissors_icon.png" alt="Icone CortaAI" />
+                        <span>CortaAI</span>
+                    </div>
 
-            <Login_Inputs/>
+                    <p className={Styles.kicker}>BEM-VINDO DE VOLTA</p>
+                    <h1 className={Styles.title_login}>Seu proximo corte comeca aqui.</h1>
+                    <p className={Styles.subtitle}>Entre para acompanhar horarios, favoritos e servicos em um painel mais rapido.</p>
 
-            <div>
-                <h3>Não tem uma conta? <Link className={Styles.Link} to="/identificacao">Crie uma Agora</Link></h3>
+                    <div className={Styles.tagRow}>
+                        <span className={Styles.roleTag}>Perfil: <strong>{roleLabel}</strong></span>
+                        <span className={Styles.softTag}>Acesso seguro</span>
+                    </div>
+
+                    <ul className={Styles.featuresList}>
+                        <li>Agenda organizada em poucos toques</li>
+                        <li>Historico de atendimentos em um so lugar</li>
+                        <li>Fluxo simples para cliente e barbeiro</li>
+                    </ul>
+                </aside>
+
+                <section className={Styles.formPanel}>
+                    <h2>Entrar na conta</h2>
+                    <p>Preencha seus dados para continuar.</p>
+
+                    <Login_Inputs />
+
+                    <div className={Styles.footerActions}>
+                        <h3>Nao tem uma conta? <Link className={Styles.Link} to="/identificacao">Crie agora</Link></h3>
+                        <Link className={Styles.homeLink} to="/">Voltar para a pagina inicial</Link>
+                    </div>
+                </section>
             </div>
         </div>
     )

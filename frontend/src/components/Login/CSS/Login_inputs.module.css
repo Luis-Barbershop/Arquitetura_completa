@@ -1,97 +1,106 @@
 .Login_Inputs_container {
-    position: relative;
-    height: auto;
     width: 100%;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 2vh 0px;
+    padding: 1.35rem 0 0.4rem 0;
 }
 
 .Login_Inputs_container form {
-    height: 100%;
     width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: space-evenly;
-
-    padding: 15px;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.2rem;
 }
 
 .Login_Inputs_container label {
     display: flex;
     flex-direction: column;
-    width: 30vw;
+    width: 100%;
     text-align: left;
-    padding: 2vh 0px;
-    font-family: Roboto;
+    padding: 0.48rem 0;
+    font-family: 'Roboto', sans-serif;
 }
 
 .label_input {
-    margin-left: 0.5vw;
-    margin-bottom: 0.5vh;
-    color: #FFF;
+    margin-bottom: 0.44rem;
+    color: #d7d7d7;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
 }
 
 .forgot_password_text {
-    color: rgba(255, 255, 255, 0.589);
-    font-family: Roboto;
+    color: #969696;
+    font-family: 'Roboto', sans-serif;
     text-align: right;
-    font-size: 15px;
-    margin-top: 1vh;
+    font-size: 0.88rem;
+    margin-top: 0.65rem;
     cursor: pointer;
 }
 
 .forgot_password_text:hover {
     color: #C19006;
-    transition: 0.2s;
+    transition: color 0.2s;
 }
 
 #email_input,
 #password_input {
     width: 100%;
-    height: 8vh;
-    border-radius: 8px;
-    margin-top: 0vh;
-    background-color: #4F4F4F;
-    color: #A0A0A0;
-    padding-left: 8px;
-    font-family: Roboto;
-    font-weight: bold;
-    font-size: 15px
+    height: 56px;
+    border-radius: 12px;
+    border: 1px solid #333333;
+    background-color: #161616;
+    color: #f0f0f0;
+    padding: 0 0.95rem;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.98rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 #email_input::placeholder,
 #password_input::placeholder {
-    margin-left: 1px;
-    font-family: Roboto;
+    color: #777777;
+    font-family: 'Roboto', sans-serif;
+}
 
+#email_input:focus,
+#password_input:focus {
+    outline: none;
+    border-color: #c19006;
+    background-color: #1b1b1b;
+    box-shadow: 0 0 0 3px rgb(193 144 6 / 20%);
 }
 
 .Login_button {
-    width: 60%;
-    height: 8vh;
-    border-radius: 8px;
-    margin-top: 2vh;
-    color: #0f0f0f333;
+    width: 100%;
+    height: 54px;
+    border-radius: 12px;
+    margin-top: 1rem;
+    color: #121212;
     background-color: #c19006;
     cursor: pointer;
-    font-family: Roboto;
-    font-size: 18px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.02rem;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .Login_button:hover {
     background-color: #ddb441;
-    transition: 0.2s;
+    transform: translateY(-1px) scale(1.004);
+}
+
+.errorMessage {
+    margin-top: 0.45rem;
+    color: #f09a9a;
+    font-size: 0.88rem;
+    font-family: 'Roboto', sans-serif;
 }
 
 @media (max-width: 768px) {
-    .Login_Inputs_container label {
-        width: 90%; /* Aumenta a área de clique/digitação no celular */
-    }
-
     .Login_button {
-        width: 90%; /* Botão grande para facilitar o toque */
+        height: 52px;
     }
 }

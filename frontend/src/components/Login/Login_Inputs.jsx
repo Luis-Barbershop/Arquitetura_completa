@@ -34,7 +34,7 @@ function Login_Inputs() {
 
     return (
         <div className={Styles.Login_Inputs_container}>
-            <form action="submit">
+            <form onSubmit={handleLogin}>
                 <label className={Styles.label_email}>
                     <p className={Styles.label_input}>Email</p>
                     <input type="email" name="email_area" id={Styles.email_input}
@@ -52,9 +52,10 @@ function Login_Inputs() {
                     <p className={Styles.forgot_password_text}>Esqueceu a Senha?</p>
                 </label>
 
+                {error && <p className={Styles.errorMessage}>{error}</p>}
 
 
-                <button type="submit" onClick={handleLogin} className={Styles.Login_button}>Entrar</button>
+                <button type="submit" className={Styles.Login_button}>Entrar</button>
 
             </form>
         </div>
