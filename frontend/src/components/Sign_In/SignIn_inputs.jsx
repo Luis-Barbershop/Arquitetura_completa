@@ -5,8 +5,7 @@ import { registerCustomer, registerBarber } from "../../services/authService"
 
 function SignIn_inputs() {
 
-    // Estados do formulário
-    const [step, setStep] = useState(1); // <<< controla o progresso
+    const [step, setStep] = useState(1);
 
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -28,7 +27,7 @@ function SignIn_inputs() {
 
     const handleNextStep = (e) => {
         e.preventDefault();
-        
+
         if (!name || !email || !cpf) {
             setError("Preencha todos os campos.");
             return;
@@ -73,18 +72,20 @@ function SignIn_inputs() {
 
     return (
         <div className={Styles.SignIn_inputs_container}>
+            <div className={Styles.stepHeader}>
+                <span className={step === 1 ? Styles.activeStep : Styles.step}>1. Dados pessoais</span>
+                <span className={step === 2 ? Styles.activeStep : Styles.step}>2. Conta e acesso</span>
+            </div>
 
-            <h3 className={Styles.title_register}>
-                Cadastro de {userType === "barber" ? "Barbeiro" : "Cliente"}
-            </h3>
+            <h3 className={Styles.formType}>Cadastro de {userType === "barber" ? "Barbeiro" : "Cliente"}</h3>
 
-            <form>
+            <form onSubmit={step === 1 ? handleNextStep : handleRegister}>
                 {step === 1 && (
                     <>
                         <label className={Styles.label_name}>
-                            <p>Nome Completo:</p>
+                            <p>Nome completo</p>
                             <input 
-                                id={Styles.name_input}
+                                className={Styles.formInput}
                                 type="text"
                                 value={name}
                                 onChange={e => setName(e.target.value)}
@@ -94,9 +95,9 @@ function SignIn_inputs() {
                         </label>
 
                         <label className={Styles.label_email}>
-                            <p>E-mail:</p>
+                            <p>E-mail</p>
                             <input 
-                                id={Styles.email_input}
+                                className={Styles.formInput}
                                 type="email"
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
@@ -106,9 +107,9 @@ function SignIn_inputs() {
                         </label>
 
                         <label className={Styles.label_name}>
-                            <p>CPF:</p>
+                            <p>CPF</p>
                             <input
-                                 id={Styles.email_input}
+                                className={Styles.formInput}
                                 type="text"
                                 value={cpf}
                                 onChange={e => setCpf(e.target.value)}
@@ -119,8 +120,8 @@ function SignIn_inputs() {
 
                         {error && <p className={Styles.error_message}>{error}</p>}
 
-                        <button className={Styles.SignIn_button} onClick={handleNextStep}>
-                            Próximo
+                        <button type="submit" className={Styles.SignIn_button}>
+                            Continuar
                         </button>
                     </>
                 )}
@@ -128,9 +129,9 @@ function SignIn_inputs() {
                 {step === 2 && (
                     <>
                         <label className={Styles.label_name}>
-                            <p>Telefone:</p>
+                            <p>Telefone</p>
                             <input 
-                             id={Styles.name_input}
+                                className={Styles.formInput}
                                 type="text"
                                 value={tell}
                                 onChange={e => setTell(e.target.value)}
@@ -142,9 +143,9 @@ function SignIn_inputs() {
                         {userType === "barber" && (
                             <>
                                 <label className={Styles.label_name}>
-                                    <p>Início de Expediente:</p>
+                                    <p>Inicio de expediente</p>
                                     <input 
-                                     id={Styles.name_input}
+                                        className={Styles.formInput}
                                         type="time"
                                         value={workStart}
                                         onChange={e => setWorkStart(e.target.value)}
@@ -153,9 +154,9 @@ function SignIn_inputs() {
                                 </label>
 
                                 <label className={Styles.label_name}>
-                                    <p>Fim de Expediente:</p>
+                                    <p>Fim de expediente</p>
                                     <input 
-                                     id={Styles.name_input}
+                                        className={Styles.formInput}
                                         type="time"
                                         value={workEnd}
                                         onChange={e => setWorkEnd(e.target.value)}
@@ -166,9 +167,9 @@ function SignIn_inputs() {
                         )}
 
                         <label className={Styles.label_name}>
-                            <p>Senha:</p>
+                            <p>Senha</p>
                             <input 
-                             id={Styles.name_input}
+                                className={Styles.formInput}
                                 type="password"
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
@@ -177,9 +178,9 @@ function SignIn_inputs() {
                         </label>
 
                         <label className={Styles.label_name}>
-                            <p>Confirmar senha:</p>
+                            <p>Confirmar senha</p>
                             <input 
-                             id={Styles.name_input}
+                                className={Styles.formInput}
                                 type="password"
                                 value={confirmPassword}
                                 onChange={e => setConfirmPassword(e.target.value)}
@@ -189,14 +190,18 @@ function SignIn_inputs() {
 
                         {error && <p className={Styles.error_message}>{error}</p>}
 
-                        <button className={Styles.SignIn_button} onClick={handleRegister}>
-                            Cadastrar
-                        </button>
+                        <div className={Styles.actionsRow}>
+                            <button type="button" className={Styles.secondaryButton} onClick={() => setStep(1)}>
+                                Voltar
+                            </button>
+                            <button type="submit" className={Styles.SignIn_button}>
+                                Cadastrar
+                            </button>
+                        </div>
                     </>
                 )}
             </form>
 
-            <p className={Styles.login_link}>Já possui conta? Entrar</p>
         </div>
     );
 }

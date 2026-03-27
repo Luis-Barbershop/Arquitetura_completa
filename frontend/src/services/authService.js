@@ -66,8 +66,7 @@ export const registerCustomer = async (userData) => {
 
 // Função de Logout
 export const logoutUser = () => {
-    localStorage.clear(); // Limpa tudo de uma vez
-    window.location.href = '/login';
+    localStorage.clear();
 };
 
 export const registerBarber = async (barberData) => {

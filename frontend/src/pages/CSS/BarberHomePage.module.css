@@ -1,4 +1,4 @@
-*{
+* {
     margin: 0;
     padding: 0;
     border: 0;
@@ -6,17 +6,27 @@
 }
 
 .pageContainer {
-    background-color: #0f0f0f;
     min-height: 100vh;
     width: 100%;
     color: white;
     padding: 20px;
-    padding-bottom: 110px;
     overflow-x: hidden;
+    background-color: #0f0f0f;
+    background-image:
+        radial-gradient(circle at 8% 12%, rgb(193 144 6 / 10%), transparent 24%),
+        radial-gradient(circle at 84% 80%, rgb(193 144 6 / 8%), transparent 26%);
+}
+
+.withNavbar {
+    padding-bottom: 110px;
+}
+
+.withoutNavbar {
+    padding-bottom: 30px;
 }
 
 .contentWrapper {
-    max-width: 100%;
+    max-width: 1140px;
     margin: 0 auto;
     overflow-x: hidden;
 }
@@ -27,50 +37,39 @@
     padding: 50px;
 }
 
-.headerTitle{
-    color: #D4AF37;
-}
-
-.notificationButton{
-    height: 35px;
-    width: 35px;
-
-}
-
-.notificationButton img{
-    width: 100%;
-}
-
-/* Header */
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    margin-bottom: 30px;
+    margin-bottom: 24px;
     font-family: "Space Grotesk", sans-serif;
+    padding: 1rem 1.2rem;
+    border: 1px solid #292929;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #171717 0%, #121212 100%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
 }
 
-.headerSpacer {
-    flex: 1;
-}
-
-.headerCenter {
-    text-align: center;
-    flex: 2;
+.headerleft {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .headerTitle {
     margin: 0;
+    color: #d4af37;
 }
 
 .headerWelcome {
-    margin: 10px 0;
+    margin: 2px 0 0;
+    color: #cccccc;
 }
 
 .headerShopName {
-    color: #D4AF37;
-    font-weight: bold;
+    color: #d4af37;
+    font-weight: 700;
 }
 
 .headerRight {
@@ -80,91 +79,339 @@
     flex-direction: row;
     align-items: center;
     justify-content: flex-end;
-    gap: 15px;
+    gap: 10px;
+}
+
+.notificationButton {
+    height: 38px;
+    width: 38px;
+    border: 1px solid #333;
+    border-radius: 12px;
+    background-color: #1a1a1a;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.notificationButton img {
+    width: 100%;
+}
+
+.notificationButton:hover {
+    border-color: #c19006;
+    background-color: #1f1a11;
 }
 
 .logoutButton {
     background: transparent;
-    border: 1px solid #F44336;
-    color: #F44336;
+    border: 1px solid #f44336;
+    color: #f44336;
     padding: 8px 15px;
-    border-radius: 5px;
+    border-radius: 10px;
     cursor: pointer;
     font-size: 0.9rem;
+    font-family: "Space Grotesk", sans-serif;
 }
 
 .logoutButton:hover {
-    background-color: #F44336;
+    background-color: #f44336;
     color: white;
 }
 
-/* No Barbershop Panel */
 .noBarbershopPanel {
-    text-align: center;
-    padding: 40px;
-    background: #2A2A2A;
-    border-radius: 10px;
+    margin-top: 0.5rem;
+    padding: 2.2rem;
+    background:
+        radial-gradient(circle at 90% 12%, rgb(193 144 6 / 14%), transparent 28%),
+        #151515;
+    border-radius: 20px;
+    border: 1px solid #2b2b2b;
+    box-shadow: 0 24px 44px rgb(0 0 0 / 28%);
+}
+
+.noBarbershopKicker {
+    color: #c19006;
+    letter-spacing: 0.16em;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.78rem;
+    margin-bottom: 0.6rem;
 }
 
 .noBarbershopTitle {
-    color: #D4AF37;
+    color: #f4f4f4;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    line-height: 1.15;
+    max-width: 760px;
 }
 
 .noBarbershopSubtitle {
-    margin-bottom: 30px;
-    color: #ccc;
+    margin: 0.7rem 0 1.5rem;
+    color: #b8b1a3;
+    max-width: 700px;
+    line-height: 1.55;
+    font-size: 1rem;
 }
 
 .noBarbershopActions {
     display: flex;
-    gap: 20px;
-    justify-content: center;
+    gap: 1rem;
+    justify-content: flex-start;
     flex-wrap: wrap;
 }
 
+.actionCard {
+    flex: 1;
+    min-width: 280px;
+    padding: 1.1rem;
+    border-radius: 14px;
+    border: 1px solid #2f2f2f;
+    background: linear-gradient(180deg, #181818 0%, #141414 100%);
+}
+
+.actionCard h3 {
+    margin: 0;
+    color: #f2f2f2;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 1.06rem;
+}
+
+.actionCard p {
+    margin: 0.55rem 0 0;
+    color: #a6a6a6;
+    line-height: 1.45;
+    min-height: 48px;
+}
+
 .createShopButton {
-    padding: 15px 30px;
-    font-size: 1rem;
+    margin-top: 1rem;
+    padding: 12px 16px;
+    font-size: 0.97rem;
     cursor: pointer;
-    background-color: #D4AF37;
+    background-color: #c19006;
     border: none;
-    border-radius: 5px;
-    font-weight: bold;
+    border-radius: 10px;
+    font-weight: 700;
+    font-family: "Space Grotesk", sans-serif;
+    transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .createShopButton:hover {
-    background-color: #c9a42f;
+    background-color: #ddb441;
+    transform: translateY(-1px);
 }
 
 .joinShopButton {
-    padding: 15px 30px;
-    font-size: 1rem;
+    margin-top: 1rem;
+    padding: 12px 16px;
+    font-size: 0.97rem;
     cursor: pointer;
     background-color: transparent;
-    border: 2px solid #D4AF37;
-    color: #D4AF37;
-    border-radius: 5px;
-    font-weight: bold;
+    border: 1px solid #6b5118;
+    color: #d8c59a;
+    border-radius: 10px;
+    font-weight: 700;
+    font-family: "Space Grotesk", sans-serif;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .joinShopButton:hover {
-    background-color: #D4AF37;
-    color: #1E1E1E;
+    background-color: #1f190d;
+    border-color: #c19006;
+    transform: translateY(-1px);
 }
 
-/* Agenda Button */
+.noBarbershopHint {
+    margin-top: 1.1rem;
+    color: #7f7f7f;
+    font-size: 0.9rem;
+}
+
 .agendaButton {
     width: 100%;
     padding: 15px;
-    background-color: #D4AF37;
+    background-color: #d4af37;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-weight: bold;
+    font-weight: 700;
     font-size: 1.1rem;
     margin-bottom: 20px;
 }
 
 .agendaButton:hover {
     background-color: #c9a42f;
+}
+
+.modalBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgb(0 0 0 / 62%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1300;
+    padding: 1rem;
+}
+
+.modalCard {
+    width: min(520px, 96vw);
+    border-radius: 18px;
+    border: 1px solid #2f2f2f;
+    background:
+        radial-gradient(circle at 90% 12%, rgb(193 144 6 / 15%), transparent 28%),
+        linear-gradient(180deg, #161616 0%, #111111 100%);
+    padding: 1.5rem;
+    box-shadow: 0 30px 70px rgb(0 0 0 / 45%);
+}
+
+.logoutModalCard {
+    width: min(460px, 96vw);
+}
+
+.modalKicker {
+    color: #c19006;
+    font-family: "Space Grotesk", sans-serif;
+    letter-spacing: 0.14em;
+    font-size: 0.77rem;
+}
+
+.modalTitle {
+    margin-top: 0.5rem;
+    color: #f5f5f5;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(1.35rem, 3vw, 1.8rem);
+}
+
+.modalSubtitle {
+    margin-top: 0.45rem;
+    color: #b6af9f;
+    line-height: 1.5;
+    font-family: "Roboto", sans-serif;
+}
+
+.modalForm {
+    margin-top: 1.1rem;
+}
+
+.modalLabel {
+    display: block;
+    color: #dddddd;
+    font-size: 0.84rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-family: "Roboto", sans-serif;
+}
+
+.modalInput {
+    margin-top: 0.5rem;
+    width: 100%;
+    height: 52px;
+    border-radius: 12px;
+    border: 1px solid #343434;
+    background: #171717;
+    color: #f2f2f2;
+    padding: 0 0.95rem;
+    font-size: 1rem;
+    font-family: "Roboto", sans-serif;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modalInput:focus {
+    outline: none;
+    border-color: #c19006;
+    box-shadow: 0 0 0 3px rgb(193 144 6 / 20%);
+}
+
+.modalError {
+    margin-top: 0.55rem;
+    color: #f09a9a;
+    font-size: 0.88rem;
+    font-family: "Roboto", sans-serif;
+}
+
+.modalActions {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem;
+}
+
+.modalPrimaryButton,
+.modalSecondaryButton,
+.modalDangerButton {
+    height: 50px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-family: "Space Grotesk", sans-serif;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.modalPrimaryButton {
+    background-color: #c19006;
+    color: #161616;
+    font-weight: 700;
+}
+
+.modalPrimaryButton:hover {
+    background-color: #ddb441;
+    transform: translateY(-1px);
+}
+
+.modalPrimaryButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.modalSecondaryButton {
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    color: #d0d0d0;
+}
+
+.modalSecondaryButton:hover {
+    background: #202020;
+}
+
+.modalDangerButton {
+    background: #381313;
+    border: 1px solid #8f2a2a;
+    color: #ffb4b4;
+    font-weight: 700;
+}
+
+.modalDangerButton:hover {
+    background: #522020;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 760px) {
+    .pageContainer {
+        padding: 12px;
+    }
+
+    .header {
+        padding: 0.9rem;
+    }
+
+    .headerTitle {
+        font-size: 1.2rem;
+    }
+
+    .headerWelcome {
+        font-size: 0.9rem;
+    }
+
+    .noBarbershopPanel {
+        padding: 1.2rem;
+        border-radius: 14px;
+    }
+
+    .actionCard {
+        min-width: 100%;
+    }
+
+    .modalActions {
+        grid-template-columns: 1fr;
+    }
 }

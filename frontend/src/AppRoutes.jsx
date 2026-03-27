@@ -19,6 +19,7 @@ function AppRoutes() {
       <Route path="/identificacao" element={<RedirectionPage/>} />
       <Route path="/login" element= {<LoginPage/>}/>
       <Route path="/SignIn" element={<SignInPage/>}/>
+      <Route path="/signin" element={<SignInPage/>}/>
       <Route path="/homepage" element={<HomePage/>}/>
       <Route path='/agendamentoPage/:barbershopId' element={<AgendamentoPage/>}/>
       <Route path='/barberHome' element={<BarberHomePage/>}/>

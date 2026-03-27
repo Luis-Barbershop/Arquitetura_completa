@@ -8,6 +8,8 @@ function RedirectionPage() {
   const mode = location.state?.mode || 'login';
   const actionLabel = mode === 'login' ? 'entrar' : 'criar sua conta';
   const actionTitle = mode === 'login' ? 'Bem-vindo de volta.' : 'Vamos afiar a lâmina.';
+  const customerLabel = mode === 'login' ? 'Entrar como Cliente' : 'Cadastrar como Cliente';
+  const barberLabel = mode === 'login' ? 'Entrar como Barbeiro' : 'Cadastrar como Barbeiro';
 
   const handleProfileSelection = (profile) => {
     // profile será 'customer' ou 'barber'
@@ -39,7 +41,7 @@ function RedirectionPage() {
           <button className={Styles.redirection_buttons} onClick={() => handleProfileSelection('customer')}>
             <img src="/Icons/user_icon.png" alt="Icone de Usuario" />
             <div>
-              <p className={Styles.title_button}>Entrar como Cliente</p>
+              <p className={Styles.title_button}>{customerLabel}</p>
               <p className={Styles.text_button}>Quero agendar um servico com rapidez.</p>
             </div>
           </button>
@@ -47,7 +49,7 @@ function RedirectionPage() {
           <button className={Styles.redirection_buttons} onClick={() => handleProfileSelection('barber')}>
             <img src="/Icons/barber_icon.png" alt="Icone de Barbearia" />
             <div>
-              <p className={Styles.title_button}>Entrar como Barbeiro</p>
+              <p className={Styles.title_button}>{barberLabel}</p>
               <p className={Styles.text_button}>Quero organizar agenda e atendimentos.</p>
             </div>
           </button>

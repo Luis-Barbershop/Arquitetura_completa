@@ -39,7 +39,7 @@ function LoginPage() {
                     <Login_Inputs />
 
                     <div className={Styles.footerActions}>
-                        <h3>Nao tem uma conta? <Link className={Styles.Link} to="/identificacao">Crie agora</Link></h3>
+                        <h3>Nao tem uma conta? <Link className={Styles.Link} to="/identificacao" state={{ mode: "register", role }}>Crie agora</Link></h3>
                         <Link className={Styles.homeLink} to="/">Voltar para a pagina inicial</Link>
                     </div>
                 </section>
