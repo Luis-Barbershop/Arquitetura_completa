@@ -3,6 +3,7 @@ package ifsp.edu.projeto.cortaai.barbershopservice.feign;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.UserInfoDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.exception.UserServiceUnavailableException;
 import org.springframework.cloud.openfeign.FallbackFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -31,6 +32,11 @@ public class UserServiceClientFallbackFactory implements FallbackFactory<UserSer
 
             @Override
             public void updateUserBarbershopId(UUID id, Map<String, String> body) {
+                throw unavailable(cause);
+            }
+
+            @Override
+            public ResponseEntity<Void> makeBarberOwner(String uid) {
                 throw unavailable(cause);
             }
         };

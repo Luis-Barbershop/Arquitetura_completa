@@ -2,6 +2,7 @@ package ifsp.edu.projeto.cortaai.barbershopservice.feign;
 
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.UserInfoDTO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -32,5 +33,8 @@ public interface UserServiceClient {
 
     @PutMapping("/{id}/barbershop")
     void updateUserBarbershopId(@PathVariable("id") UUID id, @RequestBody Map<String, String> body);
+    
+    @PutMapping("/api/internal/users/make-owner/{uid}")
+    ResponseEntity<Void> makeBarberOwner(@PathVariable("uid") String uid);
 }
 

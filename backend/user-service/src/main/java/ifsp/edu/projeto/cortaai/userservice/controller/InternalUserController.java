@@ -6,6 +6,7 @@ import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository;
 import ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository;
+import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -37,6 +38,7 @@ public class InternalUserController {
 
     private final CustomerRepository customerRepository;
     private final BarberRepository barberRepository;
+    private final FirebaseAuthService firebaseAuthService;
 
     /** Busca usuário por ID (Customer ou Barber). */
     @Operation(summary = "Busca usuário por ID", description = "Retorna o UserInfoDTO de um Customer ou Barber pelo UUID.")
@@ -151,6 +153,13 @@ public class InternalUserController {
         log.info("Barber {} barbershopId updated to {}", id, barbershopId);
         return ResponseEntity.ok().build();
     }
+    @PutMapping("/make-owner/{uid}")
+        public ResponseEntity<Void> makeBarberOwner(@PathVariable String uid) {
+                // Seta a claim isOwner para true, mantendo a role BARBER
+                firebaseAuthService.setCustomUserClaims(uid, "BARBER", true);
+                return ResponseEntity.ok().build();
+        }
+
 
     // ── conversores ──────────────────────────────────────────────────────────
 

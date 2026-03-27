@@ -70,7 +70,7 @@ public class BarbershopController {
 
     @Operation(
         summary = "Registra uma nova barbearia",
-        description = "Cria uma nova barbearia associada ao usuário autenticado. Envie os dados como JSON. Para adicionar logo, use o endpoint POST /my-shop/upload-logo após o cadastro."
+        description = "Cria uma nova barbearia associada ao usuário autenticado. Envie os dados como FormData contendo 'shop' (JSON) e 'file' (Imagem)."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Barbearia criada com sucesso"),
@@ -83,11 +83,16 @@ public class BarbershopController {
             @ApiResponse(responseCode = "500", description = "Erro interno",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
-    @PostMapping(value = "/register-my-shop", consumes = MediaType.APPLICATION_JSON_VALUE)
+    // 1. ALTERADO: Agora consome MULTIPART_FORM_DATA_VALUE
+    @PostMapping(value = "/register-my-shop", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BarbershopDTO> createBarbershop(
             @Parameter(hidden = true) Principal principal,
-            @RequestBody @Valid CreateBarbershopDTO dto) throws IOException {
-        BarbershopDTO created = barbershopService.createBarbershop(principal.getName(), dto, null);
+            // 2. ALTERADO: Usando @RequestPart em vez de @RequestBody
+            @RequestPart("shop") @Valid CreateBarbershopDTO dto,
+            @RequestPart(value = "file", required = false) MultipartFile file) throws IOException {
+        
+        // 3. ALTERADO: Passando o 'file' em vez de null
+        BarbershopDTO created = barbershopService.createBarbershop(principal.getName(), dto, file);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 

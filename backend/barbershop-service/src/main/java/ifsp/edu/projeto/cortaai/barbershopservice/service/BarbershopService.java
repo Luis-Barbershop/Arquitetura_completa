@@ -174,11 +174,16 @@ public class BarbershopService {
             UploadResultDTO result = storageService.uploadFile(logoFile, "barbershop-logos");
             saved.setLogoUrl(result.getSecureUrl());
             saved.setLogoUrlPublicId(result.getPublicId());
-            barbershopRepository.save(saved);
+            // Atualiza a barbearia salva com a url da imagem
+            saved = barbershopRepository.save(saved); 
         }
 
-        // Atualiza barbershopId no user-service
+        // 1. Atualiza barbershopId no user-service
         updateUserBarbershop(owner.getId(), saved.getId());
+
+        // 2. AVISA O USER-SERVICE PARA ELEVAR O PRIVILÉGIO NO FIREBASE (isOwner = true)
+        // ESSA É A LINHA QUE FALTAVA!
+        userServiceClient.makeBarberOwner(ownerUid);
 
         return barbershopMapper.toDTO(saved);
     }

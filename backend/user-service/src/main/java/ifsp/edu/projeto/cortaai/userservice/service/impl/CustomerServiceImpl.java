@@ -8,6 +8,7 @@ import ifsp.edu.projeto.cortaai.userservice.mapper.CustomerMapper;
 import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository;
 import ifsp.edu.projeto.cortaai.userservice.service.CustomerService;
+import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import ifsp.edu.projeto.cortaai.userservice.service.storage.StorageService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
@@ -26,15 +27,19 @@ public class CustomerServiceImpl implements CustomerService {
     private final ApplicationEventPublisher publisher;
     private final CustomerMapper customerMapper;
     private final StorageService storageService;
+    private final FirebaseAuthService firebaseAuthService;
 
     public CustomerServiceImpl(final CustomerRepository customerRepository,
                                final ApplicationEventPublisher publisher,
                                final CustomerMapper customerMapper,
-                               final StorageService storageService) {
+                               final StorageService storageService,
+                               final FirebaseAuthService firebaseAuthService
+                               ) {
         this.customerRepository = customerRepository;
         this.publisher = publisher;
         this.customerMapper = customerMapper;
         this.storageService = storageService;
+        this.firebaseAuthService = firebaseAuthService;
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
@@ -77,6 +82,7 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         customerRepository.save(customer);
+        firebaseAuthService.setCustomUserClaims(customer.getFirebaseUid(), "CUSTOMER", false);
     }
 
     @Override
@@ -122,4 +128,7 @@ public class CustomerServiceImpl implements CustomerService {
     public boolean documentCPFExists(final String documentCPF) {
         return customerRepository.existsByDocumentCPFIgnoreCase(documentCPF);
     }
+
+
+    
 }

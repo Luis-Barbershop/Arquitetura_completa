@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -146,27 +147,33 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
      * Constrói a requisição mutada com headers de identidade injetados.
      * Headers anteriores de identidade (X-User-*) são removidos para evitar spoofing.
      */
-    private ServerHttpRequest buildMutatedRequest(ServerWebExchange exchange, FirebaseToken token, String correlationId) {
-        // Tenta obter o tipo do usuário a partir do header enviado pelo cliente
-        String userType = exchange.getRequest().getHeaders().getFirst("X-User-Type");
-        if (userType == null) {
-            userType = "UNKNOWN";
+    private ServerHttpRequest buildMutatedRequest(ServerWebExchange exchange, FirebaseToken decodedToken, String correlationId) {
+        // 1. Extrair as Custom Claims do token assinado pelo Firebase
+        Map<String, Object> claims = decodedToken.getClaims();
+        
+        // Pega a role (se não existir, cai para UNKNOWN para evitar null)
+        String role = (String) claims.getOrDefault("role", "UNKNOWN");
+        
+        // Tratamento seguro para o isOwner (o Firebase pode converter tipos nas claims)
+        boolean isOwner = false;
+        if (claims.containsKey("isOwner")) {
+            Object isOwnerClaim = claims.get("isOwner");
+            if (isOwnerClaim instanceof Boolean) {
+                isOwner = (Boolean) isOwnerClaim;
+            } else if (isOwnerClaim instanceof String) {
+                isOwner = Boolean.parseBoolean((String) isOwnerClaim);
+            }
         }
-
+    
+        // 2. Montar a nova requisição IGNORANDO o X-User-Type do Frontend
         return exchange.getRequest().mutate()
-                // Remove headers que o cliente poderia ter injetado (anti-spoofing)
-                .headers(headers -> {
-                    headers.remove("X-User-UID");
-                    headers.remove("X-User-Email");
-                    headers.remove("X-User-Name");
-                    headers.remove("X-User-Type");
-                    headers.remove("X-Correlation-Id");
-                })
-                .header("X-User-UID", token.getUid())
-                .header("X-User-Email", token.getEmail() != null ? token.getEmail() : "")
-                .header("X-User-Name",  token.getName()  != null ? token.getName()  : "")
-                .header("X-User-Type",  userType)
-                .header("X-Correlation-Id", correlationId)
+                .header("X-Correlation-ID", correlationId)
+                .header("X-User-UID", decodedToken.getUid())
+                .header("X-User-Email", decodedToken.getEmail() != null ? decodedToken.getEmail() : "")
+                
+                // Aqui é a blindagem: injetamos os valores do Firebase, não do cliente
+                .header("X-User-Type", role)
+                .header("X-User-Owner", String.valueOf(isOwner))
                 .build();
     }
 

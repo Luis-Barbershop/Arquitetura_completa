@@ -18,6 +18,7 @@ export const signInWithGoogle = async (userType = null) => {
         // Backend espera { idToken, userType } conforme FirebaseAuthRequestDTO
         const response = await api.post('/auth/verify', { idToken, userType });
         
+        
         // AuthResponseDTO retorna: { id, name, email, phone, photoUrl, userType, authProvider, profileComplete, role }
         // Normalizamos para o formato que os componentes esperam
         const data = response.data;
@@ -60,6 +61,12 @@ export const completeProfileApi = async (type, data, firebaseUserInfo = {}) => {
         }
             
         const response = await api.post(endpoint, payload);
+
+        if (auth.currentUser) {
+            await auth.currentUser.getIdToken(true);
+        }
+
+        
         return response.data;
     } catch (error) {
         console.error("Erro ao completar o perfil:", error);

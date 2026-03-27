@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -200,6 +201,21 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         }
 
         throw new NotFoundException("Usuário não encontrado para o UID: " + firebaseUid);
+    }
+
+
+    @Override
+    public void setCustomUserClaims(String uid, String role, boolean isOwner) {
+        try {
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("role", role);
+            claims.put("isOwner", isOwner);
+            FirebaseAuth.getInstance().setCustomUserClaims(uid, claims);
+            log.info("Custom claims atualizadas para UID {}: role={}, isOwner={}", uid, role, isOwner);
+        } catch (FirebaseAuthException e) {
+            log.error("Erro ao setar custom claims para o usuário {}: {}", uid, e.getMessage());
+            throw new RuntimeException("Falha ao atualizar permissões do usuário", e);
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────────

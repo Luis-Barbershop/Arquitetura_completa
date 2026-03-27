@@ -6,6 +6,7 @@ import ifsp.edu.projeto.cortaai.userservice.mapper.BarberMapper;
 import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository;
 import ifsp.edu.projeto.cortaai.userservice.service.BarberService;
+import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +20,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class BarberServiceImpl implements BarberService {
+    
 
     private final BarberRepository barberRepository;
     private final BarberMapper barberMapper;
+    private final FirebaseAuthService firebaseAuthService;
 
     @Override
     public BarberDTO update(UUID id, UpdateBarberDTO dto) {
@@ -32,7 +35,14 @@ public class BarberServiceImpl implements BarberService {
         if (dto.getTell() != null)  barber.setTell(dto.getTell());
         if (dto.getEmail() != null) barber.setEmail(dto.getEmail());
 
-        return barberMapper.toDTO(barberRepository.save(barber));
+        // 1. Salva no banco e guarda a referência
+        Barber savedBarber = barberRepository.save(barber);
+
+        // 2. Avisa o Firebase que esse UID agora é um Barbeiro
+        firebaseAuthService.setCustomUserClaims(savedBarber.getFirebaseUid(), "BARBER", false);
+
+        // 3. Retorna o DTO
+        return barberMapper.toDTO(savedBarber);
     }
 
     @Override

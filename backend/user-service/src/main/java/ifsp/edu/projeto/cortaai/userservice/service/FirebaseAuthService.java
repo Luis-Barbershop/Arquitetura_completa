@@ -50,4 +50,6 @@ public interface FirebaseAuthService {
      * @return perfil do usuário
      */
     AuthResponseDTO getMe(String firebaseUid);
+
+    void setCustomUserClaims(String uid, String role, boolean isOwner);
 }

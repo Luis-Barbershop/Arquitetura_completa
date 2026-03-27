@@ -1,4 +1,5 @@
 import api from "./api"
+import { auth } from './firebase';
 
 const getStoredUserId = () => {
     const legacyUserId = localStorage.getItem('userId');
@@ -62,6 +63,11 @@ export const createBarbershop = async (shopData, imageFile) => {
     }
 
     const response = await api.post('/barbershops/register-my-shop', formData);
+
+    if (auth.currentUser) {
+        await auth.currentUser.getIdToken(true);
+    }
+
     return response.data;
 };
 
