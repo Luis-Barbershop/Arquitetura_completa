@@ -28,7 +28,11 @@ const Login_Inputs = ({ role }) => {
             }
         } catch (err) {
             console.error(err);
-            setError('Email ou senha invalidos.');
+            if (err.code === 'auth/email-not-verified') {
+                setError('Seu e-mail ainda nao foi verificado. Verifique sua caixa de entrada.');
+            } else {
+                setError('Email ou senha invalidos.');
+            }
         } finally {
             setLoading(false);
         }

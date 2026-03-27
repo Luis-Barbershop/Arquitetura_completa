@@ -6,7 +6,26 @@ import {
     signInWithPopup,
     GoogleAuthProvider,
     signOut,
+    sendEmailVerification,
+    reload,
 } from 'firebase/auth';
+
+const normalizeAuthPayload = (backendData, firebaseUid) => ({
+    user: {
+        id: backendData.id,
+        name: backendData.name,
+        email: backendData.email,
+        phone: backendData.phone,
+        photoUrl: backendData.photoUrl,
+        firebaseUid,
+    },
+    userType: backendData.userType,
+    profileComplete: backendData.profileComplete,
+    role: backendData.role,
+    authProvider: backendData.authProvider,
+    emailVerified: backendData.emailVerified,
+    verificationRequired: backendData.verificationRequired,
+});
 
 // LOGIN COM GOOGLE (ATUALIZADO PARA O NOVO FLUXO)
 export const signInWithGoogle = async (userType = null) => {
@@ -21,21 +40,7 @@ export const signInWithGoogle = async (userType = null) => {
         
         // AuthResponseDTO retorna: { id, name, email, phone, photoUrl, userType, authProvider, profileComplete, role }
         // Normalizamos para o formato que os componentes esperam
-        const data = response.data;
-        return {
-            user: {
-                id: data.id,
-                name: data.name,
-                email: data.email,
-                phone: data.phone,
-                photoUrl: data.photoUrl,
-                firebaseUid: result.user.uid,
-            },
-            userType: data.userType,
-            profileComplete: data.profileComplete,
-            role: data.role,
-            authProvider: data.authProvider,
-        };
+        return normalizeAuthPayload(response.data, result.user.uid);
     } catch (error) {
         console.error("Erro no login com Google:", error);
         if (error.response) {
@@ -81,27 +86,29 @@ export const completeProfileApi = async (type, data, firebaseUserInfo = {}) => {
 export const login = async (email, password) => {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        await reload(userCredential.user);
+
+        if (!userCredential.user.emailVerified) {
+            await sendEmailVerification(userCredential.user);
+            await signOut(auth);
+            const error = new Error('Email nao verificado.');
+            error.code = 'auth/email-not-verified';
+            throw error;
+        }
+
         const idToken = await userCredential.user.getIdToken();
         
         // Backend espera { idToken, userType } conforme FirebaseAuthRequestDTO
         const response = await api.post('/auth/verify', { idToken, userType: null });
+        if (response.data?.verificationRequired) {
+            await signOut(auth);
+            const error = new Error('Email nao verificado.');
+            error.code = 'auth/email-not-verified';
+            throw error;
+        }
         
         // Normaliza a resposta do AuthResponseDTO
-        const data = response.data;
-        return {
-            user: {
-                id: data.id,
-                name: data.name,
-                email: data.email,
-                phone: data.phone,
-                photoUrl: data.photoUrl,
-                firebaseUid: userCredential.user.uid,
-            },
-            userType: data.userType,
-            profileComplete: data.profileComplete,
-            role: data.role,
-            authProvider: data.authProvider,
-        };
+        return normalizeAuthPayload(response.data, userCredential.user.uid);
     } catch (error) {
         console.error("Erro no login:", error);
         throw error;
@@ -114,38 +121,24 @@ export const register = async (email, password, userData, type) => {
     try {
         // 1. Cria o user no Firebase Authentication
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const idToken = await userCredential.user.getIdToken();
+        await sendEmailVerification(userCredential.user);
+        await signOut(auth);
 
-        // 2. Verifica o token no backend (sem salvar no banco — apenas valida)
-        await api.post('/auth/verify', { idToken, userType: type });
-
-        // 3. Completa o perfil com os dados digitados (aqui é que salva no banco)
-        const endpoint = type === 'BARBER' 
-            ? '/auth/barbers/complete-profile' 
-            : '/auth/customers/complete-profile';
-
-        const payload = { ...userData };
-        if (!payload.name) {
-            payload.name = userCredential.user.displayName || 'Usuário';
-        }
-
-        const response = await api.post(endpoint, payload);
-        const data = response.data;
-
-        // Normaliza para o formato que os componentes esperam
         return {
             user: {
-                id: data.id,
-                name: data.name,
-                email: data.email,
-                phone: data.phone,
-                photoUrl: data.photoUrl,
+                id: null,
+                name: userData.name || userCredential.user.displayName || 'Usuario',
+                email,
+                phone: userData.tell || null,
+                photoUrl: null,
                 firebaseUid: userCredential.user.uid,
             },
-            userType: data.userType,
-            profileComplete: data.profileComplete,
-            role: data.role,
-            authProvider: data.authProvider,
+            userType: type,
+            profileComplete: false,
+            role: type === 'BARBER' ? 'ROLE_BARBER' : 'ROLE_CUSTOMER',
+            authProvider: 'EMAIL',
+            emailVerified: false,
+            verificationRequired: true,
         };
     } catch (error) {
         console.error("Erro no registo:", error);

@@ -53,6 +53,15 @@ function SignIn_inputs() {
             }
             const type = isBarber ? 'BARBER' : 'CUSTOMER';
             const data = await register(email, password, userData, type);
+
+            if (data.verificationRequired) {
+                setStep(1);
+                setPassword('');
+                setConfirmPassword('');
+                setError('Enviamos um e-mail de verificacao. Confirme o link antes de entrar.');
+                return;
+            }
+
             finalizeLogin(data);
         } catch (err) {
             console.error(err);
