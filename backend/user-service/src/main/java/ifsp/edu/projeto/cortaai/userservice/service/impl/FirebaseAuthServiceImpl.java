@@ -48,8 +48,32 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         String name     = decoded.getName();
         String photoUrl = decoded.getPicture();
         String provider = extractProvider(decoded);
+        boolean emailVerified = extractEmailVerified(decoded);
+        boolean verificationRequired = isEmailVerificationRequired(provider, emailVerified);
 
         log.info("Firebase auth OK — uid={} provider={} userType={}", uid, provider, request.userType());
+
+        String resolvedType = (request.userType() != null && !request.userType().isBlank())
+                ? request.userType().toUpperCase()
+                : "CUSTOMER";
+        String resolvedRole = "BARBER".equals(resolvedType) ? "ROLE_BARBER" : "ROLE_CUSTOMER";
+
+        if (verificationRequired) {
+            log.info("Login bloqueado: e-mail ainda nao verificado para uid={}", uid);
+            return new AuthResponseDTO(
+                    null,
+                    name != null ? name : "Usuário",
+                    email,
+                    null,
+                    photoUrl,
+                    resolvedType,
+                    provider,
+                    false,
+                    resolvedRole,
+                    false,
+                    true
+            );
+        }
 
         // 2. Verifica se o usuário JÁ EXISTE no banco (por UID ou e-mail)
         //    Se existe e tem perfil completo, retorna direto.
@@ -61,14 +85,14 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         Optional<Barber> barberByUid = barberRepository.findByFirebaseUid(uid);
         if (barberByUid.isPresent()) {
             log.info("Barber encontrado por UID={}", uid);
-            return toAuthResponse(barberByUid.get());
+            return toAuthResponse(barberByUid.get(), emailVerified, false);
         }
 
         // Tenta como Customer (por UID)
         Optional<Customer> customerByUid = customerRepository.findByFirebaseUid(uid);
         if (customerByUid.isPresent()) {
             log.info("Customer encontrado por UID={}", uid);
-            return toAuthResponse(customerByUid.get());
+            return toAuthResponse(customerByUid.get(), emailVerified, false);
         }
 
         // Tenta por e-mail (migração de conta antiga)
@@ -79,23 +103,19 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             if (barberByEmail.isPresent()) {
                 Barber existing = barberByEmail.get();
                 log.info("Encontrado barber existente por email={} (migração). Retornando dados sem atualizar.", email);
-                return toAuthResponse(existing);
+                return toAuthResponse(existing, emailVerified, false);
             }
             Optional<Customer> customerByEmail = customerRepository.findByEmail(email);
             if (customerByEmail.isPresent()) {
                 Customer existing = customerByEmail.get();
                 log.info("Encontrado customer existente por email={} (migração). Retornando dados sem atualizar.", email);
-                return toAuthResponse(existing);
+                return toAuthResponse(existing, emailVerified, false);
             }
         }
 
         // Usuário NOVO — NÃO salva no banco ainda!
         // Retorna um DTO provisório com profileComplete=false para o frontend mostrar o modal.
         log.info("Usuário novo (não existe no banco). uid={} — aguardando complete-profile para salvar.", uid);
-        String resolvedType = (request.userType() != null && !request.userType().isBlank())
-                ? request.userType().toUpperCase()
-                : "CUSTOMER";
-        String resolvedRole = "BARBER".equals(resolvedType) ? "ROLE_BARBER" : "ROLE_CUSTOMER";
         return new AuthResponseDTO(
                 null,                        // sem ID (ainda não foi salvo)
                 name != null ? name : "Usuário",
@@ -105,7 +125,9 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 resolvedType,
                 provider,
                 false,                       // perfil NÃO completo
-                resolvedRole
+                resolvedRole,
+                emailVerified,
+                false
         );
     }
 
@@ -143,7 +165,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         customer.setAuthProvider(customer.getAuthProvider() != null ? customer.getAuthProvider() : "GOOGLE");
 
         customerRepository.saveAndFlush(customer);
-        return toAuthResponse(customer);
+        return toAuthResponse(customer, true, false);
     }
 
     @Override
@@ -182,7 +204,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         barber.setAuthProvider(barber.getAuthProvider() != null ? barber.getAuthProvider() : "GOOGLE");
 
         barberRepository.saveAndFlush(barber);
-        return toAuthResponse(barber);
+        return toAuthResponse(barber, true, false);
     }
 
     @Override
@@ -191,13 +213,13 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         // Tenta como Customer primeiro
         Optional<Customer> customer = customerRepository.findByFirebaseUid(firebaseUid);
         if (customer.isPresent()) {
-            return toAuthResponse(customer.get());
+            return toAuthResponse(customer.get(), true, false);
         }
 
         // Depois tenta como Barber
         Optional<Barber> barber = barberRepository.findByFirebaseUid(firebaseUid);
         if (barber.isPresent()) {
-            return toAuthResponse(barber.get());
+            return toAuthResponse(barber.get(), true, false);
         }
 
         throw new NotFoundException("Usuário não encontrado para o UID: " + firebaseUid);
@@ -260,9 +282,24 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         return "EMAIL";
     }
 
+    private boolean extractEmailVerified(FirebaseToken token) {
+        Object claim = token.getClaims().get("email_verified");
+        if (claim instanceof Boolean boolClaim) {
+            return boolClaim;
+        }
+        if (claim instanceof String strClaim) {
+            return Boolean.parseBoolean(strClaim);
+        }
+        return false;
+    }
+
+    private boolean isEmailVerificationRequired(String provider, boolean emailVerified) {
+        return "EMAIL".equalsIgnoreCase(provider) && !emailVerified;
+    }
+
     // ─── Conversão para AuthResponseDTO ──────────────────────────────────────
 
-    private AuthResponseDTO toAuthResponse(Customer customer) {
+    private AuthResponseDTO toAuthResponse(Customer customer, boolean emailVerified, boolean verificationRequired) {
         boolean complete = customer.getTell() != null && customer.getDocumentCPF() != null;
         return new AuthResponseDTO(
                 customer.getId(),
@@ -273,11 +310,13 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 "CUSTOMER",
                 customer.getAuthProvider(),
                 complete,
-                "ROLE_CUSTOMER"
+                "ROLE_CUSTOMER",
+                emailVerified,
+                verificationRequired
         );
     }
 
-    private AuthResponseDTO toAuthResponse(Barber barber) {
+    private AuthResponseDTO toAuthResponse(Barber barber, boolean emailVerified, boolean verificationRequired) {
         boolean complete = barber.getTell() != null && barber.getDocumentCPF() != null
                 && barber.getWorkStartTime() != null && barber.getWorkEndTime() != null;
         return new AuthResponseDTO(
@@ -289,7 +328,9 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 "BARBER",
                 barber.getAuthProvider(),
                 complete,
-                barber.getRole()
+                barber.getRole(),
+                emailVerified,
+                verificationRequired
         );
     }
 }

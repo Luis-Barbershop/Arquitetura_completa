@@ -117,6 +117,10 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
         return Mono.fromCallable(() -> firebaseAuth.verifyIdToken(idToken))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(decodedToken -> {
+                    if (requiresVerifiedEmail(decodedToken)) {
+                        log.info("event=gateway-email-not-verified uid={} correlationId={}", decodedToken.getUid(), correlationId);
+                        return unauthorized(exchangeWithCorrelation, "E-mail ainda nao verificado.", correlationId);
+                    }
                     ServerHttpRequest mutatedRequest = buildMutatedRequest(exchangeWithCorrelation, decodedToken, correlationId);
                     return chain.filter(exchangeWithCorrelation.mutate().request(mutatedRequest).build());
                 })
@@ -141,6 +145,32 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             return false;
         }
         return PUBLIC_BARBERSHOP_GET_PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
+    }
+
+    private boolean requiresVerifiedEmail(FirebaseToken token) {
+        String provider = extractSignInProvider(token);
+        if (!"password".equalsIgnoreCase(provider)) {
+            return false;
+        }
+
+        Object emailVerifiedClaim = token.getClaims().get("email_verified");
+        if (emailVerifiedClaim instanceof Boolean boolClaim) {
+            return !boolClaim;
+        }
+        if (emailVerifiedClaim instanceof String strClaim) {
+            return !Boolean.parseBoolean(strClaim);
+        }
+        return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String extractSignInProvider(FirebaseToken token) {
+        Object firebaseClaim = token.getClaims().get("firebase");
+        if (!(firebaseClaim instanceof Map<?, ?> firebaseMap)) {
+            return "";
+        }
+        Object provider = firebaseMap.get("sign_in_provider");
+        return provider != null ? provider.toString() : "";
     }
 
     /**

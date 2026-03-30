@@ -18,5 +18,7 @@ public record AuthResponseDTO(
         String userType,       // CUSTOMER | BARBER
         String authProvider,   // EMAIL | GOOGLE | FACEBOOK | APPLE | GITHUB | TWITTER
         boolean profileComplete,
-        String role            // ROLE_CUSTOMER | ROLE_BARBER | ROLE_OWNER
+        String role,           // ROLE_CUSTOMER | ROLE_BARBER | ROLE_OWNER
+        boolean emailVerified,
+        boolean verificationRequired
 ) {}

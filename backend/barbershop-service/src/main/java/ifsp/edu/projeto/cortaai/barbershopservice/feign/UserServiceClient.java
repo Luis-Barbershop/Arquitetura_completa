@@ -34,7 +34,7 @@ public interface UserServiceClient {
     @PutMapping("/{id}/barbershop")
     void updateUserBarbershopId(@PathVariable("id") UUID id, @RequestBody Map<String, String> body);
     
-    @PutMapping("/api/internal/users/make-owner/{uid}")
+    @PutMapping("/make-owner/{uid}")
     ResponseEntity<Void> makeBarberOwner(@PathVariable("uid") String uid);
 }
 
