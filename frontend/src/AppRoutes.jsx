@@ -9,15 +9,17 @@ import BarberHomePage from './pages/BarberHomePage';
 import AgendamentoPage from './pages/AgendamentoPage';
 import CreateBarbershopPage from './pages/CreateBarbershopPage';
 import MeusAgendamentosPage from './pages/MeusAgendamentosPage';
+import Site from './pages/Site';
 
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<StartPage />} />
+      <Route path="/" element={<Site/>} />
       <Route path="/identificacao" element={<RedirectionPage/>} />
       <Route path="/login" element= {<LoginPage/>}/>
       <Route path="/SignIn" element={<SignInPage/>}/>
+      <Route path="/signin" element={<SignInPage/>}/>
       <Route path="/homepage" element={<HomePage/>}/>
       <Route path='/agendamentoPage/:barbershopId' element={<AgendamentoPage/>}/>
       <Route path='/barberHome' element={<BarberHomePage/>}/>

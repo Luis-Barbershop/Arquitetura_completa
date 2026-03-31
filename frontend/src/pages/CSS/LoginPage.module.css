@@ -1,81 +1,237 @@
-.LoginPage_container{
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 40vw;
-    height: 100%;
-    margin: auto;
-}
-
-.logo_container{
-  background-color: white;
-  width: 160px;
-  height: 160px;
-  border-radius: 85px;
+.loginStage {
+  min-height: 100vh;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 15px;
+  padding: 2rem;
+  background-color: #0d0d0d;
+  background-image:
+    linear-gradient(125deg, rgb(193 144 6 / 14%) 0%, transparent 25%),
+    repeating-linear-gradient(0deg, transparent 0 28px, rgb(255 255 255 / 2%) 28px 29px);
 }
 
-.title_login{
-  font-family: Roboto;
-  font-size: 6vh;
-  color: #FFF;
-  font-weight: bold;
-  margin-top: 2vh;
+.loginShell {
+  width: min(1040px, 96%);
+  min-height: 650px;
+  border: 1px solid #262626;
+  border-radius: 26px;
+  overflow: hidden;
+  background-color: #111111;
+  box-shadow: 0 28px 60px rgb(0 0 0 / 40%);
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
 }
 
-.content_container{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+.brandPanel {
+  position: relative;
+  padding: 2.8rem 2.6rem;
+  background:
+    radial-gradient(circle at 10% 8%, rgb(193 144 6 / 18%), transparent 44%),
+    #141414;
+  border-right: 1px solid #242424;
 }
 
-.LoginPage_container h3{
-    color: #FFF;
-    font-family: Roboto;
+.brandPanel::after {
+  content: "";
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  border: 1px dashed rgb(193 144 6 / 40%);
+  right: -70px;
+  bottom: -82px;
 }
 
-.logo_container img{
-  object-fit: cover;
-  width: 100%;
-  height: 100%;
+.brandBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid #3a321f;
+  background-color: #1a1710;
 }
 
+.brandBadge img {
+  width: 22px;
+  height: 22px;
+}
+
+.brandBadge span {
+  color: #f3e8cf;
+  font-size: 0.92rem;
+  letter-spacing: 0.04em;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.kicker {
+  margin-top: 2.2rem;
+  color: #c19006;
+  font-size: 0.8rem;
+  letter-spacing: 0.22em;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.title_login {
+  margin-top: 0.65rem;
+  color: #f5f5f5;
+  font-size: clamp(2rem, 3.9vw, 3rem);
+  line-height: 1.02;
+  font-family: 'Space Grotesk', sans-serif;
+  max-width: 460px;
+}
+
+.subtitle {
+  margin-top: 1rem;
+  color: #a9a093;
+  font-size: 1rem;
+  max-width: 430px;
+  line-height: 1.5;
+  font-family: 'Roboto', sans-serif;
+}
+
+.tagRow {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.roleTag,
+.softTag {
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.86rem;
+  border: 1px solid #333333;
+  font-family: 'Roboto', sans-serif;
+}
+
+.roleTag {
+  color: #d8c59a;
+  background-color: #1b1b1b;
+}
+
+.roleTag strong {
+  color: #c19006;
+}
+
+.softTag {
+  color: #a9a9a9;
+  background-color: #181818;
+}
+
+.featuresList {
+  margin-top: 1.7rem;
+  margin-left: 1.1rem;
+  color: #cfc8bb;
+  font-family: 'Roboto', sans-serif;
+  line-height: 1.9;
+}
+
+.featuresList li::marker {
+  color: #c19006;
+}
+
+.formPanel {
+  padding: 2.7rem 2.2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background-color: #101010;
+}
+
+.formPanel h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.95rem;
+  line-height: 1.15;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.formPanel p {
+  margin-top: 0.55rem;
+  color: #8f8f8f;
+  font-size: 0.96rem;
+  font-family: 'Roboto', sans-serif;
+}
+
+.footerActions {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.footerActions h3 {
+  color: #dfdbd1;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 0.95rem;
+  text-align: center;
+}
 
 .Link {
-  color: gold;
+  color: #c19006;
   text-decoration: none;
-  font-weight: 600;
-  cursor: pointer;
-  transition: color .3s ease, text-decoration .3s ease;
+  font-weight: 700;
+  transition: color 0.2s ease;
 }
 
 .Link:hover {
-  color: rgb(255, 215, 100);
-  text-decoration: underline;
-  transition: 0.2s
+  color: #ddb441;
 }
 
+.homeLink {
+  color: #868686;
+  text-decoration: none;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.87rem;
+  transition: color 0.2s ease;
+}
 
+.homeLink:hover {
+  color: #d1d1d1;
+}
 
-@media (max-width: 768px) {
-    .LoginPage_container {
-        width: 100%; /* Ocupa a largura total */
-        padding: 0 20px; /* Um pouco de respiro nas bordas */
-        box-sizing: border-box; /* Garante que o padding não estoure a largura */
-    }
+@media (max-width: 960px) {
+  .loginShell {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
 
-    .logo_container {
-        width: 120px; /* Logo um pouco menor */
-        height: 120px;
-        border-radius: 60px;
-    }
+  .brandPanel {
+    border-right: 0;
+    border-bottom: 1px solid #242424;
+    padding: 2rem 1.4rem;
+  }
 
-    .title_login {
-        font-size: 2rem; /* Fonte ajustada */
-    }
+  .formPanel {
+    padding: 2rem 1.4rem;
+  }
+
+  .featuresList {
+    line-height: 1.65;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .loginStage {
+    padding: 0.85rem;
+  }
+
+  .loginShell {
+    border-radius: 16px;
+  }
+
+  .title_login {
+    font-size: 1.8rem;
+  }
+
+  .formPanel h2 {
+    font-size: 1.55rem;
+  }
 }
 

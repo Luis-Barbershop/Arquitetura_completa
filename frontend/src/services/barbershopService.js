@@ -1,81 +1,60 @@
 import api from "./api"
-import { auth } from './firebase';
 
-const getStoredUserId = () => {
-    const legacyUserId = localStorage.getItem('userId');
-    if (legacyUserId) return legacyUserId;
-
-    try {
-        const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-        if (storedUser?.id) {
-            const parsedId = String(storedUser.id);
-            localStorage.setItem('userId', parsedId);
-            return parsedId;
-        }
-    } catch (error) {
-        console.error('Erro ao ler usuario salvo:', error);
-    }
-
-    return null;
-};
-
-// GET /api/barbershops
 export const getAllBarbershops = async () => {
     try {
         const response = await api.get("/barbershops");
         return response.data;
     } catch (error) {
-        console.error("Erro de API - getAllBarbershops:", error);
-        return [];
-    }
-};
+        console.log("Erro de API - API AllBarbershops");
+        return[];
+    };
+}
 
-// GET /api/barbershops/{id}
 export const getBarbershopById = async (id) => {
     try {
-        const response = await api.get(`/barbershops/${id}`);
-        return response.data;
+        const response = await api.get("/barbershops/")
     } catch (error) {
-        console.error("Erro de API - getBarbershopById:", error);
-        return null;
+         console.log("Erro de API - API GetBarbershopById");
+        return[];
     }
-};
+}
 
-// POST /api/barbershops/register-my-shop
 export const createBarbershop = async (shopData, imageFile) => {
     const formData = new FormData();
 
-    // Limpeza: Remove pontos, barras e traços, deixando apenas números
-    const cleanCnpj = shopData.cnpj.replace(/\D/g, '');
+    // 1. LIMPEZA: Remove pontos, barras e traços, deixando apenas números
+    const cleanCnpj = shopData.cnpj.replace(/\D/g, ''); 
 
+    // 2. Monta o objeto JSON com o CNPJ limpo
     const shopObject = {
         name: shopData.name,
-        cnpj: cleanCnpj,
+        cnpj: cleanCnpj, // Agora envia "48719131000150" (14 dígitos)
         address: shopData.address
     };
 
+    // 3. Cria o Blob JSON
     const shopJsonString = JSON.stringify(shopObject);
-    const jsonBlob = new Blob([shopJsonString], { type: 'application/json' });
+    const jsonBlob = new Blob([shopJsonString], {
+        type: 'application/json'
+    });
+
+    // 4. Adiciona ao FormData
     formData.append('shop', jsonBlob);
 
+    // 5. Adiciona imagem se existir
     if (imageFile) {
         formData.append('file', imageFile);
     }
 
     const response = await api.post('/barbershops/register-my-shop', formData);
-
-    if (auth.currentUser) {
-        await auth.currentUser.getIdToken(true);
-    }
-
+    
     return response.data;
 };
 
-// Busca os barbeiros de uma barbearia
-// GET /api/barbers/barbershop/{barbershopId} (rota no user-service, gateway roteia)
+// Busca os barbeiros de uma loja específica (Público)
 export const getShopBarbers = async (shopId) => {
     try {
-        const response = await api.get(`/barbers/barbershop/${shopId}`);
+        const response = await api.get(`/barbershops/${shopId}/barbers`);
         return response.data;
     } catch (error) {
         console.error("Erro ao buscar barbeiros da loja:", error);
@@ -83,30 +62,27 @@ export const getShopBarbers = async (shopId) => {
     }
 };
 
-// GET /api/barbershops/{shopId}/activities
 export const getShopServices = async (shopId) => {
     try {
         const response = await api.get(`/barbershops/${shopId}/activities`);
-        return response.data;
+        return response.data; // Retorna lista de ActivityDTO
     } catch (error) {
         console.error("Erro ao buscar serviços da loja:", error);
         return [];
     }
 };
 
-// Busca serviços da barbearia do barbeiro logado
-// Usa /api/auth/me para descobrir barbershopId, depois lista activities
+
 export const getMyServices = async () => {
+    // Precisamos primeiro saber o ID da loja do usuário logado
+    // Uma forma segura é buscar os dados do barbeiro primeiro
     try {
-        const meResponse = await api.get('/auth/me');
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        // O barbershopId pode estar no user armazenado ou precisar de outra chamada
-        // Busca pelo barber endpoint com o userId
-        const barberResponse = await api.get(`/barbers/${meResponse.data.id}`);
-        const shopId = barberResponse.data.barbershopId;
+        const meResponse = await api.get('/barbers/me');
+        const shopId = meResponse.data.barbershopId;
+        
+        if(!shopId) return [];
 
-        if (!shopId) return [];
-
+        // Usa a rota pública de listar serviços, já que serve para o dono também
         const response = await api.get(`/barbershops/${shopId}/activities`);
         return response.data;
     } catch (error) {
@@ -115,48 +91,26 @@ export const getMyServices = async () => {
     }
 };
 
-// POST /api/barbershops/my-shop/activities
+// Criar novo serviço
 export const createService = async (serviceData) => {
+    // serviceData: { activityName, price, durationMinutes }
     const response = await api.post('/barbershops/my-shop/activities', serviceData);
     return response.data;
 };
 
-// DELETE /api/barbershops/my-shop/activities/{id}
+// Deletar serviço
 export const deleteService = async (serviceId) => {
     await api.delete(`/barbershops/my-shop/activities/${serviceId}`);
 };
 
-// Busca atividades vinculadas ao barbeiro logado
-// Nota: Esse endpoint precisa ser criado no backend (GET /api/barbers/{id}/activities)
-// Por enquanto, usa workaround: busca todas activities da shop e filtra no frontend
 export const getMyAssignedActivities = async () => {
-    try {
-        const userId = getStoredUserId();
-        if (!userId) return [];
-
-        const barberResponse = await api.get(`/barbers/${userId}`);
-        const shopId = barberResponse.data.barbershopId;
-        if (!shopId) return [];
-
-        // Retorna todas as atividades da barbearia
-        // TODO: Quando o backend tiver endpoint de atividades por barbeiro, usar ele
-        const response = await api.get(`/barbershops/${shopId}/activities`);
-        return response.data;
-    } catch (error) {
-        console.error("Erro ao buscar minhas atividades:", error);
-        return [];
-    }
+    const response = await api.get('/barbers/me/my-activities');
+    return response.data; // Lista de ActivityDTO
 };
 
 // Vincula atividades ao perfil do Barbeiro
-// TODO: Esse endpoint precisa ser criado no backend (POST /api/barbers/me/assign-activities)
-// Por enquanto mantém a chamada para quando o endpoint for implementado
 export const assignActivities = async (activityIds) => {
-    try {
-        const response = await api.post('/barbers/me/assign-activities', { activityIds });
-        return response.data;
-    } catch (error) {
-        console.error("Erro ao vincular atividades:", error);
-        throw error;
-    }
+    // O DTO espera { activityIds: [uuid, uuid] }
+    const response = await api.post('/barbers/me/assign-activities', { activityIds });
+    return response.data;
 };

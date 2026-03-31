@@ -47,7 +47,7 @@ function CreateBarbershopPage() {
                             value={name} 
                             onChange={e => setName(e.target.value)} 
                             required 
-                            style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#333', color: 'white' }}
+                            style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#0f0f0f', color: 'white' }}
                         />
                     </div>
 
@@ -59,7 +59,7 @@ function CreateBarbershopPage() {
                             onChange={e => setCnpj(e.target.value)} 
                             required 
                             placeholder="00.000.000/0001-00"
-                            style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#333', color: 'white' }}
+                            style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#0f0f0f', color: 'white' }}
                         />
                     </div>
 
@@ -70,7 +70,7 @@ function CreateBarbershopPage() {
                             value={address} 
                             onChange={e => setAddress(e.target.value)} 
                             required 
-                            style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#333', color: 'white' }}
+                            style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#0f0f0f', color: 'white' }}
                         />
                     </div>
 

@@ -1,162 +1,105 @@
 import api from './api';
-import { auth } from './firebase';
-import {
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signInWithPopup,
-    GoogleAuthProvider,
-    signOut,
-    sendEmailVerification,
-    reload,
-} from 'firebase/auth';
 
-const normalizeAuthPayload = (backendData, firebaseUid) => ({
-    user: {
-        id: backendData.id,
-        name: backendData.name,
-        email: backendData.email,
-        phone: backendData.phone,
-        photoUrl: backendData.photoUrl,
-        firebaseUid,
-    },
-    userType: backendData.userType,
-    profileComplete: backendData.profileComplete,
-    role: backendData.role,
-    authProvider: backendData.authProvider,
-    emailVerified: backendData.emailVerified,
-    verificationRequired: backendData.verificationRequired,
-});
-
-// LOGIN COM GOOGLE (ATUALIZADO PARA O NOVO FLUXO)
-export const signInWithGoogle = async (userType = null) => {
-    const provider = new GoogleAuthProvider();
-    try {
-        const result = await signInWithPopup(auth, provider);
-        const idToken = await result.user.getIdToken();
-
-        // Backend espera { idToken, userType } conforme FirebaseAuthRequestDTO
-        const response = await api.post('/auth/verify', { idToken, userType });
-        
-        
-        // AuthResponseDTO retorna: { id, name, email, phone, photoUrl, userType, authProvider, profileComplete, role }
-        // Normalizamos para o formato que os componentes esperam
-        return normalizeAuthPayload(response.data, result.user.uid);
-    } catch (error) {
-        console.error("Erro no login com Google:", error);
-        if (error.response) {
-            console.error("Status:", error.response.status, "Body:", JSON.stringify(error.response.data));
-        }
-        throw error;
+// Login Genérico (aceita 'customer' ou 'barber')
+export const loginUser = async (email, password, userType = 'customer') => {
+    let url = '';
+    
+    // 1. Define a URL correta baseada no Back-end (CustomerController ou BarberController)
+    if (userType === 'barber') {
+        url = '/barbers/login'; 
+    } else {
+        url = '/customers/login'; 
     }
+
+    const response = await api.post(url, { email, password });
+    
+    // 2. Salva os dados se o login der certo
+    if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        
+        // 3. CORREÇÃO CRÍTICA: O Back-end não manda a 'role' explícita no DTO.
+        // Precisamos definir manualmente para o appointmentService funcionar.
+        const roleName = userType === 'barber' ? 'ROLE_BARBER' : 'ROLE_CUSTOMER';
+        localStorage.setItem('role', roleName); 
+
+        // O userData vem dentro de response.data
+        if (response.data.userData) {
+             localStorage.setItem('userName', response.data.userData.name);
+             localStorage.setItem('userId', response.data.userData.id);
+             // Salva o objeto completo caso precise depois
+             localStorage.setItem('user', JSON.stringify(response.data.userData));
+        }
+    }
+    
+    // Retorna o objeto combinado para a tela usar
+    return { ...response.data, role: localStorage.getItem('role') };
 };
 
-// NOVA FUNÇÃO PARA COMPLETAR O PERFIL (FALTAVA ESTA EXPORTAÇÃO!)
-export const completeProfileApi = async (type, data, firebaseUserInfo = {}) => {
-    try {
-        // Backend: /api/auth/customers/complete-profile ou /api/auth/barbers/complete-profile
-        // baseURL já inclui /api, então usamos apenas /auth/...
-        const endpoint = type === 'BARBER' 
-            ? '/auth/barbers/complete-profile' 
-            : '/auth/customers/complete-profile';
-        
-        // Envia também o nome do Firebase para o backend salvar junto
-        const payload = { ...data };
-        if (firebaseUserInfo.name && !payload.name) {
-            payload.name = firebaseUserInfo.name;
-        }
-            
-        const response = await api.post(endpoint, payload);
+// Função de Cadastro (Cliente)
+export const registerCustomer = async (userData) => {
+    const formData = new FormData();
 
-        if (auth.currentUser) {
-            await auth.currentUser.getIdToken(true);
-        }
+    // 1. Limpeza de caracteres especiais (CPF e Telefone)
+    const cleanCPF = userData.documentCPF ? userData.documentCPF.replace(/\D/g, '') : '';
+    const cleanTell = userData.tell ? userData.tell.replace(/\D/g, '') : '';
 
-        
-        return response.data;
-    } catch (error) {
-        console.error("Erro ao completar o perfil:", error);
-        if (error.response) {
-            console.error("Status:", error.response.status, "Body:", JSON.stringify(error.response.data));
-        }
-        throw error;
-    }
+    // 2. Monta o objeto JSON
+    const customerJson = JSON.stringify({
+        name: userData.name,
+        email: userData.email,
+        password: userData.password,
+        documentCPF: cleanCPF,
+        tell: cleanTell
+    });
+
+    // 3. Adiciona o JSON como Blob (Obrigatório para @RequestPart do Java)
+    const jsonBlob = new Blob([customerJson], { type: 'application/json' });
+    formData.append('customer', jsonBlob);
+
+    // 4. Se tiver arquivo de foto no futuro, adicione aqui:
+    // if (userData.file) formData.append('file', userData.file);
+
+    // 5. Envia para o endpoint correto
+    const response = await api.post('/customers/register', formData);
+    return response.data;
 };
 
-// Login Padrão (Email e Senha)
-export const login = async (email, password) => {
-    try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        await reload(userCredential.user);
-
-        if (!userCredential.user.emailVerified) {
-            await sendEmailVerification(userCredential.user);
-            await signOut(auth);
-            const error = new Error('Email nao verificado.');
-            error.code = 'auth/email-not-verified';
-            throw error;
-        }
-
-        const idToken = await userCredential.user.getIdToken();
-        
-        // Backend espera { idToken, userType } conforme FirebaseAuthRequestDTO
-        const response = await api.post('/auth/verify', { idToken, userType: null });
-        if (response.data?.verificationRequired) {
-            await signOut(auth);
-            const error = new Error('Email nao verificado.');
-            error.code = 'auth/email-not-verified';
-            throw error;
-        }
-        
-        // Normaliza a resposta do AuthResponseDTO
-        return normalizeAuthPayload(response.data, userCredential.user.uid);
-    } catch (error) {
-        console.error("Erro no login:", error);
-        throw error;
-    }
+// Função de Logout
+export const logoutUser = () => {
+    localStorage.clear();
 };
 
-// Registo Padrão (Email e Senha)
-// Fluxo: Firebase createUser → /auth/verify → /auth/{type}/complete-profile
-export const register = async (email, password, userData, type) => {
-    try {
-        // 1. Cria o user no Firebase Authentication
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await sendEmailVerification(userCredential.user);
-        await signOut(auth);
+export const registerBarber = async (barberData) => {
+    const formData = new FormData();
+    
+    // 1. Limpeza de caracteres especiais (CPF e Telefone)
+    // O backend usa @CPF e @Size(max=11), então espera apenas números.
+    const cleanCPF = barberData.documentCPF ? barberData.documentCPF.replace(/\D/g, '') : '';
+    const cleanTell = barberData.tell ? barberData.tell.replace(/\D/g, '') : '';
 
-        return {
-            user: {
-                id: null,
-                name: userData.name || userCredential.user.displayName || 'Usuario',
-                email,
-                phone: userData.tell || null,
-                photoUrl: null,
-                firebaseUid: userCredential.user.uid,
-            },
-            userType: type,
-            profileComplete: false,
-            role: type === 'BARBER' ? 'ROLE_BARBER' : 'ROLE_CUSTOMER',
-            authProvider: 'EMAIL',
-            emailVerified: false,
-            verificationRequired: true,
-        };
-    } catch (error) {
-        console.error("Erro no registo:", error);
-        if (error.response) {
-            console.error("Status:", error.response.status, "Body:", JSON.stringify(error.response.data));
-        }
-        throw error;
-    }
-};
+    // 2. Monta o objeto JSON
+    // NOTA: Removemos a função formatTime que adicionava ":00".
+    // O HTML input type="time" já retorna "09:00", que é exatamente o que o teu @JsonFormat pede.
+    const barberJson = JSON.stringify({
+        name: barberData.name,
+        email: barberData.email,
+        password: barberData.password,
+        documentCPF: cleanCPF,       
+        tell: cleanTell,             
+        workStartTime: barberData.workStartTime, // Envia "09:00"
+        workEndTime: barberData.workEndTime      // Envia "18:00"
+    });
 
-// Logout
-export const logoutUser = async () => {
-    try {
-        await signOut(auth);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-    } catch (error) {
-        console.error("Erro no logout:", error);
-        throw error;
-    }
+    // 3. Adiciona o JSON como Blob com o Content-Type EXPLICITO de application/json
+    // Isso é obrigatório para o @RequestPart("barber") do Java funcionar.
+    const jsonBlob = new Blob([barberJson], { type: 'application/json' });
+    formData.append('barber', jsonBlob);
+
+    // Se tiver arquivo de foto no futuro, adicionas aqui:
+    // if (barberData.file) formData.append('file', barberData.file);
+
+    // 4. Envia SEM o header Content-Type manual (o axios gera o boundary sozinho)
+    const response = await api.post('/barbers/register', formData);
+
+    return response.data;
 };

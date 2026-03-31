@@ -1,0 +1,111 @@
+.header{
+    display: flex;
+    width: 100%;
+    height: 60px;
+    background-color: rgba(0, 0, 0, 0.705);
+    align-items: center;
+    justify-content: space-evenly;
+    gap: 8rem;
+}
+
+.logo{
+    display: flex;
+    width: 10%;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.logo img{
+    width: 150px;
+    height: auto;
+
+}
+
+
+.nav{
+    display: flex;
+    width: 50%;
+    height: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+
+.nav ul{
+    display: flex;
+    width: 100%;
+    height: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+  
+
+}
+
+.nav ul li{
+    list-style: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.nav ul li a{
+    text-decoration: none;
+    color: white;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 23px;
+}
+
+.nav ul li:hover{
+    color: #c19006;
+    transition: 0.5s;
+}
+
+.buttons{
+    display: flex;
+    width: 20%;
+    height: 100%;
+    align-items: center;
+    justify-content: space-evenly;
+
+}
+
+.registerButton{
+    width: 100px;
+    height: 40px;
+    background-color: transparent;
+    border: 2px solid #c19006;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #c19006;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.loginButton{
+    width: 100px;
+    height: 40px;
+    background-color: #c19006;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    color: white;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.loginButton:hover{
+    background-color: #a06e05;
+    transition: 0.5s;
+}
+
+.registerButton:hover{
+    background-color: #c19006;
+    color: white;
+    transition: 0.5s;
+}
+

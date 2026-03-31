@@ -52,7 +52,7 @@
 }
 
 .nextSchedulingContent h5{
-    color: #333;
+    color: #0f0f0f;
     font-size: 0.9rem;
 }
 
@@ -99,7 +99,7 @@
 
 .ButtonActions:hover{
     background-color: rgba(255, 255, 255, 0.8);
-    color: #333;
+    color: #0f0f0f;
     transition: 0.3s;
 }
 

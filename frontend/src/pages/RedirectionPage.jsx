@@ -6,11 +6,15 @@ function RedirectionPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const mode = location.state?.mode || 'login';
+  const actionLabel = mode === 'login' ? 'entrar' : 'criar sua conta';
+  const actionTitle = mode === 'login' ? 'Bem-vindo de volta.' : 'Vamos afiar a lâmina.';
+  const customerLabel = mode === 'login' ? 'Entrar como Cliente' : 'Cadastrar como Cliente';
+  const barberLabel = mode === 'login' ? 'Entrar como Barbeiro' : 'Cadastrar como Barbeiro';
 
   const handleProfileSelection = (profile) => {
     // profile será 'customer' ou 'barber'
 
-    const targetPath = mode === 'login' ? '/login' : '/SignIn';
+    const targetPath = mode === 'login' ? '/login' : '/signin';
 
     navigate(targetPath, { state: { role: profile } });
   };
@@ -21,29 +25,38 @@ function RedirectionPage() {
 
   return (
     <div className={Styles.RedirectionPage_Container}>
+      <div className={Styles.redirection_card}>
+        <div className={Styles.title_redirection}>
+          <div className={Styles.brandBadge}>
+            <img src="/Icons/scissors_icon.png" alt="Icone de Tesoura" />
+            <span>CortaAI</span>
+          </div>
 
-      <div className={Styles.title_redirection}>
-        <img src="./Icons/scissors_icon.png" alt="Icone de Tesoura" />
-        <h1>CortaAI</h1>
-        <h2>{mode === 'login' ? 'Como você quer Entrar?' : 'Como você quer se Cadastrar?'}</h2>
-      </div>
+          <p className={Styles.kicker}>ESCOLHA DE PERFIL</p>
+          <h1>{actionTitle}</h1>
+          <h2>Como voce quer {actionLabel}?</h2>
+        </div>
 
+        <div className={Styles.redirection_buttons_container}>
+          <button className={Styles.redirection_buttons} onClick={() => handleProfileSelection('customer')}>
+            <img src="/Icons/user_icon.png" alt="Icone de Usuario" />
+            <div>
+              <p className={Styles.title_button}>{customerLabel}</p>
+              <p className={Styles.text_button}>Quero agendar um servico com rapidez.</p>
+            </div>
+          </button>
 
-      <div className={Styles.redirection_buttons_container}>
-        <button className={Styles.redirection_buttons} onClick={() => handleProfileSelection('customer')}>
-          <img src="./Icons/user_icon.png" alt="Icone de Usuário" />
-          <p className={Styles.title_button}>{mode === 'login' ? 'Entrar como Cliente' : 'Cadastrar como Cliente'}</p>
-          <p className={Styles.text_button}>Quero agendar um serviço</p>
-        </button>
-
-        <button className={Styles.redirection_buttons} onClick={() => handleProfileSelection('barber')}>
-          <img src="./Icons/barber_icon.png" alt="Icone de Barbearia" />
-          <p className={Styles.title_button}>{mode === 'login' ? 'Entrar como Barbeiro' : 'Cadastrar como Barbeiro'}</p>
-          <p className={Styles.text_button}>Quero gerenciar minha Agenda</p>
-        </button>
+          <button className={Styles.redirection_buttons} onClick={() => handleProfileSelection('barber')}>
+            <img src="/Icons/barber_icon.png" alt="Icone de Barbearia" />
+            <div>
+              <p className={Styles.title_button}>{barberLabel}</p>
+              <p className={Styles.text_button}>Quero organizar agenda e atendimentos.</p>
+            </div>
+          </button>
+        </div>
 
         <button className={Styles.redirection_button_exit} onClick={handleNavigationHome}>
-          Sair
+          Voltar para a pagina inicial
         </button>
       </div>
     </div>

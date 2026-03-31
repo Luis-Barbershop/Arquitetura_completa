@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 function StartPage() {
 
   const navigate = useNavigate();
-const handleNavigation = (action) => {
-        navigate('/identificacao', { state: { mode: action } });
-    };
+  const handleNavigation = (action) => {
+    navigate('/identificacao', { state: { mode: action } });
+  };
 
   return (
     <div className='workscreen'>

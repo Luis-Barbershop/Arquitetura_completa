@@ -1,107 +1,171 @@
-.RedirectionPage_Container{
-    position: relative;
+.RedirectionPage_Container {
+    min-height: 100vh;
+    width: 100%;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    max-height: 100%;
-    justify-content: space-evenly;
-    width: auto;
-    margin: 0px auto;
-    padding: 15px 50px;
+    justify-content: center;
+    padding: 2rem;
+    background:
+        radial-gradient(circle at 8% 0%, rgb(193 144 6 / 12%), transparent 36%),
+        radial-gradient(circle at 90% 90%, rgb(193 144 6 / 7%), transparent 35%),
+        #0f0f0f;
 }
 
-.RedirectionPage_Container h1{
+.redirection_card {
+    width: min(760px, 96%);
+    border: 1px solid #2d2d2d;
+    border-radius: 20px;
+    background-color: #161616;
+    padding: 2.2rem;
+    box-shadow: 0 24px 55px rgb(0 0 0 / 35%);
+}
+
+.title_redirection {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.brandBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid #323232;
+    background-color: #111111;
+    margin-bottom: 1.2rem;
+}
+
+.brandBadge img {
+    width: 24px;
+    height: 24px;
+}
+
+.brandBadge span {
+    color: #ffffff;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.kicker {
+    margin: 0 0 0.4rem 0;
+    color: #c19006;
+    font-size: 0.86rem;
+    letter-spacing: 0.2em;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.title_redirection h1 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    line-height: 1.1;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.title_redirection h2 {
+    margin: 0.55rem 0 0 0;
+    color: #9a9080;
+    font-size: 1.15rem;
+    font-weight: 400;
+    line-height: 1.35;
+    font-family: 'Roboto', sans-serif;
+}
+
+.redirection_buttons_container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.95rem;
+    margin-top: 1.8rem;
+}
+
+.redirection_buttons {
+    width: 100%;
+    min-height: 176px;
+    border: 1px solid #313131;
+    border-radius: 14px;
+    background-color: #1d1d1d;
+    padding: 1.15rem;
     color: white;
-    font-family: Roboto;
-    margin-top: 5px 
-}
-
-.RedirectionPage_Container h2{
-    color: #FFF;
-    font-family: Roboto;
-    font-size: 25px;
-    margin-top: 15px;
-}
-
-.title_redirection{
-
+    font-family: 'Roboto', sans-serif;
+    cursor: pointer;
+    text-align: left;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    justify-content: flex-start;
+    gap: 0.85rem;
+    transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
-.title_redirection img{
-    width: 70px;
-    height: 70px;
+.redirection_buttons:hover {
+    border-color: #c19006;
+    background-color: #222222;
+    transform: translateY(-2px);
 }
 
-.redirection_buttons_container{
-    display: flex;
-    width: 25vw;
-    height: 60vh;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-evenly;
+.redirection_buttons img {
+    width: 34px;
+    height: 34px;
 }
 
-.redirection_buttons{
-    width: 90%;
-    height: 20vh;
-    margin-top: 15px;
-    background-color: #444;
-    color: white;
-    border-radius: 8px;
-    font-family: Roboto;
+.title_button {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.16rem;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.text_button {
+    margin: 0.4rem 0 0 0;
+    color: #9a9080;
+    font-size: 0.98rem;
+    line-height: 1.4;
+}
+
+.redirection_button_exit {
+    width: 100%;
+    height: 52px;
+    margin-top: 1.1rem;
+    border: 1px solid #c19006;
+    border-radius: 12px;
+    background-color: transparent;
+    color: #c19006;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'Space Grotesk', sans-serif;
     cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.redirection_buttons img{
-    width: 35px;
-    height: 35px;
-    text-align: justify;
-    margin-bottom: 15px;
+.redirection_button_exit:hover {
+    background-color: #c19006;
+    color: #111111;
 }
 
-.title_button{
-    color: #FFF;
-    font-size: 15px;
-    margin-left: 15px;
-    text-align: left;
-}
-
-.text_button{
-    color: rgba(255, 255, 255, 0.589);
-    margin-left: 15px;
-    text-align: left;
-}
-
-.redirection_button_exit{
-    width: 80%;
-    height: 7vh;
-    background-color: #333333;
-    border: 1px solid rgba(255, 255, 255, 0.589);
-    color: rgba(255, 255, 255, 0.589);
-    font-size: 15px;
-    margin-top: 15px;
-    border-radius: 10px;
-    cursor: pointer;
-}
-
-
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .redirection_buttons_container {
-        width: 90%; /* Aumenta a largura do container dos botões */
-        height: auto; /* Deixa a altura se ajustar ao conteúdo */
-        gap: 20px; /* Espaço entre os botões */
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .RedirectionPage_Container {
+        padding: 1rem;
+    }
+
+    .redirection_card {
+        padding: 1.3rem;
+        border-radius: 16px;
+    }
+
+    .title_redirection h2 {
+        font-size: 1.03rem;
     }
 
     .redirection_buttons {
-        height: auto; /* Altura flexível */
-        padding: 20px; /* Mais espaço interno */
-    }
-    
-    .RedirectionPage_Container {
-        padding: 20px; /* Ajuste do padding geral */
+        min-height: 152px;
     }
 }
 
