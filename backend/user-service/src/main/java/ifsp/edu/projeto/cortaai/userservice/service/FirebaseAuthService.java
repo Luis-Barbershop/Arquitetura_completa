@@ -35,6 +35,12 @@ public interface FirebaseAuthService {
     AuthResponseDTO completeCustomerProfile(String firebaseUid, CompleteProfileCustomerDTO dto);
 
     /**
+     * Overload com email explícito — usado quando não há SecurityContext disponível
+     * (ex.: chamada interna do FirebaseDebugServiceImpl durante o cadastro direto).
+     */
+    AuthResponseDTO completeCustomerProfile(String firebaseUid, CompleteProfileCustomerDTO dto, String email);
+
+    /**
      * Completa o perfil de um barbeiro após login social.
      *
      * @param firebaseUid UID do Firebase (extraído do header X-User-UID)
@@ -42,6 +48,12 @@ public interface FirebaseAuthService {
      * @return perfil atualizado
      */
     AuthResponseDTO completeBarberProfile(String firebaseUid, CompleteProfileBarberDTO dto);
+
+    /**
+     * Overload com email explícito — usado quando não há SecurityContext disponível
+     * (ex.: chamada interna do FirebaseDebugServiceImpl durante o cadastro direto).
+     */
+    AuthResponseDTO completeBarberProfile(String firebaseUid, CompleteProfileBarberDTO dto, String email);
 
     /**
      * Retorna os dados do usuário a partir do UID do Firebase.

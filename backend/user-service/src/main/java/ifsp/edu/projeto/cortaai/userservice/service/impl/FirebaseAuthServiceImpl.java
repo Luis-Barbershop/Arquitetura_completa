@@ -134,7 +134,12 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
     @Override
     @Transactional
     public AuthResponseDTO completeCustomerProfile(String firebaseUid, CompleteProfileCustomerDTO dto) {
-        // Busca customer existente ou cria um novo (o verify NÃO salva no banco para usuários novos)
+        return completeCustomerProfile(firebaseUid, dto, null);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponseDTO completeCustomerProfile(String firebaseUid, CompleteProfileCustomerDTO dto, String email) {
         Customer customer = customerRepository.findByFirebaseUid(firebaseUid)
                 .orElseGet(() -> {
                     log.info("Customer não encontrado para UID={}, criando novo registro no complete-profile.", firebaseUid);
@@ -146,15 +151,16 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         if (dto.name() != null && !dto.name().isBlank()) {
             customer.setName(dto.name());
         }
-        // Se o customer é novo, precisamos garantir que o e-mail foi setado
-        // O gateway injeta X-User-Email — vamos buscar do SecurityContext ou do próprio Firebase
         if (customer.getEmail() == null || customer.getEmail().isBlank()) {
-            // Tenta extrair e-mail do Firebase token via SecurityContext
-            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getCredentials() instanceof String emailFromHeader) {
-                customer.setEmail(emailFromHeader);
+            if (email != null && !email.isBlank()) {
+                customer.setEmail(email);
             } else {
-                customer.setEmail(firebaseUid + "@firebase.local");
+                var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.getCredentials() instanceof String emailFromHeader) {
+                    customer.setEmail(emailFromHeader);
+                } else {
+                    customer.setEmail(firebaseUid + "@firebase.local");
+                }
             }
         }
         if (customer.getName() == null || customer.getName().isBlank()) {
@@ -162,7 +168,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         }
         customer.setTell(dto.tell());
         customer.setDocumentCPF(dto.documentCPF());
-        customer.setAuthProvider(customer.getAuthProvider() != null ? customer.getAuthProvider() : "GOOGLE");
+        customer.setAuthProvider(customer.getAuthProvider() != null ? customer.getAuthProvider() : "EMAIL");
 
         customerRepository.saveAndFlush(customer);
         return toAuthResponse(customer, true, false);
@@ -171,7 +177,12 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
     @Override
     @Transactional
     public AuthResponseDTO completeBarberProfile(String firebaseUid, CompleteProfileBarberDTO dto) {
-        // Busca barber existente ou cria um novo
+        return completeBarberProfile(firebaseUid, dto, null);
+    }
+
+    @Override
+    @Transactional
+    public AuthResponseDTO completeBarberProfile(String firebaseUid, CompleteProfileBarberDTO dto, String email) {
         Barber barber = barberRepository.findByFirebaseUid(firebaseUid)
                 .orElseGet(() -> {
                     log.info("Barber não encontrado para UID={}, criando novo registro no complete-profile.", firebaseUid);
@@ -186,11 +197,15 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             barber.setName(dto.name());
         }
         if (barber.getEmail() == null || barber.getEmail().isBlank()) {
-            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getCredentials() instanceof String emailFromHeader) {
-                barber.setEmail(emailFromHeader);
+            if (email != null && !email.isBlank()) {
+                barber.setEmail(email);
             } else {
-                barber.setEmail(firebaseUid + "@firebase.local");
+                var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.getCredentials() instanceof String emailFromHeader) {
+                    barber.setEmail(emailFromHeader);
+                } else {
+                    barber.setEmail(firebaseUid + "@firebase.local");
+                }
             }
         }
         if (barber.getName() == null || barber.getName().isBlank()) {
@@ -201,7 +216,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         barber.setWorkStartTime(dto.workStartTime());
         barber.setWorkEndTime(dto.workEndTime());
         barber.setOwner(dto.isOwner());
-        barber.setAuthProvider(barber.getAuthProvider() != null ? barber.getAuthProvider() : "GOOGLE");
+        barber.setAuthProvider(barber.getAuthProvider() != null ? barber.getAuthProvider() : "EMAIL");
 
         barberRepository.saveAndFlush(barber);
         return toAuthResponse(barber, true, false);

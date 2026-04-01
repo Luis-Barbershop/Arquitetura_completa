@@ -116,6 +116,8 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
             throw new IllegalArgumentException("A propriedade firebase.web-api-key não está configurada.");
         }
 
+        String localId = null; // rastreia o UID criado para permitir rollback
+
         try {
             // ── 1. Criar usuário no Firebase via Identity Toolkit REST ─────────
             Map<String, Object> signUpPayload = Map.of(
@@ -135,15 +137,19 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
             JsonNode signUpRoot = objectMapper.readTree(signUpResponse.body());
 
             if (signUpResponse.statusCode() >= 400) {
+                // Falha ANTES de criar o usuário — nenhum rollback necessário
                 throw new SecurityException(extractRegisterError(signUpRoot));
             }
 
-            String idToken   = text(signUpRoot, "idToken");
-            String localId   = text(signUpRoot, "localId");
+            String idToken      = text(signUpRoot, "idToken");
+            localId             = text(signUpRoot, "localId"); // UID criado — salvo para rollback
             String refreshToken = text(signUpRoot, "refreshToken");
-            String expiresIn = text(signUpRoot, "expiresIn");
+            String expiresIn    = text(signUpRoot, "expiresIn");
+            String email        = request.email();
 
-            // ── 2a. Enviar e-mail de verificação ─────────────────────────────
+            log.info("event=firebase-signup-ok uid={} email={}", localId, email);
+
+            // ── 2. Enviar e-mail de verificação (melhor-esforço, não bloqueia) ─
             try {
                 Map<String, Object> verifyPayload = Map.of(
                         "requestType", "VERIFY_EMAIL",
@@ -156,18 +162,18 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                         .POST(HttpRequest.BodyPublishers.ofString(verifyBody))
                         .build();
                 HTTP_CLIENT.send(verifyRequest, HttpResponse.BodyHandlers.ofString());
-                // Não bloqueia o cadastro se o envio falhar
+                log.info("event=verification-email-sent uid={}", localId);
             } catch (Exception e) {
-                log.warn("Falha ao enviar e-mail de verificação para uid={}: {}", localId, e.getMessage());
+                log.warn("event=verification-email-failed uid={} reason={}", localId, e.getMessage());
+                // Não cancela o cadastro — e-mail pode ser reenviado depois
             }
 
-            // ── 2b. Provisionar no backend (verify) ───────────────────────────
+            // ── 3. Provisionar no banco (verifyAndProvision) ──────────────────
             String userType = request.userType() == null ? "CUSTOMER" : request.userType().toUpperCase();
             firebaseAuthService.verifyAndProvision(new FirebaseAuthRequestDTO(idToken, userType));
+            log.info("event=provision-ok uid={} userType={}", localId, userType);
 
-            // ── 3. Completar o perfil ─────────────────────────────────────────
-            // O gateway injeta X-User-UID a partir do token, mas aqui estamos dentro do
-            // próprio user-service. Portanto chamamos o service diretamente com o UID.
+            // ── 4. Completar perfil com email explícito (não há SecurityContext aqui) ─
             AuthResponseDTO profile;
             if ("BARBER".equals(userType)) {
                 DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm");
@@ -185,23 +191,46 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                                 start,
                                 end,
                                 isOwner
-                        ));
+                        ),
+                        email);
             } else {
                 profile = firebaseAuthService.completeCustomerProfile(localId,
                         new CompleteProfileCustomerDTO(
                                 request.tell(),
                                 request.documentCPF(),
                                 request.name()
-                        ));
+                        ),
+                        email);
             }
 
+            log.info("event=complete-profile-ok uid={}", localId);
             return new FirebaseEmailRegisterResponseDTO(idToken, refreshToken, expiresIn, localId, profile);
 
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
+            rollbackFirebaseUser(localId);
             throw new RuntimeException("Requisicao ao Firebase foi interrompida.", ex);
         } catch (IOException ex) {
-            throw new RuntimeException("Falha ao comunicar com o Firebase Authentication: " + ex.getMessage(), ex);
+            rollbackFirebaseUser(localId);
+            throw new RuntimeException("Falha ao comunicar com o Firebase: " + ex.getMessage(), ex);
+        } catch (Exception ex) {
+            // Falha nas etapas 3 ou 4: remove do Firebase para evitar estado inconsistente
+            rollbackFirebaseUser(localId);
+            throw ex;
+        }
+    }
+
+    /**
+     * Rollback: remove o usuário do Firebase Auth se o cadastro falhou após o signUp.
+     * Se uid for null (falha antes do signUp), não faz nada.
+     */
+    private void rollbackFirebaseUser(String uid) {
+        if (uid == null || uid.isBlank()) return;
+        try {
+            firebaseAuth.deleteUser(uid);
+            log.warn("event=firebase-rollback-ok uid={} — usuário removido do Firebase após falha no cadastro.", uid);
+        } catch (FirebaseAuthException e) {
+            log.error("event=firebase-rollback-failed uid={} reason={} — estado inconsistente! Requer limpeza manual.", uid, e.getMessage());
         }
     }
 
