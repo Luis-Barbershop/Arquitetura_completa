@@ -29,11 +29,14 @@ import java.time.Instant;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @RequiredArgsConstructor
 public class FirebaseDebugServiceImpl implements FirebaseDebugService {
 
+    private static final Logger log = LoggerFactory.getLogger(FirebaseDebugServiceImpl.class);
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
 
     private final FirebaseAuth firebaseAuth;
@@ -140,7 +143,25 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
             String refreshToken = text(signUpRoot, "refreshToken");
             String expiresIn = text(signUpRoot, "expiresIn");
 
-            // ── 2. Provisionar no backend (verify) ────────────────────────────
+            // ── 2a. Enviar e-mail de verificação ─────────────────────────────
+            try {
+                Map<String, Object> verifyPayload = Map.of(
+                        "requestType", "VERIFY_EMAIL",
+                        "idToken", idToken
+                );
+                String verifyBody = objectMapper.writeValueAsString(verifyPayload);
+                HttpRequest verifyRequest = HttpRequest.newBuilder()
+                        .uri(URI.create("https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=" + firebaseWebApiKey))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(verifyBody))
+                        .build();
+                HTTP_CLIENT.send(verifyRequest, HttpResponse.BodyHandlers.ofString());
+                // Não bloqueia o cadastro se o envio falhar
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail de verificação para uid={}: {}", localId, e.getMessage());
+            }
+
+            // ── 2b. Provisionar no backend (verify) ───────────────────────────
             String userType = request.userType() == null ? "CUSTOMER" : request.userType().toUpperCase();
             firebaseAuthService.verifyAndProvision(new FirebaseAuthRequestDTO(idToken, userType));
 

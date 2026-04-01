@@ -1,6 +1,6 @@
 import Styles from "./CSS/Login_inputs.module.css"
 import { useState } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { loginUser } from "../../services/authService"
 
 function Login_Inputs() {
@@ -8,27 +8,21 @@ function Login_Inputs() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState(null);
-    const location = useLocation();
     const navigate = useNavigate();
-
-    const userType = location.state?.role || "customer";
 
    const handleLogin = async (e) => {
         e.preventDefault();
         setError(null);
 
         try {
-            // Usa o userType que veio automático da RedirectionPage
-            const data = await loginUser(email, password, userType);
+            await loginUser(email, password);
+            // Redireciona para homepage — o app detecta o perfil do usuário pelo token
+            navigate("/homepage");
 
-            if (data.role === 'ROLE_CUSTOMER') {
-                navigate("/homepage"); 
-            } else {
-                navigate("/barberHome");
-            }
-
-        } catch (error) {
-            setError("Falha no login. Verifique seus dados.");
+        } catch (err) {
+            console.error(err);
+            const msg = err.response?.data?.message || "Falha no login. Verifique seus dados.";
+            setError(msg);
         }
     };
 

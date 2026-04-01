@@ -6,6 +6,7 @@ import { registerCustomer, registerBarber } from "../../services/authService"
 function SignIn_inputs() {
 
     const [step, setStep] = useState(1);
+    const [registered, setRegistered] = useState(false); // mostra tela de "verifique seu e-mail"
 
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -60,14 +61,40 @@ function SignIn_inputs() {
                 });
             }
 
-            alert("Cadastro realizado com sucesso!");
-            navigate("/login", { state: { role: userType } });
+            // Cadastro feito — Firebase enviou e-mail de verificação automaticamente
+            // Usuário precisa verificar antes de fazer login
+            setRegistered(true);
 
         } catch (err) {
             console.error(err);
-            setError("Erro ao cadastrar. Verifique os dados.");
+            const msg = err.response?.data?.message || "Erro ao cadastrar. Verifique os dados.";
+            setError(msg);
         }
     };
+
+    // ── Tela pós-cadastro: avisa para verificar o e-mail ─────────────────────
+    if (registered) {
+        return (
+            <div className={Styles.SignIn_inputs_container}>
+                <div style={{ textAlign: 'center', padding: '2rem' }}>
+                    <h3>✅ Cadastro realizado!</h3>
+                    <p style={{ marginTop: '1rem' }}>
+                        Um e-mail de verificação foi enviado para <strong>{email}</strong>.
+                    </p>
+                    <p style={{ marginTop: '0.5rem', color: '#888' }}>
+                        Verifique sua caixa de entrada (e o spam) e clique no link antes de fazer login.
+                    </p>
+                    <button
+                        style={{ marginTop: '1.5rem' }}
+                        className={Styles.SignIn_button}
+                        onClick={() => navigate("/login")}
+                    >
+                        Ir para o Login
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
 
     return (
