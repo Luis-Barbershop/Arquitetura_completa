@@ -2,7 +2,7 @@ import React from 'react';
 import Styles from './CSS/ServicesAgendamento.module.css';
 
 // Recebe as props enviadas pelo AgendamentoPage.jsx
-function ServicesAgendamento({ data, isSelected, onToggle }) {
+function ServicesAgendamento({ data, isSelected, onToggle, disabled = false }) {
     
     // Formatação de moeda para ficar bonito (R$ 25,00)
     const formattedPrice = new Intl.NumberFormat('pt-BR', {
@@ -12,8 +12,11 @@ function ServicesAgendamento({ data, isSelected, onToggle }) {
 
     return (
         <div 
-            className={`${Styles.service_card} ${isSelected ? Styles.selected : ''}`} 
-            onClick={onToggle}
+            className={`${Styles.service_card} ${isSelected ? Styles.selected : ''} ${disabled ? Styles.disabled : ''}`} 
+            onClick={() => {
+                if (disabled) return;
+                onToggle();
+            }}
         >
             <div className={Styles.info}>
                 <span className={Styles.name}>{data.activityName}</span>

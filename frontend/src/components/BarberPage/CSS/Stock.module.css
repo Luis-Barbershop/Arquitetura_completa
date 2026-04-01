@@ -1,10 +1,10 @@
 .container{
     width: 49.5%;
     height: 220px;
-    background-color: #404040;
-    border-radius: 10px;
+    background: linear-gradient(180deg, #1c1c1c 0%, #161616 100%);
+    border-radius: 14px;
     font-family: "Space Grotesk", sans-serif;
-    border: #ef4444 1px solid;
+    border: #4a3535 1px solid;
 }
 
 .stockIcon{
@@ -24,11 +24,11 @@
 }
 
 .stockCard h3{
-    color: #ef4444;
+    color: #f09a9a;
 }
 
 .stockNumber{
-    color: white;
+    color: #ffffff;
     font-size: 1.5rem;
     font-weight: bold;
     padding-left: 20px;
@@ -38,6 +38,7 @@
     display: flex;
     flex-direction: column;
     padding-left: 20px;
+    color: #b0a8a8;
 }
 
 .stockButton{
@@ -45,10 +46,11 @@
     margin: 0 auto;
     display: block;
     margin-top: 15px;
-    color: #ef4444;
+    color: #f09a9a;
     height: 40px;
     border-radius: 10px;
-    background-color: #402f2f;
+    background-color: #2e2222;
+    border: 1px solid #583838;
     cursor: pointer;
 }
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
@@ -11,11 +11,13 @@ import NextScheduling from '../components/BarberPage/NextScheduling';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import ServicesHomeBarber from '../components/BarberPage/ServicesHomeBarber';
 import ActionsBarber from '../components/BarberPage/ActionsBarber';
+import ManageMySkills from '../components/BarberPage/ManageMySkills';
 
 function BarberHomePage() {
+  const location = useLocation();
   const [barber, setBarber] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('inicio');
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'home');
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [joinCnpj, setJoinCnpj] = useState('');
   const [joinError, setJoinError] = useState('');
@@ -33,13 +35,13 @@ function BarberHomePage() {
   };
 
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
+    const token = localStorage.getItem('token');
+    if (!token) {
       navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
       return;
     }
 
-    api.get(`/barbers/${userId}`)
+    api.get('/barbers/me')
       .then(response => {
         setBarber(response.data);
         setLoading(false);
@@ -52,6 +54,36 @@ function BarberHomePage() {
         }
       });
   }, [navigate]);
+
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
+
+  const handleTabChange = (tab) => {
+    if (tab === 'home') {
+      setActiveTab('home');
+      return;
+    }
+
+    if (tab === 'agenda') {
+      navigate('/meus-agendamentos');
+      return;
+    }
+
+    if (tab === 'servicos') {
+      navigate('/barberHome/servicos');
+      return;
+    }
+
+    if (tab === 'estoque') {
+      navigate('/barberHome/estoque');
+      return;
+    }
+
+    setActiveTab(tab);
+  };
 
   const handleCreateShop = () => navigate('/create-barbershop');
 
@@ -111,11 +143,17 @@ function BarberHomePage() {
   if (loading) return <div className={styles.loadingContainer}>Carregando...</div>;
 
   const hasLinkedBarbershop = Boolean(barber?.barbershopId);
+  const firstName = barber?.name?.split(' ')[0] || 'Profissional';
 
   return (
     <div className={`${styles.pageContainer} ${hasLinkedBarbershop ? styles.withNavbar : styles.withoutNavbar}`}>
       <div className={styles.contentWrapper}>
-        <BarberHeader barber={barber} onLogout={handleOpenLogoutModal} />
+        <BarberHeader
+          barber={barber}
+          onLogout={handleOpenLogoutModal}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+        />
 
         {!hasLinkedBarbershop ? (
           <NoBarbershopPanel
@@ -124,11 +162,35 @@ function BarberHomePage() {
           />
         ) : (
             <>
+            <section className={styles.heroSection}>
+              <p className={styles.heroKicker}>HOME DO PROFISSIONAL</p>
+              <h1>Ola, {firstName}. Vamos fazer o dia render.</h1>
+              <p>Confira os numeros da barbearia, priorize os agendamentos e mantenha os servicos mais procurados em destaque.</p>
+            </section>
+
+            <section className={styles.dashboardSection}>
             <Invoicing />
+            </section>
+
+            <section className={styles.dashboardSection}>
             <Buttonsbarber />
-            <ActionsBarber/>
+            </section>
+
+            <section className={styles.dashboardSection}>
+            <ActionsBarber onNavigateToStock={() => navigate('/barberHome/estoque')} />
+            </section>
+
+            <section className={styles.dashboardSection}>
             <NextScheduling/>
-            <ServicesHomeBarber/>
+            </section>
+
+            <section className={styles.dashboardSection}>
+            <ServicesHomeBarber onNavigateToServices={() => navigate('/barberHome/servicos')} />
+            </section>
+
+            <section className={styles.dashboardSection}>
+           
+            </section>
             </>
 
 
@@ -147,7 +209,7 @@ function BarberHomePage() {
         )}
       </div>
       {hasLinkedBarbershop && (
-        <BarberNavbar activeTab={activeTab} onTabChange={setActiveTab} />
+        <BarberNavbar activeTab={activeTab} onTabChange={handleTabChange} />
       )}
 
       {isJoinModalOpen && (

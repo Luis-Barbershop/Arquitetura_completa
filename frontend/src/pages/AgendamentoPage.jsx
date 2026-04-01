@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiCalendar, FiCheckCircle, FiChevronLeft, FiChevronRight, FiRefreshCw, FiScissors } from "react-icons/fi";
-import DatePicker from "react-datepicker";
-import { ptBR } from "date-fns/locale";
+import { FiArrowLeft, FiCalendar, FiCheckCircle, FiRefreshCw, FiScissors } from "react-icons/fi";
 import Styles from "./CSS/AgendamentoPage.module.css";
-import "react-datepicker/dist/react-datepicker.css";
 
 import ServicesAgendamento from "../components/AgendamentoPage/ServicesAgendamento";
 
@@ -17,25 +14,42 @@ const AgendamentoPage = () => {
   const [servicesList, setServicesList] = useState([]);
   const [barbersList, setBarbersList] = useState([]);
   const [availableSlots, setAvailableSlots] = useState([]); 
+  const [barberActivitiesById, setBarberActivitiesById] = useState({});
+  const [isLoadingBarberActivities, setIsLoadingBarberActivities] = useState(false);
 
   const [selectedServices, setSelectedServices] = useState([]);
   const [selectedBarber, setSelectedBarber] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [dateOptions, setDateOptions] = useState([]);
+  const [isLoadingDateOptions, setIsLoadingDateOptions] = useState(false);
   const [selectedTime, setSelectedTime] = useState("");
+
+  const fetchDateSlots = async (barberId, dateObj, durationMinutes) => {
+    const response = await api.get(`/barbers/${barberId}/availability`, {
+      params: {
+        date: formatDateToApi(dateObj),
+        duration: durationMinutes,
+      },
+    });
+
+    return Array.isArray(response.data) ? response.data : [];
+  };
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [isSubmittingAppointment, setIsSubmittingAppointment] = useState(false);
 
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 4 }, (_, index) => currentYear + index);
-  const monthNames = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-  ];
-
   const selectedBarberData = barbersList.find((barber) => String(barber.id) === String(selectedBarber));
+  const selectedBarberActivities = useMemo(
+    () => (selectedBarber && barberActivitiesById[selectedBarber] ? barberActivitiesById[selectedBarber] : []),
+    [selectedBarber, barberActivitiesById]
+  );
+  const selectedBarberActivityIds = useMemo(
+    () => new Set(selectedBarberActivities.map((activity) => String(activity.id))),
+    [selectedBarberActivities]
+  );
   const totalDuration = selectedServices.reduce((acc, curr) => acc + curr.durationMinutes, 0);
   const totalPrice = selectedServices.reduce((acc, curr) => acc + curr.price, 0);
-  const selectedDateLabel = selectedDate ? formatDateForSummary(selectedDate) : "Selecione um dia";
+
+  const weekDayShort = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
 
   const formatCurrency = (value) => (
     new Intl.NumberFormat("pt-BR", {
@@ -52,6 +66,112 @@ const AgendamentoPage = () => {
     return `${year}-${month}-${day}`;
   };
 
+  const getDateKey = (dateObj) => formatDateToApi(dateObj);
+
+  const buildDateWindow = (daysToShow = 14) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return Array.from({ length: daysToShow }, (_, index) => {
+      const nextDate = new Date(today);
+      nextDate.setDate(today.getDate() + index);
+      return nextDate;
+    });
+  };
+
+  const formatCompactDate = (dateObj) => {
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    return `${day}/${month}`;
+  };
+
+  const getRelativeDateLabel = (dateObj, index) => {
+    if (index === 0) return "Hoje";
+    if (index === 1) return "Amanhã";
+    return weekDayShort[dateObj.getDay()];
+  };
+
+  useEffect(() => {
+    const initializeDateOptions = async () => {
+      if (!selectedBarber || selectedServices.length === 0 || totalDuration <= 0) {
+        setDateOptions([]);
+        setSelectedDate(null);
+        setAvailableSlots([]);
+        setSelectedTime("");
+        return;
+      }
+
+      setIsLoadingDateOptions(true);
+
+      try {
+        const windowDates = buildDateWindow(14);
+        const initialOptions = windowDates.map((dateObj, index) => ({
+          key: getDateKey(dateObj),
+          date: dateObj,
+          label: getRelativeDateLabel(dateObj, index),
+          compact: formatCompactDate(dateObj),
+          slots: [],
+          isAvailable: false,
+          status: "idle",
+        }));
+
+        setDateOptions(initialOptions);
+
+        // Carrega apenas os primeiros dias para evitar tempestade de requests.
+        let hydratedOptions = [...initialOptions];
+        const preloadCount = 4;
+
+        for (let index = 0; index < preloadCount; index += 1) {
+          const current = hydratedOptions[index];
+          if (!current) break;
+
+          try {
+            const slots = await fetchDateSlots(selectedBarber, current.date, totalDuration);
+            hydratedOptions[index] = {
+              ...current,
+              slots,
+              isAvailable: slots.length > 0,
+              status: "loaded",
+            };
+          } catch (error) {
+            hydratedOptions[index] = {
+              ...current,
+              slots: [],
+              isAvailable: false,
+              status: "loaded",
+            };
+          }
+        }
+
+        setDateOptions(hydratedOptions);
+
+        const selectedKey = selectedDate ? getDateKey(selectedDate) : null;
+        const stillValidSelectedDate = hydratedOptions.find((option) => option.key === selectedKey && option.isAvailable);
+        const firstAvailable = hydratedOptions.find((option) => option.isAvailable);
+
+        if (stillValidSelectedDate) {
+          setSelectedDate(stillValidSelectedDate.date);
+        } else if (firstAvailable) {
+          setSelectedDate(firstAvailable.date);
+          setSelectedTime(firstAvailable.slots[0] || "");
+        } else {
+          setSelectedDate(hydratedOptions[0]?.date || null);
+          setSelectedTime("");
+        }
+      } catch (error) {
+        console.error("Erro ao preparar datas:", error);
+        setDateOptions([]);
+        setSelectedDate(null);
+        setAvailableSlots([]);
+        setSelectedTime("");
+      } finally {
+        setIsLoadingDateOptions(false);
+      }
+    };
+
+    initializeDateOptions();
+  }, [selectedBarber, selectedServices, totalDuration]);
+
   const formatDateForSummary = (rawDate) => {
     if (!rawDate) return "--";
     const date = rawDate instanceof Date ? rawDate : new Date(rawDate);
@@ -62,6 +182,9 @@ const AgendamentoPage = () => {
       year: "numeric",
     });
   };
+
+  const selectedDateLabel = selectedDate ? formatDateForSummary(selectedDate) : "Selecione um dia";
+  const nextAvailableDate = dateOptions.find((option) => option.isAvailable);
 
   const getInitials = (name) => {
     if (!name) return "--";
@@ -77,28 +200,53 @@ const AgendamentoPage = () => {
     setSelectedServices([]);
     setSelectedBarber(null);
     setSelectedDate(null);
+    setDateOptions([]);
     setSelectedTime("");
     setAvailableSlots([]);
   };
 
-  const getDayClassName = (date) => {
-    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-    const isToday = date.toDateString() === new Date().toDateString();
+  useEffect(() => {
+    const fetchSelectedBarberActivities = async () => {
+      if (!selectedBarber) return;
+      if (barberActivitiesById[selectedBarber]) return;
 
-    if (isToday && isWeekend) {
-      return `${Styles.calendarTodayDay} ${Styles.calendarWeekendDay}`;
-    }
+      try {
+        setIsLoadingBarberActivities(true);
+        const response = await api.get(`/barbers/${selectedBarber}/activities`);
+        const activities = Array.isArray(response.data) ? response.data : [];
 
-    if (isToday) {
-      return Styles.calendarTodayDay;
-    }
+        setBarberActivitiesById((prev) => ({
+          ...prev,
+          [selectedBarber]: activities,
+        }));
+      } catch (error) {
+        console.error("Erro ao carregar serviços do barbeiro selecionado:", error);
+        setBarberActivitiesById((prev) => ({
+          ...prev,
+          [selectedBarber]: [],
+        }));
+      } finally {
+        setIsLoadingBarberActivities(false);
+      }
+    };
 
-    if (isWeekend) {
-      return Styles.calendarWeekendDay;
-    }
+    fetchSelectedBarberActivities();
+  }, [selectedBarber, barberActivitiesById]);
 
-    return "";
-  };
+  useEffect(() => {
+    if (!selectedBarber) return;
+
+    if (!barberActivitiesById[selectedBarber]) return;
+
+    setSelectedServices((prev) => {
+      const filtered = prev.filter((service) => selectedBarberActivityIds.has(String(service.id)));
+      if (filtered.length === prev.length) {
+        return prev;
+      }
+
+      return filtered;
+    });
+  }, [selectedBarber, barberActivitiesById, selectedBarberActivityIds]);
 
  
   useEffect(() => {
@@ -127,33 +275,66 @@ const AgendamentoPage = () => {
     if (barbershopId) fetchData();
   }, [barbershopId]);
 
-  // Buscar Horários Disponíveis
   useEffect(() => {
-    const fetchAvailability = async () => {
-      if (!selectedBarber || !selectedDate || selectedServices.length === 0) {
+    const syncSelectedDateSlots = async () => {
+      if (!selectedDate || !selectedBarber || totalDuration <= 0) {
         setAvailableSlots([]);
+        setSelectedTime("");
         return;
       }
 
-      try {
-        const response = await api.get(`/barbers/${selectedBarber}/availability`, {
-          params: {
-            date: formatDateToApi(selectedDate),
-            duration: totalDuration 
-          }
-        });
-        setAvailableSlots(response.data);
-      } catch (error) {
-        console.error("Erro ao buscar horários:", error);
+      const selectedKey = getDateKey(selectedDate);
+      const selectedOption = dateOptions.find((option) => option.key === selectedKey);
+
+      if (!selectedOption) {
         setAvailableSlots([]);
+        setSelectedTime("");
+        return;
+      }
+
+      // Lazy-load: datas não pré-carregadas só consultam ao serem escolhidas.
+      if (selectedOption.status !== "loaded") {
+        try {
+          const slots = await fetchDateSlots(selectedBarber, selectedOption.date, totalDuration);
+
+          setDateOptions((prev) => prev.map((option) => (
+            option.key === selectedOption.key
+              ? { ...option, slots, isAvailable: slots.length > 0, status: "loaded" }
+              : option
+          )));
+
+          setAvailableSlots(slots);
+
+          if (!slots.some((slot) => slot === selectedTime)) {
+            setSelectedTime("");
+          }
+          return;
+        } catch (error) {
+          console.error("Erro ao buscar horários da data selecionada:", error);
+          setAvailableSlots([]);
+          setSelectedTime("");
+          return;
+        }
+      }
+
+      const slots = selectedOption.slots || [];
+      setAvailableSlots(slots);
+
+      if (!slots.some((slot) => slot === selectedTime)) {
+        setSelectedTime("");
       }
     };
 
-    fetchAvailability();
-  }, [selectedBarber, selectedDate, selectedServices]);
+    syncSelectedDateSlots();
+  }, [selectedDate, dateOptions, selectedTime, selectedBarber, totalDuration]);
 
   // Handler: Selecionar/Deselecionar Serviço
   const handleServiceToggle = (service) => {
+    if (selectedBarber && !selectedBarberActivityIds.has(String(service.id))) {
+      alert("Este barbeiro nao executa esse servico. Escolha outro profissional ou outro servico.");
+      return;
+    }
+
     setSelectedServices(prev => {
       const exists = prev.some(s => s.id === service.id);
       if (exists) {
@@ -267,6 +448,9 @@ const AgendamentoPage = () => {
 
         <section className={Styles.section}>
           <h3 className={Styles.section_title}>1. Serviços</h3>
+          {selectedBarber && isLoadingBarberActivities && (
+            <p className={Styles.info_text}>Carregando serviços que este barbeiro executa...</p>
+          )}
           <div className={Styles.services_list}>
             {servicesList && servicesList.length > 0 ? (
               servicesList.map((service) => (
@@ -274,6 +458,7 @@ const AgendamentoPage = () => {
                   key={service.id}
                   data={service}
                   isSelected={selectedServices.some((selected) => selected.id === service.id)}
+                  disabled={selectedBarber ? !selectedBarberActivityIds.has(String(service.id)) : false}
                   onToggle={() => handleServiceToggle(service)}
                 />
               ))
@@ -308,96 +493,55 @@ const AgendamentoPage = () => {
 
         <section className={Styles.section}>
           <h3 className={Styles.section_title}>3. Data</h3>
-          <div className={Styles.calendarModule}>
-            <aside className={Styles.calendarInfoPanel}>
-              <p className={Styles.calendarInfoKicker}>DATA ESCOLHIDA</p>
-              <h4 className={Styles.calendarInfoDate}>{selectedDateLabel}</h4>
-              <p className={Styles.calendarInfoHint}>Datas anteriores estão bloqueadas automaticamente.</p>
+          <div className={Styles.dateModule}>
+            <div className={Styles.dateInfoPanel}>
+              <p className={Styles.dateInfoKicker}>DATA ESCOLHIDA</p>
+              <h4 className={Styles.dateInfoValue}>{selectedDateLabel}</h4>
+              {nextAvailableDate ? (
+                <p className={Styles.dateInfoHint}>
+                  Próximo horário disponível: {formatDateForSummary(nextAvailableDate.date)}.
+                </p>
+              ) : (
+                <p className={Styles.dateInfoHint}>
+                  Selecione serviços e profissional para ver os próximos dias com horário.
+                </p>
+              )}
+            </div>
 
-              <div className={Styles.calendarLegend}>
-                <div className={Styles.legendItem}>
-                  <span className={`${Styles.legendDot} ${Styles.legendDotToday}`}></span>
-                  <span>Hoje</span>
-                </div>
-                <div className={Styles.legendItem}>
-                  <span className={`${Styles.legendDot} ${Styles.legendDotSelected}`}></span>
-                  <span>Selecionado</span>
-                </div>
-              </div>
-            </aside>
-
-            <div className={Styles.calendarInlineContainer}>
-              <DatePicker
-                selected={selectedDate}
-                onChange={(date) => {
-                  setSelectedDate(date);
-                  setSelectedTime("");
-                }}
-                inline
-                calendarClassName={Styles.inlineCalendar}
-                minDate={new Date()}
-                locale={ptBR}
-                fixedHeight
-                dayClassName={getDayClassName}
-                formatWeekDay={(nameOfDay) => nameOfDay.slice(0, 3).toUpperCase()}
-                renderCustomHeader={({
-                  date,
-                  changeYear,
-                  changeMonth,
-                  decreaseMonth,
-                  increaseMonth,
-                  prevMonthButtonDisabled,
-                  nextMonthButtonDisabled,
-                }) => (
-                  <div className={Styles.customCalendarHeader}>
+            <div className={Styles.dateRail}>
+              {selectedBarber && selectedServices.length > 0 ? (
+                isLoadingDateOptions ? (
+                  <p className={Styles.info_text}>Carregando datas inteligentes...</p>
+                ) : dateOptions.length > 0 ? (
+                  dateOptions.map((option) => (
                     <button
+                      key={option.key}
                       type="button"
-                      onClick={decreaseMonth}
-                      disabled={prevMonthButtonDisabled}
-                      className={Styles.calendarNavButton}
-                      aria-label="Mês anterior"
+                      className={`${Styles.dateChip} ${selectedDate && option.key === getDateKey(selectedDate) ? Styles.dateChipSelected : ''}`}
+                      onClick={() => {
+                        if (option.status === "loaded" && !option.isAvailable) return;
+                        setSelectedDate(option.date);
+                        setSelectedTime("");
+                      }}
+                      disabled={option.status === "loaded" && !option.isAvailable}
                     >
-                      <FiChevronLeft />
+                      <span className={Styles.dateChipLabel}>{option.label}</span>
+                      <strong className={Styles.dateChipValue}>{option.compact}</strong>
+                      <small className={Styles.dateChipMeta}>
+                        {option.status !== "loaded"
+                          ? 'Toque para consultar'
+                          : option.isAvailable
+                            ? `${option.slots.length} horários`
+                            : 'Indisponível'}
+                      </small>
                     </button>
-
-                    <div className={Styles.calendarHeaderCenter}>
-                      <select
-                        value={date.getMonth()}
-                        onChange={({ target: { value } }) => changeMonth(Number(value))}
-                        className={Styles.calendarMonthSelect}
-                      >
-                        {monthNames.map((monthName, monthIndex) => (
-                          <option key={monthName} value={monthIndex}>
-                            {monthName}
-                          </option>
-                        ))}
-                      </select>
-
-                      <select
-                        value={date.getFullYear()}
-                        onChange={({ target: { value } }) => changeYear(Number(value))}
-                        className={Styles.calendarYearSelect}
-                      >
-                        {years.map((year) => (
-                          <option key={year} value={year}>
-                            {year}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={increaseMonth}
-                      disabled={nextMonthButtonDisabled}
-                      className={Styles.calendarNavButton}
-                      aria-label="Próximo mês"
-                    >
-                      <FiChevronRight />
-                    </button>
-                  </div>
-                )}
-              />
+                  ))
+                ) : (
+                  <p className={Styles.info_text}>Sem datas disponíveis no momento.</p>
+                )
+              ) : (
+                <p className={Styles.info_text}>Selecione serviços e profissional para liberar as datas.</p>
+              )}
             </div>
           </div>
         </section>

@@ -21,9 +21,10 @@ function CreateBarbershopPage() {
             // Chama o serviço
             await createBarbershop({ name, cnpj, address }, file);
             
-            alert("Barbearia criada com sucesso!");
-            // Redireciona para a Home do Barbeiro (que agora vai mostrar a agenda)
-            navigate('/barberHome'); 
+            alert("Barbearia criada com sucesso! Para liberar as permissoes de dono, entre novamente.");
+            // O backend coloca a role de dono no JWT. Forcamos novo login para atualizar o token.
+            localStorage.clear();
+            navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
         } catch (error) {
             console.error(error);
             alert("Erro ao criar barbearia. Verifique os dados.");

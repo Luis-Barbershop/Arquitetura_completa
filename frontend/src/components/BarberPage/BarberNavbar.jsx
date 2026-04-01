@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styles from './CSS/BarberNavbar.module.css';
 
 const navItems = [
-    { id: 'inicio', label: 'Início', icon: '🏠' },
-    { id: 'agendamentos', label: 'Agendamentos', icon: '📅' },
-    { id: 'servicos', label: 'Serviços', icon: '✂️' },
-    { id: 'estoque', label: 'Estoque', icon: '📦' },
-    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'perfil', label: 'Meu Perfil', icon: '👤' },
+    { id: 'home', label: 'Home', short: 'HM' },
+    { id: 'agenda', label: 'Agenda', short: 'AG' },
+    { id: 'dashboards', label: 'Dash', short: 'DB' },
+    { id: 'estoque', label: 'Estoque', short: 'ES' },
+    { id: 'servicos', label: 'Servicos', short: 'SV' },
+    { id: 'perfil', label: 'Perfil', short: 'PF' },
+    { id: 'time', label: 'Time', short: 'TM' },
 ];
 
 function BarberNavbar({ activeTab, onTabChange }) {
@@ -17,10 +18,12 @@ function BarberNavbar({ activeTab, onTabChange }) {
                 {navItems.map(item => (
                     <li key={item.id}>
                         <button
+                            type="button"
                             className={activeTab === item.id ? styles.navItemActive : styles.navItem}
                             onClick={() => onTabChange(item.id)}
+                            aria-label={item.label}
                         >
-                            <span className={styles.navIcon}>{item.icon}</span>
+                            <span className={styles.navIcon}>{item.short}</span>
                             <span className={styles.navLabel}>{item.label}</span>
                         </button>
                     </li>

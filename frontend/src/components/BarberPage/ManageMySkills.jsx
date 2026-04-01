@@ -6,20 +6,28 @@ const ManageMySkills = ({ shopId }) => {
     const [shopServices, setShopServices] = useState([]);
     const [myServicesIds, setMyServicesIds] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
         const loadData = async () => {
             try {
+                setLoading(true);
+                setErrorMessage('');
+                setSuccessMessage('');
                 const [allServices, myActivities] = await Promise.all([
                     getShopServices(shopId),
                     getMyAssignedActivities()
                 ]);
 
                 setShopServices(allServices);
-                setMyServicesIds(myActivities.map(a => a.id));
-                setLoading(false);
+                setMyServicesIds(myActivities.map(a => String(a.id)));
             } catch (error) {
                 console.error("Erro ao carregar habilidades:", error);
+                setErrorMessage('Nao foi possivel carregar os servicos do perfil.');
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -27,52 +35,73 @@ const ManageMySkills = ({ shopId }) => {
     }, [shopId]);
 
     const handleToggle = (serviceId) => {
+        const normalizedId = String(serviceId);
         setMyServicesIds(prev =>
-            prev.includes(serviceId)
-                ? prev.filter(id => id !== serviceId)
-                : [...prev, serviceId]
+            prev.includes(normalizedId)
+                ? prev.filter(id => id !== normalizedId)
+                : [...prev, normalizedId]
         );
     };
 
     const handleSave = async () => {
         try {
+            setSaving(true);
+            setErrorMessage('');
+            setSuccessMessage('');
             await assignActivities(myServicesIds);
-            alert("Habilidades atualizadas com sucesso!");
+            setSuccessMessage('Habilidades atualizadas com sucesso!');
         } catch (error) {
-            alert("Erro ao salvar habilidades.");
+            console.error("Erro ao salvar habilidades:", error);
+            setErrorMessage('Erro ao salvar habilidades. Tente novamente.');
+        } finally {
+            setSaving(false);
         }
     };
 
     return (
         <div className={styles.container}>
-            <h2 className={styles.title}>Meus Serviços</h2>
-            <p className={styles.subtitle}>Selecione quais serviços desta barbearia você realiza:</p>
+            {!!errorMessage && <p className={styles.errorText}>{errorMessage}</p>}
+            {!!successMessage && <p className={styles.successText}>{successMessage}</p>}
 
             {loading ? (
                 <p className={styles.loadingText}>Carregando...</p>
             ) : (
-                <div className={styles.grid}>
-                    {shopServices.map(service => {
-                        const isSelected = myServicesIds.includes(service.id);
-                        return (
-                            <div
-                                key={service.id}
-                                onClick={() => handleToggle(service.id)}
-                                className={isSelected ? styles.serviceCardSelected : styles.serviceCard}
-                            >
-                                <div className={styles.cardContent}>
-                                    <strong>{service.activityName}</strong>
-                                    {isSelected && <span className={styles.checkMark}>✓</span>}
-                                </div>
-                                <span className={styles.servicePrice}>R$ {service.price.toFixed(2)}</span>
-                            </div>
-                        );
-                    })}
-                </div>
+                <>
+                    <div className={styles.metaRow}>
+                        <span>{myServicesIds.length} selecionados</span>
+                        <span>{shopServices.length} disponiveis</span>
+                    </div>
+
+                    <div className={styles.grid}>
+                        {shopServices.map(service => {
+                            const isSelected = myServicesIds.includes(String(service.id));
+                            return (
+                                <button
+                                    key={service.id}
+                                    type="button"
+                                    onClick={() => handleToggle(service.id)}
+                                    className={isSelected ? styles.serviceCardSelected : styles.serviceCard}
+                                >
+                                    <div className={styles.cardContent}>
+                                        <strong>{service.activityName}</strong>
+                                        <span className={isSelected ? styles.cardStatusSelected : styles.cardStatus}>
+                                            {isSelected ? 'Selecionado' : 'Selecionar'}
+                                        </span>
+                                    </div>
+                                    <span className={styles.servicePrice}>R$ {service.price.toFixed(2)}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </>
             )}
 
-            <button onClick={handleSave} className={styles.saveButton}>
-                Salvar Minhas Habilidades
+            {!loading && shopServices.length === 0 && (
+                <p className={styles.loadingText}>Nao ha servicos cadastrados na barbearia ainda.</p>
+            )}
+
+            <button onClick={handleSave} className={styles.saveButton} disabled={saving || loading}>
+                {saving ? 'Salvando...' : 'Salvar Minhas Habilidades'}
             </button>
         </div>
     );

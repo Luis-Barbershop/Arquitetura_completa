@@ -1,0 +1,451 @@
+.pageContainer {
+    min-height: 100vh;
+    width: 100%;
+    padding: 20px;
+    color: #f5f5f5;
+    background:
+        radial-gradient(circle at 10% 2%, rgb(193 144 6 / 13%), transparent 24%),
+        radial-gradient(circle at 92% 76%, rgb(193 144 6 / 8%), transparent 26%),
+        linear-gradient(180deg, #101010 0%, #0d0d0d 100%);
+}
+
+.contentWrapper {
+    max-width: 1240px;
+    margin: 0 auto;
+}
+
+.loadingContainer {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f5f5f5;
+    background: #0f0f0f;
+    font-family: "Space Grotesk", sans-serif;
+}
+
+.heroSection {
+    margin-top: 16px;
+    margin-bottom: 18px;
+    padding: 18px;
+    border-radius: 22px;
+    border: 1px solid #2f2f2f;
+    background:
+        radial-gradient(circle at 85% -10%, rgb(193 144 6 / 11%), transparent 44%),
+        radial-gradient(circle at 10% 120%, rgb(193 144 6 / 6%), transparent 40%),
+        linear-gradient(180deg, #181818 0%, #111111 100%);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(250px, 340px);
+    align-items: center;
+    gap: 18px;
+}
+
+.heroKicker {
+    color: #c19006;
+    letter-spacing: 0.15em;
+    font-size: 0.74rem;
+    font-family: "Space Grotesk", sans-serif;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.heroSection h1 {
+    margin-top: 8px;
+    color: #ffffff;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(1.6rem, 2.85vw, 2.3rem);
+    line-height: 1.1;
+    max-width: 700px;
+}
+
+.heroSection p {
+    margin-top: 10px;
+    color: #aca79e;
+    max-width: 680px;
+    line-height: 1.5;
+    font-size: 0.96rem;
+}
+
+.heroInfoCard {
+    border-radius: 18px;
+    border: 1px solid #3d341f;
+    background: linear-gradient(155deg, rgb(193 144 6 / 20%), #171717 70%);
+    padding: 14px 16px;
+    display: grid;
+    gap: 4px;
+}
+
+.heroInfoCard span {
+    color: #e5ca91;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+}
+
+.heroInfoCard strong {
+    color: #ffffff;
+    font-size: 1rem;
+    font-family: "Space Grotesk", sans-serif;
+}
+
+.heroInfoCard small {
+    color: #bbb3a3;
+    font-size: 0.82rem;
+}
+
+.metricsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.metricCard {
+    border: 1px solid #2f2f2f;
+    border-radius: 16px;
+    padding: 14px;
+    background:
+        radial-gradient(circle at 100% 0%, rgb(193 144 6 / 9%), transparent 35%),
+        linear-gradient(180deg, #181818 0%, #131313 100%);
+    box-shadow: 0 14px 30px rgb(0 0 0 / 24%);
+}
+
+.metricLabel {
+    display: block;
+    color: #aaa18f;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: "Space Grotesk", sans-serif;
+}
+
+.metricValue {
+    margin-top: 6px;
+    display: block;
+    color: #f0dec0;
+    font-size: 1.35rem;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+}
+
+.managementGrid {
+    display: grid;
+    grid-template-columns: minmax(280px, 0.82fr) minmax(0, 1.3fr);
+    gap: 14px;
+    margin-bottom: 96px;
+}
+
+.panelCard {
+    border: 1px solid #2f2f2f;
+    background:
+        radial-gradient(circle at 100% 0%, rgb(193 144 6 / 10%), transparent 24%),
+        linear-gradient(180deg, #181818 0%, #111111 100%);
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 18px 30px rgb(0 0 0 / 32%);
+}
+
+.createPanel {
+    position: sticky;
+    top: 12px;
+    height: fit-content;
+}
+
+.listPanel {
+    min-height: 480px;
+}
+
+.panelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.panelHeader h2 {
+    color: #f5f5f5;
+    font-size: 1.03rem;
+    font-family: "Space Grotesk", sans-serif;
+}
+
+.lowStockBadge {
+    display: inline-flex;
+    align-items: center;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid #7f3131;
+    background: #351515;
+    color: #ffb2b2;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.filtersRow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 190px;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.searchInput,
+.filterSelect,
+.formInput {
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    background: #151515;
+    color: #f2f2f2;
+    padding: 0 12px;
+    font-size: 0.92rem;
+}
+
+.filterSelect {
+    cursor: pointer;
+}
+
+.searchInput::placeholder,
+.formInput::placeholder {
+    color: #8f887b;
+}
+
+.searchInput:focus,
+.filterSelect:focus,
+.formInput:focus {
+    outline: none;
+    border-color: #c19006;
+    box-shadow: 0 0 0 3px rgb(193 144 6 / 20%);
+}
+
+.mutedText {
+    color: #a39d90;
+    line-height: 1.5;
+    font-size: 0.92rem;
+}
+
+.itemsList {
+    list-style: none;
+    display: grid;
+    gap: 10px;
+}
+
+.itemCard {
+    border: 1px solid #2c2c2c;
+    background:
+        radial-gradient(circle at 100% 0%, rgb(193 144 6 / 7%), transparent 30%),
+        #171717;
+    border-radius: 14px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: transform 0.15s ease, border-color 0.2s ease;
+}
+
+.itemCard:hover {
+    transform: translateY(-1px);
+    border-color: #5a461c;
+}
+
+.itemMainInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.itemName {
+    color: #f2f2f2;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.itemMetaRow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.itemMeta,
+.itemAlert {
+    font-size: 0.8rem;
+    border-radius: 999px;
+    padding: 2px 8px;
+}
+
+.itemMeta {
+    color: #8f887b;
+    background: #1f1f1f;
+}
+
+.itemAlert {
+    color: #ffb9b9;
+    background: #3f1f1f;
+    font-weight: 700;
+}
+
+.itemRightInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.itemCost {
+    color: #e0c784;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.9rem;
+    min-width: 86px;
+    text-align: right;
+}
+
+.quantityControl {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #323232;
+    border-radius: 10px;
+    background: #121212;
+    overflow: hidden;
+}
+
+.quantityControl button {
+    width: 30px;
+    height: 32px;
+    border: none;
+    background: #1f1f1f;
+    color: #e5ca91;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.quantityControl button:hover {
+    background: #2a2a2a;
+}
+
+.quantityControl span {
+    min-width: 34px;
+    text-align: center;
+    color: #d8d2c5;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.deleteButton {
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid #7f3131;
+    background: #351515;
+    color: #ffb2b2;
+    padding: 0 11px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+}
+
+.deleteButton:hover {
+    background: #4a1f1f;
+}
+
+.form {
+    display: grid;
+    gap: 10px;
+}
+
+.inlineFields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.inlineFields > div {
+    display: grid;
+    gap: 6px;
+}
+
+.formLabel {
+    color: #d5d0c3;
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 600;
+}
+
+.primaryButton {
+    margin-top: 8px;
+    height: 46px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(145deg, #c79a2a, #966c10);
+    color: #161616;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: transform 0.16s ease, filter 0.2s ease;
+}
+
+.primaryButton:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+}
+
+.primaryButton:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.helperText {
+    margin-top: 10px;
+    color: #a39d90;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+@media (max-width: 980px) {
+    .heroSection {
+        grid-template-columns: 1fr;
+    }
+
+    .metricsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .managementGrid {
+        grid-template-columns: 1fr;
+        margin-bottom: 98px;
+    }
+
+    .createPanel {
+        position: static;
+    }
+
+    .filtersRow {
+        grid-template-columns: 1fr;
+    }
+
+    .itemCard {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .itemRightInfo {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .inlineFields {
+        grid-template-columns: 1fr;
+    }
+}

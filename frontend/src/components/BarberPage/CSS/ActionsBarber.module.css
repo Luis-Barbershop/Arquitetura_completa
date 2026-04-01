@@ -1,15 +1,20 @@
 .ActionsBarber{
     width: 100%;
     height: auto;
-    margin-top: 25px;
-    ;
+    margin-top: 0;
 }
 
 .ActionsBarberTitle{
     width: 100%;
     font-family: "Space Grotesk", sans-serif;
     color: white;
-    height: 40px;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+.ActionsBarberTitle h3 {
+    color: #f2f2f2;
+    font-size: 1.2rem;
 }
 
 .ActionsBarberContent{
@@ -17,6 +22,7 @@
     height: auto;
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-between;
+    gap: 14px;
 }

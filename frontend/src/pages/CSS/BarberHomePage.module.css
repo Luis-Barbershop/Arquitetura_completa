@@ -9,26 +9,61 @@
     min-height: 100vh;
     width: 100%;
     color: white;
-    padding: 20px;
+    padding: 16px;
     overflow-x: hidden;
     background-color: #0f0f0f;
     background-image:
-        radial-gradient(circle at 8% 12%, rgb(193 144 6 / 10%), transparent 24%),
-        radial-gradient(circle at 84% 80%, rgb(193 144 6 / 8%), transparent 26%);
+        radial-gradient(circle at 10% 2%, rgb(193 144 6 / 13%), transparent 24%),
+        radial-gradient(circle at 92% 76%, rgb(193 144 6 / 8%), transparent 26%),
+        linear-gradient(180deg, #101010 0%, #0d0d0d 100%);
 }
 
 .withNavbar {
-    padding-bottom: 110px;
+    padding-bottom: 26px;
 }
 
 .withoutNavbar {
-    padding-bottom: 30px;
+    padding-bottom: 26px;
 }
 
 .contentWrapper {
-    max-width: 1140px;
+    max-width: 1180px;
     margin: 0 auto;
     overflow-x: hidden;
+}
+
+.heroSection {
+    width: 100%;
+    margin-top: 0.9rem;
+    margin-bottom: 0.85rem;
+    padding: 0.9rem 0.4rem 0.2rem;
+}
+
+.heroKicker {
+    color: #c19006;
+    letter-spacing: 0.16em;
+    font-size: 0.78rem;
+    font-family: "Space Grotesk", sans-serif;
+}
+
+.heroSection h1 {
+    margin-top: 0.58rem;
+    color: #f5f5f5;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(1.7rem, 3.3vw, 2.4rem);
+    line-height: 1.1;
+}
+
+.heroSection p {
+    margin-top: 0.55rem;
+    color: #aca79e;
+    max-width: 740px;
+    line-height: 1.5;
+    font-size: 0.98rem;
+}
+
+.dashboardSection {
+    margin-top: 16px;
 }
 
 .loadingContainer {
@@ -39,32 +74,68 @@
 
 .header {
     display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    width: 100%;
+    margin-bottom: 14px;
+    font-family: "Space Grotesk", sans-serif;
+    padding: 1rem 1.1rem;
+    border: 1px solid #2f2f2f;
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at 90% -10%, rgb(193 144 6 / 13%), transparent 42%),
+        radial-gradient(circle at 8% 130%, rgb(193 144 6 / 6%), transparent 40%),
+        linear-gradient(180deg, #181818 0%, #111111 100%);
+    box-shadow: 0 18px 38px rgb(0 0 0 / 38%);
+}
+
+.headerTopRow {
+    display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 100%;
-    margin-bottom: 24px;
-    font-family: "Space Grotesk", sans-serif;
-    padding: 1rem 1.2rem;
-    border: 1px solid #292929;
-    border-radius: 16px;
-    background: linear-gradient(180deg, #171717 0%, #121212 100%);
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
+    gap: 1rem;
+    padding-bottom: 0.2rem;
 }
 
 .headerleft {
     display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+
+.headerBrandBadge {
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    background: linear-gradient(145deg, #d2a73e, #8d6308);
+    color: #131313;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgb(193 144 6 / 35%);
+}
+
+.headerBrandText {
+    display: flex;
     flex-direction: column;
-    gap: 4px;
 }
 
 .headerTitle {
     margin: 0;
-    color: #d4af37;
+    color: #ffffff;
+    font-size: 1.06rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .headerWelcome {
-    margin: 2px 0 0;
-    color: #cccccc;
+    margin: 0.22rem 0 0;
+    color: #b2a998;
+    font-size: 0.79rem;
 }
 
 .headerShopName {
@@ -74,7 +145,6 @@
 
 .headerRight {
     display: flex;
-    flex: 1;
     text-align: left;
     flex-direction: row;
     align-items: center;
@@ -82,18 +152,80 @@
     gap: 10px;
 }
 
+.headerNav {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    padding: 0.35rem;
+    border: 1px solid #2d2d2d;
+    border-radius: 14px;
+    background: #141414;
+}
+
+.headerNavItem,
+.headerNavItemActive {
+    height: 40px;
+    padding: 0 0.84rem;
+    border-radius: 11px;
+    border: 1px solid transparent;
+    background: #1a1a1a;
+    color: #bfb7a5;
+    cursor: pointer;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.headerNavItem:hover {
+    border-color: #4a3a17;
+    color: #f3ddb1;
+    transform: translateY(-1px);
+}
+
+.headerNavItemActive {
+    border-color: #7a5b11;
+    background: linear-gradient(180deg, #31240f 0%, #251c0c 100%);
+    color: #e1c98a;
+    box-shadow: inset 0 0 0 1px rgb(193 144 6 / 24%);
+}
+
+.headerNavChip {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.62rem;
+    letter-spacing: 0.05em;
+    color: #a79c87;
+    background: #232323;
+    border: 1px solid #353535;
+}
+
+.headerNavItemActive .headerNavChip {
+    color: #f4dfb1;
+    background: #3a2b10;
+    border-color: #6d5012;
+}
+
 .notificationButton {
-    height: 38px;
-    width: 38px;
-    border: 1px solid #333;
+    height: 40px;
+    width: 40px;
+    border: 1px solid #3a3a3a;
     border-radius: 12px;
-    background-color: #1a1a1a;
+    background: #1a1a1a;
     cursor: pointer;
     transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .notificationButton img {
-    width: 100%;
+    width: 70%;
 }
 
 .notificationButton:hover {
@@ -102,19 +234,21 @@
 }
 
 .logoutButton {
-    background: transparent;
-    border: 1px solid #f44336;
-    color: #f44336;
-    padding: 8px 15px;
-    border-radius: 10px;
+    background-color: transparent;
+    border: 1px solid #b3473e;
+    color: #f07d74;
+    padding: 10px 15px;
+    border-radius: 12px;
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 0.83rem;
     font-family: "Space Grotesk", sans-serif;
+    font-weight: 600;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .logoutButton:hover {
-    background-color: #f44336;
-    color: white;
+    background-color: #b3473e;
+    color: #ffffff;
 }
 
 .noBarbershopPanel {
@@ -390,16 +524,42 @@
         padding: 12px;
     }
 
+    .withNavbar {
+        padding-bottom: 98px;
+    }
+
     .header {
         padding: 0.9rem;
+        border-radius: 14px;
+        gap: 0;
+    }
+
+    .headerNav {
+        display: none;
+    }
+
+    .headerBrandBadge {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        font-size: 0.82rem;
     }
 
     .headerTitle {
-        font-size: 1.2rem;
+        font-size: 0.98rem;
     }
 
     .headerWelcome {
-        font-size: 0.9rem;
+        font-size: 0.75rem;
+    }
+
+    .heroSection {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .heroSection h1 {
+        font-size: 1.5rem;
     }
 
     .noBarbershopPanel {

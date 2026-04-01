@@ -74,11 +74,11 @@ export const getShopServices = async (shopId) => {
 
 
 export const getMyServices = async () => {
-    // Precisamos primeiro saber o ID da loja do usuário logado
-    // Uma forma segura é buscar os dados do barbeiro primeiro
+    // Busca os dados do barbeiro autenticado e depois usa o barbershopId
+    // para listar os serviços da loja.
     try {
-        const meResponse = await api.get('/barbers/me');
-        const shopId = meResponse.data.barbershopId;
+        const barberResponse = await api.get('/barbers/me');
+        const shopId = barberResponse.data?.barbershopId;
         
         if(!shopId) return [];
 

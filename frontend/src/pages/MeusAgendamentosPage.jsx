@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiCalendar, FiCheckCircle, FiClock, FiRefreshCw, FiScissors, FiXCircle } from 'react-icons/fi';
 import Styles from './CSS/MeusAgendamentos.module.css';
 import { getMyAppointments, cancelAppointment } from '../services/appointmentService';
+import BarberHeader from '../components/BarberPage/BarberHeader';
+import BarberNavbar from '../components/BarberPage/BarberNavbar';
+import { logoutUser } from '../services/authService';
 
 const MeusAgendamentosPage = () => {
     const navigate = useNavigate();
@@ -127,11 +130,46 @@ const MeusAgendamentosPage = () => {
         { key: 'CANCELLED', label: 'Cancelados' },
     ];
 
+    const handleBarberTabChange = (tab) => {
+        if (tab === 'agenda') return;
+
+        if (tab === 'home') {
+            navigate('/barberHome');
+            return;
+        }
+
+        if (tab === 'servicos') {
+            navigate('/barberHome/servicos');
+            return;
+        }
+
+        if (tab === 'estoque') {
+            navigate('/barberHome/estoque');
+            return;
+        }
+
+        navigate('/barberHome', { state: { activeTab: tab } });
+    };
+
+    const handleBarberLogout = () => {
+        logoutUser();
+        navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+    };
+
     return (
         <div className={Styles.container}>
             <div className={Styles.content}>
 
-                <header className={Styles.topMenu}>
+                {!isCustomer && (
+                    <BarberHeader
+                        barber={{ name: userName }}
+                        onLogout={handleBarberLogout}
+                        activeTab="agenda"
+                        onTabChange={handleBarberTabChange}
+                    />
+                )}
+
+                {isCustomer && <header className={Styles.topMenu}>
                     <div className={Styles.brandBlock}>
                         <div className={Styles.brandBadge}>CA</div>
                         <div>
@@ -141,7 +179,7 @@ const MeusAgendamentosPage = () => {
                     </div>
 
                     <nav className={Styles.menuCenter} aria-label="Navegacao de agendamentos">
-                        <button onClick={() => navigate('/homepage')}>
+                        <button onClick={() => navigate(isCustomer ? '/homepage' : '/barberHome')}>
                             <FiScissors />
                             <span>Home</span>
                         </button>
@@ -161,7 +199,7 @@ const MeusAgendamentosPage = () => {
                             <span>Voltar</span>
                         </button>
                     </div>
-                </header>
+                </header>}
 
                 <section className={Styles.heroBlock}>
                     <p className={Styles.kicker}>{isCustomer ? 'PAINEL DE AGENDAMENTOS' : 'MINHA AGENDA'}</p>
@@ -300,6 +338,10 @@ const MeusAgendamentosPage = () => {
                     </div>
                 )}
             </div>
+
+            {!isCustomer && (
+                <BarberNavbar activeTab="agenda" onTabChange={handleBarberTabChange} />
+            )}
         </div>
     );
 };

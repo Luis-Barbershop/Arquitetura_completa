@@ -1,6 +1,6 @@
 import Styles from './CSS/Stock.module.css'
 
-function Stock() {
+function Stock({ onNavigateToStock }) {
   return (
     <div className={Styles.container}>
         <div className={Styles.stockCard}>
@@ -17,8 +17,8 @@ function Stock() {
         </div>
 
         <div>
-        <button className={Styles.stockButton}>
-            Ver Detalhes
+        <button className={Styles.stockButton} onClick={onNavigateToStock}>
+            Gerenciar Estoque
         </button>
         </div>
 
