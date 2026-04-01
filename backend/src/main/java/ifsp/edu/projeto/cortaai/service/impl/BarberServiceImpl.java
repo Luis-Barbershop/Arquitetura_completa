@@ -99,6 +99,12 @@ public class BarberServiceImpl implements BarberService {
 
     @Override
     @Transactional(readOnly = true)
+    public BarberDTO getByEmail(final String email) {
+        return barberMapper.toDTO(findBarberByEmail(email));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public LoginResponseDTO login(final LoginDTO loginDTO) { // TIPO DE RETORNO ALTERADO
         final Barber barber = barberRepository.findByEmailIgnoreCase(loginDTO.getEmail())
                 .orElseThrow(() -> new NotFoundException("Usuário ou senha inválidos"));

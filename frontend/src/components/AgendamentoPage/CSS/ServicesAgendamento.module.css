@@ -18,6 +18,16 @@
     background-color: #363636;
 }
 
+.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    border-style: dashed;
+}
+
+.disabled:hover {
+    background-color: #2C2C2C;
+}
+
 /* Estado Selecionado */
 .selected {
     background-color: rgba(193, 144, 6, 0.15); /* Fundo dourado bem transparente */

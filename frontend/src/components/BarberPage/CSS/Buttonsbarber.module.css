@@ -1,29 +1,32 @@
 .containerButtons{
-    position: relative;
     width: 100%;
     height: auto;
-    margin-top: 15px;
+    margin-top: 0;
     display: flex;
     flex-direction: row;
-    gap: 10px;
+    gap: 14px;
     justify-content: center;
-    padding: 5px 0px;
+    padding: 4px 0;
 }
 
 .button{
-    background-color: #404040;
-    color: white;
-    height: 90%;
+    background: linear-gradient(180deg, #1d1d1d 0%, #161616 100%);
+    color: #f6f6f6;
+    height: 100%;
     width: 50%;
-    padding: 15px;
-    border-radius: 15px;
+    padding: 16px;
+    border-radius: 16px;
     cursor: pointer;
     font-family: "Space Grotesk", sans-serif;
+    border: 1px solid #2f2f2f;
+    box-shadow: 0 10px 24px rgb(0 0 0 / 22%);
+    transition: border-color 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
 }
 
 .button:hover{
-    transition: 0.5s;
-    background-color: #999896dc;
+    border-color: #6b5118;
+    background: linear-gradient(180deg, #221f18 0%, #1a1812 100%);
+    transform: translateY(-1px);
 }
 
 .iconReport{
@@ -32,7 +35,7 @@
     justify-content: center;
     width: 60px;
     height: 60px;
-    border-radius: 30px;
+    border-radius: 16px;
     background-color: #b68809ab;
     
 }
@@ -48,7 +51,7 @@
      display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 30px;
+    border-radius: 16px;
     background-color: #22c55e83;
 }
 
@@ -62,9 +65,11 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 90px;
+    height: 96px;
 }
 
 .button h3{
     margin-top: 15px;
+    font-size: 0.95rem;
+    font-weight: 600;
 }

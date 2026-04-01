@@ -108,6 +108,13 @@
     overflow: hidden;
 }
 
+.services_summary {
+    margin: 0 0 8px 0;
+    color: #c5b086;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
 .service_tag {
     background-color: #2c2c2c;
     color: #dddddd;

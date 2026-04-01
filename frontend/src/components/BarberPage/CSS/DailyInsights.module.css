@@ -3,17 +3,17 @@
     flex-direction: column;
     width: 49.5%;
     height: 220px;
-    background-color: #1f1e2e;
-    border-radius: 10px;
+    background: linear-gradient(180deg, #1d1a13 0%, #17140f 100%);
+    border-radius: 14px;
     font-family: "Space Grotesk", sans-serif;
-    border: #5553a1 1px solid;
+    border: #4a3b1c 1px solid;
 }
 
 .dailyInsightIcon{
     width: 50px;
     height: 50px;
-    background-color: #5553a1;
-    border-radius: 10px;
+    background-color: #3c3120;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -32,12 +32,16 @@
 }
 
 .headerDailyInsights p{
-    color: #6d76cf;
+    color: #c8b48a;
     font-weight: bold;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
 }
 
 .content{
     padding-left: 20px;
+    color: #f2f2f2;
+    line-height: 1.45;
 }
 
 .footer{
@@ -45,19 +49,21 @@
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 55%;
+    gap: 25%;
     margin-top: 35px;
+    justify-content: space-between;
+    padding: 0 20px;
 }
 
 .footer p{
-    color: #a5b4ef;
+    color: #e1c27b;
     font-size: 0.9rem;
     font-weight: bold;
 }
 
 .seeMoreButton{
     background: transparent;
-    color: #6d76cf;
+    color: #d4af37;
     font-weight: bold;
     font-family: "Space Grotesk", sans-serif;
     font-size: 0.9rem ;
@@ -65,6 +71,6 @@
 }
 
 .seeMoreButton:hover{
-    color: #a5b4ef;
-    transition: 0.3s;
+    color: #f3dfb0;
+    transition: 0.2s;
 }

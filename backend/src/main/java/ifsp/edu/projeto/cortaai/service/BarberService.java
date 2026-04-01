@@ -16,6 +16,7 @@ public interface BarberService {
 
     // --- Gestão de Barbeiros (Global) ---
     List<BarberDTO> findAll();
+    BarberDTO getByEmail(String email);
     BarberDTO get(UUID id);
     UUID create(@Valid CreateBarberDTO createBarberDTO, MultipartFile file) throws IOException;
     void update(String email, BarberDTO barberDTO);

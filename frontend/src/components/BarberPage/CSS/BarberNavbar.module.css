@@ -3,11 +3,14 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    background-color: #1E1E1E;
-    border-top: 1px solid #444;
-    padding: 10px 40px;
+    background:
+        radial-gradient(circle at 50% -180%, rgb(193 144 6 / 24%), transparent 70%),
+        #171717;
+    border-top: 1px solid #353535;
+    padding: 10px 14px;
     z-index: 100;
     font-family: "Space Grotesk", sans-serif;
+    display: none;
 }
 
 .navbarList {
@@ -18,6 +21,11 @@
     padding: 0;
     margin: 0;
     width: 100%;
+    gap: 6px;
+}
+
+.navbarList li {
+    flex: 1;
 }
 
 .navItem {
@@ -26,42 +34,64 @@
     align-items: center;
     gap: 4px;
     cursor: pointer;
-    padding: 8px 20px;
-    border-radius: 10px;
+    width: 100%;
+    padding: 8px 4px;
+    border-radius: 11px;
     transition: all 0.2s;
     background: transparent;
     border: none;
-    color: #888;
-    font-size: 1rem;
+    color: #9f9787;
+    font-size: 0.9rem;
     font-family: inherit;
 }
 
 .navItem:hover {
-    color: #D4AF37;
+    color: #d4af37;
+    background: #221b0f;
 }
 
 .navItemActive {
     composes: navItem;
-    color: #D4AF37;
+    color: #e1c887;
+    background: linear-gradient(180deg, #2c220f 0%, #221a0d 100%);
+    border: 1px solid #5f4714;
 }
 
 .navIcon {
-    width: 32px;
-    height: 32px;
-    font-size: 1.5rem;
-    opacity: 0.6;
-    transition: opacity 0.2s;
+    width: 24px;
+    height: 24px;
+    font-size: 0.62rem;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    border: 1px solid #3b3b3b;
+    background: #222;
+    color: #9d927b;
+    transition: all 0.2s;
 }
 
 .navItemActive .navIcon {
-    opacity: 1;
+    border-color: #6d5012;
+    color: #f0dcae;
+    background: #3b2b0f;
 }
 
 .navItem:hover .navIcon {
-    opacity: 1;
+    color: #e4cf9b;
 }
 
 .navLabel {
-    font-weight: 600;
+    font-weight: 700;
     white-space: nowrap;
+    font-size: 0.62rem;
+    letter-spacing: 0.02em;
+}
+
+@media (max-width: 760px) {
+    .navbarContainer {
+        display: block;
+    }
 }

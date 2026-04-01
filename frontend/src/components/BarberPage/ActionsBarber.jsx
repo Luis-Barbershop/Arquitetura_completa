@@ -3,14 +3,14 @@ import DailyInsights from './DailyInsights'
 import Stock from './Stock'
  
 
-function ActionsBarber() {
+function ActionsBarber({ onNavigateToStock }) {
   return (
     <div className={Styles.ActionsBarber}>
         <div className={Styles.ActionsBarberTitle}>
         <h3>Ações Importantes</h3>
         </div>
         <div className={Styles.ActionsBarberContent}>
-       <Stock/>
+       <Stock onNavigateToStock={onNavigateToStock} />
        <DailyInsights/>
         </div>
     </div>

@@ -1,6 +1,6 @@
 .container {
     width: 100%;
-    margin-top: 20px;
+    margin-top: 0;
     font-family: "Space Grotesk", sans-serif;
 }
 
@@ -12,14 +12,14 @@
 }
 
 .title {
-    color: white;
-    font-size: 1.3rem;
+    color: #f2f2f2;
+    font-size: 1.2rem;
 }
 
 .seeMoreButton {
     background: transparent;
     border: none;
-    color: #D4AF37;
+    color: #d4af37;
     font-size: 0.9rem;
     font-weight: bold;
     cursor: pointer;
@@ -32,30 +32,36 @@
 
 .cardsRow {
     display: flex;
-    gap: 15px;
+    gap: 12px;
     overflow-x: auto;
-    padding-top: 15px;
+    padding-top: 6px;
+}
+
+.statusText {
+    color: #a8a08f;
+    font-size: 0.92rem;
+    margin: 0.35rem 0 0.15rem;
 }
 
 .card {
     min-width: 160px;
     flex: 1;
-    background: linear-gradient(145deg, #4a4a4a, #363636);
-    border-radius: 16px;
-    padding: 20px;
+    background: linear-gradient(180deg, #1d1d1d 0%, #161616 100%);
+    border-radius: 14px;
+    padding: 18px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
-    border: 1px solid transparent;
+    border: 1px solid #2f2f2f;
 }
 
 .card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    border-color: #D4AF37;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgb(0 0 0 / 24%);
+    border-color: #6b5118;
 }
 
 .cardEmoji {
@@ -64,19 +70,19 @@
 }
 
 .cardName {
-    color: white;
+    color: #f0f0f0;
     font-size: 0.95rem;
     text-align: center;
     font-weight: 600;
 }
 
 .cardDuration {
-    color: #999;
+    color: #8f8f8f;
     font-size: 0.8rem;
 }
 
 .cardPrice {
-    color: #D4AF37;
+    color: #d4af37;
     font-weight: bold;
     font-size: 1.1rem;
     margin-top: 4px;

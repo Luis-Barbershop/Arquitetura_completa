@@ -35,7 +35,12 @@ public class BarberController {
         return ResponseEntity.ok(barberService.findAll());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/me")
+    public ResponseEntity<BarberDTO> getCurrentBarber(Principal principal) {
+        return ResponseEntity.ok(barberService.getByEmail(principal.getName()));
+    }
+
+    @GetMapping("/{id:[0-9a-fA-F\\-]{36}}")
     public ResponseEntity<BarberDTO> getBarber(@PathVariable(name = "id") final UUID id) {
         return ResponseEntity.ok(barberService.get(id));
     }
@@ -98,7 +103,7 @@ public class BarberController {
         return ResponseEntity.ok(activities);
     }
 
-    @GetMapping("/{id}/activities")
+    @GetMapping("/{id:[0-9a-fA-F\\-]{36}}/activities")
     public ResponseEntity<List<ActivityDTO>> getBarberActivities(@PathVariable(name = "id") final UUID id) {
         List<ActivityDTO> activities = barberService.listActivitiesByBarber(id);
         return ResponseEntity.ok(activities);
@@ -133,7 +138,7 @@ public class BarberController {
     }
 
     // NOVO: Endpoint para obter a lista de horários disponíveis
-    @GetMapping("/{id}/availability")
+    @GetMapping("/{id:[0-9a-fA-F\\-]{36}}/availability")
     public ResponseEntity<List<LocalTime>> getBarberAvailability(
             @PathVariable(name = "id") final UUID id,
             @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) final LocalDate date,
@@ -144,7 +149,7 @@ public class BarberController {
     }
 
     //Endpoint para obter a disponibilidade do mês
-    @GetMapping("/{id}/monthly-availability")
+    @GetMapping("/{id:[0-9a-fA-F\\-]{36}}/monthly-availability")
     public ResponseEntity<List<DailyAvailabilityDTO>> getBarberMonthlyAvailability(
             @PathVariable(name = "id") final UUID id,
             @RequestParam("year") final int year,

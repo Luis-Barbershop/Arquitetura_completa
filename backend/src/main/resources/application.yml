@@ -66,12 +66,9 @@ app:
     slot-interval-minutes: 15
 
 
-# ===============================================
-# CONFIGURAÇÕES DE LOG PARA DEBUG DO HIBERNATE
-# ===============================================
-# (ESSENCIAL) Mostra as queries SQL
 logging:
   level:
-    org.hibernate.SQL: DEBUG
-    # (MUITO ÚTIL) Mostra os valores dos parâmetros (?) nas queries
-    org.hibernate.type.descriptor.sql: TRACE
+    org.hibernate.SQL: ERROR
+    org.hibernate.type.descriptor.sql: ERROR
+    org.hibernate.orm.jdbc.bind: ERROR
+    org.hibernate.orm.jdbc.extract: ERROR

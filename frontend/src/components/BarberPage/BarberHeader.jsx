@@ -1,32 +1,52 @@
 import React from 'react';
 import styles from '../../pages/CSS/BarberHomePage.module.css';
 
-function BarberHeader({ barber, onLogout }) {
+const navItems = [
+    { id: 'home', label: 'Home', short: 'HM' },
+    { id: 'agenda', label: 'Minha Agenda', short: 'AG' },
+    { id: 'dashboards', label: 'Dashboards', short: 'DB' },
+    { id: 'estoque', label: 'Estoque', short: 'ES' },
+    { id: 'servicos', label: 'Servicos', short: 'SV' },
+    { id: 'perfil', label: 'Meu Perfil', short: 'PF' },
+    { id: 'time', label: 'Meu Time', short: 'TM' },
+];
+
+function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
     return (
         <header className={styles.header}>
-          
-{/* 
-            <div className={styles.headerCenter}>
-                <h1 className={styles.headerTitle}>Painel do Profissional</h1>
-                <p className={styles.headerWelcome}>Bem-vindo, {barber?.name}</p>
-                {barber?.barbershopName && (
-                    <span className={styles.headerShopName}>@{barber.barbershopName}</span>
-                )}
-            </div> */}
+            <div className={styles.headerTopRow}>
+                <div className={styles.headerleft}>
+                    <div className={styles.headerBrandBadge}>CA</div>
+                    <div className={styles.headerBrandText}>
+                        <h2 className={styles.headerTitle}>Corta AI</h2>
+                        <p className={styles.headerWelcome}>Painel profissional de {barber?.name}</p>
+                    </div>
+                </div>
 
-            <div className={styles.headerleft}>
-                <h2 className={styles.headerTitle}>CortaAÍ</h2>
-                <p className={styles.headerWelcome}>Olá, {barber?.name}! 👋</p>
+                <div className={styles.headerRight}>
+                    <button className={styles.notificationButton}>
+                        <img src="/Icons/bellicon.png" alt="Sino de Notificacao" />
+                    </button>
+                    <button onClick={onLogout} className={styles.logoutButton}>
+                        Sair
+                    </button>
+                </div>
             </div>
 
-            <div className={styles.headerRight}>
-                <button className={styles.notificationButton}>
-                    <img src="./Icons/bellicon.png" alt="Sino de Notificação" />
-                </button>
-                <button onClick={onLogout} className={styles.logoutButton}>
-                    Sair ➜
-                </button>
-            </div>
+            <nav className={styles.headerNav} aria-label="Navegacao principal do barbeiro">
+                {navItems.map((item) => (
+                    <button
+                        key={item.id}
+                        type="button"
+                        className={activeTab === item.id ? styles.headerNavItemActive : styles.headerNavItem}
+                        onClick={() => onTabChange(item.id)}
+                        aria-label={item.label}
+                    >
+                        <span className={styles.headerNavChip}>{item.short}</span>
+                        {item.label}
+                    </button>
+                ))}
+            </nav>
         </header>
     );
 }

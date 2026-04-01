@@ -5,15 +5,23 @@ import styles from './CSS/ManageServices.module.css';
 const ManageServices = () => {
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isOwner, setIsOwner] = useState(false);
 
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
     const [duration, setDuration] = useState("30");
 
     const loadServices = async () => {
-        const data = await getMyServices();
-        setServices(data);
-        setLoading(false);
+        try {
+            const data = await getMyServices();
+            setServices(data);
+
+            const userRaw = localStorage.getItem('user');
+            const userData = userRaw ? JSON.parse(userRaw) : null;
+            setIsOwner(Boolean(userData?.isOwner ?? userData?.owner));
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -24,11 +32,29 @@ const ManageServices = () => {
         e.preventDefault();
         if (!name || !price || !duration) return;
 
+        if (!isOwner) {
+            alert('Apenas o dono da barbearia pode cadastrar servicos.');
+            return;
+        }
+
+        const parsedPrice = Number(String(price).replace(',', '.').trim());
+        const parsedDuration = Number(duration);
+
+        if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+            alert('Informe um preco valido maior que zero.');
+            return;
+        }
+
+        if (!Number.isFinite(parsedDuration) || parsedDuration <= 0) {
+            alert('Informe uma duracao valida em minutos.');
+            return;
+        }
+
         try {
             await createService({
                 activityName: name,
-                price: parseFloat(price),
-                durationMinutes: parseInt(duration)
+                price: parsedPrice,
+                durationMinutes: parsedDuration
             });
 
             alert("Serviço adicionado!");
@@ -36,7 +62,12 @@ const ManageServices = () => {
             setPrice("");
             loadServices();
         } catch (error) {
-            alert("Erro ao criar serviço.");
+            const status = error?.response?.status;
+            if (status === 403) {
+                alert('Seu usuario nao tem permissao ativa de dono no token atual. Faca logout e login novamente.');
+            } else {
+                alert("Erro ao criar servico.");
+            }
         }
     };
 
@@ -81,6 +112,12 @@ const ManageServices = () => {
             </div>
 
             <form onSubmit={handleAdd} className={styles.form}>
+                {!isOwner && (
+                    <p className={styles.emptyText}>
+                        Apenas o dono pode cadastrar servicos. Se voce acabou de criar a barbearia,
+                        faca logout e login para atualizar o token.
+                    </p>
+                )}
                 <div className={styles.formGroupName}>
                     <label className={styles.formLabel}>Nome do Serviço</label>
                     <input
@@ -89,6 +126,7 @@ const ManageServices = () => {
                         value={name}
                         onChange={e => setName(e.target.value)}
                         className={styles.formInput}
+                        disabled={!isOwner}
                         required
                     />
                 </div>
@@ -102,6 +140,7 @@ const ManageServices = () => {
                         value={price}
                         onChange={e => setPrice(e.target.value)}
                         className={styles.formInput}
+                        disabled={!isOwner}
                         required
                     />
                 </div>
@@ -114,11 +153,12 @@ const ManageServices = () => {
                         value={duration}
                         onChange={e => setDuration(e.target.value)}
                         className={styles.formInput}
+                        disabled={!isOwner}
                         required
                     />
                 </div>
 
-                <button type="submit" className={styles.addButton}>
+                <button type="submit" className={styles.addButton} disabled={!isOwner}>
                     + Adicionar
                 </button>
             </form>

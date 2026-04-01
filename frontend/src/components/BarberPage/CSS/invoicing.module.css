@@ -3,27 +3,45 @@
     flex-direction: row;
     width: 100%;
     height: auto;
-    background-color: #b68809;
-    padding: 20px 20px;
+    background:
+        radial-gradient(circle at 88% 8%, rgb(255 255 255 / 16%), transparent 35%),
+        linear-gradient(135deg, #c19006 0%, #9b710d 100%);
+    padding: 22px;
     font-family: "Space Grotesk", sans-serif;
-    color: #0f0f0f;
-    border-radius: 15px;
+    color: #151515;
+    border-radius: 18px;
     justify-content: space-between;
+    box-shadow: 0 16px 30px rgb(0 0 0 / 24%);
 }
 
 .containerFaturamento p{
     font-weight: bold;
 }
 
+.containerFaturamentoLeft h2 {
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+}
+
+.containerFaturamentoLeft h1 {
+    margin-top: 0.28rem;
+    font-size: clamp(1.7rem, 3vw, 2.2rem);
+}
+
+.containerFaturamentoLeft p {
+    margin-top: 0.32rem;
+    color: #2f260f;
+    font-size: 0.9rem;
+}
+
 .containerFaturamentoRight{
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 10px;
+    justify-content: center;
 }
 
 .containerFaturamentoRight img{
-    width: 30px;
-    height: 30px;
-    /* cursor: pointer; */
+    width: 36px;
+    height: 36px;
 }
