@@ -21,15 +21,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/auth/firebase-test")
+@RequestMapping({"/api/auth/email", "/api/auth/firebase-test"})
 @RequiredArgsConstructor
-@Tag(name = "Firebase Test", description = "Endpoints para testar Firebase sem frontend/Postman")
+@Tag(name = "Email Auth", description = "Autenticação com e-mail/senha via Firebase (rotas de produção + aliases legados)")
 public class FirebaseTestController {
 
 	private final FirebaseDebugService firebaseDebugService;
 
 	@Operation(
-			summary = "Login Firebase por email/senha",
+			summary = "Login por e-mail/senha",
 			description = "Usa o Identity Toolkit do Firebase para retornar idToken/refreshToken."
 	)
 	@ApiResponses({
@@ -38,7 +38,7 @@ public class FirebaseTestController {
 			@ApiResponse(responseCode = "401", description = "Credenciais inválidas")
 	})
 	@SecurityRequirements
-	@PostMapping("/sign-in-email")
+	@PostMapping({"/login", "/sign-in-email"})
 	public ResponseEntity<FirebaseEmailSignInResponseDTO> signInWithEmail(
 			@RequestBody @Valid FirebaseEmailSignInRequestDTO request) {
 		return ResponseEntity.ok(firebaseDebugService.signInWithEmailPassword(request));
@@ -54,7 +54,7 @@ public class FirebaseTestController {
 			@ApiResponse(responseCode = "401", description = "Token inválido ou expirado")
 	})
 	@SecurityRequirements
-	@PostMapping("/verify-id-token")
+	@PostMapping({"/verify-token", "/verify-id-token"})
 	public ResponseEntity<FirebaseTokenDebugResponseDTO> verifyIdToken(
 			@RequestBody @Valid FirebaseTokenDebugRequestDTO request) {
 		return ResponseEntity.ok(firebaseDebugService.verifyToken(request.idToken()));
@@ -82,7 +82,7 @@ public class FirebaseTestController {
 			@ApiResponse(responseCode = "500", description = "Erro ao comunicar com Firebase")
 	})
 	@SecurityRequirements
-	@PostMapping("/register-email")
+	@PostMapping({"/register", "/register-email"})
 	public ResponseEntity<FirebaseEmailRegisterResponseDTO> registerWithEmail(
 			@RequestBody @Valid FirebaseEmailRegisterRequestDTO request) {
 		return ResponseEntity.ok(firebaseDebugService.registerWithEmailPassword(request));

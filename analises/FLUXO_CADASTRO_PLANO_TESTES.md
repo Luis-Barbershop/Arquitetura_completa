@@ -56,8 +56,7 @@
 ```
 Frontend                        API Gateway              user-service           Firebase
    │                                 │                        │                     │
-   │  POST /api/auth/firebase-test   │                        │                     │
-   │    /register-email              │                        │                     │
+   │  POST /api/auth/email/register  │                        │                     │
    │  Body (JSON):                   │                        │                     │
    │  { email, password, userType,   │                        │                     │
    │    name, tell, documentCPF }    │                        │                     │
@@ -150,9 +149,7 @@ Idêntico ao Customer, mas com campos extras no body:
 ```
 Frontend                   API Gateway           user-service           Firebase
    │                            │                     │                     │
-   │  POST /api/auth/           │                     │                     │
-   │    firebase-test/          │                     │                     │
-   │    sign-in-email           │                     │                     │
+   │  POST /api/auth/email/login│                     │                     │
    │  { email, password }       │                     │                     │
    │───────────────────────────►│                     │                     │
    │                            │  (rota pública)     │                     │
@@ -215,7 +212,7 @@ user-service → completeCustomerProfile(uid, dto)
 ### TC-01 — Cadastro de Customer com sucesso
 
 ```bash
-curl -s -X POST "https://api.cortaai.shop/api/auth/firebase-test/register-email" \
+curl -s -X POST "https://api.cortaai.shop/api/auth/email/register" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "cliente_teste@gmail.com",
@@ -250,7 +247,7 @@ curl -s -X POST "https://api.cortaai.shop/api/auth/firebase-test/register-email"
 ### TC-02 — Cadastro de Barbeiro com sucesso
 
 ```bash
-curl -s -X POST "https://api.cortaai.shop/api/auth/firebase-test/register-email" \
+curl -s -X POST "https://api.cortaai.shop/api/auth/email/register" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "barbeiro_teste@gmail.com",
@@ -274,12 +271,12 @@ curl -s -X POST "https://api.cortaai.shop/api/auth/firebase-test/register-email"
 ```bash
 # 1. Cadastrar (TC-01 acima), NÃO verificar o e-mail
 # 2. Tentar login:
-curl -s -X POST "https://api.cortaai.shop/api/auth/firebase-test/sign-in-email" \
+curl -s -X POST "https://api.cortaai.shop/api/auth/email/login" \
   -H "Content-Type: application/json" \
   -d '{ "email": "cliente_teste@gmail.com", "password": "Senha@123456" }' | jq .
 
 # 3. Tentar acessar rota protegida com o token retornado:
-TOKEN=$(curl -s -X POST "https://api.cortaai.shop/api/auth/firebase-test/sign-in-email" \
+TOKEN=$(curl -s -X POST "https://api.cortaai.shop/api/auth/email/login" \
   -H "Content-Type: application/json" \
   -d '{ "email": "cliente_teste@gmail.com", "password": "Senha@123456" }' \
   | jq -r '.idToken')
@@ -300,7 +297,7 @@ curl -s -X GET "https://api.cortaai.shop/api/auth/me" \
 ```bash
 # 1. Verificar e-mail clicando no link recebido
 # 2. Obter novo token (token antigo pode ter emailVerified=false em cache)
-TOKEN=$(curl -s -X POST "https://api.cortaai.shop/api/auth/firebase-test/sign-in-email" \
+TOKEN=$(curl -s -X POST "https://api.cortaai.shop/api/auth/email/login" \
   -H "Content-Type: application/json" \
   -d '{ "email": "cliente_teste@gmail.com", "password": "Senha@123456" }' \
   | jq -r '.idToken')
@@ -317,7 +314,7 @@ curl -s -X GET "https://api.cortaai.shop/api/auth/me" \
 
 ```bash
 # Rodar TC-01 duas vezes com o mesmo e-mail
-curl -s -X POST "https://api.cortaai.shop/api/auth/firebase-test/register-email" \
+curl -s -X POST "https://api.cortaai.shop/api/auth/email/register" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "cliente_teste@gmail.com",
@@ -339,7 +336,7 @@ curl -s -X POST "https://api.cortaai.shop/api/auth/firebase-test/register-email"
 ### TC-06 — Cadastro com senha fraca
 
 ```bash
-curl -s -X POST "https://api.cortaai.shop/api/auth/firebase-test/register-email" \
+curl -s -X POST "https://api.cortaai.shop/api/auth/email/register" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "novo_user@gmail.com",
@@ -361,7 +358,7 @@ curl -s -X POST "https://api.cortaai.shop/api/auth/firebase-test/register-email"
 ### TC-07 — Login com senha errada
 
 ```bash
-curl -s -X POST "https://api.cortaai.shop/api/auth/firebase-test/sign-in-email" \
+curl -s -X POST "https://api.cortaai.shop/api/auth/email/login" \
   -H "Content-Type: application/json" \
   -d '{ "email": "cliente_teste@gmail.com", "password": "SenhaErrada" }' | jq .
 ```
@@ -428,16 +425,16 @@ WARN  event=register-rollback uid=<localId> — Firebase user deleted due to bac
 
 | # | Cenário | Método | Endpoint | Esperado |
 |---|---------|--------|----------|----------|
-| TC-01 | Cadastro customer válido | POST | `/api/auth/firebase-test/register-email` | 200 + e-mail verificação |
-| TC-02 | Cadastro barber válido | POST | `/api/auth/firebase-test/register-email` | 200 + e-mail verificação |
+| TC-01 | Cadastro customer válido | POST | `/api/auth/email/register` | 200 + e-mail verificação |
+| TC-02 | Cadastro barber válido | POST | `/api/auth/email/register` | 200 + e-mail verificação |
 | TC-03 | Login sem verificar e-mail | GET | `/api/auth/me` | 401 emailNotVerified |
 | TC-04 | Login após verificar e-mail | GET | `/api/auth/me` | 200 perfil |
-| TC-05 | E-mail duplicado | POST | `/api/auth/firebase-test/register-email` | 400/409 EMAIL_EXISTS |
-| TC-06 | Senha fraca | POST | `/api/auth/firebase-test/register-email` | 400 WEAK_PASSWORD |
-| TC-07 | Senha errada no login | POST | `/api/auth/firebase-test/sign-in-email` | 400 INVALID_PASSWORD |
+| TC-05 | E-mail duplicado | POST | `/api/auth/email/register` | 400/409 EMAIL_EXISTS |
+| TC-06 | Senha fraca | POST | `/api/auth/email/register` | 400 WEAK_PASSWORD |
+| TC-07 | Senha errada no login | POST | `/api/auth/email/login` | 400 INVALID_PASSWORD |
 | TC-08 | GET /me token válido | GET | `/api/auth/me` | 200 perfil completo |
 | TC-09 | GET /me sem token | GET | `/api/auth/me` | 401 |
-| TC-10 | Rollback falha de DB | POST | `/api/auth/firebase-test/register-email` | 5xx + user removido do Firebase |
+| TC-10 | Rollback falha de DB | POST | `/api/auth/email/register` | 5xx + user removido do Firebase |
 
 ---
 
@@ -460,4 +457,4 @@ WARN  event=register-rollback uid=<localId> — Firebase user deleted due to bac
 
 3. **Email placeholder eliminado:** O campo `email` do Customer/Barber no banco era preenchido com `uid@firebase.local` quando o SecurityContext não tinha o e-mail disponível (ex.: chamadas internas sem header). Isso foi corrigido — o `registerWithEmailPassword` agora passa o e-mail explicitamente via overload.
 
-4. **Rota `/register-email` é pública:** O `FirebaseTokenGatewayFilter` não intercepta este endpoint para não criar dependência circular (o usuário não tem token antes de se cadastrar).
+4. **Rota `/api/auth/email/register` é pública:** O `FirebaseTokenGatewayFilter` não intercepta este endpoint para não criar dependência circular (o usuário não tem token antes de se cadastrar).

@@ -18,6 +18,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -28,14 +29,6 @@ import java.util.UUID;
  * <p>Valida o Firebase ID Token (Bearer) presente no header {@code Authorization}.
  * Em rotas públicas, a requisição é deixada passar sem validação.
  * Em rotas protegidas, caso o token seja inválido ou ausente, retorna HTTP 401.
- *
- * <p>Após validação bem-sucedida, injeta os seguintes headers para os serviços downstream:
- * <ul>
- * <li>{@code X-User-UID}   — UID único do Firebase</li>
- * <li>{@code X-User-Email} — e-mail do usuário</li>
- * <li>{@code X-User-Name}  — nome de exibição</li>
- * <li>{@code X-User-Type}  — hint do tipo (CUSTOMER | BARBER), enviado pelo cliente como query param ou header</li>
- * </ul>
  */
 @Component
 public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
@@ -45,6 +38,10 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
     /** Rotas que NÃO exigem autenticação Firebase. */
     private static final List<String> PUBLIC_PATHS = List.of(
             "/api/auth/verify", "/api/auth/verify/",
+            "/api/auth/email/login", "/api/auth/email/login/",
+            "/api/auth/email/verify-token", "/api/auth/email/verify-token/",
+            "/api/auth/email/register", "/api/auth/email/register/",
+            // alias legado (remover após migração completa do frontend)
             "/api/auth/firebase-test/sign-in-email", "/api/auth/firebase-test/sign-in-email/",
             "/api/auth/firebase-test/verify-id-token", "/api/auth/firebase-test/verify-id-token/",
             "/api/auth/firebase-test/register-email", "/api/auth/firebase-test/register-email/",
@@ -52,17 +49,16 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             "/api/barbers/login", "/api/barbers/login/",
             "/api/customers/register", "/api/customers/register/",
             "/api/barbers/register", "/api/barbers/register/",
-            "/api/auth/social/**",        // compatibilidade futura
+            "/api/auth/social/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
             "/webjars/**",
             "/actuator/**",
-            "/api/barbers",              // listagem pública de barbeiros
-            "/api/barbers/**",           // detalhes públicos de barbeiro
-            "/api/payments/webhook",     // webhook do Mercado Pago (sem autenticação)
-            "/api/payments/webhook/",
-            "/api/internal/**"           // endpoints internos (Feign inter-serviço)
+            "/api/barbers",
+            "/api/barbers/**",
+            "/api/payments/webhook", "/api/payments/webhook/",
+            "/api/internal/**"
     );
 
     /** Endpoints públicos de leitura de barbearia (somente GET). */
@@ -82,7 +78,6 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        // -100 garante que este filtro rode antes dos filtros de roteamento
         return -100;
     }
 
@@ -92,20 +87,15 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
         ServerWebExchange exchangeWithCorrelation = withCorrelationId(exchange, correlationId);
 
         String method = exchangeWithCorrelation.getRequest().getMethod().name();
-
-        // Preflight CORS (OPTIONS) — NUNCA bloquear; o CorsConfig cuida disso
         if ("OPTIONS".equalsIgnoreCase(method)) {
             return chain.filter(exchangeWithCorrelation);
         }
 
         String path = exchangeWithCorrelation.getRequest().getURI().getPath();
-
-        // Rotas públicas — deixa passar sem validação
         if (isPublicPath(path) || isPublicBarbershopGet(path, method)) {
             return chain.filter(exchangeWithCorrelation);
         }
 
-        // Extrai o token do header Authorization: Bearer <token>
         String authHeader = exchangeWithCorrelation.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return unauthorized(exchangeWithCorrelation, "Token de autenticação ausente ou malformado.", correlationId);
@@ -113,7 +103,6 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
 
         String idToken = authHeader.substring(7);
 
-        // Validação do token é bloqueante — executamos em thread do pool boundedElastic
         return Mono.fromCallable(() -> firebaseAuth.verifyIdToken(idToken))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(decodedToken -> {
@@ -121,6 +110,7 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
                         log.info("event=gateway-email-not-verified uid={} correlationId={}", decodedToken.getUid(), correlationId);
                         return unauthorized(exchangeWithCorrelation, "E-mail ainda nao verificado.", correlationId);
                     }
+
                     ServerHttpRequest mutatedRequest = buildMutatedRequest(exchangeWithCorrelation, decodedToken, correlationId);
                     return chain.filter(exchangeWithCorrelation.mutate().request(mutatedRequest).build());
                 })
@@ -133,8 +123,6 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
                     return unauthorized(exchangeWithCorrelation, "Erro de autenticação.", correlationId);
                 });
     }
-
-    // ─── helpers ──────────────────────────────────────────────────────────────
 
     private boolean isPublicPath(String path) {
         return PUBLIC_PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
@@ -175,33 +163,34 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
 
     /**
      * Constrói a requisição mutada com headers de identidade injetados.
-     * Headers anteriores de identidade (X-User-*) são removidos para evitar spoofing.
+     * Remove headers X-User-* de entrada para evitar spoofing do cliente.
      */
     private ServerHttpRequest buildMutatedRequest(ServerWebExchange exchange, FirebaseToken decodedToken, String correlationId) {
-        // 1. Extrair as Custom Claims do token assinado pelo Firebase
         Map<String, Object> claims = decodedToken.getClaims();
-        
-        // Pega a role (se não existir, cai para UNKNOWN para evitar null)
+
         String role = (String) claims.getOrDefault("role", "UNKNOWN");
-        
-        // Tratamento seguro para o isOwner (o Firebase pode converter tipos nas claims)
         boolean isOwner = false;
         if (claims.containsKey("isOwner")) {
             Object isOwnerClaim = claims.get("isOwner");
-            if (isOwnerClaim instanceof Boolean) {
-                isOwner = (Boolean) isOwnerClaim;
-            } else if (isOwnerClaim instanceof String) {
-                isOwner = Boolean.parseBoolean((String) isOwnerClaim);
+            if (isOwnerClaim instanceof Boolean boolClaim) {
+                isOwner = boolClaim;
+            } else if (isOwnerClaim instanceof String strClaim) {
+                isOwner = Boolean.parseBoolean(strClaim);
             }
         }
-    
-        // 2. Montar a nova requisição IGNORANDO o X-User-Type do Frontend
+
         return exchange.getRequest().mutate()
-                .header("X-Correlation-ID", correlationId)
+                .headers(headers -> {
+                    headers.remove("X-User-UID");
+                    headers.remove("X-User-Email");
+                    headers.remove("X-User-Type");
+                    headers.remove("X-User-Owner");
+                    headers.remove("X-Correlation-ID");
+                    headers.remove("X-Correlation-Id");
+                })
+                .header("X-Correlation-Id", correlationId)
                 .header("X-User-UID", decodedToken.getUid())
                 .header("X-User-Email", decodedToken.getEmail() != null ? decodedToken.getEmail() : "")
-                
-                // Aqui é a blindagem: injetamos os valores do Firebase, não do cliente
                 .header("X-User-Type", role)
                 .header("X-User-Owner", String.valueOf(isOwner))
                 .build();
@@ -211,16 +200,19 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
         exchange.getResponse().getHeaders().set("X-Correlation-Id", correlationId);
+
         String path = exchange.getRequest().getURI().getPath();
         String body = String.format(
-                "{\"timestamp\":\"%s\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"%s\","
-                + "\"cause\":\"FirebaseAuthException\",\"origin\":\"api-gateway\","
-                + "\"path\":\"%s\",\"correlationId\":\"%s\"}",
+                "{\"timestamp\":\"%s\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"%s\"," +
+                        "\"cause\":\"FirebaseAuthException\",\"origin\":\"api-gateway\"," +
+                        "\"path\":\"%s\",\"correlationId\":\"%s\"}",
                 java.time.Instant.now().toString(),
                 message.replace("\"", "\\\""),
                 path != null ? path.replace("\"", "\\\"") : "",
-                correlationId);
-        var buffer = exchange.getResponse().bufferFactory().wrap(body.getBytes());
+                correlationId
+        );
+
+        var buffer = exchange.getResponse().bufferFactory().wrap(body.getBytes(StandardCharsets.UTF_8));
         return exchange.getResponse().writeWith(Mono.just(buffer));
     }
 
@@ -245,3 +237,4 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
         return incomingCorrelationId;
     }
 }
+
