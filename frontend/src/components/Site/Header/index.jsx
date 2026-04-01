@@ -1,5 +1,4 @@
 import Styles from './Header.module.css'
-import logo from '../../../../public/CortaAiLogo.png'
 import { useNavigate } from 'react-router-dom';
 
 function HeaderSite() {
@@ -11,7 +10,7 @@ function HeaderSite() {
   return (
     <div className={Styles.header}>
         <div className={Styles.logo}>
-            <img src={logo} alt="Corta Ai" />
+            <img src="/CortaAiLogo.png" alt="Corta Ai" />
         </div>
 
         <div className={Styles.nav}>

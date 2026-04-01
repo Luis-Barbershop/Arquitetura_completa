@@ -5,7 +5,7 @@ function DailyInsights() {
     <div className={Styles.container}>
         <div className={Styles.headerDailyInsights}>
             <div className={Styles.dailyInsightIcon}>
-                <img src="./Icons/dailyInsights.png" alt="Ícone de Insights" />
+                <img src="/Icons/dailyInsights.png" alt="Ícone de Insights" />
             </div>
 
             <div>

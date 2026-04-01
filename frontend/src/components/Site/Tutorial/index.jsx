@@ -27,7 +27,7 @@ function Tutorial() {
         <div className={Style.ContentOption1}>
           <div className={Style.ContentOption1Container}>
             <div className={Style.ContentImage}>
-              <img src="public/Icons/Compass.png" alt="Bússula" />
+              <img src="/Icons/Compass.png" alt="Bússula" />
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 01</p>
@@ -38,7 +38,7 @@ function Tutorial() {
 
           <div className={Style.ContentOption1Container}>
             <div className={Style.ContentImage}>
-              <img src="public/Icons/scissors_icon.png" alt="Tesoura" />
+              <img src="/Icons/scissors_icon.png" alt="Tesoura" />
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 02</p>
@@ -49,7 +49,7 @@ function Tutorial() {
 
           <div className={Style.ContentOption1Container}>
             <div className={Style.ContentImage}>
-              <img src="public/Icons/Compass.png" alt="Bússula" />
+              <img src="/Icons/Compass.png" alt="Bússula" />
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 03</p>
@@ -61,7 +61,7 @@ function Tutorial() {
 
           <div className={Style.ContentOption1Container}>
             <div className={Style.ContentImageFinal}>
-              <img src="public/Icons/Check.png" alt="Bússula" />
+              <img src="/Icons/Check.png" alt="Bússula" />
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 04</p>
@@ -75,7 +75,7 @@ function Tutorial() {
         <div className={Style.ContentOption2}>
            <div className={Style.ContentOption1Container}>
             <div className={Style.ContentImage}>
-              <img src="public/Icons/Store.png" alt="Loja" />
+              <img src="/Icons/Store.png" alt="Loja" />
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 01</p>
@@ -86,7 +86,7 @@ function Tutorial() {
 
           <div className={Style.ContentOption1Container}>
             <div className={Style.ContentImage}>
-              <img src="public/Icons/Settings.png" alt="Engrenagem" />
+              <img src="/Icons/Settings.png" alt="Engrenagem" />
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 02</p>
@@ -97,7 +97,7 @@ function Tutorial() {
 
           <div className={Style.ContentOption1Container}>
             <div className={Style.ContentImage}>
-              <img src="public/Icons/Box.png" alt="Caixa de Armazenamento" />
+              <img src="/Icons/Box.png" alt="Caixa de Armazenamento" />
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 03</p>
@@ -109,7 +109,7 @@ function Tutorial() {
 
           <div className={Style.ContentOption1Container}>
             <div className={Style.ContentImageFinal}>
-              <img src="public/Icons/GraphicsInsights.png" alt="Insights Gráficos" />
+              <img src="/Icons/GraphicsInsights.png" alt="Insights Gráficos" />
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 04</p>

@@ -4,7 +4,7 @@ function Mockup() {
   return (
     <div className={Styles.Container}>
         <div className={Styles.ImageContainer}>
-            <img src="public/Mockup.png" alt="Mockup" />
+            <img src="/Mockup.png" alt="Mockup" />
         </div>
 
         <div className={Styles.DescriptionContainer}>

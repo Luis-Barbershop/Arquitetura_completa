@@ -10,7 +10,7 @@ function Header() {
     return (
         <div className={Styles.header_container}>
             <div className={Styles.arrow_back_page} onClick={handleBackPage}>
-                <img src="../Icons/left_arrow.png" alt="Flecha para esquerda" />
+                <img src="/Icons/left_arrow.png" alt="Flecha para esquerda" />
             </div>
             <h2>Agendamento</h2>
         </div>

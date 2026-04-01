@@ -12,7 +12,7 @@ function StartPage() {
     <div className='workscreen'>
       <div className='start_container'>
         <div className='image_container'>
-          <img src="./Icons/cortaAi.jpg" alt="Logo APP" />
+          <img src="/Icons/cortaAi.jpg" alt="Logo APP" />
         </div>
 
 

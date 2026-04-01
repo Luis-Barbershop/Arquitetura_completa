@@ -12,7 +12,7 @@ function Invoicing() {
         </div>
 
         <div className={Styles.containerFaturamentoRight}>
-            <img src="../public/Icons/moneyIcon.png" alt="Icone de Dinheiro" />
+            <img src="/Icons/moneyIcon.png" alt="Icone de Dinheiro" />
         </div>
     </div>
   )

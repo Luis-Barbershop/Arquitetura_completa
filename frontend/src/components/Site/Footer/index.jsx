@@ -1,5 +1,4 @@
 import Styles from './Footer.module.css'
-import logo from '../../../../public/CortaAiLogo.png'
 
 function Footer() {
   return (
@@ -7,7 +6,7 @@ function Footer() {
       <div className={Styles.footerCard}>
         <div className={Styles.topArea}>
           <div className={Styles.brandCol}>
-            <img src={logo} alt="Corta Ai" className={Styles.logo} />
+            <img src="/CortaAiLogo.png" alt="Corta Ai" className={Styles.logo} />
             <p>
               Plataforma completa para conectar clientes e barbeiros, com agendamento
               simples, rapido e profissional.
