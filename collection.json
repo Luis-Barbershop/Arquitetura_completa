@@ -6,27 +6,365 @@
    },
    "variable":[
       {
-         "key":"base_url",
+         "key":"gateway_base_url",
          "value":"http://localhost:8080",
          "type":"string"
       },
       {
+         "key":"base_url",
+         "value":"{{gateway_base_url}}",
+         "type":"string"
+      },
+      {
+         "key":"user_service_url",
+         "value":"http://localhost:8081",
+         "type":"string"
+      },
+      {
+         "key":"barbershop_service_url",
+         "value":"http://localhost:8082",
+         "type":"string"
+      },
+      {
+         "key":"schedule_service_url",
+         "value":"http://localhost:8083",
+         "type":"string"
+      },
+      {
+         "key":"product_service_url",
+         "value":"http://localhost:8084",
+         "type":"string"
+      },
+      {
+         "key":"payment_service_url",
+         "value":"http://localhost:8085",
+         "type":"string"
+      },
+      {
+         "key":"notification_service_url",
+         "value":"http://localhost:8086",
+         "type":"string"
+      },
+      {
+         "key":"discovery_service_url",
+         "value":"http://localhost:8761",
+         "type":"string"
+      },
+      {
+         "key":"firebase_id_token",
+         "value":"",
+         "type":"string"
+      },
+      {
          "key":"token",
-         "value":"seu_jwt_token_aqui",
+         "value":"",
+         "type":"string"
+      },
+      {
+         "key":"firebase_refresh_token",
+         "value":"",
+         "type":"string"
+      },
+      {
+         "key":"firebase_local_id",
+         "value":"",
+         "type":"string"
+      },
+      {
+         "key":"auth_email",
+         "value":"",
+         "type":"string"
+      },
+      {
+         "key":"user_type",
+         "value":"CUSTOMER",
          "type":"string"
       }
    ],
-   "auth":{
-      "type":"bearer",
-      "bearer":[
-         {
-            "key":"token",
-            "value":"{{token}}",
-            "type":"string"
+   "event":[
+      {
+         "listen":"prerequest",
+         "script":{
+            "type":"text/javascript",
+            "exec":[
+               "const publicPaths = [",
+               "  '/api/auth/email/login',",
+               "  '/api/auth/email/register',",
+               "  '/api/auth/email/verify-token',",
+               "  '/api/auth/firebase-test/sign-in-email',",
+               "  '/api/auth/firebase-test/register-email',",
+               "  '/api/auth/firebase-test/verify-id-token',",
+               "  '/api/auth/verify',",
+               "  '/api/customers/login',",
+               "  '/api/customers/register',",
+               "  '/api/barbers/login',",
+               "  '/api/barbers/register'",
+               "];",
+               "",
+               "const raw = pm.request.url.toString();",
+               "const path = '/' + pm.request.url.path.join('/');",
+               "const shouldSkip = publicPaths.some((p) => path === p || path.startsWith(p + '/'));",
+               "",
+               "if (!shouldSkip) {",
+               "  const token = pm.collectionVariables.get('firebase_id_token') || pm.collectionVariables.get('token');",
+               "  if (token) {",
+               "    pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + token });",
+               "  }",
+               "}",
+               "",
+               "if (raw.includes('/api/auth/email/')) {",
+               "  pm.request.headers.upsert({ key: 'Content-Type', value: 'application/json' });",
+               "}"
+            ]
          }
-      ]
-   },
+      },
+      {
+         "listen":"test",
+         "script":{
+            "type":"text/javascript",
+            "exec":[
+               "let data = null;",
+               "try { data = pm.response.json(); } catch (e) { data = null; }",
+               "",
+               "if (data && data.idToken) {",
+               "  pm.collectionVariables.set('firebase_id_token', data.idToken);",
+               "  pm.collectionVariables.set('token', data.idToken);",
+               "}",
+               "if (data && data.refreshToken) pm.collectionVariables.set('firebase_refresh_token', data.refreshToken);",
+               "if (data && data.localId) pm.collectionVariables.set('firebase_local_id', data.localId);",
+               "if (data && data.email) pm.collectionVariables.set('auth_email', data.email);",
+               "if (data && data.profile && data.profile.userType) pm.collectionVariables.set('user_type', data.profile.userType);",
+               "if (data && data.userType) pm.collectionVariables.set('user_type', data.userType);"
+            ]
+         }
+      }
+   ],
    "item":[
+      {
+         "name":"Auth Firebase Email",
+         "item":[
+            {
+               "name":"Register (Producao)",
+               "request":{
+                  "method":"POST",
+                  "header":[
+                     {
+                        "key":"Content-Type",
+                        "value":"application/json"
+                     }
+                  ],
+                  "body":{
+                     "mode":"raw",
+                     "raw":"{\n  \"email\": \"{{auth_email}}\",\n  \"password\": \"Senha@123456\",\n  \"userType\": \"{{user_type}}\",\n  \"name\": \"Usuario Teste\",\n  \"tell\": \"11999999999\",\n  \"documentCPF\": \"12345678901\",\n  \"workStartTime\": \"09:00\",\n  \"workEndTime\": \"18:00\",\n  \"isOwner\": false\n}"
+                  },
+                  "url":{
+                     "raw":"{{gateway_base_url}}/api/auth/email/register",
+                     "host":[
+                        "{{gateway_base_url}}"
+                     ],
+                     "path":[
+                        "api",
+                        "auth",
+                        "email",
+                        "register"
+                     ]
+                  }
+               },
+               "response":[]
+            },
+            {
+               "name":"Login (Producao)",
+               "request":{
+                  "method":"POST",
+                  "header":[
+                     {
+                        "key":"Content-Type",
+                        "value":"application/json"
+                     }
+                  ],
+                  "body":{
+                     "mode":"raw",
+                     "raw":"{\n  \"email\": \"{{auth_email}}\",\n  \"password\": \"Senha@123456\"\n}"
+                  },
+                  "url":{
+                     "raw":"{{gateway_base_url}}/api/auth/email/login",
+                     "host":[
+                        "{{gateway_base_url}}"
+                     ],
+                     "path":[
+                        "api",
+                        "auth",
+                        "email",
+                        "login"
+                     ]
+                  }
+               },
+               "response":[]
+            },
+            {
+               "name":"Verify (Provision)",
+               "request":{
+                  "method":"POST",
+                  "header":[
+                     {
+                        "key":"Content-Type",
+                        "value":"application/json"
+                     }
+                  ],
+                  "body":{
+                     "mode":"raw",
+                     "raw":"{\n  \"idToken\": \"{{firebase_id_token}}\",\n  \"userType\": \"{{user_type}}\"\n}"
+                  },
+                  "url":{
+                     "raw":"{{gateway_base_url}}/api/auth/verify",
+                     "host":[
+                        "{{gateway_base_url}}"
+                     ],
+                     "path":[
+                        "api",
+                        "auth",
+                        "verify"
+                     ]
+                  }
+               },
+               "response":[]
+            },
+            {
+               "name":"Me (Protegido)",
+               "request":{
+                  "method":"GET",
+                  "url":{
+                     "raw":"{{gateway_base_url}}/api/auth/me",
+                     "host":[
+                        "{{gateway_base_url}}"
+                     ],
+                     "path":[
+                        "api",
+                        "auth",
+                        "me"
+                     ]
+                  }
+               },
+               "response":[]
+            },
+            {
+               "name":"Complete Profile Customer (Protegido)",
+               "request":{
+                  "method":"POST",
+                  "header":[
+                     {
+                        "key":"Content-Type",
+                        "value":"application/json"
+                     }
+                  ],
+                  "body":{
+                     "mode":"raw",
+                     "raw":"{\n  \"name\": \"Cliente Completo\",\n  \"tell\": \"11988887777\",\n  \"documentCPF\": \"12345678901\"\n}"
+                  },
+                  "url":{
+                     "raw":"{{gateway_base_url}}/api/auth/customers/complete-profile",
+                     "host":[
+                        "{{gateway_base_url}}"
+                     ],
+                     "path":[
+                        "api",
+                        "auth",
+                        "customers",
+                        "complete-profile"
+                     ]
+                  }
+               },
+               "response":[]
+            },
+            {
+               "name":"Complete Profile Barber (Protegido)",
+               "request":{
+                  "method":"POST",
+                  "header":[
+                     {
+                        "key":"Content-Type",
+                        "value":"application/json"
+                     }
+                  ],
+                  "body":{
+                     "mode":"raw",
+                     "raw":"{\n  \"name\": \"Barbeiro Completo\",\n  \"tell\": \"11977776666\",\n  \"documentCPF\": \"98765432100\",\n  \"workStartTime\": \"09:00\",\n  \"workEndTime\": \"18:00\",\n  \"isOwner\": false\n}"
+                  },
+                  "url":{
+                     "raw":"{{gateway_base_url}}/api/auth/barbers/complete-profile",
+                     "host":[
+                        "{{gateway_base_url}}"
+                     ],
+                     "path":[
+                        "api",
+                        "auth",
+                        "barbers",
+                        "complete-profile"
+                     ]
+                  }
+               },
+               "response":[]
+            },
+            {
+               "name":"Login (Alias Legado)",
+               "request":{
+                  "method":"POST",
+                  "header":[
+                     {
+                        "key":"Content-Type",
+                        "value":"application/json"
+                     }
+                  ],
+                  "body":{
+                     "mode":"raw",
+                     "raw":"{\n  \"email\": \"{{auth_email}}\",\n  \"password\": \"Senha@123456\"\n}"
+                  },
+                  "url":{
+                     "raw":"{{gateway_base_url}}/api/auth/firebase-test/sign-in-email",
+                     "host":[
+                        "{{gateway_base_url}}"
+                     ],
+                     "path":[
+                        "api",
+                        "auth",
+                        "firebase-test",
+                        "sign-in-email"
+                     ]
+                  }
+               },
+               "response":[]
+            },
+            {
+               "name":"Register (Alias Legado)",
+               "request":{
+                  "method":"POST",
+                  "header":[
+                     {
+                        "key":"Content-Type",
+                        "value":"application/json"
+                     }
+                  ],
+                  "body":{
+                     "mode":"raw",
+                     "raw":"{\n  \"email\": \"{{auth_email}}\",\n  \"password\": \"Senha@123456\",\n  \"userType\": \"{{user_type}}\",\n  \"name\": \"Usuario Teste\",\n  \"tell\": \"11999999999\",\n  \"documentCPF\": \"12345678901\",\n  \"workStartTime\": \"09:00\",\n  \"workEndTime\": \"18:00\",\n  \"isOwner\": false\n}"
+                  },
+                  "url":{
+                     "raw":"{{gateway_base_url}}/api/auth/firebase-test/register-email",
+                     "host":[
+                        "{{gateway_base_url}}"
+                     ],
+                     "path":[
+                        "api",
+                        "auth",
+                        "firebase-test",
+                        "register-email"
+                     ]
+                  }
+               },
+               "response":[]
+            }
+         ]
+      },
       {
          "name":"User Service",
          "item":[
@@ -1365,12 +1703,10 @@
                      "request":{
                         "method":"GET",
                         "url":{
-                           "raw":"http://localhost:8081/api/internal/users/:id",
-                           "protocol":"http",
+                           "raw":"{{user_service_url}}/api/internal/users/:id",
                            "host":[
-                              "localhost"
+                              "{{user_service_url}}"
                            ],
-                           "port":"8081",
                            "path":[
                               "api",
                               "internal",
@@ -1391,12 +1727,10 @@
                      "request":{
                         "method":"GET",
                         "url":{
-                           "raw":"http://localhost:8081/api/internal/users/by-email/:email",
-                           "protocol":"http",
+                           "raw":"{{user_service_url}}/api/internal/users/by-email/:email",
                            "host":[
-                              "localhost"
+                              "{{user_service_url}}"
                            ],
-                           "port":"8081",
                            "path":[
                               "api",
                               "internal",
@@ -1418,12 +1752,10 @@
                      "request":{
                         "method":"PUT",
                         "url":{
-                           "raw":"http://localhost:8081/api/internal/users/:id/barbershop",
-                           "protocol":"http",
+                           "raw":"{{user_service_url}}/api/internal/users/:id/barbershop",
                            "host":[
-                              "localhost"
+                              "{{user_service_url}}"
                            ],
-                           "port":"8081",
                            "path":[
                               "api",
                               "internal",
@@ -1450,12 +1782,10 @@
                      "request":{
                         "method":"GET",
                         "url":{
-                           "raw":"http://localhost:8082/api/internal/barbershops/:id",
-                           "protocol":"http",
+                           "raw":"{{barbershop_service_url}}/api/internal/barbershops/:id",
                            "host":[
-                              "localhost"
+                              "{{barbershop_service_url}}"
                            ],
-                           "port":"8082",
                            "path":[
                               "api",
                               "internal",
@@ -1476,12 +1806,10 @@
                      "request":{
                         "method":"GET",
                         "url":{
-                           "raw":"http://localhost:8082/api/internal/barbershops/:shopId/activities?ids=uuid1,uuid2",
-                           "protocol":"http",
+                           "raw":"{{barbershop_service_url}}/api/internal/barbershops/:shopId/activities?ids=uuid1,uuid2",
                            "host":[
-                              "localhost"
+                              "{{barbershop_service_url}}"
                            ],
-                           "port":"8082",
                            "path":[
                               "api",
                               "internal",
@@ -1514,12 +1842,10 @@
                      "request":{
                         "method":"GET",
                         "url":{
-                           "raw":"http://localhost:8083/api/internal/appointments/:id",
-                           "protocol":"http",
+                           "raw":"{{schedule_service_url}}/api/internal/appointments/:id",
                            "host":[
-                              "localhost"
+                              "{{schedule_service_url}}"
                            ],
-                           "port":"8083",
                            "path":[
                               "api",
                               "internal",
@@ -1540,12 +1866,10 @@
                      "request":{
                         "method":"PUT",
                         "url":{
-                           "raw":"http://localhost:8083/api/internal/appointments/:id/payment-status",
-                           "protocol":"http",
+                           "raw":"{{schedule_service_url}}/api/internal/appointments/:id/payment-status",
                            "host":[
-                              "localhost"
+                              "{{schedule_service_url}}"
                            ],
-                           "port":"8083",
                            "path":[
                               "api",
                               "internal",

@@ -1,10 +1,16 @@
 import api from './api';
 
+const AUTH_ENDPOINTS = {
+    login: '/auth/email/login',
+    register: '/auth/email/register',
+    verify: '/auth/verify',
+};
+
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 // Usa o Firebase Identity Toolkit via backend: POST /api/auth/email/login
 // Retorna { idToken, refreshToken, expiresIn, localId, email, registered }
 export const loginUser = async (email, password) => {
-    const response = await api.post('/auth/email/login', { email, password });
+    const response = await api.post(AUTH_ENDPOINTS.login, { email, password });
 
     const { idToken, localId, email: userEmail } = response.data;
 
@@ -14,7 +20,7 @@ export const loginUser = async (email, password) => {
     localStorage.setItem('userEmail', userEmail);
 
     // Verifica o estado no backend para bloquear acesso quando emailVerified=false.
-    const verifyResponse = await api.post('/auth/verify', { idToken, userType: null });
+    const verifyResponse = await api.post(AUTH_ENDPOINTS.verify, { idToken, userType: null });
     if (verifyResponse?.data?.verificationRequired) {
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
@@ -34,7 +40,7 @@ export const registerCustomer = async (userData) => {
     const cleanCPF  = userData.documentCPF ? userData.documentCPF.replace(/\D/g, '') : '';
     const cleanTell = userData.tell        ? userData.tell.replace(/\D/g, '')         : '';
 
-    const response = await api.post('/auth/email/register', {
+    const response = await api.post(AUTH_ENDPOINTS.register, {
         email:       userData.email,
         password:    userData.password,
         userType:    'CUSTOMER',
@@ -52,7 +58,7 @@ export const registerBarber = async (barberData) => {
     const cleanCPF  = barberData.documentCPF ? barberData.documentCPF.replace(/\D/g, '') : '';
     const cleanTell = barberData.tell        ? barberData.tell.replace(/\D/g, '')         : '';
 
-    const response = await api.post('/auth/email/register', {
+    const response = await api.post(AUTH_ENDPOINTS.register, {
         email:         barberData.email,
         password:      barberData.password,
         userType:      'BARBER',
