@@ -32,13 +32,13 @@ public class Customer {
     private String name;
 
     // CORREÇÃO: O telefone agora é opcional (removido o nullable = false)
-    @Column(unique = true, length = 11)
+    @Column(unique = true, length = 15)
     private String tell;
 
     @Column(nullable = false, unique = true, length = 70)
     private String email;
 
-    @Column(name = "document_cpf", unique = true, length = 11)
+    @Column(name = "document_cpf", unique = true, length = 14)
     private String documentCPF;
 
     @Column(length = 255)
