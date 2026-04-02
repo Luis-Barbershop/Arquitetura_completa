@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.userservice.controller;
 
+import ifsp.edu.projeto.cortaai.userservice.dto.AssignActivitiesDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.BarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.UpdateBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.exception.ApiErrorResponse;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -71,5 +73,40 @@ public class BarberController {
     public ResponseEntity<List<BarberDTO>> getBarbersByBarbershop(
             @Parameter(description = "UUID da barbearia") @PathVariable UUID barbershopId) {
         return ResponseEntity.ok(barberService.findByBarbershopId(barbershopId));
+    }
+
+    // ========== HABILIDADES DO BARBEIRO AUTENTICADO ==========
+
+    @Operation(
+            summary = "Lista os IDs das atividades atribuídas ao barbeiro autenticado",
+            description = "Retorna o conjunto de UUIDs das atividades que o barbeiro marcou como suas habilidades."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    @GetMapping("/me/my-activities")
+    public ResponseEntity<Set<UUID>> getMyActivities(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
+        return ResponseEntity.ok(barberService.getAssignedActivityIds(firebaseUid));
+    }
+
+    @Operation(
+            summary = "Atribui (substitui) as atividades do barbeiro autenticado",
+            description = "Recebe uma lista de UUIDs de atividades e substitui completamente as habilidades registradas para o barbeiro."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Habilidades atualizadas com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    @PostMapping("/me/assign-activities")
+    public ResponseEntity<Set<UUID>> assignActivities(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
+            @RequestBody @Valid AssignActivitiesDTO dto) {
+        return ResponseEntity.ok(barberService.assignActivities(firebaseUid, dto));
     }
 }

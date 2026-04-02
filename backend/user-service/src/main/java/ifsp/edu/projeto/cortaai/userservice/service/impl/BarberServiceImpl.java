@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.userservice.service.impl;
 
+import ifsp.edu.projeto.cortaai.userservice.dto.AssignActivitiesDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.BarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.UpdateBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.mapper.BarberMapper;
@@ -12,7 +13,9 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -84,5 +87,27 @@ public class BarberServiceImpl implements BarberService {
     @Override
     public boolean tellExists(String tell) {
         return barberRepository.existsByTellIgnoreCase(tell);
+    }
+
+    // ========== HABILIDADES ==========
+
+    @Override
+    public Set<UUID> getAssignedActivityIds(String firebaseUid) {
+        Barber barber = barberRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
+        return barber.getAssignedActivityIds();
+    }
+
+    @Override
+    public Set<UUID> assignActivities(String firebaseUid, AssignActivitiesDTO dto) {
+        Barber barber = barberRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
+        // Substitui completamente a seleção anterior
+        barber.getAssignedActivityIds().clear();
+        if (dto.activityIds() != null) {
+            barber.getAssignedActivityIds().addAll(dto.activityIds());
+        }
+        barberRepository.save(barber);
+        return barber.getAssignedActivityIds();
     }
 }

@@ -1,9 +1,11 @@
 package ifsp.edu.projeto.cortaai.userservice.service;
 
+import ifsp.edu.projeto.cortaai.userservice.dto.AssignActivitiesDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.BarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.UpdateBarberDTO;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public interface BarberService {
@@ -12,6 +14,10 @@ public interface BarberService {
     BarberDTO get(UUID id);
     List<BarberDTO> findAll();
     List<BarberDTO> findByBarbershopId(UUID barbershopId);
+
+    // Habilidades do barbeiro
+    Set<UUID> getAssignedActivityIds(String firebaseUid);
+    Set<UUID> assignActivities(String firebaseUid, AssignActivitiesDTO dto);
 
     // Validações
     boolean emailExists(String email);

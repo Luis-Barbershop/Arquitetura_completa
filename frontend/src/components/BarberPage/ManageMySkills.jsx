@@ -22,7 +22,8 @@ const ManageMySkills = ({ shopId }) => {
                 ]);
 
                 setShopServices(allServices);
-                setMyServicesIds(myActivities.map(a => String(a.id)));
+                // O backend retorna Set<UUID> (array de strings), não objetos ActivityDTO
+                setMyServicesIds((myActivities || []).map(id => String(id)));
             } catch (error) {
                 console.error("Erro ao carregar habilidades:", error);
                 setErrorMessage('Nao foi possivel carregar os servicos do perfil.');

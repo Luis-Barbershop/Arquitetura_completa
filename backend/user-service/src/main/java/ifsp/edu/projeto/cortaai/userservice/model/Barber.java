@@ -15,7 +15,9 @@ import java.sql.Types;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -84,6 +86,16 @@ public class Barber implements UserDetails {
 
     @Column(name = "image_url_public_id")
     private String imageUrlPublicId;
+
+    /** UUIDs das atividades (serviços) que este barbeiro sabe executar. */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "barber_assigned_activities",
+            joinColumns = @JoinColumn(name = "barber_id")
+    )
+    @Column(name = "activity_id", length = 36)
+    @Builder.Default
+    private Set<UUID> assignedActivityIds = new HashSet<>();
 
     @CreatedDate
     @Column(name = "date_created", nullable = false, updatable = false)
