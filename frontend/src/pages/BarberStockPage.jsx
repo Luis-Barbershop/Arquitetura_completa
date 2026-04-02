@@ -88,7 +88,7 @@ function BarberStockPage() {
       return;
     }
 
-    api.get('/barbers/me')
+    api.get('/auth/me')
       .then((response) => {
         setBarber(response.data);
         setLoadingBarber(false);
