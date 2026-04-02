@@ -20,5 +20,8 @@ public record AuthResponseDTO(
         boolean profileComplete,
         String role,           // ROLE_CUSTOMER | ROLE_BARBER | ROLE_OWNER
         boolean emailVerified,
-        boolean verificationRequired
+        boolean verificationRequired,
+        // Campos extras para barbeiros (null para customers)
+        UUID barbershopId,
+        Boolean isOwner
 ) {}

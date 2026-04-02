@@ -71,7 +71,9 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                     false,
                     resolvedRole,
                     false,
-                    true
+                    true,
+                    null,  // barbershopId
+                    null   // isOwner
             );
         }
 
@@ -127,7 +129,9 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 false,                       // perfil NÃO completo
                 resolvedRole,
                 emailVerified,
-                false
+                false,
+                null,  // barbershopId
+                null   // isOwner
         );
     }
 
@@ -327,7 +331,9 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 complete,
                 "ROLE_CUSTOMER",
                 emailVerified,
-                verificationRequired
+                verificationRequired,
+                null,   // barbershopId — customers não têm
+                null    // isOwner — customers não têm
         );
     }
 
@@ -345,7 +351,9 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 complete,
                 barber.getRole(),
                 emailVerified,
-                verificationRequired
+                verificationRequired,
+                barber.getBarbershopId(),   // ← campo chave para o frontend saber se tem barbearia
+                barber.isOwner()            // ← campo chave para mostrar painel de dono
         );
     }
 }

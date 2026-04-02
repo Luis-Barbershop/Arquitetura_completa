@@ -77,7 +77,7 @@ export const getMyServices = async () => {
     // Busca os dados do barbeiro autenticado e depois usa o barbershopId
     // para listar os serviços da loja.
     try {
-        const barberResponse = await api.get('/barbers/me');
+        const barberResponse = await api.get('/auth/me');
         const shopId = barberResponse.data?.barbershopId;
         
         if(!shopId) return [];

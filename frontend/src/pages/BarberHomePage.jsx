@@ -41,7 +41,7 @@ function BarberHomePage() {
       return;
     }
 
-    api.get('/barbers/me')
+    api.get('/auth/me')
       .then(response => {
         setBarber(response.data);
         setLoading(false);
