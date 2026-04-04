@@ -207,7 +207,7 @@ public class AppointmentService {
             throw new NotFoundException("Apenas o barbeiro do agendamento pode concluí-lo.");
         }
 
-        appointment.setStatus(AppointmentStatus.CONCLUDED);
+        appointment.setStatus(AppointmentStatus.COMPLETED);
         appointmentRepository.save(appointment);
 
         // Buscar email do customer para o evento
@@ -338,6 +338,15 @@ public class AppointmentService {
     @Transactional(readOnly = true)
     public List<AppointmentDTO> getMyAppointments(String email) {
         UserInfoDTO caller = userServiceClient.getUserByEmail(email);
+        String userType = caller.getUserType() != null ? caller.getUserType().toUpperCase() : "";
+
+        if ("BARBER".equals(userType)) {
+            return appointmentRepository.findByBarberIdOrderByStartTimeDesc(caller.getId())
+                    .stream()
+                    .map(appointmentMapper::toDTO)
+                    .collect(Collectors.toList());
+        }
+
         return appointmentRepository.findByCustomerIdOrderByStartTimeDesc(caller.getId())
                 .stream()
                 .map(appointmentMapper::toDTO)

@@ -27,7 +27,13 @@ public interface AppointmentMapper {
     List<BarberBlockDTO> toBlockDTOList(List<BarberBlock> blocks);
 
     default String mapStatus(ifsp.edu.projeto.cortaai.scheduleservice.model.enums.AppointmentStatus status) {
-        return status != null ? status.name() : null;
+        if (status == null) {
+            return null;
+        }
+        if (status == ifsp.edu.projeto.cortaai.scheduleservice.model.enums.AppointmentStatus.CONCLUDED) {
+            return ifsp.edu.projeto.cortaai.scheduleservice.model.enums.AppointmentStatus.COMPLETED.name();
+        }
+        return status.name();
     }
 }
 

@@ -117,6 +117,15 @@ public class AppointmentController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Completar agendamento", description = "Alias canônico para concluir um agendamento de forma explícita e segura.")
+    @PutMapping("/{id}/complete")
+    public ResponseEntity<Void> completeAppointment(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "UUID do agendamento") @PathVariable UUID id) {
+        appointmentService.concludeAppointment(principal.getName(), id);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Confirmar agendamento", description = "Marca um agendamento pendente como confirmado.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Agendamento confirmado"),
