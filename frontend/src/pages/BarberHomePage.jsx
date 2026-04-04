@@ -11,7 +11,6 @@ import NextScheduling from '../components/BarberPage/NextScheduling';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import ServicesHomeBarber from '../components/BarberPage/ServicesHomeBarber';
 import ActionsBarber from '../components/BarberPage/ActionsBarber';
-import ManageMySkills from '../components/BarberPage/ManageMySkills';
 
 function BarberHomePage() {
   const location = useLocation();
@@ -169,7 +168,7 @@ function BarberHomePage() {
             </section>
 
             <section className={styles.dashboardSection}>
-            <Invoicing />
+            <Invoicing barber={barber} />
             </section>
 
             <section className={styles.dashboardSection}>

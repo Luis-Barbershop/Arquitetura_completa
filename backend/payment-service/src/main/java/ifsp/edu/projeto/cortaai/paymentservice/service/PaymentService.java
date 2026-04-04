@@ -4,8 +4,14 @@ import com.mercadopago.client.preference.*;
 import com.mercadopago.resources.preference.Preference;
 import ifsp.edu.projeto.cortaai.paymentservice.config.RabbitConfig;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.AppointmentInfoDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialOverviewDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesPointDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.InventoryFinancialSummaryDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.TransactionDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.UserInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.event.PaymentApprovedEvent;
+import ifsp.edu.projeto.cortaai.paymentservice.feign.ProductServiceClient;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.ScheduleServiceClient;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.UserServiceClient;
 import ifsp.edu.projeto.cortaai.paymentservice.model.PaymentStatus;
@@ -22,8 +28,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +47,7 @@ public class PaymentService {
     private final WebhookLogRepository webhookLogRepository;
     private final ScheduleServiceClient scheduleServiceClient;
     private final UserServiceClient userServiceClient;
+    private final ProductServiceClient productServiceClient;
     private final RabbitTemplate rabbitTemplate;
 
     @Value("${mercadopago.notification-url}")
@@ -108,6 +121,7 @@ public class PaymentService {
             Transaction transaction = Transaction.builder()
                     .appointmentId(appointmentId)
                     .customerId(customerId)
+                    .barbershopId(appointment.barbershopId())
                     .amount(grossAmount)
                     .grossAmount(grossAmount)
                     .platformFeeAmount(platformFee)
@@ -245,6 +259,103 @@ public class PaymentService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public FinancialOverviewDTO getBarbershopOverview(UUID barbershopId, LocalDate from, LocalDate to) {
+        LocalDate startDate = from != null ? from : LocalDate.now();
+        LocalDate endDate = to != null ? to : startDate;
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.plusDays(1).atStartOfDay().minusNanos(1);
+
+        List<Transaction> periodTransactions = transactionRepository.findByBarbershopIdAndCreatedAtBetween(
+                barbershopId, start, end);
+
+        int approvedCount = (int) periodTransactions.stream().filter(t -> t.getStatus() == PaymentStatus.APPROVED).count();
+        int pendingCount = (int) periodTransactions.stream().filter(t -> t.getStatus() == PaymentStatus.PENDING || t.getStatus() == PaymentStatus.IN_PROCESS).count();
+        int cancelledCount = (int) periodTransactions.stream().filter(t -> t.getStatus() == PaymentStatus.CANCELLED).count();
+
+        BigDecimal serviceRevenue = transactionRepository.sumAmountByBarbershopAndStatusAndCreatedAtBetween(
+                barbershopId, PaymentStatus.APPROVED, start, end);
+
+        InventoryFinancialSummaryDTO inventorySummary;
+        try {
+            inventorySummary = productServiceClient.getFinancialSummary(barbershopId, startDate, endDate);
+        } catch (Exception ex) {
+            log.warn("Falha ao buscar resumo financeiro de estoque para a barbearia {}: {}", barbershopId, ex.getMessage());
+            inventorySummary = new InventoryFinancialSummaryDTO(barbershopId, BigDecimal.ZERO, BigDecimal.ZERO);
+        }
+
+        BigDecimal productExpenses = inventorySummary.productExpenses() != null ? inventorySummary.productExpenses() : BigDecimal.ZERO;
+        BigDecimal inventoryAssetValue = inventorySummary.inventoryAssetValue() != null ? inventorySummary.inventoryAssetValue() : BigDecimal.ZERO;
+        BigDecimal operationalResult = serviceRevenue.subtract(productExpenses);
+
+        return new FinancialOverviewDTO(
+                barbershopId,
+                "BRL",
+                serviceRevenue,
+                productExpenses,
+                inventoryAssetValue,
+                operationalResult,
+                periodTransactions.size(),
+                approvedCount,
+                pendingCount,
+                cancelledCount
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public FinancialSeriesDTO getBarbershopSeries(UUID barbershopId, LocalDate from, LocalDate to, String groupBy) {
+        LocalDate startDate = from != null ? from : LocalDate.now().minusDays(6);
+        LocalDate endDate = to != null ? to : LocalDate.now();
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.plusDays(1).atStartOfDay().minusNanos(1);
+
+        String safeGroupBy = groupBy == null ? "DAY" : groupBy.toUpperCase(Locale.ROOT);
+        List<Transaction> periodTransactions = transactionRepository.findByBarbershopIdAndCreatedAtBetween(barbershopId, start, end)
+                .stream()
+                .filter(t -> t.getStatus() == PaymentStatus.APPROVED)
+                .toList();
+
+        Stream<Map.Entry<LocalDate, List<Transaction>>> groupedStream;
+        if ("WEEK".equals(safeGroupBy)) {
+            groupedStream = periodTransactions.stream()
+                    .collect(Collectors.groupingBy(t -> t.getCreatedAt().toLocalDate().with(java.time.DayOfWeek.MONDAY)))
+                    .entrySet()
+                    .stream();
+        } else {
+            groupedStream = periodTransactions.stream()
+                    .collect(Collectors.groupingBy(t -> t.getCreatedAt().toLocalDate()))
+                    .entrySet()
+                    .stream();
+            safeGroupBy = "DAY";
+        }
+
+        List<FinancialSeriesPointDTO> points = groupedStream
+                .map(entry -> new FinancialSeriesPointDTO(
+                        entry.getKey(),
+                        entry.getValue().stream().map(Transaction::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add),
+                        entry.getValue().size()
+                ))
+                .sorted(Comparator.comparing(FinancialSeriesPointDTO::date))
+                .toList();
+
+        return new FinancialSeriesDTO(barbershopId, safeGroupBy, points);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean canAccessBarbershopFinancials(UUID userId, UUID barbershopId) {
+        UserInfoDTO user = userServiceClient.getUserById(userId);
+        if (user == null || user.getUserType() == null) {
+            return false;
+        }
+
+        String userType = user.getUserType().toUpperCase(Locale.ROOT);
+        if (!"BARBER".equals(userType)) {
+            return false;
+        }
+
+        return barbershopId.equals(user.getBarbershopId());
+    }
+
     private PaymentStatus mapMpStatus(String mpStatus) {
         return switch (mpStatus) {
             case "approved" -> PaymentStatus.APPROVED;
@@ -261,6 +372,7 @@ public class PaymentService {
                 tx.getId(),
                 tx.getAppointmentId(),
                 tx.getCustomerId(),
+                tx.getBarbershopId(),
                 tx.getAmount(),
                 tx.getGrossAmount(),
                 tx.getNetAmount(),

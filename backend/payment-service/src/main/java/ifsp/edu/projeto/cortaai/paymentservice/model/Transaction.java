@@ -42,6 +42,9 @@ public class Transaction {
     @Column(nullable = false)
     private UUID customerId;
 
+    @Column
+    private UUID barbershopId;
+
     @Column(nullable = false)
     private BigDecimal amount;
 

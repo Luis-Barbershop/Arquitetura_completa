@@ -14,6 +14,7 @@ public record TransactionDTO(
         UUID id,
         UUID appointmentId,
         UUID customerId,
+        UUID barbershopId,
         BigDecimal amount,
         BigDecimal grossAmount,
         BigDecimal netAmount,

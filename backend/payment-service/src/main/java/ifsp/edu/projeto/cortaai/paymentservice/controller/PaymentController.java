@@ -1,6 +1,8 @@
 package ifsp.edu.projeto.cortaai.paymentservice.controller;
 
 import ifsp.edu.projeto.cortaai.paymentservice.dto.CreatePaymentDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialOverviewDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.TransactionDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.paymentservice.service.PaymentService;
@@ -13,11 +15,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 
 /**
  * Controller REST para pagamentos.
@@ -76,5 +82,32 @@ public class PaymentController {
     public ResponseEntity<List<TransactionDTO>> getMyPayments(
             @Parameter(description = "ID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-Id") UUID userId) {
         return ResponseEntity.ok(paymentService.getMyPayments(userId));
+    }
+
+    @Operation(summary = "Resumo financeiro da barbearia", description = "Retorna receita de serviços, gastos com produtos (estoque interno), valor atual dos bens em estoque e resultado operacional no período.")
+    @GetMapping("/my-shop/overview")
+    public ResponseEntity<FinancialOverviewDTO> getMyShopOverview(
+            @Parameter(description = "ID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
+            @Parameter(description = "UUID da barbearia") @RequestParam UUID barbershopId,
+            @Parameter(description = "Data inicial (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @Parameter(description = "Data final (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        if (!paymentService.canAccessBarbershopFinancials(userId, barbershopId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para acessar o financeiro desta barbearia.");
+        }
+        return ResponseEntity.ok(paymentService.getBarbershopOverview(barbershopId, from, to));
+    }
+
+    @Operation(summary = "Serie financeira da barbearia", description = "Retorna série de receita de serviços aprovados por período para uso em gráficos internos.")
+    @GetMapping("/my-shop/series")
+    public ResponseEntity<FinancialSeriesDTO> getMyShopSeries(
+            @Parameter(description = "ID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
+            @Parameter(description = "UUID da barbearia") @RequestParam UUID barbershopId,
+            @Parameter(description = "Data inicial (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @Parameter(description = "Data final (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @Parameter(description = "Agrupamento: DAY ou WEEK") @RequestParam(required = false, defaultValue = "DAY") String groupBy) {
+        if (!paymentService.canAccessBarbershopFinancials(userId, barbershopId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para acessar o financeiro desta barbearia.");
+        }
+        return ResponseEntity.ok(paymentService.getBarbershopSeries(barbershopId, from, to, groupBy));
     }
 }

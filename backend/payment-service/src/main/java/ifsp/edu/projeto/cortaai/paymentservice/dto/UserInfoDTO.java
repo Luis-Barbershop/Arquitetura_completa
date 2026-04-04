@@ -16,4 +16,6 @@ public class UserInfoDTO {
     private String name;
     private String email;
     private String userType;
+    private String role;
+    private UUID barbershopId;
 }

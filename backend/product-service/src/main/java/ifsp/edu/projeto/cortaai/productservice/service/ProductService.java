@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.productservice.service;
 
 import ifsp.edu.projeto.cortaai.productservice.dto.CreateProductDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.InventoryFinancialSummaryDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.ProductDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.UpdateProductDTO;
 import ifsp.edu.projeto.cortaai.productservice.mapper.ProductMapper;
@@ -15,8 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,6 +43,7 @@ public class ProductService {
                 .price(dto.price())
                 .category(dto.category() != null ? dto.category() : ProductCategory.OTHER)
                 .stockQuantity(dto.stockQuantity() != null ? dto.stockQuantity() : 0)
+                .minStockQuantity(dto.minStockQuantity() != null ? dto.minStockQuantity() : 0)
                 .imageUrl(dto.imageUrl())
                 .active(true)
                 .build();
@@ -84,6 +91,7 @@ public class ProductService {
         if (dto.category() != null) product.setCategory(dto.category());
         if (dto.imageUrl() != null) product.setImageUrl(dto.imageUrl());
         if (dto.active() != null) product.setActive(dto.active());
+        if (dto.minStockQuantity() != null) product.setMinStockQuantity(dto.minStockQuantity());
 
         // Atualizar estoque se necessário
         if (dto.stockQuantity() != null && !dto.stockQuantity().equals(product.getStockQuantity())) {
@@ -111,5 +119,41 @@ public class ProductService {
         product.setActive(false);
         productRepository.save(product);
         log.info("Produto desativado: id={}", id);
+    }
+
+    @Transactional(readOnly = true)
+    public InventoryFinancialSummaryDTO getFinancialSummary(UUID barbershopId, LocalDate from, LocalDate to) {
+        LocalDate startDate = from != null ? from : LocalDate.now();
+        LocalDate endDate = to != null ? to : startDate;
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.plusDays(1).atStartOfDay().minusNanos(1);
+
+        List<Product> products = productRepository.findByBarbershopId(barbershopId);
+        if (products.isEmpty()) {
+            return new InventoryFinancialSummaryDTO(barbershopId, BigDecimal.ZERO, BigDecimal.ZERO);
+        }
+
+        Map<UUID, Product> productById = products.stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+        BigDecimal inventoryAssetValue = products.stream()
+                .filter(Product::isActive)
+                .map(p -> p.getPrice().multiply(BigDecimal.valueOf(p.getStockQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        List<UUID> productIds = products.stream().map(Product::getId).toList();
+        BigDecimal productExpenses = stockMovementRepository
+                .findByProductIdsAndTypeAndCreatedAtBetween(productIds, MovementType.IN, start, end)
+                .stream()
+                .map(m -> {
+                    Product p = productById.get(m.getProductId());
+                    if (p == null) {
+                        return BigDecimal.ZERO;
+                    }
+                    return p.getPrice().multiply(BigDecimal.valueOf(m.getQuantity()));
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new InventoryFinancialSummaryDTO(barbershopId, productExpenses, inventoryAssetValue);
     }
 }
