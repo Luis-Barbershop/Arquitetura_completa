@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom";
 import { FiHome, FiSearch, FiHeart, FiScissors, FiCalendar, FiLogOut, FiLock } from "react-icons/fi";
 import Barbershops from "../components/HomePage/Barbershops/Barbershops"
@@ -17,6 +17,15 @@ const desktopNavItems = [
 function HomePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+
+  // Guarda de rota: barbeiro/owner não deve ver a homepage do cliente
+  useEffect(() => {
+    const role = localStorage.getItem('userRole');
+    if (role === 'ROLE_BARBER' || role === 'ROLE_OWNER') {
+      navigate('/barberHome', { replace: true });
+    }
+  }, [navigate]);
+
   const userName = localStorage.getItem("userName") || "Cliente";
   const firstName = userName.split(" ")[0];
   const heroRef = useRef(null);

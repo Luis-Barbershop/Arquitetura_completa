@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../services/api';
 import styles from '../../pages/CSS/BarberHomePage.module.css';
 
 const navItems = [
@@ -14,6 +15,22 @@ const navItems = [
 
 function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
     const navigate = useNavigate();
+
+    const handleMpConnect = async () => {
+        const barberId = barber?.id;
+        if (!barberId) return;
+        try {
+            // Chama via api (com Authorization: Bearer token) para receber a URL
+            const response = await api.get(`/payments/mp-connect?state=${barberId}`);
+            const authUrl = response.data?.authorizationUrl;
+            if (authUrl) {
+                window.location.href = authUrl;
+            }
+        } catch (err) {
+            console.error('Erro ao conectar Mercado Pago:', err);
+            alert('Não foi possível iniciar a vinculação com o Mercado Pago. Tente novamente.');
+        }
+    };
 
     return (
         <header className={styles.header}>
@@ -31,10 +48,7 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
                         <img src="/Icons/bellicon.png" alt="Sino de Notificacao" />
                     </button>
                     <button
-                        onClick={() => {
-                            const userId = barber?.id;
-                            window.location.href = `https://api.cortaai.shop/api/payments/mp-connect?state=${userId}`;
-                        }}
+                        onClick={handleMpConnect}
                         className={styles.mpButton}
                         title="Vincular conta Mercado Pago para receber pagamentos online"
                     >
