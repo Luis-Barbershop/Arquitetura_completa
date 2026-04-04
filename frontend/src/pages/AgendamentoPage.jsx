@@ -36,6 +36,8 @@ const AgendamentoPage = () => {
   };
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [isSubmittingAppointment, setIsSubmittingAppointment] = useState(false);
+  // null = ainda não escolheu, 'local' = pagar na barbearia, 'online' = pagar via MP
+  const [paymentChoice, setPaymentChoice] = useState(null);
 
   const selectedBarberData = barbersList.find((barber) => String(barber.id) === String(selectedBarber));
   const selectedBarberActivities = useMemo(
@@ -358,6 +360,7 @@ const AgendamentoPage = () => {
   const handleCloseSummary = () => {
     if (isSubmittingAppointment) return;
     setIsSummaryModalOpen(false);
+    setPaymentChoice(null);
   };
 
   const handleAgendar = async () => {
@@ -395,6 +398,59 @@ const AgendamentoPage = () => {
         alert(`Erro: ${error.response.data.message || "Falha ao agendar"}`);
       } else {
         alert("Erro ao realizar agendamento. Tente novamente.");
+      }
+    } finally {
+      setIsSubmittingAppointment(false);
+    }
+  };
+
+  // Fluxo online: cria o agendamento primeiro, depois redireciona para o checkout
+  const handleAgendarOnline = async () => {
+    try {
+      setIsSubmittingAppointment(true);
+      let timeString = selectedTime;
+      if (timeString.length === 5) timeString = `${timeString}:00`;
+
+      const apiDate = formatDateToApi(selectedDate);
+      const localDateObj = new Date(`${apiDate}T${timeString}`);
+      if (isNaN(localDateObj.getTime())) {
+        alert("Erro interno ao processar a data. Tente selecionar o horário novamente.");
+        return;
+      }
+
+      const appointmentData = {
+        barbershopId,
+        barberId: selectedBarber,
+        activityIds: selectedServices.map((s) => s.id),
+        startTime: localDateObj.toISOString(),
+      };
+
+      const appointmentResponse = await api.post("/appointments", appointmentData);
+      const appointmentId = appointmentResponse.data?.id;
+
+      if (!appointmentId) {
+        alert("Agendamento criado, mas não foi possível iniciar o pagamento. Tente pagar depois em 'Meus Agendamentos'.");
+        navigate("/meus-agendamentos");
+        return;
+      }
+
+      const paymentResponse = await api.post("/payments/create", {
+        appointmentId,
+        paymentMethod: "CREDIT_CARD",
+      });
+
+      const checkoutUrl = paymentResponse.data?.checkoutUrl;
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+      } else {
+        alert("Pagamento iniciado, mas o link de checkout não foi retornado. Verifique seus agendamentos.");
+        navigate("/meus-agendamentos");
+      }
+    } catch (error) {
+      if (error.response?.data) {
+        alert(`Erro: ${error.response.data.message || "Falha ao iniciar pagamento"}`);
+      } else {
+        alert("Erro ao iniciar pagamento. Tente novamente.");
       }
     } finally {
       setIsSubmittingAppointment(false);
@@ -627,22 +683,59 @@ const AgendamentoPage = () => {
             </div>
 
             <div className={Styles.modalActions}>
-              <button
-                type="button"
-                className={Styles.modalSecondaryButton}
-                onClick={handleCloseSummary}
-                disabled={isSubmittingAppointment}
-              >
-                Ajustar dados
-              </button>
-              <button
-                type="button"
-                className={Styles.modalPrimaryButton}
-                onClick={handleAgendar}
-                disabled={isSubmittingAppointment}
-              >
-                {isSubmittingAppointment ? 'Confirmando...' : 'Finalizar agendamento'}
-              </button>
+              {!paymentChoice ? (
+                <>
+                  <p className={Styles.paymentChoiceHeading}>Como deseja pagar?</p>
+                  <p className={Styles.paymentChoiceSubtext}>Escolha uma opção para finalizar seu agendamento.</p>
+                  <div className={Styles.paymentChoiceGrid}>
+                    <button
+                      type="button"
+                      className={`${Styles.paymentChoiceBtn} ${Styles.paymentChoiceBtnLocal}`}
+                      onClick={() => { setPaymentChoice('local'); handleAgendar(); }}
+                      disabled={isSubmittingAppointment}
+                    >
+                      <span className={Styles.paymentChoiceBtnEmoji}>🏪</span>
+                      Pagar no local
+                    </button>
+                    <button
+                      type="button"
+                      className={`${Styles.paymentChoiceBtn} ${Styles.paymentChoiceBtnOnline}`}
+                      onClick={() => { setPaymentChoice('online'); handleAgendarOnline(); }}
+                      disabled={isSubmittingAppointment}
+                    >
+                      <span className={Styles.paymentChoiceBtnEmoji}>💳</span>
+                      Pagar online
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    className={Styles.modalSecondaryButton}
+                    onClick={handleCloseSummary}
+                    disabled={isSubmittingAppointment}
+                    style={{ marginTop: '0.5rem', width: '100%' }}
+                  >
+                    Ajustar dados
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className={Styles.modalSecondaryButton}
+                    onClick={handleCloseSummary}
+                    disabled={isSubmittingAppointment}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className={Styles.modalPrimaryButton}
+                    disabled={isSubmittingAppointment}
+                  >
+                    {isSubmittingAppointment ? 'Processando...' : 'Aguarde...'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

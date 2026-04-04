@@ -454,6 +454,38 @@
             "type": "string",
             "format": "uuid",
             "example": "{{appointment_id}}"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": ["PIX", "CREDIT_CARD", "LOCAL"],
+            "example": "CREDIT_CARD",
+            "description": "Método de pagamento escolhido pelo cliente"
+          }
+        }
+      },
+      "EmailExistsResponse": {
+        "type": "object",
+        "properties": {
+          "exists": {
+            "type": "boolean",
+            "example": true
+          },
+          "userType": {
+            "type": "string",
+            "enum": ["CUSTOMER", "BARBER"],
+            "nullable": true,
+            "example": "CUSTOMER",
+            "description": "Tipo de usuário encontrado, null se não existir"
+          }
+        }
+      },
+      "MpConnectResponse": {
+        "type": "object",
+        "properties": {
+          "authorizationUrl": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://auth.mercadopago.com/authorization?client_id=..."
           }
         }
       },
@@ -2074,6 +2106,119 @@
         "responses": {
           "204": {
             "description": "Bloqueio deletado"
+          }
+        }
+      }
+    },
+    "/api/auth/email/exists": {
+      "get": {
+        "tags": [
+          "01 - Autenticação"
+        ],
+        "summary": "Verificar se e-mail já está cadastrado",
+        "description": "Endpoint público. Retorna se o e-mail existe na base e o tipo de usuário (CUSTOMER ou BARBER).",
+        "operationId": "emailExists",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "email"
+            },
+            "example": "usuario@teste.com"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado da verificação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailExistsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payments/mp-connect": {
+      "get": {
+        "tags": [
+          "06 - Pagamentos"
+        ],
+        "summary": "Iniciar OAuth Mercado Pago (barbeiro)",
+        "description": "Retorna a URL de autorização do Mercado Pago. O barbeiro deve ser redirecionado para ela.",
+        "operationId": "mpConnect",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "description": "UUID do barbeiro — será devolvido pelo MP no callback",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{barber_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "URL de autorização gerada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MpConnectResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payments/mp-callback": {
+      "get": {
+        "tags": [
+          "06 - Pagamentos"
+        ],
+        "summary": "Callback OAuth Mercado Pago",
+        "description": "Recebe o code do MP, troca por access_token, salva no user-service e redireciona o barbeiro para /barberHome?mpLinked=true.",
+        "operationId": "mpCallback",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Código de autorização devolvido pelo Mercado Pago"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "UUID do barbeiro passado no state do mp-connect"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redireciona para https://cortaai.shop/barberHome?mpLinked=true"
+          },
+          "400": {
+            "description": "Código inválido ou estado ausente"
           }
         }
       }

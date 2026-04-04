@@ -47,9 +47,9 @@ public class PaymentController {
     })
     @PostMapping("/create")
     public ResponseEntity<TransactionDTO> createPayment(
-            @Parameter(description = "Dados para criação do pagamento (ex: ID do agendamento)") @Valid @RequestBody CreatePaymentDTO dto,
+            @Parameter(description = "Dados para criação do pagamento (ex: ID do agendamento, método de pagamento)") @Valid @RequestBody CreatePaymentDTO dto,
             @Parameter(description = "ID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-Id") UUID userId) {
-        TransactionDTO transaction = paymentService.createPayment(dto.appointmentId(), userId);
+        TransactionDTO transaction = paymentService.createPayment(dto.appointmentId(), userId, dto.paymentMethod());
         return ResponseEntity.ok(transaction);
     }
 

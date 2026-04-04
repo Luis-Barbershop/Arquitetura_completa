@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.controller;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.ChangePasswordRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.EmailExistsResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInRequestDTO;
@@ -20,6 +21,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -137,6 +140,29 @@ public class FirebaseTestController {
 			@RequestBody @Valid ChangePasswordRequestDTO request) {
 		firebaseDebugService.changePassword(request);
 		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(
+			summary = "Verificar existência de e-mail",
+			description = """
+					Verifica se o e-mail já está cadastrado em qualquer perfil (CUSTOMER ou BARBER).
+					
+					**Usado pela lógica de redirecionamento inteligente do front-end:**
+					- Antes de exibir erro de credenciais inválidas, o front chama este endpoint.
+					- Se `exists=false`, o usuário é redirecionado para a tela de cadastro com o e-mail pré-preenchido.
+					- Se `exists=true`, o erro de credenciais é exibido normalmente.
+					
+					**Esta rota é pública** — não requer token de autenticação.
+					""")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Consulta realizada com sucesso"),
+			@ApiResponse(responseCode = "400", description = "E-mail inválido ou ausente")
+	})
+	@SecurityRequirements
+	@GetMapping("/exists")
+	public ResponseEntity<EmailExistsResponseDTO> emailExists(
+			@RequestParam("email") String email) {
+		return ResponseEntity.ok(firebaseDebugService.checkEmailExists(email));
 	}
 }
 

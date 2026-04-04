@@ -269,6 +269,26 @@
     border-color: #c19006;
 }
 
+.mpButton {
+    background-color: transparent;
+    border: 1px solid #1f3d6e;
+    color: #5ba3f5;
+    padding: 10px 15px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.83rem;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 600;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+}
+
+.mpButton:hover {
+    background-color: rgba(91, 163, 245, 0.10);
+    border-color: #5ba3f5;
+    color: #7fbaff;
+}
+
 .noBarbershopPanel {
     margin-top: 0.5rem;
     padding: 2.2rem;

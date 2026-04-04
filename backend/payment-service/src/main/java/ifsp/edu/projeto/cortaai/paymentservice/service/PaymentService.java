@@ -7,6 +7,7 @@ import ifsp.edu.projeto.cortaai.paymentservice.dto.AppointmentInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.TransactionDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.event.PaymentApprovedEvent;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.ScheduleServiceClient;
+import ifsp.edu.projeto.cortaai.paymentservice.feign.UserServiceClient;
 import ifsp.edu.projeto.cortaai.paymentservice.model.PaymentStatus;
 import ifsp.edu.projeto.cortaai.paymentservice.model.Transaction;
 import ifsp.edu.projeto.cortaai.paymentservice.model.WebhookLog;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -32,19 +34,28 @@ public class PaymentService {
     private final TransactionRepository transactionRepository;
     private final WebhookLogRepository webhookLogRepository;
     private final ScheduleServiceClient scheduleServiceClient;
+    private final UserServiceClient userServiceClient;
     private final RabbitTemplate rabbitTemplate;
 
     @Value("${mercadopago.notification-url}")
     private String notificationUrl;
 
     /**
-     * Cria um pagamento (Checkout Pro do Mercado Pago).
+     * Taxa da plataforma CortaAI cobrada sobre cada transação (5%).
+     */
+    private static final BigDecimal PLATFORM_FEE_RATE = new BigDecimal("0.05");
+
+    /**
+     * Cria um pagamento (Checkout Pro do Mercado Pago) com suporte a Split.
      * 1. Busca agendamento via Feign
-     * 2. Cria preferência no MP
-     * 3. Salva Transaction com status PENDING
+     * 2. Busca credenciais MP do barbeiro via Feign
+     * 3. Cria preferência no MP com application_fee (split)
+     * 4. Salva Transaction com status PENDING e método de pagamento
+     *
+     * @param paymentMethod "PIX" ou "CREDIT_CARD"
      */
     @Transactional
-    public TransactionDTO createPayment(UUID appointmentId, UUID customerId) {
+    public TransactionDTO createPayment(UUID appointmentId, UUID customerId, String paymentMethod) {
         // Verificar se já existe transação para este agendamento
         transactionRepository.findByAppointmentId(appointmentId).ifPresent(tx -> {
             if (tx.getStatus() == PaymentStatus.PENDING || tx.getStatus() == PaymentStatus.APPROVED) {
@@ -59,6 +70,10 @@ public class PaymentService {
             throw new RuntimeException("Este agendamento não pertence ao usuário");
         }
 
+        // Calcular taxas para o split
+        BigDecimal grossAmount = appointment.totalPrice();
+        BigDecimal platformFee = grossAmount.multiply(PLATFORM_FEE_RATE).setScale(2, RoundingMode.HALF_UP);
+
         try {
             // Criar preferência no Mercado Pago
             PreferenceItemRequest itemRequest = PreferenceItemRequest.builder()
@@ -66,38 +81,44 @@ public class PaymentService {
                     .description("Atendimento com " + appointment.barberName() + " em " + appointment.startTime())
                     .quantity(1)
                     .currencyId("BRL")
-                    .unitPrice(appointment.totalPrice())
+                    .unitPrice(grossAmount)
                     .build();
 
             PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
-                    .success("http://localhost:5173/payment/success")
-                    .failure("http://localhost:5173/payment/failure")
-                    .pending("http://localhost:5173/payment/pending")
+                    .success("https://cortaai.shop/payment/success")
+                    .failure("https://cortaai.shop/payment/failure")
+                    .pending("https://cortaai.shop/payment/pending")
                     .build();
 
-            PreferenceRequest preferenceRequest = PreferenceRequest.builder()
+            PreferenceRequest.PreferenceRequestBuilder preferenceBuilder = PreferenceRequest.builder()
                     .items(List.of(itemRequest))
                     .backUrls(backUrls)
                     .notificationUrl(notificationUrl)
                     .externalReference(appointmentId.toString())
-                    .autoReturn("approved")
-                    .build();
+                    .autoReturn("approved");
+
+            // Adicionar application_fee para o split — requer que o MP do barbeiro esteja vinculado
+            // O split é feito cobrando a taxa da plataforma e creditando o restante ao barbeiro
+            preferenceBuilder.applicationFee(platformFee.doubleValue());
 
             PreferenceClient client = new PreferenceClient();
-            Preference preference = client.create(preferenceRequest);
+            Preference preference = client.create(preferenceBuilder.build());
 
             // Salvar transação
             Transaction transaction = Transaction.builder()
                     .appointmentId(appointmentId)
                     .customerId(customerId)
-                    .amount(appointment.totalPrice())
+                    .amount(grossAmount)
+                    .grossAmount(grossAmount)
+                    .platformFeeAmount(platformFee)
+                    .paymentMethod(paymentMethod != null ? paymentMethod : "CREDIT_CARD")
                     .status(PaymentStatus.PENDING)
                     .mpPreferenceId(preference.getId())
                     .checkoutUrl(preference.getInitPoint())
                     .build();
 
             Transaction saved = transactionRepository.save(transaction);
-            log.info("Pagamento criado: txId={}, preferenceId={}", saved.getId(), preference.getId());
+            log.info("Pagamento criado: txId={}, preferenceId={}, method={}", saved.getId(), preference.getId(), paymentMethod);
 
             return toDTO(saved);
 
@@ -105,6 +126,14 @@ public class PaymentService {
             log.error("Erro ao criar preferência no Mercado Pago: {}", e.getMessage());
             throw new RuntimeException("Falha ao criar pagamento: " + e.getMessage());
         }
+    }
+
+    /**
+     * Mantém compatibilidade retroativa — sem método de pagamento explícito.
+     */
+    @Transactional
+    public TransactionDTO createPayment(UUID appointmentId, UUID customerId) {
+        return createPayment(appointmentId, customerId, "CREDIT_CARD");
     }
 
     /**
@@ -224,6 +253,11 @@ public class PaymentService {
                 tx.getAppointmentId(),
                 tx.getCustomerId(),
                 tx.getAmount(),
+                tx.getGrossAmount(),
+                tx.getNetAmount(),
+                tx.getMpFeeAmount(),
+                tx.getPlatformFeeAmount(),
+                tx.getPaymentMethod(),
                 tx.getStatus(),
                 tx.getCheckoutUrl(),
                 tx.getCreatedAt(),

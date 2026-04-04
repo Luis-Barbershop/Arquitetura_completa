@@ -11,6 +11,15 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
+ * Campos adicionados para conciliação financeira do Marketplace:
+ * - grossAmount:       valor bruto (o que o cliente pagou)
+ * - netAmount:         valor líquido repassado ao barbeiro
+ * - mpFeeAmount:       taxa cobrada pelo Mercado Pago
+ * - platformFeeAmount: taxa da plataforma CortaAI
+ * - paymentMethod:     PIX, CREDIT_CARD, etc.
+ */
+
+/**
  * Entidade que representa uma transação de pagamento.
  */
 @Entity
@@ -35,6 +44,37 @@ public class Transaction {
 
     @Column(nullable = false)
     private BigDecimal amount;
+
+    /**
+     * Valor bruto pago pelo cliente (= amount antes do split).
+     * Preenchido após aprovação do pagamento via webhook.
+     */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal grossAmount;
+
+    /**
+     * Valor líquido repassado ao barbeiro após descontar taxas.
+     */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal netAmount;
+
+    /**
+     * Taxa cobrada pelo Mercado Pago sobre a transação.
+     */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal mpFeeAmount;
+
+    /**
+     * Taxa da plataforma CortaAI (application fee no split).
+     */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal platformFeeAmount;
+
+    /**
+     * Método de pagamento: PIX, CREDIT_CARD, DEBIT_CARD, LOCAL, etc.
+     */
+    @Column(length = 30)
+    private String paymentMethod;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.controller;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.UserInfoDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.SaveMpCredentialsDTO;
 import ifsp.edu.projeto.cortaai.userservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import ifsp.edu.projeto.cortaai.userservice.model.Customer;
@@ -154,11 +155,35 @@ public class InternalUserController {
         return ResponseEntity.ok().build();
     }
     @PutMapping("/make-owner/{uid}")
-        public ResponseEntity<Void> makeBarberOwner(@PathVariable String uid) {
-                // Seta a claim isOwner para true, mantendo a role BARBER
-                firebaseAuthService.setCustomUserClaims(uid, "BARBER", true);
-                return ResponseEntity.ok().build();
-        }
+    public ResponseEntity<Void> makeBarberOwner(@PathVariable String uid) {
+        firebaseAuthService.setCustomUserClaims(uid, "BARBER", true);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Salva as credenciais do Mercado Pago OAuth no perfil do barbeiro.
+     * Chamado pelo payment-service após o callback OAuth do MP.
+     */
+    @Operation(summary = "Salvar credenciais MP OAuth do barbeiro",
+               description = "Endpoint interno chamado pelo payment-service após o OAuth do Mercado Pago. Persiste os tokens e IDs do barbeiro.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Credenciais salvas com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado")
+    })
+    @PutMapping("/barbers/{barberId}/mp-credentials")
+    public ResponseEntity<Void> saveMpCredentials(
+            @PathVariable UUID barberId,
+            @RequestBody SaveMpCredentialsDTO dto) {
+        Barber barber = barberRepository.findById(barberId)
+                .orElseThrow(() -> new RuntimeException("Barbeiro não encontrado: " + barberId));
+        barber.setMpAccessToken(dto.mpAccessToken());
+        barber.setMpRefreshToken(dto.mpRefreshToken());
+        barber.setMpUserId(dto.mpUserId());
+        barber.setMpPublicKey(dto.mpPublicKey());
+        barberRepository.save(barber);
+        log.info("Credenciais MP salvas para barberId={}, mpUserId={}", barberId, dto.mpUserId());
+        return ResponseEntity.ok().build();
+    }
 
 
     // ── conversores ──────────────────────────────────────────────────────────

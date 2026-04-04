@@ -140,6 +140,18 @@
       "initialValue": "",
       "currentValue": "",
       "secret": false
+    },
+    {
+      "key": "mp_client_id",
+      "initialValue": "",
+      "currentValue": "",
+      "secret": true
+    },
+    {
+      "key": "mp_barber_access_token",
+      "initialValue": "",
+      "currentValue": "",
+      "secret": true
     }
   ]
 }

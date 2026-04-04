@@ -31,6 +31,16 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
                         <img src="/Icons/bellicon.png" alt="Sino de Notificacao" />
                     </button>
                     <button
+                        onClick={() => {
+                            const userId = barber?.id;
+                            window.location.href = `https://api.cortaai.shop/api/payments/mp-connect?state=${userId}`;
+                        }}
+                        className={styles.mpButton}
+                        title="Vincular conta Mercado Pago para receber pagamentos online"
+                    >
+                        💳 Vincular MP
+                    </button>
+                    <button
                         onClick={() => navigate('/change-password')}
                         className={styles.changePasswordButton}
                         title="Alterar senha"

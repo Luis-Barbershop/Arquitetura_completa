@@ -9,6 +9,7 @@ import ifsp.edu.projeto.cortaai.userservice.dto.ChangePasswordRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.AuthResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileCustomerDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.EmailExistsResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseAuthRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterResponseDTO;
@@ -44,6 +45,8 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
     private final FirebaseAuth firebaseAuth;
     private final FirebaseAuthService firebaseAuthService;
     private final ObjectMapper objectMapper;
+    private final ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository barberRepository;
+    private final ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository customerRepository;
 
     @Value("${firebase.web-api-key:}")
     private String firebaseWebApiKey;
@@ -362,6 +365,21 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
 
     private String text(Object value) {
         return value == null ? null : String.valueOf(value);
+    }
+
+    @Override
+    public EmailExistsResponseDTO checkEmailExists(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("E-mail não pode ser vazio.");
+        }
+        String normalized = email.trim().toLowerCase();
+        if (barberRepository.existsByEmailIgnoreCase(normalized)) {
+            return new EmailExistsResponseDTO(true, "BARBER");
+        }
+        if (customerRepository.existsByEmailIgnoreCase(normalized)) {
+            return new EmailExistsResponseDTO(true, "CUSTOMER");
+        }
+        return new EmailExistsResponseDTO(false, null);
     }
 }
 

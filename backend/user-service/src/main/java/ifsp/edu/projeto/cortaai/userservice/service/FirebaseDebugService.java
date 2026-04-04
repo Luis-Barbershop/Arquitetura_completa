@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.service;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.ChangePasswordRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.EmailExistsResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInRequestDTO;
@@ -32,5 +33,11 @@ public interface FirebaseDebugService {
      * Chama accounts:update com o novo password.
      */
     void changePassword(ChangePasswordRequestDTO request);
+
+    /**
+     * Verifica se um e-mail já está cadastrado em qualquer perfil (CUSTOMER ou BARBER).
+     * Usado pelo front-end para o redirecionamento inteligente de cadastro.
+     */
+    EmailExistsResponseDTO checkEmailExists(String email);
 }
 

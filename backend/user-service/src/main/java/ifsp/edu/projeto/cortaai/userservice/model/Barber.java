@@ -87,6 +87,33 @@ public class Barber implements UserDetails {
     @Column(name = "image_url_public_id")
     private String imageUrlPublicId;
 
+    // ======== Mercado Pago OAuth ========
+    /**
+     * Access token OAuth do barbeiro no Mercado Pago.
+     * Usado para criar pagamentos em nome dele no split.
+     */
+    @Column(name = "mp_access_token", columnDefinition = "TEXT")
+    private String mpAccessToken;
+
+    /**
+     * Refresh token para renovar o mpAccessToken quando expirar.
+     */
+    @Column(name = "mp_refresh_token", columnDefinition = "TEXT")
+    private String mpRefreshToken;
+
+    /**
+     * ID numérico do usuário no Mercado Pago (collector_id).
+     * Referenciado como marketplace_owner_id no split.
+     */
+    @Column(name = "mp_user_id", length = 60)
+    private String mpUserId;
+
+    /**
+     * Public key do MP do barbeiro — usada no front-end para tokenizar cartão.
+     */
+    @Column(name = "mp_public_key", length = 100)
+    private String mpPublicKey;
+
     /** UUIDs das atividades (serviços) que este barbeiro sabe executar. */
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(

@@ -1,4 +1,6 @@
 import api from './api';
+import { auth, googleProvider } from './firebase';
+import { signInWithPopup } from 'firebase/auth';
 
 const AUTH_ENDPOINTS = {
     login: '/auth/email/login',
@@ -6,6 +8,7 @@ const AUTH_ENDPOINTS = {
     verify: '/auth/verify',
     forgotPassword: '/auth/email/forgot-password',
     changePassword: '/auth/email/change-password',
+    emailExists: '/auth/email/exists',
 };
 
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
@@ -92,4 +95,68 @@ export const forgotPassword = async (email) => {
 // Após alterar, Firebase invalida todas as sessões. Usuário precisa fazer login novamente.
 export const changePassword = async (idToken, newPassword) => {
     await api.post(AUTH_ENDPOINTS.changePassword, { idToken, newPassword });
+};
+
+// ─── VERIFICAR SE E-MAIL EXISTE ───────────────────────────────────────────────
+// Usa: GET /api/auth/email/exists?email=...
+// Retorna { exists: boolean, userType: "CUSTOMER"|"BARBER"|null }
+// Usado pelo redirecionamento inteligente no login.
+export const checkEmailExists = async (email) => {
+    const response = await api.get(AUTH_ENDPOINTS.emailExists, { params: { email } });
+    return response.data;
+};
+
+// ─── LOGIN COM GOOGLE ─────────────────────────────────────────────────────────
+// 1. Abre popup do Google (Firebase SDK)
+// 2. Pega o idToken e envia para o backend via /api/auth/verify
+// 3. Se o backend retornar 404/USER_NOT_FOUND, lança erro especial
+//    para que o front redirecione para o cadastro com os dados do Google.
+export const loginWithGoogle = async () => {
+    const result = await signInWithPopup(auth, googleProvider);
+    const idToken = await result.user.getIdToken();
+
+    // Salva o token temporariamente para o verify
+    localStorage.setItem('token', idToken);
+    localStorage.setItem('userId', result.user.uid);
+    localStorage.setItem('userEmail', result.user.email);
+
+    try {
+        const verifyResponse = await api.post(AUTH_ENDPOINTS.verify, { idToken, userType: null });
+
+        if (verifyResponse?.data?.verificationRequired) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userEmail');
+            const error = new Error('E-mail ainda não verificado.');
+            error.response = { data: { message: error.message } };
+            throw error;
+        }
+
+        return {
+            idToken,
+            localId: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName,
+            photoURL: result.user.photoURL,
+            profile: verifyResponse.data,
+        };
+    } catch (err) {
+        // Se o backend retornar 404, o usuário não existe — sinaliza redirecionamento para cadastro
+        if (err?.response?.status === 404) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userEmail');
+            const redirectError = new Error('USER_NOT_FOUND');
+            redirectError.code = 'USER_NOT_FOUND';
+            redirectError.googleData = {
+                idToken,
+                email: result.user.email,
+                displayName: result.user.displayName,
+                photoURL: result.user.photoURL,
+                uid: result.user.uid,
+            };
+            throw redirectError;
+        }
+        throw err;
+    }
 };

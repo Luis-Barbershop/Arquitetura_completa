@@ -275,6 +275,35 @@
           "requestVariables": [],
           "responses": {},
           "description": "Altera a senha do usuário autenticado. Requer idToken da sessão atual. Após alterar, todas as sessões anteriores são invalidadas. Mínimo 6 caracteres. Rota pública (idToken no body)."
+        },
+        {
+          "v": "17",
+          "id": "req-11c",
+          "name": "Verificar se e-mail existe",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/auth/email/exists",
+          "params": [
+            {
+              "key": "email",
+              "value": "<<customer_email>>",
+              "active": true,
+              "description": "E-mail a verificar"
+            }
+          ],
+          "headers": [],
+          "preRequestScript": "",
+          "testScript": "pw.test('Email exists check', () => { pw.expect(pw.response.status).toBe(200); pw.expect(pw.response.body).toHaveProperty('exists'); });",
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": null,
+            "body": null
+          },
+          "requestVariables": [],
+          "responses": {},
+          "description": "Rota pública. Retorna {exists: bool, userType: 'CUSTOMER'|'BARBER'|null}. Usada pelo frontend para redirecionar para cadastro se o e-mail não existir."
         }
       ],
       "auth": {
@@ -1376,11 +1405,76 @@
           },
           "body": {
             "contentType": "application/json",
-            "body": "{\n  \"appointmentId\": \"<<appointment_id>>\"\n}"
+            "body": "{\n  \"appointmentId\": \"<<appointment_id>>\",\n  \"paymentMethod\": \"CREDIT_CARD\"\n}"
           },
           "requestVariables": [],
           "responses": {},
           "description": null
+        },
+        {
+          "v": "17",
+          "id": "req-mp-connect",
+          "name": "MP OAuth - Iniciar vinculação (barbeiro)",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/payments/mp-connect",
+          "params": [
+            {
+              "key": "state",
+              "value": "<<barber_id>>",
+              "active": true,
+              "description": "UUID do barbeiro"
+            }
+          ],
+          "headers": [],
+          "preRequestScript": "",
+          "testScript": "pw.test('Returns authorizationUrl', () => { pw.expect(pw.response.status).toBe(200); pw.expect(pw.response.body).toHaveProperty('authorizationUrl'); });",
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<barber_token>>"
+          },
+          "body": {
+            "contentType": null,
+            "body": null
+          },
+          "requestVariables": [],
+          "responses": {},
+          "description": "Retorna a URL de autorização do Mercado Pago. O barbeiro deve ser redirecionado para ela para vincular sua conta."
+        },
+        {
+          "v": "17",
+          "id": "req-mp-callback",
+          "name": "MP OAuth - Callback (simular)",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/payments/mp-callback",
+          "params": [
+            {
+              "key": "code",
+              "value": "TG-AUTHORIZATION_CODE",
+              "active": true,
+              "description": "Código de autorização do MP"
+            },
+            {
+              "key": "state",
+              "value": "<<barber_id>>",
+              "active": true,
+              "description": "UUID do barbeiro"
+            }
+          ],
+          "headers": [],
+          "preRequestScript": "",
+          "testScript": "",
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": null,
+            "body": null
+          },
+          "requestVariables": [],
+          "responses": {},
+          "description": "Callback do OAuth do MP. Em prod é chamado automaticamente pelo Mercado Pago. Redireciona 302 para /barberHome?mpLinked=true após salvar as credenciais."
         },
         {
           "v": "17",

@@ -13,6 +13,7 @@ import CreateBarbershopPage from './pages/CreateBarbershopPage';
 import MeusAgendamentosPage from './pages/MeusAgendamentosPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 import Site from './pages/Site';
 
 
@@ -33,6 +34,7 @@ function AppRoutes() {
       <Route path="/meus-agendamentos" element={<MeusAgendamentosPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/change-password" element={<ChangePasswordPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
     </Routes>
   )
 }
