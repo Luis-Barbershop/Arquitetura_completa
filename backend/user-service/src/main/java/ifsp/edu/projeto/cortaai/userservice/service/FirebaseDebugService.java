@@ -1,10 +1,12 @@
 package ifsp.edu.projeto.cortaai.userservice.service;
 
+import ifsp.edu.projeto.cortaai.userservice.dto.ChangePasswordRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseTokenDebugResponseDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.ForgotPasswordRequestDTO;
 
 public interface FirebaseDebugService {
 
@@ -17,5 +19,18 @@ public interface FirebaseDebugService {
      * Fluxo: signUp → verify → complete-profile.
      */
     FirebaseEmailRegisterResponseDTO registerWithEmailPassword(FirebaseEmailRegisterRequestDTO request);
+
+    /**
+     * Envia e-mail de recuperação de senha via Firebase.
+     * Chama accounts:sendOobCode com requestType=PASSWORD_RESET.
+     */
+    void forgotPassword(ForgotPasswordRequestDTO request);
+
+    /**
+     * Altera a senha do usuário autenticado via Firebase.
+     * Requer o idToken válido da sessão atual.
+     * Chama accounts:update com o novo password.
+     */
+    void changePassword(ChangePasswordRequestDTO request);
 }
 

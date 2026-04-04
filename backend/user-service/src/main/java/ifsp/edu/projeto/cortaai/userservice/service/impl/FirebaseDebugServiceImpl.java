@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import ifsp.edu.projeto.cortaai.userservice.dto.ChangePasswordRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.AuthResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileCustomerDTO;
@@ -14,6 +15,7 @@ import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterResponseDTO
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseTokenDebugResponseDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.ForgotPasswordRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseDebugService;
 import lombok.RequiredArgsConstructor;
@@ -217,6 +219,89 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
             // Falha nas etapas 3 ou 4: remove do Firebase para evitar estado inconsistente
             rollbackFirebaseUser(localId);
             throw ex;
+        }
+    }
+
+    @Override
+    public void forgotPassword(ForgotPasswordRequestDTO request) {
+        if (firebaseWebApiKey == null || firebaseWebApiKey.isBlank()) {
+            throw new IllegalArgumentException("A propriedade firebase.web-api-key não está configurada.");
+        }
+        try {
+            Map<String, Object> payload = Map.of(
+                    "requestType", "PASSWORD_RESET",
+                    "email", request.email()
+            );
+            String body = objectMapper.writeValueAsString(payload);
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create("https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=" + firebaseWebApiKey))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+
+            HttpResponse<String> response = HTTP_CLIENT.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            JsonNode root = objectMapper.readTree(response.body());
+
+            if (response.statusCode() >= 400) {
+                String code = root.path("error").path("message").asText("");
+                String msg = switch (code) {
+                    case "EMAIL_NOT_FOUND" -> "E-mail não encontrado.";
+                    case "INVALID_EMAIL" -> "E-mail inválido.";
+                    default -> "Erro Firebase: " + code;
+                };
+                throw new SecurityException(msg);
+            }
+
+            log.info("event=forgot-password-email-sent email={}", request.email());
+
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Requisição ao Firebase foi interrompida.", ex);
+        } catch (IOException ex) {
+            throw new RuntimeException("Falha ao comunicar com o Firebase: " + ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    public void changePassword(ChangePasswordRequestDTO request) {
+        if (firebaseWebApiKey == null || firebaseWebApiKey.isBlank()) {
+            throw new IllegalArgumentException("A propriedade firebase.web-api-key não está configurada.");
+        }
+        try {
+            Map<String, Object> payload = Map.of(
+                    "idToken", request.idToken(),
+                    "password", request.newPassword(),
+                    "returnSecureToken", true
+            );
+            String body = objectMapper.writeValueAsString(payload);
+            HttpRequest httpRequest = HttpRequest.newBuilder()
+                    .uri(URI.create("https://identitytoolkit.googleapis.com/v1/accounts:update?key=" + firebaseWebApiKey))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
+
+            HttpResponse<String> response = HTTP_CLIENT.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            JsonNode root = objectMapper.readTree(response.body());
+
+            if (response.statusCode() >= 400) {
+                String code = root.path("error").path("message").asText("");
+                String msg = switch (code) {
+                    case "INVALID_ID_TOKEN" -> "Token de sessão inválido ou expirado. Faça login novamente.";
+                    case "WEAK_PASSWORD : Password should be at least 6 characters" -> "Senha muito curta (mínimo 6 caracteres).";
+                    case "USER_NOT_FOUND" -> "Usuário não encontrado.";
+                    case "TOKEN_EXPIRED" -> "Sessão expirada. Faça login novamente.";
+                    default -> "Erro Firebase: " + code;
+                };
+                throw new SecurityException(msg);
+            }
+
+            log.info("event=change-password-ok uid={}", text(root, "localId"));
+
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Requisição ao Firebase foi interrompida.", ex);
+        } catch (IOException ex) {
+            throw new RuntimeException("Falha ao comunicar com o Firebase: " + ex.getMessage(), ex);
         }
     }
 

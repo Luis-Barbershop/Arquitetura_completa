@@ -1,11 +1,13 @@
 package ifsp.edu.projeto.cortaai.userservice.controller;
 
+import ifsp.edu.projeto.cortaai.userservice.dto.ChangePasswordRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseTokenDebugRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseTokenDebugResponseDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.ForgotPasswordRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseDebugService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -86,6 +88,55 @@ public class FirebaseTestController {
 	public ResponseEntity<FirebaseEmailRegisterResponseDTO> registerWithEmail(
 			@RequestBody @Valid FirebaseEmailRegisterRequestDTO request) {
 		return ResponseEntity.ok(firebaseDebugService.registerWithEmailPassword(request));
+	}
+
+	@Operation(
+			summary = "Recuperação de senha",
+			description = """
+					Envia um e-mail de redefinição de senha para o endereço informado.
+					
+					O Firebase Authentication dispara o e-mail automaticamente com um link seguro.
+					O usuário clica no link, define a nova senha e pode fazer login normalmente.
+					
+					**Esta rota é pública** — não requer token.
+					"""
+	)
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "E-mail de recuperação enviado com sucesso"),
+			@ApiResponse(responseCode = "400", description = "E-mail inválido ou ausente"),
+			@ApiResponse(responseCode = "404", description = "E-mail não encontrado no Firebase")
+	})
+	@SecurityRequirements
+	@PostMapping("/forgot-password")
+	public ResponseEntity<Void> forgotPassword(
+			@RequestBody @Valid ForgotPasswordRequestDTO request) {
+		firebaseDebugService.forgotPassword(request);
+		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(
+			summary = "Alterar senha (usuário autenticado)",
+			description = """
+					Altera a senha do usuário autenticado.
+					
+					Requer o `idToken` da sessão atual (obtido no login).
+					Após a alteração, o Firebase invalida todas as sessões anteriores.
+					O usuário precisará fazer login novamente com a nova senha.
+					
+					**Esta rota é pública** — o idToken vai no corpo, não no header.
+					"""
+	)
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "Senha alterada com sucesso"),
+			@ApiResponse(responseCode = "400", description = "Dados inválidos ou senha muito curta"),
+			@ApiResponse(responseCode = "401", description = "Token expirado ou inválido — faça login novamente")
+	})
+	@SecurityRequirements
+	@PostMapping("/change-password")
+	public ResponseEntity<Void> changePassword(
+			@RequestBody @Valid ChangePasswordRequestDTO request) {
+		firebaseDebugService.changePassword(request);
+		return ResponseEntity.noContent().build();
 	}
 }
 
