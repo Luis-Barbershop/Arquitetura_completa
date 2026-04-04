@@ -1,1894 +1,1574 @@
 {
-   "info":{
-      "name":"CortaAí - Microserviços API",
-      "description":"Collection gerada a partir da documentação da arquitetura de microserviços do CortaAí.",
-      "schema":"https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-   },
-   "variable":[
-      {
-         "key":"gateway_base_url",
-         "value":"http://localhost:8080",
-         "type":"string"
-      },
-      {
-         "key":"base_url",
-         "value":"{{gateway_base_url}}",
-         "type":"string"
-      },
-      {
-         "key":"user_service_url",
-         "value":"http://localhost:8081",
-         "type":"string"
-      },
-      {
-         "key":"barbershop_service_url",
-         "value":"http://localhost:8082",
-         "type":"string"
-      },
-      {
-         "key":"schedule_service_url",
-         "value":"http://localhost:8083",
-         "type":"string"
-      },
-      {
-         "key":"product_service_url",
-         "value":"http://localhost:8084",
-         "type":"string"
-      },
-      {
-         "key":"payment_service_url",
-         "value":"http://localhost:8085",
-         "type":"string"
-      },
-      {
-         "key":"notification_service_url",
-         "value":"http://localhost:8086",
-         "type":"string"
-      },
-      {
-         "key":"discovery_service_url",
-         "value":"http://localhost:8761",
-         "type":"string"
-      },
-      {
-         "key":"firebase_id_token",
-         "value":"",
-         "type":"string"
-      },
-      {
-         "key":"token",
-         "value":"",
-         "type":"string"
-      },
-      {
-         "key":"firebase_refresh_token",
-         "value":"",
-         "type":"string"
-      },
-      {
-         "key":"firebase_local_id",
-         "value":"",
-         "type":"string"
-      },
-      {
-         "key":"auth_email",
-         "value":"",
-         "type":"string"
-      },
-      {
-         "key":"user_type",
-         "value":"CUSTOMER",
-         "type":"string"
-      }
-   ],
-   "event":[
-      {
-         "listen":"prerequest",
-         "script":{
-            "type":"text/javascript",
-            "exec":[
-               "const publicPaths = [",
-               "  '/api/auth/email/login',",
-               "  '/api/auth/email/register',",
-               "  '/api/auth/email/verify-token',",
-               "  '/api/auth/firebase-test/sign-in-email',",
-               "  '/api/auth/firebase-test/register-email',",
-               "  '/api/auth/firebase-test/verify-id-token',",
-               "  '/api/auth/verify',",
-               "  '/api/customers/login',",
-               "  '/api/customers/register',",
-               "  '/api/barbers/login',",
-               "  '/api/barbers/register'",
-               "];",
-               "",
-               "const raw = pm.request.url.toString();",
-               "const path = '/' + pm.request.url.path.join('/');",
-               "const shouldSkip = publicPaths.some((p) => path === p || path.startsWith(p + '/'));",
-               "",
-               "if (!shouldSkip) {",
-               "  const token = pm.collectionVariables.get('firebase_id_token') || pm.collectionVariables.get('token');",
-               "  if (token) {",
-               "    pm.request.headers.upsert({ key: 'Authorization', value: 'Bearer ' + token });",
-               "  }",
-               "}",
-               "",
-               "if (raw.includes('/api/auth/email/')) {",
-               "  pm.request.headers.upsert({ key: 'Content-Type', value: 'application/json' });",
-               "}"
-            ]
-         }
-      },
-      {
-         "listen":"test",
-         "script":{
-            "type":"text/javascript",
-            "exec":[
-               "let data = null;",
-               "try { data = pm.response.json(); } catch (e) { data = null; }",
-               "",
-               "if (data && data.idToken) {",
-               "  pm.collectionVariables.set('firebase_id_token', data.idToken);",
-               "  pm.collectionVariables.set('token', data.idToken);",
-               "}",
-               "if (data && data.refreshToken) pm.collectionVariables.set('firebase_refresh_token', data.refreshToken);",
-               "if (data && data.localId) pm.collectionVariables.set('firebase_local_id', data.localId);",
-               "if (data && data.email) pm.collectionVariables.set('auth_email', data.email);",
-               "if (data && data.profile && data.profile.userType) pm.collectionVariables.set('user_type', data.profile.userType);",
-               "if (data && data.userType) pm.collectionVariables.set('user_type', data.userType);"
-            ]
-         }
-      }
-   ],
-   "item":[
-      {
-         "name":"Auth Firebase Email",
-         "item":[
+  "v": 2,
+  "id": "cortaai-collection",
+  "name": "CortaAi API",
+  "folders": [
+    {
+      "id": "folder-auth",
+      "name": "01 - Auth",
+      "folders": [],
+      "requests": [
+        {
+          "id": "req-auth-register-customer",
+          "name": "Cadastrar Cliente (email/senha)",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/auth/email/register",
+          "headers": [
             {
-               "name":"Register (Producao)",
-               "request":{
-                  "method":"POST",
-                  "header":[
-                     {
-                        "key":"Content-Type",
-                        "value":"application/json"
-                     }
-                  ],
-                  "body":{
-                     "mode":"raw",
-                     "raw":"{\n  \"email\": \"{{auth_email}}\",\n  \"password\": \"Senha@123456\",\n  \"userType\": \"{{user_type}}\",\n  \"name\": \"Usuario Teste\",\n  \"tell\": \"11999999999\",\n  \"documentCPF\": \"12345678901\",\n  \"workStartTime\": \"09:00\",\n  \"workEndTime\": \"18:00\",\n  \"isOwner\": false\n}"
-                  },
-                  "url":{
-                     "raw":"{{gateway_base_url}}/api/auth/email/register",
-                     "host":[
-                        "{{gateway_base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "auth",
-                        "email",
-                        "register"
-                     ]
-                  }
-               },
-               "response":[]
-            },
-            {
-               "name":"Login (Producao)",
-               "request":{
-                  "method":"POST",
-                  "header":[
-                     {
-                        "key":"Content-Type",
-                        "value":"application/json"
-                     }
-                  ],
-                  "body":{
-                     "mode":"raw",
-                     "raw":"{\n  \"email\": \"{{auth_email}}\",\n  \"password\": \"Senha@123456\"\n}"
-                  },
-                  "url":{
-                     "raw":"{{gateway_base_url}}/api/auth/email/login",
-                     "host":[
-                        "{{gateway_base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "auth",
-                        "email",
-                        "login"
-                     ]
-                  }
-               },
-               "response":[]
-            },
-            {
-               "name":"Verify (Provision)",
-               "request":{
-                  "method":"POST",
-                  "header":[
-                     {
-                        "key":"Content-Type",
-                        "value":"application/json"
-                     }
-                  ],
-                  "body":{
-                     "mode":"raw",
-                     "raw":"{\n  \"idToken\": \"{{firebase_id_token}}\",\n  \"userType\": \"{{user_type}}\"\n}"
-                  },
-                  "url":{
-                     "raw":"{{gateway_base_url}}/api/auth/verify",
-                     "host":[
-                        "{{gateway_base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "auth",
-                        "verify"
-                     ]
-                  }
-               },
-               "response":[]
-            },
-            {
-               "name":"Me (Protegido)",
-               "request":{
-                  "method":"GET",
-                  "url":{
-                     "raw":"{{gateway_base_url}}/api/auth/me",
-                     "host":[
-                        "{{gateway_base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "auth",
-                        "me"
-                     ]
-                  }
-               },
-               "response":[]
-            },
-            {
-               "name":"Complete Profile Customer (Protegido)",
-               "request":{
-                  "method":"POST",
-                  "header":[
-                     {
-                        "key":"Content-Type",
-                        "value":"application/json"
-                     }
-                  ],
-                  "body":{
-                     "mode":"raw",
-                     "raw":"{\n  \"name\": \"Cliente Completo\",\n  \"tell\": \"11988887777\",\n  \"documentCPF\": \"12345678901\"\n}"
-                  },
-                  "url":{
-                     "raw":"{{gateway_base_url}}/api/auth/customers/complete-profile",
-                     "host":[
-                        "{{gateway_base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "auth",
-                        "customers",
-                        "complete-profile"
-                     ]
-                  }
-               },
-               "response":[]
-            },
-            {
-               "name":"Complete Profile Barber (Protegido)",
-               "request":{
-                  "method":"POST",
-                  "header":[
-                     {
-                        "key":"Content-Type",
-                        "value":"application/json"
-                     }
-                  ],
-                  "body":{
-                     "mode":"raw",
-                     "raw":"{\n  \"name\": \"Barbeiro Completo\",\n  \"tell\": \"11977776666\",\n  \"documentCPF\": \"98765432100\",\n  \"workStartTime\": \"09:00\",\n  \"workEndTime\": \"18:00\",\n  \"isOwner\": false\n}"
-                  },
-                  "url":{
-                     "raw":"{{gateway_base_url}}/api/auth/barbers/complete-profile",
-                     "host":[
-                        "{{gateway_base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "auth",
-                        "barbers",
-                        "complete-profile"
-                     ]
-                  }
-               },
-               "response":[]
-            },
-            {
-               "name":"Login (Alias Legado)",
-               "request":{
-                  "method":"POST",
-                  "header":[
-                     {
-                        "key":"Content-Type",
-                        "value":"application/json"
-                     }
-                  ],
-                  "body":{
-                     "mode":"raw",
-                     "raw":"{\n  \"email\": \"{{auth_email}}\",\n  \"password\": \"Senha@123456\"\n}"
-                  },
-                  "url":{
-                     "raw":"{{gateway_base_url}}/api/auth/firebase-test/sign-in-email",
-                     "host":[
-                        "{{gateway_base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "auth",
-                        "firebase-test",
-                        "sign-in-email"
-                     ]
-                  }
-               },
-               "response":[]
-            },
-            {
-               "name":"Register (Alias Legado)",
-               "request":{
-                  "method":"POST",
-                  "header":[
-                     {
-                        "key":"Content-Type",
-                        "value":"application/json"
-                     }
-                  ],
-                  "body":{
-                     "mode":"raw",
-                     "raw":"{\n  \"email\": \"{{auth_email}}\",\n  \"password\": \"Senha@123456\",\n  \"userType\": \"{{user_type}}\",\n  \"name\": \"Usuario Teste\",\n  \"tell\": \"11999999999\",\n  \"documentCPF\": \"12345678901\",\n  \"workStartTime\": \"09:00\",\n  \"workEndTime\": \"18:00\",\n  \"isOwner\": false\n}"
-                  },
-                  "url":{
-                     "raw":"{{gateway_base_url}}/api/auth/firebase-test/register-email",
-                     "host":[
-                        "{{gateway_base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "auth",
-                        "firebase-test",
-                        "register-email"
-                     ]
-                  }
-               },
-               "response":[]
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
             }
-         ]
-      },
-      {
-         "name":"User Service",
-         "item":[
+          ],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"email\": \"<<customer_email>>\",\n  \"password\": \"<<customer_password>>\",\n  \"userType\": \"CUSTOMER\",\n  \"name\": \"Joao Cliente\",\n  \"tell\": \"11987654321\",\n  \"documentCPF\": \"12345678901\",\n  \"workStartTime\": null,\n  \"workEndTime\": null,\n  \"isOwner\": false\n}"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const body=pw.response.body;if(body.idToken){pw.env.set('customer_token',body.idToken);pw.env.set('token',body.idToken);}if(body.profile&&body.profile.id)pw.env.set('customer_id',body.profile.id);}"
+        },
+        {
+          "id": "req-auth-register-barber",
+          "name": "Cadastrar Barbeiro (email/senha)",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/auth/email/register",
+          "headers": [
             {
-               "name":"Customers",
-               "item":[
-                  {
-                     "name":"Listar todos os clientes",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/customers",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "customers"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Buscar cliente por ID",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/customers/:id",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "customers",
-                              ":id"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Registrar Cliente (Multipart)",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/customers/register",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "customers",
-                              "register"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Login Cliente",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/customers/login",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "customers",
-                              "login"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Atualizar meu perfil (Cliente)",
-                     "request":{
-                        "method":"PUT",
-                        "url":{
-                           "raw":"{{base_url}}/api/customers/me",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "customers",
-                              "me"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Deletar meu perfil (Cliente)",
-                     "request":{
-                        "method":"DELETE",
-                        "url":{
-                           "raw":"{{base_url}}/api/customers/me",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "customers",
-                              "me"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Upload de Foto (Cliente)",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/customers/me/upload-photo",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "customers",
-                              "me",
-                              "upload-photo"
-                           ]
-                        }
-                     }
-                  }
-               ]
-            },
-            {
-               "name":"Barbers",
-               "item":[
-                  {
-                     "name":"Listar todos os barbeiros",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbers",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbers"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Buscar barbeiro por ID",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbers/:id",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbers",
-                              ":id"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Listar barbeiros de uma barbearia",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbers/barbershop/:barbershopId",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbers",
-                              "barbershop",
-                              ":barbershopId"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"barbershopId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Registrar Barbeiro",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbers/register",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbers",
-                              "register"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Login Barbeiro",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbers/login",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbers",
-                              "login"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Atualizar perfil (Barbeiro)",
-                     "request":{
-                        "method":"PUT",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbers/:id",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbers",
-                              ":id"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  }
-               ]
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
             }
-         ]
-      },
-      {
-         "name":"Barbershop Service",
-         "item":[
+          ],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"email\": \"<<barber_email>>\",\n  \"password\": \"<<barber_password>>\",\n  \"userType\": \"BARBER\",\n  \"name\": \"Carlos Barbeiro\",\n  \"tell\": \"11911112222\",\n  \"documentCPF\": \"98765432100\",\n  \"workStartTime\": \"09:00\",\n  \"workEndTime\": \"18:00\",\n  \"isOwner\": false\n}"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const body=pw.response.body;if(body.idToken){pw.env.set('barber_token',body.idToken);pw.env.set('token',body.idToken);}if(body.profile&&body.profile.id)pw.env.set('barber_id',body.profile.id);}"
+        },
+        {
+          "id": "req-auth-register-owner",
+          "name": "Cadastrar Dono de Barbearia (email/senha)",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/auth/email/register",
+          "headers": [
             {
-               "name":"Público",
-               "item":[
-                  {
-                     "name":"Listar barbearias",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Buscar barbearia por ID",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/:shopId",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              ":shopId"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"shopId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Listar serviços da barbearia",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/:shopId/activities",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              ":shopId",
-                              "activities"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"shopId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  }
-               ]
-            },
-            {
-               "name":"Owner (Dono)",
-               "item":[
-                  {
-                     "name":"Registrar barbearia",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/register-my-shop",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "register-my-shop"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Atualizar minha barbearia",
-                     "request":{
-                        "method":"PUT",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/my-shop",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "my-shop"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Fechar barbearia",
-                     "request":{
-                        "method":"DELETE",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/my-shop/close",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "my-shop",
-                              "close"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Adicionar serviço",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/my-shop/activities",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "my-shop",
-                              "activities"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Atualizar serviço",
-                     "request":{
-                        "method":"PUT",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/my-shop/activities/:activityId",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "my-shop",
-                              "activities",
-                              ":activityId"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"activityId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Remover serviço",
-                     "request":{
-                        "method":"DELETE",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/my-shop/activities/:activityId",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "my-shop",
-                              "activities",
-                              ":activityId"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"activityId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Remover barbeiro",
-                     "request":{
-                        "method":"DELETE",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/my-shop/remove-barber/:barberId",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "my-shop",
-                              "remove-barber",
-                              ":barberId"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"barberId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  }
-               ]
-            },
-            {
-               "name":"Join Requests & Team",
-               "item":[
-                  {
-                     "name":"Solicitar ingresso",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/join-request",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "join-request"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Sair da barbearia",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/leave-shop",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "leave-shop"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Listar solicitações pendentes",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/my-shop/pending-requests",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "my-shop",
-                              "pending-requests"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Aprovar solicitação",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/my-shop/approve-request/:requestId",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "my-shop",
-                              "approve-request",
-                              ":requestId"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"requestId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  }
-               ]
-            },
-            {
-               "name":"Imagens (Upload)",
-               "item":[
-                  {
-                     "name":"Upload Logo",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/my-shop/upload-logo",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "my-shop",
-                              "upload-logo"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Upload Banner",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/my-shop/upload-banner",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "my-shop",
-                              "upload-banner"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Upload Foto Serviço",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/my-shop/activities/:activityId/upload-photo",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "my-shop",
-                              "activities",
-                              ":activityId",
-                              "upload-photo"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"activityId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Adicionar Destaque",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/my-shop/highlights",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "my-shop",
-                              "highlights"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Remover Destaque",
-                     "request":{
-                        "method":"DELETE",
-                        "url":{
-                           "raw":"{{base_url}}/api/barbershops/my-shop/highlights/:highlightId",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "barbershops",
-                              "my-shop",
-                              "highlights",
-                              ":highlightId"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"highlightId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  }
-               ]
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
             }
-         ]
-      },
-      {
-         "name":"Schedule Service",
-         "item":[
+          ],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"email\": \"<<owner_email>>\",\n  \"password\": \"<<owner_password>>\",\n  \"userType\": \"BARBER\",\n  \"name\": \"Ana Dona\",\n  \"tell\": \"11933334444\",\n  \"documentCPF\": \"11122233344\",\n  \"workStartTime\": \"09:00\",\n  \"workEndTime\": \"18:00\",\n  \"isOwner\": true\n}"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const body=pw.response.body;if(body.idToken){pw.env.set('owner_token',body.idToken);pw.env.set('token',body.idToken);}}"
+        },
+        {
+          "id": "req-auth-login-customer",
+          "name": "Login Cliente",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/auth/email/login",
+          "headers": [
             {
-               "name":"Appointments",
-               "item":[
-                  {
-                     "name":"Criar agendamento",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/appointments",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "appointments"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Buscar agendamento",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/appointments/:id",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "appointments",
-                              ":id"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Meus agendamentos",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/appointments/my-appointments",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "appointments",
-                              "my-appointments"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Agenda do Barbeiro",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/appointments/barber/:barberId?date=2026-03-01",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "appointments",
-                              "barber",
-                              ":barberId"
-                           ],
-                           "query":[
-                              {
-                                 "key":"date",
-                                 "value":"2026-03-01"
-                              }
-                           ],
-                           "variable":[
-                              {
-                                 "key":"barberId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Agenda da Barbearia",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/appointments/barbershop/:shopId?date=2026-03-01",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "appointments",
-                              "barbershop",
-                              ":shopId"
-                           ],
-                           "query":[
-                              {
-                                 "key":"date",
-                                 "value":"2026-03-01"
-                              }
-                           ],
-                           "variable":[
-                              {
-                                 "key":"shopId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Consultar Disponibilidade",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/appointments/availability?barberId=uuid&date=2026-03-01",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "appointments",
-                              "availability"
-                           ],
-                           "query":[
-                              {
-                                 "key":"barberId",
-                                 "value":"uuid"
-                              },
-                              {
-                                 "key":"date",
-                                 "value":"2026-03-01"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Cancelar Agendamento",
-                     "request":{
-                        "method":"PUT",
-                        "url":{
-                           "raw":"{{base_url}}/api/appointments/:id/cancel",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "appointments",
-                              ":id",
-                              "cancel"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Confirmar Agendamento",
-                     "request":{
-                        "method":"PUT",
-                        "url":{
-                           "raw":"{{base_url}}/api/appointments/:id/confirm",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "appointments",
-                              ":id",
-                              "confirm"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Concluir Agendamento",
-                     "request":{
-                        "method":"PUT",
-                        "url":{
-                           "raw":"{{base_url}}/api/appointments/:id/conclude",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "appointments",
-                              ":id",
-                              "conclude"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  }
-               ]
-            },
-            {
-               "name":"Barber Blocks",
-               "item":[
-                  {
-                     "name":"Criar bloqueio",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/appointments/barber-blocks",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "appointments",
-                              "barber-blocks"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Listar bloqueios",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/appointments/barber-blocks?barberId=uuid&date=2026-03-01",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "appointments",
-                              "barber-blocks"
-                           ],
-                           "query":[
-                              {
-                                 "key":"barberId",
-                                 "value":"uuid"
-                              },
-                              {
-                                 "key":"date",
-                                 "value":"2026-03-01"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Remover bloqueio",
-                     "request":{
-                        "method":"DELETE",
-                        "url":{
-                           "raw":"{{base_url}}/api/appointments/barber-blocks/:id",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "appointments",
-                              "barber-blocks",
-                              ":id"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  }
-               ]
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
             }
-         ]
-      },
-      {
-         "name":"Payment Service",
-         "item":[
+          ],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"email\": \"<<customer_email>>\",\n  \"password\": \"<<customer_password>>\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200){const body=pw.response.body;if(body.idToken){pw.env.set('customer_token',body.idToken);pw.env.set('token',body.idToken);}if(body.profile&&body.profile.id)pw.env.set('customer_id',body.profile.id);}"
+        },
+        {
+          "id": "req-auth-login-barber",
+          "name": "Login Barbeiro",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/auth/email/login",
+          "headers": [
             {
-               "name":"Criar Pagamento",
-               "request":{
-                  "method":"POST",
-                  "url":{
-                     "raw":"{{base_url}}/api/payments/create",
-                     "host":[
-                        "{{base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "payments",
-                        "create"
-                     ]
-                  }
-               }
-            },
-            {
-               "name":"Buscar transação por ID",
-               "request":{
-                  "method":"GET",
-                  "url":{
-                     "raw":"{{base_url}}/api/payments/:id",
-                     "host":[
-                        "{{base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "payments",
-                        ":id"
-                     ],
-                     "variable":[
-                        {
-                           "key":"id",
-                           "value":"uuid"
-                        }
-                     ]
-                  }
-               }
-            },
-            {
-               "name":"Meus pagamentos",
-               "request":{
-                  "method":"GET",
-                  "url":{
-                     "raw":"{{base_url}}/api/payments/my-payments",
-                     "host":[
-                        "{{base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "payments",
-                        "my-payments"
-                     ]
-                  }
-               }
-            },
-            {
-               "name":"Mercado Pago Webhook",
-               "request":{
-                  "method":"POST",
-                  "url":{
-                     "raw":"{{base_url}}/api/payments/webhook",
-                     "host":[
-                        "{{base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "payments",
-                        "webhook"
-                     ]
-                  }
-               },
-               "protocolProfileBehavior":{
-                  "disableBodyPruning":true
-               }
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
             }
-         ]
-      },
-      {
-         "name":"Notification Service",
-         "item":[
+          ],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"email\": \"<<barber_email>>\",\n  \"password\": \"<<barber_password>>\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200){const body=pw.response.body;if(body.idToken){pw.env.set('barber_token',body.idToken);pw.env.set('token',body.idToken);}if(body.profile&&body.profile.id)pw.env.set('barber_id',body.profile.id);}"
+        },
+        {
+          "id": "req-auth-login-owner",
+          "name": "Login Dono",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/auth/email/login",
+          "headers": [
             {
-               "name":"Minhas notificações",
-               "request":{
-                  "method":"GET",
-                  "url":{
-                     "raw":"{{base_url}}/api/notifications/my-notifications",
-                     "host":[
-                        "{{base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "notifications",
-                        "my-notifications"
-                     ]
-                  }
-               }
-            },
-            {
-               "name":"Marcar como lida",
-               "request":{
-                  "method":"PUT",
-                  "url":{
-                     "raw":"{{base_url}}/api/notifications/:id/read",
-                     "host":[
-                        "{{base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "notifications",
-                        ":id",
-                        "read"
-                     ],
-                     "variable":[
-                        {
-                           "key":"id",
-                           "value":"uuid"
-                        }
-                     ]
-                  }
-               }
-            },
-            {
-               "name":"Contagem de não lidas",
-               "request":{
-                  "method":"GET",
-                  "url":{
-                     "raw":"{{base_url}}/api/notifications/unread-count",
-                     "host":[
-                        "{{base_url}}"
-                     ],
-                     "path":[
-                        "api",
-                        "notifications",
-                        "unread-count"
-                     ]
-                  }
-               }
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
             }
-         ]
-      },
-      {
-         "name":"Product Service",
-         "item":[
+          ],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"email\": \"<<owner_email>>\",\n  \"password\": \"<<owner_password>>\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200){const body=pw.response.body;if(body.idToken){pw.env.set('owner_token',body.idToken);pw.env.set('token',body.idToken);}}"
+        },
+        {
+          "id": "req-auth-verify",
+          "name": "Verificar Token (verify)",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/auth/verify",
+          "headers": [
             {
-               "name":"Products",
-               "item":[
-                  {
-                     "name":"Criar Produto",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/products",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "products"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Listar Produtos da Barbearia",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/products?barbershopId=uuid",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "products"
-                           ],
-                           "query":[
-                              {
-                                 "key":"barbershopId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Buscar Produto por ID",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/products/:id",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "products",
-                              ":id"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Atualizar Produto",
-                     "request":{
-                        "method":"PUT",
-                        "url":{
-                           "raw":"{{base_url}}/api/products/:id",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "products",
-                              ":id"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Desativar Produto",
-                     "request":{
-                        "method":"DELETE",
-                        "url":{
-                           "raw":"{{base_url}}/api/products/:id",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "products",
-                              ":id"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  }
-               ]
-            },
-            {
-               "name":"Orders",
-               "item":[
-                  {
-                     "name":"Criar Pedido",
-                     "request":{
-                        "method":"POST",
-                        "url":{
-                           "raw":"{{base_url}}/api/orders",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "orders"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Meus Pedidos (Cliente)",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/orders/my-orders",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "orders",
-                              "my-orders"
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Pedidos da Barbearia (Dono)",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{base_url}}/api/orders/shop-orders?barbershopId=uuid",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "orders",
-                              "shop-orders"
-                           ],
-                           "query":[
-                              {
-                                 "key":"barbershopId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Atualizar Status do Pedido",
-                     "request":{
-                        "method":"PUT",
-                        "url":{
-                           "raw":"{{base_url}}/api/orders/:id/status?status=PAID",
-                           "host":[
-                              "{{base_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "orders",
-                              ":id",
-                              "status"
-                           ],
-                           "query":[
-                              {
-                                 "key":"status",
-                                 "value":"PAID"
-                              }
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  }
-               ]
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
             }
-         ]
-      },
-      {
-         "name":"Internal (Apenas Feign Clients)",
-         "description":"Estes endpoints não são expostos pelo API Gateway (porta 8080/8082). Devem ser acessados diretamente nas portas dos respectivos serviços no ambiente local.",
-         "item":[
+          ],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"idToken\": \"<<token>>\",\n  \"userType\": null\n}"
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-auth-me",
+          "name": "GET /auth/me (perfil autenticado)",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/auth/me",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200){const body=pw.response.body;if(body.id)pw.env.set('customer_id',body.id);if(body.barbershopId)pw.env.set('barbershop_id',body.barbershopId);}"
+        },
+        {
+          "id": "req-auth-complete-customer",
+          "name": "Completar Perfil Cliente",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/auth/customers/complete-profile",
+          "headers": [
             {
-               "name":"User Service (Porta 8081)",
-               "item":[
-                  {
-                     "name":"Buscar Usuário por ID",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{user_service_url}}/api/internal/users/:id",
-                           "host":[
-                              "{{user_service_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "internal",
-                              "users",
-                              ":id"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Buscar Usuário por Email",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{user_service_url}}/api/internal/users/by-email/:email",
-                           "host":[
-                              "{{user_service_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "internal",
-                              "users",
-                              "by-email",
-                              ":email"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"email",
-                                 "value":"teste@teste.com"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Vincular Barbeiro a Barbearia",
-                     "request":{
-                        "method":"PUT",
-                        "url":{
-                           "raw":"{{user_service_url}}/api/internal/users/:id/barbershop",
-                           "host":[
-                              "{{user_service_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "internal",
-                              "users",
-                              ":id",
-                              "barbershop"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  }
-               ]
-            },
-            {
-               "name":"Barbershop Service (Porta 8082)",
-               "item":[
-                  {
-                     "name":"Buscar Barbearia Básica",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{barbershop_service_url}}/api/internal/barbershops/:id",
-                           "host":[
-                              "{{barbershop_service_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "internal",
-                              "barbershops",
-                              ":id"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Buscar Atividades (IDs)",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{barbershop_service_url}}/api/internal/barbershops/:shopId/activities?ids=uuid1,uuid2",
-                           "host":[
-                              "{{barbershop_service_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "internal",
-                              "barbershops",
-                              ":shopId",
-                              "activities"
-                           ],
-                           "query":[
-                              {
-                                 "key":"ids",
-                                 "value":"uuid1,uuid2"
-                              }
-                           ],
-                           "variable":[
-                              {
-                                 "key":"shopId",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  }
-               ]
-            },
-            {
-               "name":"Schedule Service (Porta 8083)",
-               "item":[
-                  {
-                     "name":"Buscar Agendamento (Payment)",
-                     "request":{
-                        "method":"GET",
-                        "url":{
-                           "raw":"{{schedule_service_url}}/api/internal/appointments/:id",
-                           "host":[
-                              "{{schedule_service_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "internal",
-                              "appointments",
-                              ":id"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  },
-                  {
-                     "name":"Atualizar Status de Pagamento",
-                     "request":{
-                        "method":"PUT",
-                        "url":{
-                           "raw":"{{schedule_service_url}}/api/internal/appointments/:id/payment-status",
-                           "host":[
-                              "{{schedule_service_url}}"
-                           ],
-                           "path":[
-                              "api",
-                              "internal",
-                              "appointments",
-                              ":id",
-                              "payment-status"
-                           ],
-                           "variable":[
-                              {
-                                 "key":"id",
-                                 "value":"uuid"
-                              }
-                           ]
-                        }
-                     }
-                  }
-               ]
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
             }
-         ]
-      }
-   ]
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<customer_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"tell\": \"11987654321\",\n  \"documentCPF\": \"12345678901\",\n  \"name\": \"Joao Cliente\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-auth-complete-barber",
+          "name": "Completar Perfil Barbeiro",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/auth/barbers/complete-profile",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<barber_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"tell\": \"11911112222\",\n  \"documentCPF\": \"98765432100\",\n  \"name\": \"Carlos Barbeiro\",\n  \"workStartTime\": \"09:00\",\n  \"workEndTime\": \"18:00\",\n  \"isOwner\": false\n}"
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        }
+      ]
+    },
+    {
+      "id": "folder-customers",
+      "name": "02 - Customers",
+      "folders": [],
+      "requests": [
+        {
+          "id": "req-customers-list",
+          "name": "Listar Clientes",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/customers",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-customers-get",
+          "name": "Buscar Cliente por ID",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/customers/<<customer_id>>",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-customers-update",
+          "name": "Atualizar Meu Perfil (Customer)",
+          "method": "PUT",
+          "endpoint": "<<base_url>>/api/customers/me",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<customer_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"name\": \"Joao Atualizado\",\n  \"tell\": \"11999998888\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-customers-delete",
+          "name": "Deletar Minha Conta",
+          "method": "DELETE",
+          "endpoint": "<<base_url>>/api/customers/me",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<customer_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-customers-upload-photo",
+          "name": "Upload Foto Cliente",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/customers/me/upload-photo",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<customer_token>>"
+          },
+          "body": {
+            "contentType": "multipart/form-data",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        }
+      ]
+    },
+    {
+      "id": "folder-barbers",
+      "name": "03 - Barbers",
+      "folders": [],
+      "requests": [
+        {
+          "id": "req-barbers-list",
+          "name": "Listar Barbeiros",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/barbers",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200){const body=pw.response.body;if(Array.isArray(body)&&body.length>0)pw.env.set('barber_id',body[0].id);}"
+        },
+        {
+          "id": "req-barbers-get",
+          "name": "Buscar Barbeiro por ID",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/barbers/<<barber_id>>",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-barbers-by-barbershop",
+          "name": "Barbeiros por Barbearia",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/barbers/barbershop/<<barbershop_id>>",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-barbers-update",
+          "name": "Atualizar Barbeiro",
+          "method": "PUT",
+          "endpoint": "<<base_url>>/api/barbers/<<barber_id>>",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<barber_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"name\": \"Carlos Atualizado\",\n  \"tell\": \"11955556666\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-barbers-my-activities",
+          "name": "Minhas Atividades Atribuidas",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/barbers/me/my-activities",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<barber_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200){const body=pw.response.body;if(Array.isArray(body)&&body.length>0)pw.env.set('activity_id',body[0]);}"
+        },
+        {
+          "id": "req-barbers-assign-activities",
+          "name": "Atribuir Atividades ao Barbeiro",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/barbers/me/assign-activities",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<barber_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"activityIds\": [\n    \"<<activity_id>>\"\n  ]\n}"
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        }
+      ]
+    },
+    {
+      "id": "folder-barbershops",
+      "name": "04 - Barbershops",
+      "folders": [],
+      "requests": [
+        {
+          "id": "req-shops-list",
+          "name": "Listar Barbearias",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/barbershops",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200){const body=pw.response.body;if(Array.isArray(body)&&body.length>0)pw.env.set('barbershop_id',body[0].id);}"
+        },
+        {
+          "id": "req-shops-get",
+          "name": "Buscar Barbearia por ID",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/barbershops/<<barbershop_id>>",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-shops-activities",
+          "name": "Atividades da Barbearia",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/barbershops/<<barbershop_id>>/activities",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200){const body=pw.response.body;if(Array.isArray(body)&&body.length>0)pw.env.set('activity_id',body[0].id);}"
+        },
+        {
+          "id": "req-shops-register",
+          "name": "Registrar Minha Barbearia",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/barbershops/register-my-shop",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "multipart/form-data",
+            "body": "name=Barbearia CortaAi\ncnpj=12345678000199\naddress=Rua das Flores, 123"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const body=pw.response.body;if(body.id)pw.env.set('barbershop_id',body.id);}"
+        },
+        {
+          "id": "req-shops-update",
+          "name": "Atualizar Minha Barbearia",
+          "method": "PUT",
+          "endpoint": "<<base_url>>/api/barbershops/my-shop",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"name\": \"Barbearia CortaAi Premium\",\n  \"address\": \"Av. Paulista, 1000\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-shops-create-activity",
+          "name": "Criar Atividade/Servico",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/barbershops/my-shop/activities",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"activityName\": \"Corte Masculino\",\n  \"price\": 35,\n  \"durationMinutes\": 30\n}"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const body=pw.response.body;if(body.id)pw.env.set('activity_id',body.id);}"
+        },
+        {
+          "id": "req-shops-update-activity",
+          "name": "Atualizar Atividade",
+          "method": "PUT",
+          "endpoint": "<<base_url>>/api/barbershops/my-shop/activities/<<activity_id>>",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"activityName\": \"Corte + Barba\",\n  \"price\": 55,\n  \"durationMinutes\": 50\n}"
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-shops-delete-activity",
+          "name": "Remover Atividade",
+          "method": "DELETE",
+          "endpoint": "<<base_url>>/api/barbershops/my-shop/activities/<<activity_id>>",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-shops-join-request",
+          "name": "Solicitar Entrada na Barbearia (Barbeiro)",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/barbershops/join-request",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<barber_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"cnpj\": \"12345678000199\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const body=pw.response.body;if(body.requestId)pw.env.set('join_request_id',body.requestId);else if(body.id)pw.env.set('join_request_id',body.id);}"
+        },
+        {
+          "id": "req-shops-pending-requests",
+          "name": "Listar Solicitacoes Pendentes (Dono)",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/barbershops/my-shop/pending-requests",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200){const body=pw.response.body;if(Array.isArray(body)&&body.length>0)pw.env.set('join_request_id',body[0].requestId);}"
+        },
+        {
+          "id": "req-shops-approve-request",
+          "name": "Aprovar Solicitacao (Dono)",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/barbershops/my-shop/approve-request/<<join_request_id>>",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-shops-leave",
+          "name": "Sair da Barbearia (Barbeiro)",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/barbershops/leave-shop",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<barber_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-shops-remove-barber",
+          "name": "Remover Barbeiro (Dono)",
+          "method": "DELETE",
+          "endpoint": "<<base_url>>/api/barbershops/my-shop/remove-barber/<<barber_id>>",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-shops-upload-logo",
+          "name": "Upload Logo",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/barbershops/my-shop/upload-logo",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "multipart/form-data",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-shops-upload-banner",
+          "name": "Upload Banner",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/barbershops/my-shop/upload-banner",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "multipart/form-data",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-shops-upload-activity-photo",
+          "name": "Upload Foto da Atividade",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/barbershops/my-shop/activities/<<activity_id>>/upload-photo",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "multipart/form-data",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-shops-create-highlight",
+          "name": "Adicionar Destaque (Highlight)",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/barbershops/my-shop/highlights",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "multipart/form-data",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const body=pw.response.body;if(body.id)pw.env.set('highlight_id',body.id);}"
+        },
+        {
+          "id": "req-shops-delete-highlight",
+          "name": "Remover Destaque",
+          "method": "DELETE",
+          "endpoint": "<<base_url>>/api/barbershops/my-shop/highlights/<<highlight_id>>",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-shops-close",
+          "name": "[PERIGO] Fechar Barbearia",
+          "method": "DELETE",
+          "endpoint": "<<base_url>>/api/barbershops/my-shop/close",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"password\": \"<<owner_password>>\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        }
+      ]
+    },
+    {
+      "id": "folder-schedule",
+      "name": "05 - Agendamentos",
+      "folders": [],
+      "requests": [
+        {
+          "id": "req-appt-create",
+          "name": "Criar Agendamento",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/appointments",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<customer_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"customerId\": \"<<customer_id>>\",\n  \"barberId\": \"<<barber_id>>\",\n  \"barbershopId\": \"<<barbershop_id>>\",\n  \"activityIds\": [\n    \"<<activity_id>>\"\n  ],\n  \"startTime\": \"2025-08-20T10:00:00\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const body=pw.response.body;if(body.id)pw.env.set('appointment_id',body.id);}"
+        },
+        {
+          "id": "req-appt-get",
+          "name": "Buscar Agendamento por ID",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/appointments/<<appointment_id>>",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-appt-mine",
+          "name": "Meus Agendamentos",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/appointments/my-appointments",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-appt-by-barber",
+          "name": "Agendamentos do Barbeiro (por data)",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/appointments/barber/<<barber_id>>",
+          "headers": [],
+          "params": [
+            {
+              "key": "date",
+              "value": "2025-08-20",
+              "active": true
+            }
+          ],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<barber_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-appt-by-barbershop",
+          "name": "Agendamentos da Barbearia (por data)",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/appointments/barbershop/<<barbershop_id>>",
+          "headers": [],
+          "params": [
+            {
+              "key": "date",
+              "value": "2025-08-20",
+              "active": true
+            }
+          ],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-appt-availability",
+          "name": "Consultar Disponibilidade",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/appointments/availability",
+          "headers": [],
+          "params": [
+            {
+              "key": "barberId",
+              "value": "<<barber_id>>",
+              "active": true
+            },
+            {
+              "key": "date",
+              "value": "2025-08-20",
+              "active": true
+            }
+          ],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-appt-confirm",
+          "name": "Confirmar Agendamento",
+          "method": "PUT",
+          "endpoint": "<<base_url>>/api/appointments/<<appointment_id>>/confirm",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<barber_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-appt-cancel",
+          "name": "Cancelar Agendamento",
+          "method": "PUT",
+          "endpoint": "<<base_url>>/api/appointments/<<appointment_id>>/cancel",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-appt-conclude",
+          "name": "Concluir Agendamento",
+          "method": "PUT",
+          "endpoint": "<<base_url>>/api/appointments/<<appointment_id>>/conclude",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<barber_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-block-create",
+          "name": "Criar Bloqueio de Horario",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/appointments/barber-blocks",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<barber_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"barberId\": \"<<barber_id>>\",\n  \"startTime\": \"2025-08-20T13:00:00\",\n  \"endTime\": \"2025-08-20T14:00:00\",\n  \"reason\": \"Almoco\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const body=pw.response.body;if(body.id)pw.env.set('block_id',body.id);}"
+        },
+        {
+          "id": "req-block-list",
+          "name": "Listar Bloqueios do Barbeiro",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/appointments/barber-blocks",
+          "headers": [],
+          "params": [
+            {
+              "key": "barberId",
+              "value": "<<barber_id>>",
+              "active": true
+            },
+            {
+              "key": "date",
+              "value": "2025-08-20",
+              "active": true
+            }
+          ],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-block-delete",
+          "name": "Remover Bloqueio",
+          "method": "DELETE",
+          "endpoint": "<<base_url>>/api/appointments/barber-blocks/<<block_id>>",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<barber_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        }
+      ]
+    },
+    {
+      "id": "folder-payments",
+      "name": "06 - Pagamentos",
+      "folders": [],
+      "requests": [
+        {
+          "id": "req-payment-create",
+          "name": "Criar Pagamento",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/payments/create",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            },
+            {
+              "key": "X-User-Id",
+              "value": "<<customer_id>>",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<customer_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"appointmentId\": \"<<appointment_id>>\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const body=pw.response.body;if(body.id)pw.env.set('payment_id',body.id);}"
+        },
+        {
+          "id": "req-payment-get",
+          "name": "Buscar Pagamento por ID",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/payments/<<payment_id>>",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-payment-mine",
+          "name": "Meus Pagamentos",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/payments/my-payments",
+          "headers": [
+            {
+              "key": "X-User-Id",
+              "value": "<<customer_id>>",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<customer_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-payment-webhook",
+          "name": "Webhook MercadoPago (simulacao)",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/payments/webhook",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"action\": \"payment.updated\",\n  \"data\": {\n    \"id\": \"123456789\"\n  },\n  \"type\": \"payment\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        }
+      ]
+    },
+    {
+      "id": "folder-products",
+      "name": "07 - Produtos e Pedidos",
+      "folders": [],
+      "requests": [
+        {
+          "id": "req-products-list",
+          "name": "Listar Produtos da Barbearia",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/products",
+          "headers": [],
+          "params": [
+            {
+              "key": "barbershopId",
+              "value": "<<barbershop_id>>",
+              "active": true
+            }
+          ],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200){const body=pw.response.body;if(Array.isArray(body)&&body.length>0)pw.env.set('product_id',body[0].id);}"
+        },
+        {
+          "id": "req-products-get",
+          "name": "Buscar Produto por ID",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/products/<<product_id>>",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-products-create",
+          "name": "Criar Produto",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/products",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"barbershopId\": \"<<barbershop_id>>\",\n  \"name\": \"Pomada Modeladora\",\n  \"description\": \"Pomada de fixacao forte\",\n  \"price\": 45.9,\n  \"category\": \"HAIR_PRODUCT\",\n  \"stockQuantity\": 20,\n  \"imageUrl\": \"\"\n}"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const body=pw.response.body;if(body.id)pw.env.set('product_id',body.id);}"
+        },
+        {
+          "id": "req-products-update",
+          "name": "Atualizar Produto",
+          "method": "PUT",
+          "endpoint": "<<base_url>>/api/products/<<product_id>>",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"name\": \"Pomada Premium\",\n  \"price\": 55.9,\n  \"stockQuantity\": 15\n}"
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-products-delete",
+          "name": "Desativar Produto (soft delete)",
+          "method": "DELETE",
+          "endpoint": "<<base_url>>/api/products/<<product_id>>",
+          "headers": [],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-orders-create",
+          "name": "Criar Pedido",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/orders",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            },
+            {
+              "key": "X-User-Id",
+              "value": "<<customer_id>>",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<customer_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"barbershopId\": \"<<barbershop_id>>\",\n  \"items\": [\n    {\n      \"productId\": \"<<product_id>>\",\n      \"quantity\": 1\n    }\n  ]\n}"
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const body=pw.response.body;if(body.id)pw.env.set('order_id',body.id);}"
+        },
+        {
+          "id": "req-orders-mine",
+          "name": "Meus Pedidos",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/orders/my-orders",
+          "headers": [
+            {
+              "key": "X-User-Id",
+              "value": "<<customer_id>>",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<customer_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-orders-shop",
+          "name": "Pedidos da Barbearia",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/orders/shop-orders",
+          "headers": [],
+          "params": [
+            {
+              "key": "barbershopId",
+              "value": "<<barbershop_id>>",
+              "active": true
+            }
+          ],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-orders-status",
+          "name": "Atualizar Status do Pedido",
+          "method": "PUT",
+          "endpoint": "<<base_url>>/api/orders/<<order_id>>/status",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<owner_token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "\"DELIVERED\""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        }
+      ]
+    },
+    {
+      "id": "folder-notifications",
+      "name": "08 - Notificacoes",
+      "folders": [],
+      "requests": [
+        {
+          "id": "req-notif-mine",
+          "name": "Minhas Notificacoes",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/notifications/my-notifications",
+          "headers": [
+            {
+              "key": "X-User-Id",
+              "value": "<<customer_id>>",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": "if(pw.response.status===200){const body=pw.response.body;if(Array.isArray(body)&&body.length>0)pw.env.set('notification_id',body[0].id);}"
+        },
+        {
+          "id": "req-notif-count",
+          "name": "Contagem de Nao Lidas",
+          "method": "GET",
+          "endpoint": "<<base_url>>/api/notifications/unread-count",
+          "headers": [
+            {
+              "key": "X-User-Id",
+              "value": "<<customer_id>>",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        },
+        {
+          "id": "req-notif-read",
+          "name": "Marcar como Lida",
+          "method": "PUT",
+          "endpoint": "<<base_url>>/api/notifications/<<notification_id>>/read",
+          "headers": [
+            {
+              "key": "X-User-Id",
+              "value": "<<customer_id>>",
+              "active": true
+            }
+          ],
+          "params": [],
+          "auth": {
+            "authType": "bearer",
+            "authActive": true,
+            "token": "<<token>>"
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": ""
+          },
+          "preRequestScript": "",
+          "testScript": ""
+        }
+      ]
+    }
+  ],
+  "requests": []
 }

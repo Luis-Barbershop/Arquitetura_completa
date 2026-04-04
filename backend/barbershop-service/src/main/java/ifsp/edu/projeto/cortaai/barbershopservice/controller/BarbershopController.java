@@ -31,14 +31,6 @@ public class BarbershopController {
 
     private final BarbershopService barbershopService;
 
-    // ========== DIAGNÓSTICO ==========
-
-    @Operation(summary = "Health check do controller", description = "Verifica se o controller está registrado e o código novo está rodando.")
-    @GetMapping("/ping")
-    public ResponseEntity<String> ping() {
-        return ResponseEntity.ok("{\"status\":\"ok\",\"version\":\"cd28fd0-httpservletrequest\",\"timestamp\":\"" + java.time.Instant.now() + "\"}");
-    }
-
     // ========== LEITURA PÚBLICA ==========
 
     @Operation(summary = "Lista todas as barbearias", description = "Retorna uma lista pública de todas as barbearias cadastradas.")

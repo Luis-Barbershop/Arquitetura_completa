@@ -1,0 +1,32 @@
+{
+  "v": 1,
+  "id": "env-cortaai-local",
+  "name": "CortaAí - Local Dev",
+  "variables": [
+    { "key": "base_url",             "value": "https://api.cortaai.shop",  "secret": false },
+
+    { "key": "customer_email",       "value": "gb.chaves@hotmail.com",  "secret": false },
+    { "key": "customer_password",    "value": "Senha@123",              "secret": true  },
+    { "key": "barber_email",         "value": "barbeiro@teste.com",     "secret": false },
+    { "key": "barber_password",      "value": "Senha@123",              "secret": true  },
+    { "key": "owner_email",          "value": "chaves.bsilba@gmail.com","secret": false },
+    { "key": "owner_password",       "value": "Senha@123",               "secret": true  },
+    { "key": "token",                "value": "",                       "secret": true  },
+    { "key": "customer_token",       "value": "",                       "secret": true  },
+    { "key": "barber_token",         "value": "",                       "secret": true  },
+    { "key": "owner_token",          "value": "",                       "secret": true  },
+
+    { "key": "customer_id",          "value": "",                       "secret": false },
+    { "key": "barber_id",            "value": "",                       "secret": false },
+    { "key": "barbershop_id",        "value": "",                       "secret": false },
+    { "key": "activity_id",          "value": "",                       "secret": false },
+    { "key": "appointment_id",       "value": "",                       "secret": false },
+    { "key": "payment_id",           "value": "",                       "secret": false },
+    { "key": "product_id",           "value": "",                       "secret": false },
+    { "key": "order_id",             "value": "",                       "secret": false },
+    { "key": "notification_id",      "value": "",                       "secret": false },
+    { "key": "join_request_id",      "value": "",                       "secret": false },
+    { "key": "block_id",             "value": "",                       "secret": false },
+    { "key": "highlight_id",         "value": "",                       "secret": false }
+  ]
+}

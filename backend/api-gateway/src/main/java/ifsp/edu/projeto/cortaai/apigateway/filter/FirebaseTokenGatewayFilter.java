@@ -41,30 +41,25 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             "/api/auth/email/login", "/api/auth/email/login/",
             "/api/auth/email/verify-token", "/api/auth/email/verify-token/",
             "/api/auth/email/register", "/api/auth/email/register/",
-            // alias legado (remover após migração completa do frontend)
-            "/api/auth/firebase-test/sign-in-email", "/api/auth/firebase-test/sign-in-email/",
-            "/api/auth/firebase-test/verify-id-token", "/api/auth/firebase-test/verify-id-token/",
-            "/api/auth/firebase-test/register-email", "/api/auth/firebase-test/register-email/",
-            "/api/customers/login", "/api/customers/login/",
-            "/api/barbers/login", "/api/barbers/login/",
-            "/api/customers/register", "/api/customers/register/",
-            "/api/barbers/register", "/api/barbers/register/",
-            "/api/auth/social/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
             "/webjars/**",
             "/actuator/**",
-            "/api/barbers",
-            "/api/barbers/**",
             "/api/payments/webhook", "/api/payments/webhook/",
             "/api/internal/**"
+    );
+
+    /** Endpoints públicos de leitura de barbeiros (somente GET). */
+    private static final List<String> PUBLIC_BARBERS_GET_PATHS = List.of(
+            "/api/barbers",
+            "/api/barbers/*",
+            "/api/barbers/barbershop/*"
     );
 
     /** Endpoints públicos de leitura de barbearia (somente GET). */
     private static final List<String> PUBLIC_BARBERSHOP_GET_PATHS = List.of(
             "/api/barbershops",
-            "/api/barbershops/ping",
             "/api/barbershops/*",
             "/api/barbershops/*/activities"
     );
@@ -92,7 +87,7 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
         }
 
         String path = exchangeWithCorrelation.getRequest().getURI().getPath();
-        if (isPublicPath(path) || isPublicBarbershopGet(path, method)) {
+        if (isPublicPath(path) || isPublicGetPath(path, method)) {
             return chain.filter(exchangeWithCorrelation);
         }
 
@@ -126,6 +121,14 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
 
     private boolean isPublicPath(String path) {
         return PUBLIC_PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
+    }
+
+    private boolean isPublicGetPath(String path, String method) {
+        if (!"GET".equalsIgnoreCase(method)) {
+            return false;
+        }
+        return PUBLIC_BARBERS_GET_PATHS.stream().anyMatch(p -> pathMatcher.match(p, path))
+                || PUBLIC_BARBERSHOP_GET_PATHS.stream().anyMatch(p -> pathMatcher.match(p, path));
     }
 
     private boolean isPublicBarbershopGet(String path, String method) {
