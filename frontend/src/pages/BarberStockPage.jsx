@@ -6,8 +6,6 @@ import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import styles from './CSS/BarberStockPage.module.css';
 
-const STOCK_STORAGE_PREFIX = 'barber_stock_items_';
-
 const defaultItems = [
   {
     id: 'default-1',
@@ -35,6 +33,27 @@ const defaultItems = [
   },
 ];
 
+const PRODUCT_CATEGORIES = [
+  { value: 'OTHER', label: 'Outros' },
+  { value: 'POMADE', label: 'Pomada' },
+  { value: 'WAX', label: 'Cera' },
+  { value: 'OIL', label: 'Oleo capilar' },
+  { value: 'BEARD_OIL', label: 'Oleo para barba' },
+  { value: 'AFTERSHAVE', label: 'Pos barba' },
+  { value: 'SHAMPOO', label: 'Shampoo' },
+  { value: 'CONDITIONER', label: 'Condicionador' },
+  { value: 'RAZOR', label: 'Navalha/Lamina' },
+  { value: 'SCISSORS', label: 'Tesoura' },
+  { value: 'COMB', label: 'Pente' },
+  { value: 'BRUSH', label: 'Escova' },
+  { value: 'ACCESSORY', label: 'Acessorio' },
+];
+
+const categoryLabelByValue = PRODUCT_CATEGORIES.reduce((acc, item) => {
+  acc[item.value] = item.label;
+  return acc;
+}, {});
+
 const asCurrency = (value) => `R$ ${Number(value || 0).toFixed(2).replace('.', ',')}`;
 
 function BarberStockPage() {
@@ -49,7 +68,7 @@ function BarberStockPage() {
   const [categoryFilter, setCategoryFilter] = useState('Todas');
 
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState('OTHER');
   const [quantity, setQuantity] = useState('1');
   const [minQuantity, setMinQuantity] = useState('3');
   const [costPrice, setCostPrice] = useState('');
@@ -101,42 +120,40 @@ function BarberStockPage() {
   }, [navigate]);
 
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
+    const loadProducts = async () => {
+      if (!barber?.barbershopId) {
+        setItems(defaultItems);
+        setLoadingItems(false);
+        return;
+      }
 
-    if (!userId) {
-      setItems(defaultItems);
-      setLoadingItems(false);
-      return;
-    }
+      try {
+        setLoadingItems(true);
+        const response = await api.get('/products', {
+          params: { barbershopId: barber.barbershopId },
+        });
 
-    const storageKey = `${STOCK_STORAGE_PREFIX}${userId}`;
-    const raw = localStorage.getItem(storageKey);
+        const apiItems = Array.isArray(response.data) ? response.data : [];
+        const normalized = apiItems.map((item) => ({
+          id: item.id,
+          name: item.name || '',
+          category: categoryLabelByValue[item.category] || 'Outros',
+          quantity: Number(item.stockQuantity || 0),
+          minQuantity: Number(item.minStockQuantity || 0),
+          costPrice: Number(item.price || 0),
+        }));
 
-    if (!raw) {
-      localStorage.setItem(storageKey, JSON.stringify(defaultItems));
-      setItems(defaultItems);
-      setLoadingItems(false);
-      return;
-    }
+        setItems(normalized);
+      } catch (error) {
+        console.error('Erro ao carregar estoque da API:', error);
+        setItems(defaultItems);
+      } finally {
+        setLoadingItems(false);
+      }
+    };
 
-    try {
-      const parsed = JSON.parse(raw);
-      setItems(Array.isArray(parsed) ? parsed : defaultItems);
-    } catch (error) {
-      console.error('Erro ao ler estoque local:', error);
-      setItems(defaultItems);
-    } finally {
-      setLoadingItems(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const userId = localStorage.getItem('userId');
-    if (!userId || loadingItems) return;
-
-    const storageKey = `${STOCK_STORAGE_PREFIX}${userId}`;
-    localStorage.setItem(storageKey, JSON.stringify(items));
-  }, [items, loadingItems]);
+    loadProducts();
+  }, [barber?.barbershopId]);
 
   const totalProducts = items.length;
   const totalUnits = useMemo(
@@ -172,49 +189,77 @@ function BarberStockPage() {
     });
   }, [items, searchTerm, categoryFilter]);
 
-  const handleAddItem = (e) => {
+  const handleAddItem = async (e) => {
     e.preventDefault();
 
     if (!name.trim() || !category.trim() || !quantity || !minQuantity || !costPrice) {
       return;
     }
 
-    setIsSaving(true);
+    if (!barber?.barbershopId) return;
 
-    const newItem = {
-      id: `stock-${Date.now()}`,
-      name: name.trim(),
-      category: category.trim(),
-      quantity: Number(quantity),
-      minQuantity: Number(minQuantity),
-      costPrice: Number(costPrice),
-    };
+    try {
+      setIsSaving(true);
 
-    setItems((prev) => [newItem, ...prev]);
+      const response = await api.post('/products', {
+        barbershopId: barber.barbershopId,
+        name: name.trim(),
+        category,
+        stockQuantity: Number(quantity),
+        minStockQuantity: Number(minQuantity),
+        price: Number(costPrice),
+      });
 
-    setName('');
-    setCategory('');
-    setQuantity('1');
-    setMinQuantity('3');
-    setCostPrice('');
+      const created = response.data;
+      const newItem = {
+        id: created.id,
+        name: created.name || name.trim(),
+        category: categoryLabelByValue[created.category] || categoryLabelByValue[category] || 'Outros',
+        quantity: Number(created.stockQuantity ?? quantity),
+        minQuantity: Number(created.minStockQuantity ?? minQuantity),
+        costPrice: Number(created.price ?? costPrice),
+      };
 
-    setIsSaving(false);
+      setItems((prev) => [newItem, ...prev]);
+      setName('');
+      setCategory('OTHER');
+      setQuantity('1');
+      setMinQuantity('3');
+      setCostPrice('');
+    } catch (error) {
+      console.error('Erro ao criar produto no estoque:', error);
+      alert('Nao foi possivel salvar o produto. Verifique os dados e tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const updateItemQuantity = (id, delta) => {
-    setItems((prev) => prev.map((item) => {
-      if (item.id !== id) return item;
+  const updateItemQuantity = async (id, delta) => {
+    const target = items.find((item) => item.id === id);
+    if (!target) return;
 
-      const nextQuantity = Math.max(0, Number(item.quantity || 0) + delta);
-      return { ...item, quantity: nextQuantity };
-    }));
+    const nextQuantity = Math.max(0, Number(target.quantity || 0) + delta);
+
+    try {
+      await api.put(`/products/${id}`, { stockQuantity: nextQuantity });
+      setItems((prev) => prev.map((item) => (item.id === id ? { ...item, quantity: nextQuantity } : item)));
+    } catch (error) {
+      console.error('Erro ao atualizar estoque:', error);
+      alert('Nao foi possivel atualizar a quantidade agora.');
+    }
   };
 
-  const handleDeleteItem = (itemId) => {
+  const handleDeleteItem = async (itemId) => {
     const confirmed = window.confirm('Deseja realmente excluir este produto do estoque?');
     if (!confirmed) return;
 
-    setItems((prev) => prev.filter((item) => item.id !== itemId));
+    try {
+      await api.delete(`/products/${itemId}`);
+      setItems((prev) => prev.filter((item) => item.id !== itemId));
+    } catch (error) {
+      console.error('Erro ao excluir produto:', error);
+      alert('Nao foi possivel excluir o produto.');
+    }
   };
 
   if (loadingBarber) {
@@ -285,15 +330,17 @@ function BarberStockPage() {
               <div className={styles.inlineFields}>
                 <div>
                   <label className={styles.formLabel} htmlFor="stock-category">Categoria</label>
-                  <input
+                  <select
                     id="stock-category"
                     className={styles.formInput}
-                    type="text"
-                    placeholder="Ex: Finalizacao"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     required
-                  />
+                  >
+                    {PRODUCT_CATEGORIES.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>

@@ -30,6 +30,8 @@ public record CreateProductDTO(
 
         Integer stockQuantity,
 
+        Integer minStockQuantity,
+
         @Size(max = 500)
         @Pattern(regexp = "^(https?://.*)?$", message = "URL da imagem inválida")
         String imageUrl

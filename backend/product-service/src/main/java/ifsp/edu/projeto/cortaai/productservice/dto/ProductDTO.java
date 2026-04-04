@@ -17,6 +17,7 @@ public record ProductDTO(
         BigDecimal price,
         ProductCategory category,
         Integer stockQuantity,
+        Integer minStockQuantity,
         String imageUrl,
         boolean active,
         LocalDateTime createdAt

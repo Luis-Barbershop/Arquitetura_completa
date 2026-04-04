@@ -5,5 +5,5 @@ package ifsp.edu.projeto.cortaai.productservice.model;
  */
 public enum MovementType {
     IN,   // Entrada de estoque
-    OUT   // Saída de estoque (venda)
+    OUT   // Saída de estoque (consumo/ajuste interno)
 }

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Produto disponível para venda em uma barbearia.
+ * Item de estoque interno da barbearia (uso operacional).
  */
 @Entity
 @Table(name = "products")
@@ -47,6 +47,10 @@ public class Product {
     @Column(nullable = false)
     @Builder.Default
     private Integer stockQuantity = 0;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer minStockQuantity = 0;
 
     private String imageUrl;
 

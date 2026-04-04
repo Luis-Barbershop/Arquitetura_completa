@@ -36,7 +36,7 @@ public class StockMovement {
     private Integer quantity;
 
     /**
-     * Referência ao pedido (caso seja saída por venda).
+     * Referência opcional externa (mantida para compatibilidade).
      */
     private UUID orderId;
 
