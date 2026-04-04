@@ -35,6 +35,12 @@ export const loginUser = async (email, password) => {
         throw error;
     }
 
+    // Salva role e isOwner para uso no redirecionamento e em guards de rota
+    const role = verifyResponse.data?.role || 'ROLE_CUSTOMER';
+    const isOwner = verifyResponse.data?.isOwner || false;
+    localStorage.setItem('userRole', role);
+    localStorage.setItem('isOwner', String(isOwner));
+
     return { ...response.data, profile: verifyResponse.data };
 };
 
@@ -131,6 +137,12 @@ export const loginWithGoogle = async () => {
             error.response = { data: { message: error.message } };
             throw error;
         }
+
+        // Salva role e isOwner para uso no redirecionamento e em guards de rota
+        const role = verifyResponse.data?.role || 'ROLE_CUSTOMER';
+        const isOwner = verifyResponse.data?.isOwner || false;
+        localStorage.setItem('userRole', role);
+        localStorage.setItem('isOwner', String(isOwner));
 
         return {
             idToken,

@@ -3,6 +3,13 @@ import { useState } from "react"
 import { useNavigate, Link, useLocation } from "react-router-dom"
 import { loginUser, loginWithGoogle, checkEmailExists } from "../../services/authService"
 
+// Retorna a rota de destino com base no role salvo no localStorage
+function getRedirectPath() {
+    const role = localStorage.getItem('userRole') || 'ROLE_CUSTOMER';
+    if (role === 'ROLE_OWNER' || role === 'ROLE_BARBER') return '/barberHome';
+    return '/homepage';
+}
+
 function Login_Inputs() {
 
     const [email, setEmail] = useState("");
@@ -19,7 +26,7 @@ function Login_Inputs() {
 
         try {
             await loginUser(email, password);
-            navigate("/homepage");
+            navigate(getRedirectPath());
 
         } catch (err) {
             console.error(err);
@@ -58,7 +65,7 @@ function Login_Inputs() {
         setLoadingGoogle(true);
         try {
             await loginWithGoogle();
-            navigate("/homepage");
+            navigate(getRedirectPath());
         } catch (err) {
             setLoadingGoogle(false);
             if (err.code === "USER_NOT_FOUND") {
