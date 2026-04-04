@@ -91,7 +91,7 @@ public class PaymentController {
             @Parameter(description = "UUID da barbearia") @RequestParam UUID barbershopId,
             @Parameter(description = "Data inicial (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @Parameter(description = "Data final (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        if (!paymentService.canAccessBarbershopFinancials(userId, barbershopId)) {
+        if (!paymentService.canAccessBarbershopFinancials(userId, barbershopId, false)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para acessar o financeiro desta barbearia.");
         }
         return ResponseEntity.ok(paymentService.getBarbershopOverview(barbershopId, from, to));
@@ -105,8 +105,8 @@ public class PaymentController {
             @Parameter(description = "Data inicial (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @Parameter(description = "Data final (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @Parameter(description = "Agrupamento: DAY ou WEEK") @RequestParam(required = false, defaultValue = "DAY") String groupBy) {
-        if (!paymentService.canAccessBarbershopFinancials(userId, barbershopId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para acessar o financeiro desta barbearia.");
+        if (!paymentService.canAccessBarbershopFinancials(userId, barbershopId, true)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "A serie financeira e restrita ao owner da barbearia.");
         }
         return ResponseEntity.ok(paymentService.getBarbershopSeries(barbershopId, from, to, groupBy));
     }

@@ -45,3 +45,58 @@
     width: 36px;
     height: 36px;
 }
+
+.seriesWrapper {
+    margin-top: 0.7rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid rgb(21 21 21 / 18%);
+}
+
+.seriesTitle {
+    font-size: 0.82rem;
+    color: #2f260f;
+    margin-bottom: 0.4rem;
+}
+
+.seriesBars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.seriesRow {
+    display: grid;
+    grid-template-columns: 42px minmax(120px, 1fr) auto;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.seriesLabel {
+    font-size: 0.75rem;
+    color: #2f260f;
+}
+
+.seriesTrack {
+    width: 100%;
+    height: 7px;
+    border-radius: 999px;
+    background: rgb(21 21 21 / 12%);
+    overflow: hidden;
+}
+
+.seriesBar {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #1f6e3a 0%, #38a057 100%);
+}
+
+.seriesValue {
+    font-size: 0.72rem;
+    color: #2f260f;
+}
+
+.seriesHint {
+    margin-top: 0.3rem;
+    font-size: 0.78rem;
+    color: #4c3d1a;
+}

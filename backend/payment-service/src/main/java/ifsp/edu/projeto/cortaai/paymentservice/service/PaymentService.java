@@ -342,7 +342,7 @@ public class PaymentService {
     }
 
     @Transactional(readOnly = true)
-    public boolean canAccessBarbershopFinancials(UUID userId, UUID barbershopId) {
+    public boolean canAccessBarbershopFinancials(UUID userId, UUID barbershopId, boolean ownerOnly) {
         UserInfoDTO user = userServiceClient.getUserById(userId);
         if (user == null || user.getUserType() == null) {
             return false;
@@ -351,6 +351,13 @@ public class PaymentService {
         String userType = user.getUserType().toUpperCase(Locale.ROOT);
         if (!"BARBER".equals(userType)) {
             return false;
+        }
+
+        if (ownerOnly) {
+            String role = user.getRole() != null ? user.getRole().toUpperCase(Locale.ROOT) : "";
+            if (!role.contains("OWNER")) {
+                return false;
+            }
         }
 
         return barbershopId.equals(user.getBarbershopId());
