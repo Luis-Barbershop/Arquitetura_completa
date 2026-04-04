@@ -4,7 +4,7 @@ import { getAllBarbershops, getShopServices } from "../../../services/barbershop
 import { useEffect, useState, useMemo } from "react"
 
 
-function Barbershops({ searchTerm }) {
+function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite }) {
   const [barbershops, setBarbershops] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,6 +47,8 @@ function Barbershops({ searchTerm }) {
           address={shop.address}
           image={shop.logoUrl || "./barbershop.jpg"}
           id={shop.id}
+          isFavorite={favoriteIds.includes(shop.id)}
+          onToggleFavorite={onToggleFavorite}
           rating={shop.averageRating}
           reviewsCount={shop.reviewsCount}
           services={shop.services || []} />

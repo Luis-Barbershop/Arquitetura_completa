@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -110,6 +111,29 @@ public class CustomerServiceImpl implements CustomerService {
         customerRepository.save(customer);
 
         return uploadResult.getSecureUrl();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UUID> listFavoriteBarbershopIdsByFirebaseUid(final String firebaseUid) {
+        final Customer customer = findByFirebaseUid(firebaseUid);
+        return new ArrayList<>(customer.getFavoriteBarbershopIds());
+    }
+
+    @Override
+    @Transactional
+    public void addFavoriteBarbershopByFirebaseUid(final String firebaseUid, final UUID barbershopId) {
+        final Customer customer = findByFirebaseUid(firebaseUid);
+        customer.getFavoriteBarbershopIds().add(barbershopId);
+        customerRepository.save(customer);
+    }
+
+    @Override
+    @Transactional
+    public void removeFavoriteBarbershopByFirebaseUid(final String firebaseUid, final UUID barbershopId) {
+        final Customer customer = findByFirebaseUid(firebaseUid);
+        customer.getFavoriteBarbershopIds().remove(barbershopId);
+        customerRepository.save(customer);
     }
 
     // ── Validações ────────────────────────────────────────────────────────────

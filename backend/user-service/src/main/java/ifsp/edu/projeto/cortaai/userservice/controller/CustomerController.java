@@ -77,6 +77,31 @@ public class CustomerController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Lista favoritas do cliente logado")
+    @GetMapping("/me/favorites")
+    public ResponseEntity<List<UUID>> listMyFavorites(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
+        return ResponseEntity.ok(customerService.listFavoriteBarbershopIdsByFirebaseUid(firebaseUid));
+    }
+
+    @Operation(summary = "Favorita uma barbearia para o cliente logado")
+    @PostMapping("/me/favorites/{barbershopId}")
+    public ResponseEntity<Void> addFavorite(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
+            @Parameter(description = "UUID da barbearia") @PathVariable UUID barbershopId) {
+        customerService.addFavoriteBarbershopByFirebaseUid(firebaseUid, barbershopId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @Operation(summary = "Remove uma barbearia das favoritas do cliente logado")
+    @DeleteMapping("/me/favorites/{barbershopId}")
+    public ResponseEntity<Void> removeFavorite(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
+            @Parameter(description = "UUID da barbearia") @PathVariable UUID barbershopId) {
+        customerService.removeFavoriteBarbershopByFirebaseUid(firebaseUid, barbershopId);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Upload/atualização da foto de perfil do cliente")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Upload realizado com sucesso (retorna a URL da imagem)"),

@@ -12,6 +12,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.sql.Types;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -71,4 +73,16 @@ public class Customer {
 
     @Column(name = "image_url_public_id", length = 255)
     private String imageUrlPublicId;
+
+    @ElementCollection
+    @CollectionTable(
+            name = "customer_favorite_barbershops",
+            joinColumns = @JoinColumn(name = "customer_id"),
+            uniqueConstraints = {
+                    @UniqueConstraint(name = "uk_customer_favorite_shop", columnNames = {"customer_id", "barbershop_id"})
+            }
+    )
+    @Column(name = "barbershop_id", nullable = false, length = 36)
+    @JdbcTypeCode(Types.VARCHAR)
+    private Set<UUID> favoriteBarbershopIds = new HashSet<>();
 }

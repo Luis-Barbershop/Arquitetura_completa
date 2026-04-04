@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Styles from "./CSS/Favorite_barbershops.module.css"
 import { getAllBarbershops } from "../../../services/barbershopService";
 
-function Favorite_barbershops() {
+function Favorite_barbershops({ favoriteIds = [] }) {
     const [favoriteBarbershops, setFavoriteBarbershops] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -12,16 +12,14 @@ function Favorite_barbershops() {
         setLoading(true);
 
         try {
-            const favoritesIds = JSON.parse(localStorage.getItem("favoriteBarbershops") || "[]");
-
-            if (favoritesIds.length === 0) {
+            if (favoriteIds.length === 0) {
                 setFavoriteBarbershops([]);
                 setLoading(false);
                 return;
             }
 
             const shops = await getAllBarbershops();
-            const filteredFavorites = shops.filter((shop) => favoritesIds.includes(shop.id));
+            const filteredFavorites = shops.filter((shop) => favoriteIds.includes(shop.id));
             setFavoriteBarbershops(filteredFavorites);
         } catch (error) {
             console.error("Erro ao carregar favoritos:", error);
@@ -33,16 +31,7 @@ function Favorite_barbershops() {
 
     useEffect(() => {
         loadFavorites();
-
-        const handleStorageChange = (event) => {
-            if (event.key === "favoriteBarbershops") {
-                loadFavorites();
-            }
-        };
-
-        window.addEventListener("storage", handleStorageChange);
-        return () => window.removeEventListener("storage", handleStorageChange);
-    }, []);
+    }, [favoriteIds]);
 
     return (
         <div className={Styles.favorite_barbershops_container}>

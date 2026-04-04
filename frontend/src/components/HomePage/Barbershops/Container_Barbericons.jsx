@@ -1,17 +1,10 @@
-import { useState, useEffect } from "react";
 import Styles from "./CSS/ContainerBarberIcons.module.css"
 import { useNavigate } from "react-router-dom";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 
-function Container_Barbericons({ name, address, image, id, onFavoriteChange, rating, reviewsCount = 0, services = [] }) {
+function Container_Barbericons({ name, address, image, id, isFavorite = false, onToggleFavorite, rating, reviewsCount = 0, services = [] }) {
 
   const navigate = useNavigate();
-  const [isFavorite, setIsFavorite] = useState(false);
-
-  useEffect(() => {
-    const favorites = JSON.parse(localStorage.getItem("favoriteBarbershops") || "[]");
-    setIsFavorite(favorites.includes(id));
-  }, [id]);
 
   const handleClick = () => {
     navigate(`/agendamentoPage/${id}`);
@@ -19,16 +12,7 @@ function Container_Barbericons({ name, address, image, id, onFavoriteChange, rat
 
   const handleFavorite = (e) => {
     e.stopPropagation();
-    const favorites = JSON.parse(localStorage.getItem("favoriteBarbershops") || "[]");
-    let updated;
-    if (favorites.includes(id)) {
-      updated = favorites.filter((favId) => favId !== id);
-    } else {
-      updated = [...favorites, id];
-    }
-    localStorage.setItem("favoriteBarbershops", JSON.stringify(updated));
-    setIsFavorite(!isFavorite);
-    if (onFavoriteChange) onFavoriteChange();
+    if (onToggleFavorite) onToggleFavorite(id, isFavorite);
   };
 
   const renderStars = (value) => {

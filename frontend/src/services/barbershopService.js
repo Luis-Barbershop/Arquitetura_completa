@@ -72,6 +72,24 @@ export const getShopServices = async (shopId) => {
     }
 };
 
+export const getMyFavoriteBarbershopsIds = async () => {
+    try {
+        const response = await api.get('/customers/me/favorites');
+        return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+        console.error('Erro ao buscar favoritas:', error);
+        return [];
+    }
+};
+
+export const addFavoriteBarbershop = async (shopId) => {
+    await api.post(`/customers/me/favorites/${shopId}`);
+};
+
+export const removeFavoriteBarbershop = async (shopId) => {
+    await api.delete(`/customers/me/favorites/${shopId}`);
+};
+
 export const createBarbershopReview = async (shopId, reviewData) => {
     await api.post(`/barbershops/${shopId}/reviews`, reviewData);
 };

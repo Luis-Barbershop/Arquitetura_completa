@@ -22,6 +22,12 @@ public interface CustomerService {
     /** Atualiza a foto de perfil do customer identificado pelo firebaseUid. */
     String updateProfilePhotoByFirebaseUid(String firebaseUid, MultipartFile file) throws IOException;
 
+    List<UUID> listFavoriteBarbershopIdsByFirebaseUid(String firebaseUid);
+
+    void addFavoriteBarbershopByFirebaseUid(String firebaseUid, UUID barbershopId);
+
+    void removeFavoriteBarbershopByFirebaseUid(String firebaseUid, UUID barbershopId);
+
     // Métodos de validação
     boolean tellExists(String tell);
     boolean emailExists(String email);

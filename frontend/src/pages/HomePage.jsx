@@ -5,6 +5,11 @@ import Barbershops from "../components/HomePage/Barbershops/Barbershops"
 import Favorite_barbershops from "../components/HomePage/Favorite_barbershops/Favorite_barbershops"
 import SearchBar from "../components/HomePage/SearchBar"
 import { logoutUser } from "../services/authService";
+import {
+  addFavoriteBarbershop,
+  getMyFavoriteBarbershopsIds,
+  removeFavoriteBarbershop,
+} from "../services/barbershopService";
 import Styles from "./CSS/HomePage.module.css"
 
 const desktopNavItems = [
@@ -16,6 +21,7 @@ const desktopNavItems = [
 
 function HomePage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [favoriteIds, setFavoriteIds] = useState([]);
   const navigate = useNavigate();
 
   // Guarda de rota: barbeiro/owner não deve ver a homepage do cliente
@@ -25,6 +31,15 @@ function HomePage() {
       navigate('/barberHome', { replace: true });
     }
   }, [navigate]);
+
+  useEffect(() => {
+    const loadFavorites = async () => {
+      const ids = await getMyFavoriteBarbershopsIds();
+      setFavoriteIds(ids);
+    };
+
+    loadFavorites();
+  }, []);
 
   const userName = localStorage.getItem("userName") || "Cliente";
   const firstName = userName.split(" ")[0];
@@ -43,6 +58,21 @@ function HomePage() {
   const handleLogout = () => {
     logoutUser();
     navigate("/identificacao", { state: { mode: "login", role: "customer" } });
+  };
+
+  const handleToggleFavorite = async (shopId, currentlyFavorite) => {
+    try {
+      if (currentlyFavorite) {
+        await removeFavoriteBarbershop(shopId);
+        setFavoriteIds((prev) => prev.filter((id) => id !== shopId));
+      } else {
+        await addFavoriteBarbershop(shopId);
+        setFavoriteIds((prev) => (prev.includes(shopId) ? prev : [...prev, shopId]));
+      }
+    } catch (error) {
+      console.error("Erro ao atualizar favorita:", error);
+      alert("Nao foi possivel atualizar suas favoritas agora.");
+    }
   };
 
   const getDesktopItemClass = (itemKey) => (
@@ -116,14 +146,18 @@ function HomePage() {
       </section>
 
       <section ref={favoritesRef} className={Styles.favorites_section}>
-        <Favorite_barbershops />
+        <Favorite_barbershops favoriteIds={favoriteIds} />
       </section>
 
       <div ref={shopsRef} className={Styles.section_header}>
         <h3>Barbearias disponiveis</h3>
       </div>
 
-      <Barbershops searchTerm={searchTerm} />
+      <Barbershops
+        searchTerm={searchTerm}
+        favoriteIds={favoriteIds}
+        onToggleFavorite={handleToggleFavorite}
+      />
     </div>
   )
 }
