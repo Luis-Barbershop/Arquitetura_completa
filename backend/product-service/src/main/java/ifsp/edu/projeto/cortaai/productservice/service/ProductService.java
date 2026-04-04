@@ -1,8 +1,11 @@
 package ifsp.edu.projeto.cortaai.productservice.service;
 
 import ifsp.edu.projeto.cortaai.productservice.dto.CreateProductDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.InventoryPageDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.InventoryFinancialSummaryDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.InventoryProductItemDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.ProductDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.StockMovementDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.UpdateProductDTO;
 import ifsp.edu.projeto.cortaai.productservice.mapper.ProductMapper;
 import ifsp.edu.projeto.cortaai.productservice.model.MovementType;
@@ -13,6 +16,9 @@ import ifsp.edu.projeto.cortaai.productservice.repository.ProductRepository;
 import ifsp.edu.projeto.cortaai.productservice.repository.StockMovementRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,6 +77,34 @@ public class ProductService {
                 .stream()
                 .map(productMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public InventoryPageDTO getInventoryPage(UUID barbershopId,
+                                             String search,
+                                             ProductCategory category,
+                                             Boolean lowStock,
+                                             int page,
+                                             int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.max(1, Math.min(size, 100));
+        Pageable pageable = PageRequest.of(safePage, safeSize);
+
+        String searchTerm = (search == null || search.isBlank()) ? null : search.trim();
+
+        Page<Product> result = productRepository.findInventoryPageByFilters(
+                barbershopId,
+                searchTerm,
+                category,
+                lowStock,
+                pageable
+        );
+
+        List<InventoryProductItemDTO> items = result.getContent().stream()
+                .map(this::toInventoryItem)
+                .toList();
+
+        return new InventoryPageDTO(items, safePage, safeSize, result.getTotalElements(), result.getTotalPages());
     }
 
     @Transactional(readOnly = true)
@@ -155,5 +189,42 @@ public class ProductService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return new InventoryFinancialSummaryDTO(barbershopId, productExpenses, inventoryAssetValue);
+    }
+
+    @Transactional(readOnly = true)
+    public List<StockMovementDTO> getStockMovementHistory(UUID productId, int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.max(1, Math.min(size, 100));
+        Pageable pageable = PageRequest.of(safePage, safeSize);
+
+        return stockMovementRepository.findByProductIdOrderByCreatedAtDesc(productId, pageable)
+                .getContent()
+                .stream()
+                .map(m -> new StockMovementDTO(
+                        m.getId(),
+                        m.getProductId(),
+                        m.getType(),
+                        m.getQuantity(),
+                        m.getReason(),
+                        m.getCreatedAt()
+                ))
+                .toList();
+    }
+
+    private InventoryProductItemDTO toInventoryItem(Product product) {
+        boolean lowStock = product.getStockQuantity() != null
+                && product.getMinStockQuantity() != null
+                && product.getStockQuantity() <= product.getMinStockQuantity();
+
+        return new InventoryProductItemDTO(
+                product.getId(),
+                product.getName(),
+                product.getCategory(),
+                product.getPrice(),
+                product.getStockQuantity(),
+                product.getMinStockQuantity(),
+                lowStock,
+                product.isActive()
+        );
     }
 }

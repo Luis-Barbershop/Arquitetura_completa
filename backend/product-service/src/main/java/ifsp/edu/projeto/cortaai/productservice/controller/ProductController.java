@@ -1,9 +1,12 @@
 package ifsp.edu.projeto.cortaai.productservice.controller;
 
 import ifsp.edu.projeto.cortaai.productservice.dto.CreateProductDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.InventoryPageDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.ProductDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.StockMovementDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.UpdateProductDTO;
 import ifsp.edu.projeto.cortaai.productservice.exception.ApiErrorResponse;
+import ifsp.edu.projeto.cortaai.productservice.model.ProductCategory;
 import ifsp.edu.projeto.cortaai.productservice.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -61,6 +64,18 @@ public class ProductController {
         return ResponseEntity.ok(productService.getProductsByBarbershop(barbershopId));
     }
 
+    @Operation(summary = "Inventário paginado", description = "Lista produtos ativos com paginação e filtros de busca, categoria e estoque baixo.")
+    @GetMapping("/inventory")
+    public ResponseEntity<InventoryPageDTO> getInventoryPage(
+            @Parameter(description = "UUID da barbearia") @RequestParam UUID barbershopId,
+            @Parameter(description = "Busca por nome/descricao") @RequestParam(required = false) String search,
+            @Parameter(description = "Categoria do produto") @RequestParam(required = false) ProductCategory category,
+            @Parameter(description = "Filtrar apenas estoque baixo") @RequestParam(required = false) Boolean lowStock,
+            @Parameter(description = "Página (base 0)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Tamanho da página") @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(productService.getInventoryPage(barbershopId, search, category, lowStock, page, size));
+    }
+
     /**
      * Busca um produto por ID.
      */
@@ -108,5 +123,14 @@ public class ProductController {
             @Parameter(description = "UUID do produto") @PathVariable UUID id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Histórico de movimentações", description = "Retorna histórico paginado de entradas/saídas de estoque de um produto.")
+    @GetMapping("/{id}/movements")
+    public ResponseEntity<List<StockMovementDTO>> getStockMovements(
+            @Parameter(description = "UUID do produto") @PathVariable UUID id,
+            @Parameter(description = "Página (base 0)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Tamanho da página") @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(productService.getStockMovementHistory(id, page, size));
     }
 }
