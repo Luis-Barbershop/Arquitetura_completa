@@ -1,4 +1,4 @@
-{
+sudo docker exec -it cortaai-mysql mysql -u root -p{
   "v": 11,
   "id": "cortaai-collection",
   "name": "CortaAi API",

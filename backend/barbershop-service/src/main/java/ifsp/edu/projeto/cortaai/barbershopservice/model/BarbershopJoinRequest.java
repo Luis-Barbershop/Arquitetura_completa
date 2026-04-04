@@ -4,10 +4,12 @@ import ifsp.edu.projeto.cortaai.barbershopservice.model.enums.JoinRequestStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -21,12 +23,14 @@ import java.util.UUID;
 public class BarbershopJoinRequest {
 
     @Id
-    @Column(nullable = false, updatable = false, length = 36)
     @GeneratedValue
     @UuidGenerator
+    @JdbcTypeCode(Types.VARCHAR)
+    @Column(nullable = false, updatable = false, length = 36)
     private UUID id;
 
     // Desacoplado: apenas o UUID do barbeiro (vive no user-service)
+    @JdbcTypeCode(Types.VARCHAR)
     @Column(name = "barber_id", nullable = false, length = 36)
     private UUID barberId;
 

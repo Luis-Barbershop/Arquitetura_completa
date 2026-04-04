@@ -3,10 +3,12 @@ package ifsp.edu.projeto.cortaai.barbershopservice.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import java.sql.Types;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -20,12 +22,14 @@ import java.util.UUID;
 public class Barbershop {
 
     @Id
-    @Column(nullable = false, updatable = false, length = 36)
     @GeneratedValue
     @UuidGenerator
+    @JdbcTypeCode(Types.VARCHAR)
+    @Column(nullable = false, updatable = false, length = 36)
     private UUID id;
 
-    // ID do dono (Barber) — armazenado como UUID, vive no user-service
+    // ID do dono (Barber) — armazenado como UUID string, vive no user-service
+    @JdbcTypeCode(Types.VARCHAR)
     @Column(name = "owner_id", nullable = false, length = 36)
     private UUID ownerId;
 

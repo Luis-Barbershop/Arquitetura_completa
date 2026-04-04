@@ -3,8 +3,10 @@ package ifsp.edu.projeto.cortaai.barbershopservice.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 
+import java.sql.Types;
 import java.util.UUID;
 
 @Entity
@@ -14,9 +16,10 @@ import java.util.UUID;
 public class BarbershopHighlight {
 
     @Id
-    @Column(nullable = false, updatable = false, length = 36)
     @GeneratedValue
     @UuidGenerator
+    @JdbcTypeCode(Types.VARCHAR)
+    @Column(nullable = false, updatable = false, length = 36)
     private UUID id;
 
     @Column(name = "image_url", nullable = false, length = 255)
