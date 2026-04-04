@@ -24,6 +24,22 @@
     letter-spacing: 0.04em;
 }
 
+.brandLink {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    color: #c19006;
+    text-decoration: none;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    transition: opacity 0.2s;
+}
+
+.brandLink:hover {
+    opacity: 0.75;
+}
+
 .brandBadge img {
     width: 28px;
     height: 28px;

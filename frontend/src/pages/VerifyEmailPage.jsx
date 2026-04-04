@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { applyActionCode } from "firebase/auth";
 import { auth } from "../services/firebase";
 import Styles from "./CSS/VerifyEmailPage.module.css";
@@ -18,6 +18,7 @@ function VerifyEmailPage() {
     const [searchParams] = useSearchParams();
     const [status, setStatus] = useState("loading"); // "loading" | "success" | "error"
     const [errorMsg, setErrorMsg] = useState("");
+    const navigate = useNavigate();
 
     useEffect(() => {
         const oobCode = searchParams.get("oobCode");
@@ -51,8 +52,10 @@ function VerifyEmailPage() {
     return (
         <div className={Styles.page}>
             <div className={Styles.brandBadge}>
-                <img src="/Icons/scissors_icon.png" alt="CortaAI" />
-                <span>CortaAI</span>
+                <Link to="/" className={Styles.brandLink}>
+                    <img src="/Icons/scissors_icon.png" alt="CortaAI" />
+                    <span>CortaAI</span>
+                </Link>
             </div>
 
             <div className={`${Styles.card} ${status === "success" ? Styles.successCard : status === "error" ? Styles.errorCard : ""}`}>
@@ -75,9 +78,12 @@ function VerifyEmailPage() {
                         <p className={Styles.successSubtitle}>
                             Sua conta está ativa. Agora você pode aproveitar todos os recursos do CortaAI.
                         </p>
-                        <Link to="/login" className={Styles.ctaButton}>
+                        <button
+                            className={Styles.ctaButton}
+                            onClick={() => navigate("/identificacao", { state: { mode: "login" } })}
+                        >
                             Fazer login agora
-                        </Link>
+                        </button>
                     </>
                 )}
 
@@ -86,9 +92,12 @@ function VerifyEmailPage() {
                         <div className={Styles.errorIcon}>:(</div>
                         <h2 className={Styles.errorTitle}>Ops!</h2>
                         <p className={Styles.errorText}>{errorMsg}</p>
-                        <Link to="/login" className={Styles.ctaButtonGhost}>
+                        <button
+                            className={Styles.ctaButtonGhost}
+                            onClick={() => navigate("/identificacao", { state: { mode: "login" } })}
+                        >
                             Voltar para o login
-                        </Link>
+                        </button>
                     </>
                 )}
             </div>
