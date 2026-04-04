@@ -156,10 +156,12 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
 
             // ── 2. Enviar e-mail de verificação (melhor-esforço, não bloqueia) ─
             try {
-                Map<String, Object> verifyPayload = Map.of(
-                        "requestType", "VERIFY_EMAIL",
-                        "idToken", idToken
-                );
+                // continueUrl: Firebase redireciona para esta URL após o clique no link,
+                // com os parâmetros mode=verifyEmail&oobCode=XXXX&apiKey=...
+                Map<String, Object> verifyPayload = new java.util.HashMap<>();
+                verifyPayload.put("requestType", "VERIFY_EMAIL");
+                verifyPayload.put("idToken", idToken);
+                verifyPayload.put("continueUrl", "https://web.cortaai.shop/verify-email");
                 String verifyBody = objectMapper.writeValueAsString(verifyPayload);
                 HttpRequest verifyRequest = HttpRequest.newBuilder()
                         .uri(URI.create("https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=" + firebaseWebApiKey))
