@@ -97,9 +97,9 @@ public class PaymentService {
                     .externalReference(appointmentId.toString())
                     .autoReturn("approved");
 
-            // Adicionar application_fee para o split — requer que o MP do barbeiro esteja vinculado
-            // O split é feito cobrando a taxa da plataforma e creditando o restante ao barbeiro
-            preferenceBuilder.applicationFee(platformFee.doubleValue());
+            // NOTA: application_fee (split de plataforma) será adicionado após
+            // implementação completa do OAuth do barbeiro (MP Marketplace).
+            // Por enquanto, o pagamento vai integralmente para a conta da plataforma.
 
             PreferenceClient client = new PreferenceClient();
             Preference preference = client.create(preferenceBuilder.build());
