@@ -18,62 +18,62 @@
           "params": [],
           "headers": [],
           "preRequestScript": "",
-          "testScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const b=pw.response.body;if(b.idToken){pw.env.set(\"customer_token\",b.idToken);}if(b.profile&&b.profile.id){pw.env.set(\"customer_id\",b.profile.id.toString());}}",
           "auth": {
             "authType": "inherit",
             "authActive": true
           },
           "body": {
             "contentType": "application/json",
-            "body": "{\n  \"email\": \"<<customer_email>>\",\n  \"password\": \"<<customer_password>>\",\n  \"userType\": \"CUSTOMER\"\n}"
+            "body": "{\n  \"email\": \"<<customer_email>>\",\n  \"password\": \"<<customer_password>>\",\n  \"userType\": \"CUSTOMER\",\n  \"name\": \"Gabriel Teste\",\n  \"tell\": \"11999999999\",\n  \"documentCPF\": \"12345678901\"\n}"
           },
           "requestVariables": [],
           "responses": {},
-          "description": null
+          "description": "Registra CUSTOMER. Retorna idToken + profile. Salva customer_token e customer_id automaticamente."
         },
         {
           "v": "17",
           "id": "req-2",
-          "name": "Registrar Barbeiro",
+          "name": "Registrar Barbeiro (funcionário)",
           "method": "POST",
           "endpoint": "<<base_url>>/api/auth/email/register",
           "params": [],
           "headers": [],
           "preRequestScript": "",
-          "testScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const b=pw.response.body;if(b.idToken){pw.env.set(\"barber_token\",b.idToken);}if(b.profile&&b.profile.id){pw.env.set(\"barber_id\",b.profile.id.toString());}}",
           "auth": {
             "authType": "inherit",
             "authActive": true
           },
           "body": {
             "contentType": "application/json",
-            "body": "{\n  \"email\": \"<<barber_email>>\",\n  \"password\": \"<<barber_password>>\",\n  \"userType\": \"BARBER\"\n}"
+            "body": "{\n  \"email\": \"<<barber_email>>\",\n  \"password\": \"<<barber_password>>\",\n  \"userType\": \"BARBER\",\n  \"name\": \"Barbeiro Teste\",\n  \"tell\": \"11988887777\",\n  \"documentCPF\": \"98765432100\",\n  \"workStartTime\": \"09:00\",\n  \"workEndTime\": \"18:00\"\n}"
           },
           "requestVariables": [],
           "responses": {},
-          "description": null
+          "description": "Registra BARBER funcionário. role=ROLE_BARBER, isOwner=false, barbershopId=null. Salva barber_token e barber_id."
         },
         {
           "v": "17",
           "id": "req-3",
-          "name": "Registrar Owner",
+          "name": "Registrar Owner (futuro)",
           "method": "POST",
           "endpoint": "<<base_url>>/api/auth/email/register",
           "params": [],
           "headers": [],
           "preRequestScript": "",
-          "testScript": "",
+          "testScript": "if(pw.response.status===200||pw.response.status===201){const b=pw.response.body;if(b.idToken){pw.env.set(\"owner_token\",b.idToken);}if(b.profile&&b.profile.id){pw.env.set(\"owner_barber_id\",b.profile.id.toString());}}",
           "auth": {
             "authType": "inherit",
             "authActive": true
           },
           "body": {
             "contentType": "application/json",
-            "body": "{\n  \"email\": \"<<owner_email>>\",\n  \"password\": \"<<owner_password>>\",\n  \"userType\": \"BARBER\"\n}"
+            "body": "{\n  \"email\": \"<<owner_email>>\",\n  \"password\": \"<<owner_password>>\",\n  \"userType\": \"BARBER\",\n  \"name\": \"Owner Teste\",\n  \"tell\": \"11977776666\",\n  \"documentCPF\": \"11122233344\",\n  \"workStartTime\": \"08:00\",\n  \"workEndTime\": \"20:00\"\n}"
           },
           "requestVariables": [],
           "responses": {},
-          "description": null
+          "description": "Registra barbeiro que será owner. role=ROLE_BARBER ainda. Só vira OWNER ao criar barbearia em 'Registrar Barbearia'."
         },
         {
           "v": "17",
@@ -84,7 +84,7 @@
           "params": [],
           "headers": [],
           "preRequestScript": "",
-          "testScript": "if(pw.response.status===200){const b=pw.response.body;if(b.idToken){pw.env.set(\"customer_token\",b.idToken);pw.env.set(\"token\",b.idToken);}if(b.profile&&b.profile.id)pw.env.set(\"customer_id\",b.profile.id);}",
+          "testScript": "if(pw.response.status===200){const b=pw.response.body;if(b.idToken){pw.env.set(\"customer_token\",b.idToken);pw.env.set(\"token\",b.idToken);}}",
           "auth": {
             "authType": "inherit",
             "authActive": true
@@ -95,7 +95,7 @@
           },
           "requestVariables": [],
           "responses": {},
-          "description": null
+          "description": "Login retorna {idToken, refreshToken, expiresIn, localId, email, registered}. NÃO retorna profile. Use GET /auth/me para obter customer_id após login."
         },
         {
           "v": "17",
@@ -106,7 +106,7 @@
           "params": [],
           "headers": [],
           "preRequestScript": "",
-          "testScript": "if(pw.response.status===200){const b=pw.response.body;if(b.idToken){pw.env.set(\"barber_token\",b.idToken);pw.env.set(\"token\",b.idToken);}if(b.profile&&b.profile.id)pw.env.set(\"barber_id\",b.profile.id);if(b.profile&&b.profile.barbershopId)pw.env.set(\"barbershop_id\",b.profile.barbershopId);}",
+          "testScript": "if(pw.response.status===200){const b=pw.response.body;if(b.idToken){pw.env.set(\"barber_token\",b.idToken);pw.env.set(\"token\",b.idToken);}}",
           "auth": {
             "authType": "inherit",
             "authActive": true
@@ -117,7 +117,7 @@
           },
           "requestVariables": [],
           "responses": {},
-          "description": null
+          "description": "Login retorna {idToken, refreshToken, expiresIn, localId, email, registered}. Use GET /auth/me para obter barber_id."
         },
         {
           "v": "17",
@@ -128,7 +128,7 @@
           "params": [],
           "headers": [],
           "preRequestScript": "",
-          "testScript": "if(pw.response.status===200){const b=pw.response.body;if(b.idToken){pw.env.set(\"owner_token\",b.idToken);pw.env.set(\"token\",b.idToken);}if(b.profile&&b.profile.id)pw.env.set(\"barber_id\",b.profile.id);if(b.profile&&b.profile.barbershopId)pw.env.set(\"barbershop_id\",b.profile.barbershopId);}",
+          "testScript": "if(pw.response.status===200){const b=pw.response.body;if(b.idToken){pw.env.set(\"owner_token\",b.idToken);pw.env.set(\"token\",b.idToken);}}",
           "auth": {
             "authType": "inherit",
             "authActive": true
@@ -139,18 +139,18 @@
           },
           "requestVariables": [],
           "responses": {},
-          "description": null
+          "description": "Login retorna {idToken, refreshToken, expiresIn, localId, email, registered}. Use GET /auth/me para obter barbershop_id após criação da barbearia."
         },
         {
           "v": "17",
           "id": "req-7",
-          "name": "Verificar Token",
+          "name": "Login Social (Google/Apple) — /auth/verify",
           "method": "POST",
           "endpoint": "<<base_url>>/api/auth/verify",
           "params": [],
           "headers": [],
           "preRequestScript": "",
-          "testScript": "",
+          "testScript": "if(pw.response.status===200){const b=pw.response.body;if(b.profileComplete===false){console.log('profileComplete=false: chame complete-profile a seguir');}}",
           "auth": {
             "authType": "inherit",
             "authActive": true
@@ -161,7 +161,7 @@
           },
           "requestVariables": [],
           "responses": {},
-          "description": null
+          "description": "⚠️ FLUXO SOCIAL (Google, Apple etc.) — NÃO é o fluxo email/senha. O idToken deve vir do Firebase SDK no frontend. Se profileComplete=false na resposta, chame complete-profile a seguir."
         },
         {
           "v": "17",
@@ -172,7 +172,7 @@
           "params": [],
           "headers": [],
           "preRequestScript": "",
-          "testScript": "",
+          "testScript": "if(pw.response.status===200){const b=pw.response.body;if(b.id)pw.env.set(\"customer_id\",b.id.toString());if(b.barbershopId)pw.env.set(\"barbershop_id\",b.barbershopId.toString());}",
           "auth": {
             "authType": "bearer",
             "authActive": true,
@@ -184,12 +184,12 @@
           },
           "requestVariables": [],
           "responses": {},
-          "description": null
+          "description": "Retorna perfil do usuário autenticado. Salva customer_id e barbershop_id (se existir). Troque <<token>> pelo token do usuário desejado."
         },
         {
           "v": "17",
           "id": "req-9",
-          "name": "Completar Perfil Cliente",
+          "name": "Completar Perfil Cliente (fluxo social)",
           "method": "POST",
           "endpoint": "<<base_url>>/api/auth/customers/complete-profile",
           "params": [],
@@ -207,12 +207,12 @@
           },
           "requestVariables": [],
           "responses": {},
-          "description": null
+          "description": "⚠️ FLUXO SOCIAL APENAS. No fluxo email/senha (register), o perfil já é completado automaticamente. Use este endpoint apenas se /auth/verify retornar profileComplete=false."
         },
         {
           "v": "17",
           "id": "req-10",
-          "name": "Completar Perfil Barbeiro",
+          "name": "Completar Perfil Barbeiro (fluxo social)",
           "method": "POST",
           "endpoint": "<<base_url>>/api/auth/barbers/complete-profile",
           "params": [],
@@ -226,11 +226,11 @@
           },
           "body": {
             "contentType": "application/json",
-            "body": "{\n  \"name\": \"Barbeiro Teste\",\n  \"tell\": \"11999999999\",\n  \"documentCPF\": \"12345678901\",\n  \"workStartTime\": \"08:00\",\n  \"workEndTime\": \"18:00\",\n  \"isOwner\": false\n}"
+            "body": "{\n  \"name\": \"Barbeiro Teste\",\n  \"tell\": \"11988887777\",\n  \"documentCPF\": \"98765432100\",\n  \"workStartTime\": \"09:00\",\n  \"workEndTime\": \"18:00\"\n}"
           },
           "requestVariables": [],
           "responses": {},
-          "description": null
+          "description": "⚠️ FLUXO SOCIAL APENAS. No fluxo email/senha (register), o perfil já é completado automaticamente. workStartTime e workEndTime no formato HH:mm."
         }
       ],
       "auth": {
@@ -594,7 +594,7 @@
         {
           "v": "17",
           "id": "req-28",
-          "name": "Registrar Barbearia",
+          "name": "Registrar Barbearia (→ vira OWNER aqui)",
           "method": "POST",
           "endpoint": "<<base_url>>/api/barbershops/register-my-shop",
           "params": [],
@@ -608,11 +608,19 @@
           },
           "body": {
             "contentType": "multipart/form-data",
-            "body": []
+            "body": [
+              {
+                "key": "shop",
+                "value": "{\"name\":\"Barbearia Teste\",\"cnpj\":\"12345678000199\",\"address\":\"Rua das Flores, 123\"}",
+                "active": true,
+                "isFile": false,
+                "contentType": "application/json"
+              }
+            ]
           },
           "requestVariables": [],
           "responses": {},
-          "description": null
+          "description": "⚠️ multipart/form-data. Part 'shop' = JSON (application/json). Part 'file' = imagem opcional. APÓS esta chamada o owner_token passa a ter role=ROLE_OWNER e isOwner=true."
         },
         {
           "v": "17",
@@ -778,13 +786,13 @@
         {
           "v": "17",
           "id": "req-36",
-          "name": "Pedidos Pendentes",
+          "name": "Pedidos Pendentes (join requests)",
           "method": "GET",
           "endpoint": "<<base_url>>/api/barbershops/my-shop/pending-requests",
           "params": [],
           "headers": [],
           "preRequestScript": "",
-          "testScript": "",
+          "testScript": "if(pw.response.status===200){const b=pw.response.body;if(Array.isArray(b)&&b.length>0&&b[0].id){pw.env.set(\"join_request_id\",b[0].id.toString());}}",
           "auth": {
             "authType": "bearer",
             "authActive": true,
@@ -796,7 +804,7 @@
           },
           "requestVariables": [],
           "responses": {},
-          "description": null
+          "description": "Lista solicitações pendentes de barbeiros. Salva o id da primeira solicitação em join_request_id."
         },
         {
           "v": "17",
@@ -1113,7 +1121,7 @@
           "auth": {
             "authType": "bearer",
             "authActive": true,
-            "token": "<<token>>"
+            "token": "<<customer_token>>"
           },
           "body": {
             "contentType": null,
@@ -1682,11 +1690,11 @@
             }
           ],
           "preRequestScript": "",
-          "testScript": "if(pw.response.status===200||pw.response.status===201){const b=pw.response.body;if(b&&b.id)pw.env.set(\"notification_id\",b.id.toString());}",
+          "testScript": "if(pw.response.status===200){const b=pw.response.body;if(Array.isArray(b)&&b.length>0&&b[0].id){pw.env.set(\"notification_id\",b[0].id.toString());}}",
           "auth": {
             "authType": "bearer",
             "authActive": true,
-            "token": "<<token>>"
+            "token": "<<customer_token>>"
           },
           "body": {
             "contentType": null,
@@ -1716,7 +1724,7 @@
           "auth": {
             "authType": "bearer",
             "authActive": true,
-            "token": "<<token>>"
+            "token": "<<customer_token>>"
           },
           "body": {
             "contentType": null,
@@ -1746,7 +1754,7 @@
           "auth": {
             "authType": "bearer",
             "authActive": true,
-            "token": "<<token>>"
+            "token": "<<customer_token>>"
           },
           "body": {
             "contentType": null,
