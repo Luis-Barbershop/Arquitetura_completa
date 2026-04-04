@@ -23,6 +23,7 @@ function BarberHomePage() {
   const [isSendingJoinRequest, setIsSendingJoinRequest] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const navigate = useNavigate();
+  const showInsights = import.meta.env.VITE_ENABLE_BARBER_INSIGHTS === 'true';
 
   const formatCnpj = (value) => {
     const digits = value.replace(/\D/g, '').slice(0, 14);
@@ -176,11 +177,15 @@ function BarberHomePage() {
             </section>
 
             <section className={styles.dashboardSection}>
-            <ActionsBarber onNavigateToStock={() => navigate('/barberHome/estoque')} />
+            <ActionsBarber
+              onNavigateToStock={() => navigate('/barberHome/estoque')}
+              barbershopId={barber?.barbershopId}
+              showInsights={showInsights}
+            />
             </section>
 
             <section className={styles.dashboardSection}>
-            <NextScheduling/>
+            <NextScheduling onViewAll={() => navigate('/meus-agendamentos')} />
             </section>
 
             <section className={styles.dashboardSection}>
