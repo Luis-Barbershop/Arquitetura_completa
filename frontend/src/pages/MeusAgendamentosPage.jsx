@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiCalendar, FiCheckCircle, FiClock, FiRefreshCw, FiScissors, FiXCircle } from 'react-icons/fi';
 import Styles from './CSS/MeusAgendamentos.module.css';
 import { getMyAppointments, cancelAppointment } from '../services/appointmentService';
+import { createBarbershopReview } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import { logoutUser } from '../services/authService';
@@ -16,6 +17,11 @@ const MeusAgendamentosPage = () => {
     const [cancelingAppointmentId, setCancelingAppointmentId] = useState(null);
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+    const [reviewingAppointment, setReviewingAppointment] = useState(null);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewComment, setReviewComment] = useState('');
     
     // Identificar o papel para ajustar os textos
     const role = localStorage.getItem('role'); 
@@ -69,6 +75,46 @@ const MeusAgendamentosPage = () => {
             alert("Erro ao cancelar. Tente novamente.");
         } finally {
             setIsSubmittingCancel(false);
+        }
+    };
+
+    const handleOpenReviewModal = (appointment) => {
+        setReviewingAppointment(appointment);
+        setReviewRating(5);
+        setReviewComment('');
+        setIsReviewModalOpen(true);
+    };
+
+    const handleCloseReviewModal = () => {
+        if (isSubmittingReview) return;
+        setIsReviewModalOpen(false);
+        setReviewingAppointment(null);
+    };
+
+    const handleSubmitReview = async () => {
+        if (!reviewingAppointment?.barbershopId) {
+            alert('Nao foi possivel identificar a barbearia deste atendimento.');
+            return;
+        }
+
+        try {
+            setIsSubmittingReview(true);
+            await createBarbershopReview(reviewingAppointment.barbershopId, {
+                rating: Number(reviewRating),
+                comment: reviewComment.trim() || null,
+            });
+
+            setIsReviewModalOpen(false);
+            setReviewingAppointment(null);
+            alert('Avaliacao enviada com sucesso!');
+        } catch (error) {
+            if (error?.response?.status === 409) {
+                alert('Voce ja avaliou esta barbearia.');
+            } else {
+                alert('Nao foi possivel enviar sua avaliacao. Tente novamente.');
+            }
+        } finally {
+            setIsSubmittingReview(false);
         }
     };
 
@@ -268,6 +314,15 @@ const MeusAgendamentosPage = () => {
                                             Cancelar
                                         </button>
                                     )}
+
+                                    {isCustomer && app.status === 'COMPLETED' && (
+                                        <button
+                                            className={Styles.reviewButton}
+                                            onClick={() => handleOpenReviewModal(app)}
+                                        >
+                                            Avaliar
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -332,6 +387,63 @@ const MeusAgendamentosPage = () => {
                                     disabled={isSubmittingCancel}
                                 >
                                     {isSubmittingCancel ? 'Cancelando...' : 'Confirmar cancelamento'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {isReviewModalOpen && (
+                    <div className={Styles.modalBackdrop} onClick={handleCloseReviewModal}>
+                        <div className={Styles.modalCard} onClick={(e) => e.stopPropagation()}>
+                            <p className={Styles.modalKicker}>AVALIAR BARBEARIA</p>
+                            <h3 className={Styles.modalTitle}>Como foi seu atendimento?</h3>
+                            <p className={Styles.modalSubtitle}>Sua opiniao ajuda outros clientes a escolher melhor.</p>
+
+                            <div className={Styles.reviewFormGroup}>
+                                <label className={Styles.reviewLabel} htmlFor="review-rating">Nota (1 a 5)</label>
+                                <select
+                                    id="review-rating"
+                                    className={Styles.reviewSelect}
+                                    value={reviewRating}
+                                    onChange={(e) => setReviewRating(e.target.value)}
+                                >
+                                    <option value={1}>1</option>
+                                    <option value={2}>2</option>
+                                    <option value={3}>3</option>
+                                    <option value={4}>4</option>
+                                    <option value={5}>5</option>
+                                </select>
+                            </div>
+
+                            <div className={Styles.reviewFormGroup}>
+                                <label className={Styles.reviewLabel} htmlFor="review-comment">Comentario (opcional)</label>
+                                <textarea
+                                    id="review-comment"
+                                    className={Styles.reviewTextarea}
+                                    value={reviewComment}
+                                    onChange={(e) => setReviewComment(e.target.value)}
+                                    maxLength={500}
+                                    placeholder="Conte como foi sua experiencia"
+                                />
+                            </div>
+
+                            <div className={Styles.modalActions}>
+                                <button
+                                    type="button"
+                                    className={Styles.modalSecondaryButton}
+                                    onClick={handleCloseReviewModal}
+                                    disabled={isSubmittingReview}
+                                >
+                                    Voltar
+                                </button>
+                                <button
+                                    type="button"
+                                    className={Styles.modalPrimaryButton}
+                                    onClick={handleSubmitReview}
+                                    disabled={isSubmittingReview}
+                                >
+                                    {isSubmittingReview ? 'Enviando...' : 'Enviar avaliacao'}
                                 </button>
                             </div>
                         </div>

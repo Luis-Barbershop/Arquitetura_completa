@@ -381,6 +381,23 @@
     transform: translateY(-1px);
 }
 
+.reviewButton {
+    background-color: #1d2c17;
+    border: 1px solid #3e8f2a;
+    color: #b8f5a9;
+    padding: 0.54rem 0.84rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-family: 'Space Grotesk', sans-serif;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.reviewButton:hover {
+    background-color: #24411b;
+    transform: translateY(-1px);
+}
+
 .empty {
     text-align: center;
     color: #8c8c8c;
@@ -443,7 +460,8 @@
 }
 
 .modalSecondaryButton,
-.modalDangerButton {
+.modalDangerButton,
+.modalPrimaryButton {
     height: 48px;
     border-radius: 12px;
     cursor: pointer;
@@ -474,10 +492,51 @@
     transform: translateY(-1px);
 }
 
+.modalPrimaryButton {
+    background: #1d3b16;
+    border: 1px solid #3e8f2a;
+    color: #c8f8bb;
+    font-weight: 700;
+}
+
+.modalPrimaryButton:hover {
+    background: #2b5321;
+    transform: translateY(-1px);
+}
+
 .modalSecondaryButton:disabled,
-.modalDangerButton:disabled {
+.modalDangerButton:disabled,
+.modalPrimaryButton:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+}
+
+.reviewFormGroup {
+    margin-top: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.reviewLabel {
+    color: #d6d0c4;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.86rem;
+}
+
+.reviewSelect,
+.reviewTextarea {
+    border: 1px solid #3b3b3b;
+    border-radius: 10px;
+    background: #171717;
+    color: #efefef;
+    padding: 0.62rem 0.72rem;
+    font-family: 'Roboto', sans-serif;
+}
+
+.reviewTextarea {
+    resize: vertical;
+    min-height: 90px;
 }
 
 @media (max-width: 860px) {
@@ -523,7 +582,8 @@
         align-items: flex-start;
     }
 
-    .cancelButton {
+    .cancelButton,
+    .reviewButton {
         width: 100%;
     }
 

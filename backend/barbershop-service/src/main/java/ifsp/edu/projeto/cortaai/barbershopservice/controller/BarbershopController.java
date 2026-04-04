@@ -58,6 +58,16 @@ public class BarbershopController {
         return ResponseEntity.ok(barbershopService.listActivities(shopId));
     }
 
+    @Operation(summary = "Avalia uma barbearia", description = "Permite que um cliente autenticado envie uma avaliação de 1 a 5 estrelas para uma barbearia.")
+    @PostMapping("/{shopId}/reviews")
+    public ResponseEntity<Void> createReview(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "UUID da barbearia") @PathVariable UUID shopId,
+            @Parameter(description = "Dados da avaliação") @RequestBody @Valid CreateBarbershopReviewDTO dto) {
+        barbershopService.createReview(principal.getName(), shopId, dto);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
     // ========== FLUXO 1: GESTÃO DO DONO (OWNER) ==========
 
     @Operation(

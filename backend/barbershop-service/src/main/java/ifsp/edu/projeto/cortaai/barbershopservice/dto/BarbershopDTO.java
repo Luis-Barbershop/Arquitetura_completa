@@ -15,6 +15,8 @@ public class BarbershopDTO {
     private String address;
     private String logoUrl;
     private String bannerUrl;
+    private Double averageRating;
+    private Long reviewsCount;
     private List<String> highlightUrls;
 }
 

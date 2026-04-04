@@ -24,8 +24,11 @@ public interface BarbershopMapper {
     @Mapping(target = "bannerUrl", ignore = true)
     @Mapping(target = "bannerUrlPublicId", ignore = true)
     @Mapping(target = "highlights", ignore = true)
+    @Mapping(target = "reviews", ignore = true)
     @Mapping(target = "activities", ignore = true)
     @Mapping(target = "joinRequests", ignore = true)
+    @Mapping(target = "averageRating", ignore = true)
+    @Mapping(target = "reviewsCount", ignore = true)
     @Mapping(target = "dateCreated", ignore = true)
     @Mapping(target = "lastUpdated", ignore = true)
     Barbershop toEntity(CreateBarbershopDTO dto);

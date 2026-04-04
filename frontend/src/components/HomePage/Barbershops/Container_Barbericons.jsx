@@ -3,7 +3,7 @@ import Styles from "./CSS/ContainerBarberIcons.module.css"
 import { useNavigate } from "react-router-dom";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 
-function Container_Barbericons({ name, address, image, id, onFavoriteChange, rating = 4.3, services = [] }) {
+function Container_Barbericons({ name, address, image, id, onFavoriteChange, rating, reviewsCount = 0, services = [] }) {
 
   const navigate = useNavigate();
   const [isFavorite, setIsFavorite] = useState(false);
@@ -45,6 +45,10 @@ function Container_Barbericons({ name, address, image, id, onFavoriteChange, rat
     return stars;
   };
 
+  const numericRating = typeof rating === "number" ? rating : null;
+  const safeRating = numericRating ?? 0;
+  const hasReviews = (reviewsCount || 0) > 0 && numericRating !== null;
+
   return (
     <div className={Styles.barbershopsicons_container} onClick={handleClick}>
       <div className={Styles.image_icon_barbershop_container}>
@@ -65,8 +69,10 @@ function Container_Barbericons({ name, address, image, id, onFavoriteChange, rat
       <div className={Styles.text_icon_barbershop_container}>
         <h4>{name}</h4>
         <div className={Styles.rating_container}>
-          <div className={Styles.stars}>{renderStars(rating)}</div>
-          <span className={Styles.rating_text}>{rating.toFixed(1)} estrelas</span>
+          <div className={Styles.stars}>{renderStars(safeRating)}</div>
+          <span className={Styles.rating_text}>
+            {hasReviews ? `${safeRating.toFixed(1)} estrelas` : "Sem avaliacoes"}
+          </span>
         </div>
         {services.length > 0 && (
           <p className={Styles.services_summary}>

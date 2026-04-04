@@ -72,6 +72,10 @@ export const getShopServices = async (shopId) => {
     }
 };
 
+export const createBarbershopReview = async (shopId, reviewData) => {
+    await api.post(`/barbershops/${shopId}/reviews`, reviewData);
+};
+
 
 export const getMyServices = async () => {
     // Busca os dados do barbeiro autenticado e depois usa o barbershopId

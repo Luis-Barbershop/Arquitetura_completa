@@ -35,6 +35,7 @@ public class BarbershopService {
     private static final Logger log = LoggerFactory.getLogger(BarbershopService.class);
 
     private final BarbershopRepository barbershopRepository;
+    private final BarbershopReviewRepository barbershopReviewRepository;
     private final ActivityRepository activityRepository;
     private final BarbershopJoinRequestRepository joinRequestRepository;
     private final BarbershopHighlightRepository highlightRepository;
@@ -149,6 +150,30 @@ public class BarbershopService {
         Barbershop shop = barbershopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Barbearia não encontrada."));
         return barbershopMapper.toDTO(shop);
+    }
+
+    public void createReview(String customerUid, UUID shopId, CreateBarbershopReviewDTO dto) {
+        UserInfoDTO customer = resolveUserByUid(customerUid);
+
+        if (!"CUSTOMER".equals(customer.getUserType())) {
+            throw new ForbiddenException("Apenas clientes podem avaliar barbearias.");
+        }
+
+        Barbershop shop = barbershopRepository.findById(shopId)
+                .orElseThrow(() -> new NotFoundException("Barbearia não encontrada."));
+
+        if (barbershopReviewRepository.existsByBarbershop_IdAndCustomerId(shopId, customer.getId())) {
+            throw new DomainConflictException("Você já avaliou esta barbearia.");
+        }
+
+        BarbershopReview review = new BarbershopReview();
+        review.setBarbershop(shop);
+        review.setCustomerId(customer.getId());
+        review.setRating(dto.getRating());
+        String normalizedComment = dto.getComment() != null ? dto.getComment().trim() : null;
+        review.setComment((normalizedComment == null || normalizedComment.isEmpty()) ? null : normalizedComment);
+
+        barbershopReviewRepository.save(review);
     }
 
     // ========== FLUXO 1: GESTÃO DO DONO (OWNER) ==========

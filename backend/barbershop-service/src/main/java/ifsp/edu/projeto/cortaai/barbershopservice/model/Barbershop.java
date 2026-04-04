@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.annotations.Formula;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -54,6 +55,12 @@ public class Barbershop {
     @Column(name = "banner_url_public_id", length = 255)
     private String bannerUrlPublicId;
 
+    @Formula("(select avg(br.rating) from barbershop_reviews br where br.barbershop_id = id)")
+    private Double averageRating;
+
+    @Formula("(select count(*) from barbershop_reviews br where br.barbershop_id = id)")
+    private Long reviewsCount;
+
     @CreatedDate
     @Column(name = "date_created", nullable = false, updatable = false)
     private LocalDateTime dateCreated;
@@ -73,4 +80,7 @@ public class Barbershop {
     // Relacionamento: 1 Barbearia tem N Destaques
     @OneToMany(mappedBy = "barbershop", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<BarbershopHighlight> highlights;
+
+    @OneToMany(mappedBy = "barbershop", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<BarbershopReview> reviews;
 }

@@ -47,6 +47,8 @@ function Barbershops({ searchTerm }) {
           address={shop.address}
           image={shop.logoUrl || "./barbershop.jpg"}
           id={shop.id}
+          rating={shop.averageRating}
+          reviewsCount={shop.reviewsCount}
           services={shop.services || []} />
         ))
       ) : (
