@@ -48,6 +48,10 @@ eureka:
 
 mercadopago:
   access-token: ${MP_ACCESS_TOKEN}
+  public-key: ${MP_PUBLIC_KEY}
+  client-id: ${MP_CLIENT_ID}
+  client-secret: ${MP_CLIENT_SECRET}
+  redirect-uri: ${MP_REDIRECT_URI:https://api.cortaai.shop/api/payments/mp-callback}
   notification-url: ${MP_NOTIFICATION_URL:http://localhost:8080/api/payments/webhook}
   marketplace-fee-percent: 5.0
 
