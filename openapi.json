@@ -74,6 +74,39 @@
           }
         }
       },
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "usuario@teste.com"
+          }
+        }
+      },
+      "ChangePasswordRequest": {
+        "type": "object",
+        "required": [
+          "idToken",
+          "newPassword"
+        ],
+        "properties": {
+          "idToken": {
+            "type": "string",
+            "description": "Firebase idToken da sessão atual (obtido no login)",
+            "example": "eyJhbGciOiJSUzI1NiJ9..."
+          },
+          "newPassword": {
+            "type": "string",
+            "description": "Nova senha (mínimo 6 caracteres)",
+            "minLength": 6,
+            "example": "NovaSenha@123"
+          }
+        }
+      },
       "LoginResponse": {
         "type": "object",
         "properties": {
@@ -644,6 +677,68 @@
           },
           "401": {
             "description": "Credenciais inválidas"
+          }
+        }
+      }
+    },
+    "/api/auth/email/forgot-password": {
+      "post": {
+        "tags": [
+          "01 - Auth"
+        ],
+        "summary": "Recuperação de senha",
+        "description": "Envia um e-mail de redefinição de senha via Firebase. O Firebase dispara o e-mail automaticamente com um link seguro. Rota pública.",
+        "operationId": "forgotPassword",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "E-mail de recuperação enviado com sucesso"
+          },
+          "400": {
+            "description": "E-mail inválido ou ausente"
+          },
+          "401": {
+            "description": "E-mail não encontrado no Firebase"
+          }
+        }
+      }
+    },
+    "/api/auth/email/change-password": {
+      "post": {
+        "tags": [
+          "01 - Auth"
+        ],
+        "summary": "Alterar senha (usuário autenticado)",
+        "description": "Altera a senha do usuário autenticado. Requer o idToken da sessão atual (obtido no login). Após a alteração, o Firebase invalida todas as sessões anteriores. Rota pública — o idToken vai no corpo.",
+        "operationId": "changePassword",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Senha alterada com sucesso"
+          },
+          "400": {
+            "description": "Dados inválidos ou senha muito curta (mín. 6 caracteres)"
+          },
+          "401": {
+            "description": "Token expirado ou inválido"
           }
         }
       }

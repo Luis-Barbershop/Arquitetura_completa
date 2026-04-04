@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from '../../pages/CSS/BarberHomePage.module.css';
 
 const navItems = [
@@ -12,6 +13,8 @@ const navItems = [
 ];
 
 function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
+    const navigate = useNavigate();
+
     return (
         <header className={styles.header}>
             <div className={styles.headerTopRow}>
@@ -26,6 +29,13 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
                 <div className={styles.headerRight}>
                     <button className={styles.notificationButton}>
                         <img src="/Icons/bellicon.png" alt="Sino de Notificacao" />
+                    </button>
+                    <button
+                        onClick={() => navigate('/change-password')}
+                        className={styles.changePasswordButton}
+                        title="Alterar senha"
+                    >
+                        🔒 Alterar senha
                     </button>
                     <button onClick={onLogout} className={styles.logoutButton}>
                         Sair

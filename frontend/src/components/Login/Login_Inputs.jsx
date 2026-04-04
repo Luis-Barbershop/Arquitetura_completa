@@ -1,6 +1,6 @@
 import Styles from "./CSS/Login_inputs.module.css"
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { loginUser } from "../../services/authService"
 
 function Login_Inputs() {
@@ -43,7 +43,7 @@ function Login_Inputs() {
                         placeholder="Digite a sua Senha" value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required />
-                    <p className={Styles.forgot_password_text}>Esqueceu a Senha?</p>
+                    <Link to="/forgot-password" className={Styles.forgot_password_text}>Esqueceu a Senha?</Link>
                 </label>
 
                 {error && <p className={Styles.errorMessage}>{error}</p>}

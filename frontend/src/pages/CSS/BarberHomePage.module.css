@@ -251,6 +251,24 @@
     color: #ffffff;
 }
 
+.changePasswordButton {
+    background-color: transparent;
+    border: 1px solid #3d3313;
+    color: #c19006;
+    padding: 10px 15px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.83rem;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 600;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.changePasswordButton:hover {
+    background-color: rgba(193, 144, 6, 0.12);
+    border-color: #c19006;
+}
+
 .noBarbershopPanel {
     margin-top: 0.5rem;
     padding: 2.2rem;

@@ -1,4 +1,4 @@
-sudo docker exec -it cortaai-mysql mysql -u root -p{
+{
   "v": 11,
   "id": "cortaai-collection",
   "name": "CortaAi API",
@@ -231,6 +231,50 @@ sudo docker exec -it cortaai-mysql mysql -u root -p{
           "requestVariables": [],
           "responses": {},
           "description": "⚠️ FLUXO SOCIAL APENAS. No fluxo email/senha (register), o perfil já é completado automaticamente. workStartTime e workEndTime no formato HH:mm."
+        },
+        {
+          "v": "17",
+          "id": "req-11a",
+          "name": "Esqueci minha senha",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/auth/email/forgot-password",
+          "params": [],
+          "headers": [],
+          "preRequestScript": "",
+          "testScript": "pw.test('Forgot password email sent', () => { pw.expect(pw.response.status).toBe(204); });",
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"email\": \"<<owner_email>>\"\n}"
+          },
+          "requestVariables": [],
+          "responses": {},
+          "description": "Envia e-mail de recuperação de senha via Firebase. Resposta 204 = e-mail enviado com sucesso. Rota pública, sem token."
+        },
+        {
+          "v": "17",
+          "id": "req-11b",
+          "name": "Alterar senha",
+          "method": "POST",
+          "endpoint": "<<base_url>>/api/auth/email/change-password",
+          "params": [],
+          "headers": [],
+          "preRequestScript": "",
+          "testScript": "pw.test('Password changed', () => { pw.expect(pw.response.status).toBe(204); });",
+          "auth": {
+            "authType": "none",
+            "authActive": false
+          },
+          "body": {
+            "contentType": "application/json",
+            "body": "{\n  \"idToken\": \"<<owner_token>>\",\n  \"newPassword\": \"NovaSenha@123\"\n}"
+          },
+          "requestVariables": [],
+          "responses": {},
+          "description": "Altera a senha do usuário autenticado. Requer idToken da sessão atual. Após alterar, todas as sessões anteriores são invalidadas. Mínimo 6 caracteres. Rota pública (idToken no body)."
         }
       ],
       "auth": {

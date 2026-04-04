@@ -4,6 +4,8 @@ const AUTH_ENDPOINTS = {
     login: '/auth/email/login',
     register: '/auth/email/register',
     verify: '/auth/verify',
+    forgotPassword: '/auth/email/forgot-password',
+    changePassword: '/auth/email/change-password',
 };
 
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
@@ -76,4 +78,18 @@ export const registerBarber = async (barberData) => {
 // ─── LOGOUT ───────────────────────────────────────────────────────────────────
 export const logoutUser = () => {
     localStorage.clear();
+};
+
+// ─── RECUPERAR SENHA ─────────────────────────────────────────────────────────
+// Usa: POST /api/auth/email/forgot-password (público, sem auth)
+// Firebase envia e-mail com link de redefinição. Resposta 204 = sucesso.
+export const forgotPassword = async (email) => {
+    await api.post(AUTH_ENDPOINTS.forgotPassword, { email });
+};
+
+// ─── ALTERAR SENHA ────────────────────────────────────────────────────────────
+// Usa: POST /api/auth/email/change-password (público, idToken no body)
+// Após alterar, Firebase invalida todas as sessões. Usuário precisa fazer login novamente.
+export const changePassword = async (idToken, newPassword) => {
+    await api.post(AUTH_ENDPOINTS.changePassword, { idToken, newPassword });
 };

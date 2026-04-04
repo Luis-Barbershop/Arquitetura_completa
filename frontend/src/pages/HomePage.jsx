@@ -1,6 +1,6 @@
 import { useRef, useState } from "react"
 import { useNavigate } from "react-router-dom";
-import { FiHome, FiSearch, FiHeart, FiScissors, FiCalendar, FiLogOut } from "react-icons/fi";
+import { FiHome, FiSearch, FiHeart, FiScissors, FiCalendar, FiLogOut, FiLock } from "react-icons/fi";
 import Barbershops from "../components/HomePage/Barbershops/Barbershops"
 import Favorite_barbershops from "../components/HomePage/Favorite_barbershops/Favorite_barbershops"
 import SearchBar from "../components/HomePage/SearchBar"
@@ -81,6 +81,13 @@ function HomePage() {
           >
             <FiCalendar className={Styles.desktop_action_icon} />
             Meus agendamentos
+          </button>
+          <button
+            className={Styles.desktop_secondary_button}
+            onClick={() => navigate("/change-password")}
+          >
+            <FiLock className={Styles.desktop_action_icon} />
+            Alterar senha
           </button>
           <button className={Styles.desktop_logout_button} onClick={handleLogout}>
             <FiLogOut className={Styles.desktop_action_icon} />
