@@ -1,0 +1,2508 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "CortaAi API",
+    "description": "API completa do sistema CortaAi — agendamentos de barbearia.\n\n**Autenticação:** Firebase Bearer Token.\n\nVariáveis de ambiente:\n- `base_url`: `https://api.cortaai.shop`\n\n**Fluxo básico:**\n1. `POST /api/auth/email/login` → salvar `idToken`\n2. Usar `Authorization: Bearer {idToken}` nas rotas protegidas",
+    "version": "1.0.0",
+    "contact": {
+      "name": "CortaAi",
+      "email": "contato@cortaai.shop"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.cortaai.shop",
+      "description": "Produção"
+    },
+    {
+      "url": "http://localhost:8080",
+      "description": "Local (Docker)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Firebase ID Token"
+      }
+    },
+    "schemas": {
+      "EmailRegisterRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "userType"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "usuario@teste.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "Senha@123"
+          },
+          "userType": {
+            "type": "string",
+            "enum": [
+              "CUSTOMER",
+              "BARBER"
+            ],
+            "example": "CUSTOMER"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "usuario@teste.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "Senha@123"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "idToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "string"
+          },
+          "localId": {
+            "type": "string"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/AuthResponse"
+          }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "userType": {
+            "type": "string",
+            "enum": [
+              "CUSTOMER",
+              "BARBER"
+            ]
+          },
+          "barbershopId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "isOwner": {
+            "type": "boolean"
+          }
+        }
+      },
+      "VerifyTokenRequest": {
+        "type": "object",
+        "required": [
+          "idToken",
+          "userType"
+        ],
+        "properties": {
+          "idToken": {
+            "type": "string"
+          },
+          "userType": {
+            "type": "string",
+            "enum": [
+              "CUSTOMER",
+              "BARBER"
+            ]
+          }
+        }
+      },
+      "CompleteProfileCustomer": {
+        "type": "object",
+        "required": [
+          "name",
+          "tell",
+          "documentCPF"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Gabriel Teste"
+          },
+          "tell": {
+            "type": "string",
+            "example": "11999999999"
+          },
+          "documentCPF": {
+            "type": "string",
+            "example": "12345678901"
+          }
+        }
+      },
+      "CompleteProfileBarber": {
+        "type": "object",
+        "required": [
+          "name",
+          "tell",
+          "documentCPF",
+          "workStartTime",
+          "workEndTime",
+          "isOwner"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Barbeiro Teste"
+          },
+          "tell": {
+            "type": "string",
+            "example": "11999999999"
+          },
+          "documentCPF": {
+            "type": "string",
+            "example": "12345678901"
+          },
+          "workStartTime": {
+            "type": "string",
+            "example": "08:00"
+          },
+          "workEndTime": {
+            "type": "string",
+            "example": "18:00"
+          },
+          "isOwner": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "CreateBarbershopRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "cnpj",
+          "address"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Barbearia do Gabriel"
+          },
+          "cnpj": {
+            "type": "string",
+            "example": "12345678000199"
+          },
+          "address": {
+            "type": "string",
+            "example": "Rua das Flores, 123"
+          },
+          "logo": {
+            "type": "string",
+            "format": "binary",
+            "description": "Imagem da logo (multipart)"
+          }
+        }
+      },
+      "UpdateBarbershopRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Barbearia Atualizada"
+          },
+          "address": {
+            "type": "string",
+            "example": "Rua Nova, 456"
+          }
+        }
+      },
+      "CreateActivityRequest": {
+        "type": "object",
+        "required": [
+          "activityName",
+          "price",
+          "durationMinutes"
+        ],
+        "properties": {
+          "activityName": {
+            "type": "string",
+            "example": "Corte Degradê"
+          },
+          "price": {
+            "type": "number",
+            "example": 45
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "example": 40
+          }
+        }
+      },
+      "UpdateActivityRequest": {
+        "type": "object",
+        "properties": {
+          "activityName": {
+            "type": "string",
+            "example": "Corte Plus"
+          },
+          "price": {
+            "type": "number",
+            "example": 50
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "example": 45
+          }
+        }
+      },
+      "JoinRequest": {
+        "type": "object",
+        "required": [
+          "cnpj"
+        ],
+        "properties": {
+          "cnpj": {
+            "type": "string",
+            "example": "12345678000199"
+          }
+        }
+      },
+      "CloseBarbershopRequest": {
+        "type": "object",
+        "required": [
+          "password"
+        ],
+        "properties": {
+          "password": {
+            "type": "string",
+            "example": "Senha@123"
+          }
+        }
+      },
+      "UpdateBarberRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Barbeiro Editado"
+          },
+          "tell": {
+            "type": "string",
+            "example": "11977776666"
+          },
+          "email": {
+            "type": "string",
+            "example": "barbeiro@teste.com"
+          }
+        }
+      },
+      "AssignActivitiesRequest": {
+        "type": "object",
+        "required": [
+          "activityIds"
+        ],
+        "properties": {
+          "activityIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": [
+              "{{activity_id}}"
+            ]
+          }
+        }
+      },
+      "CreateAppointmentRequest": {
+        "type": "object",
+        "required": [
+          "customerId",
+          "barberId",
+          "barbershopId",
+          "activityIds",
+          "startTime"
+        ],
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "{{customer_id}}"
+          },
+          "barberId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "{{barber_id}}"
+          },
+          "barbershopId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "{{barbershop_id}}"
+          },
+          "activityIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": [
+              "{{activity_id}}"
+            ]
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-05-20T10:00:00"
+          }
+        }
+      },
+      "CreateBarberBlockRequest": {
+        "type": "object",
+        "required": [
+          "barberId",
+          "startTime",
+          "endTime"
+        ],
+        "properties": {
+          "barberId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "{{barber_id}}"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-05-20T12:00:00"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-05-20T13:00:00"
+          },
+          "reason": {
+            "type": "string",
+            "example": "Almoco"
+          }
+        }
+      },
+      "CreatePaymentRequest": {
+        "type": "object",
+        "required": [
+          "appointmentId"
+        ],
+        "properties": {
+          "appointmentId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "{{appointment_id}}"
+          }
+        }
+      },
+      "WebhookRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "payment"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "12345"
+              }
+            }
+          }
+        }
+      },
+      "CreateProductRequest": {
+        "type": "object",
+        "required": [
+          "barbershopId",
+          "name",
+          "price",
+          "category",
+          "stockQuantity"
+        ],
+        "properties": {
+          "barbershopId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "{{barbershop_id}}"
+          },
+          "name": {
+            "type": "string",
+            "example": "Pomada Modeladora"
+          },
+          "description": {
+            "type": "string",
+            "example": "Fixacao forte"
+          },
+          "price": {
+            "type": "number",
+            "example": 29.9
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "HAIR_PRODUCT",
+              "BEARD_PRODUCT",
+              "SKIN_PRODUCT",
+              "ACCESSORY"
+            ],
+            "example": "HAIR_PRODUCT"
+          },
+          "stockQuantity": {
+            "type": "integer",
+            "example": 50
+          },
+          "imageUrl": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      },
+      "UpdateProductRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Pomada Pro"
+          },
+          "price": {
+            "type": "number",
+            "example": 34.9
+          }
+        }
+      },
+      "CreateOrderRequest": {
+        "type": "object",
+        "required": [
+          "barbershopId",
+          "items"
+        ],
+        "properties": {
+          "barbershopId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "{{barbershop_id}}"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "productId",
+                "quantity"
+              ],
+              "properties": {
+                "productId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "example": "{{product_id}}"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "example": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "UpdateProfileCustomerRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Gabriel Atualizado"
+          },
+          "tell": {
+            "type": "string",
+            "example": "11988887777"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "01 - Auth",
+      "description": "Autenticação e gerenciamento de perfil"
+    },
+    {
+      "name": "02 - Customers",
+      "description": "Operações de clientes"
+    },
+    {
+      "name": "03 - Barbers",
+      "description": "Operações de barbeiros"
+    },
+    {
+      "name": "04 - Barbershops",
+      "description": "Barbearias, atividades e uploads"
+    },
+    {
+      "name": "05 - Agendamentos",
+      "description": "Agendamentos e bloqueios de horário"
+    },
+    {
+      "name": "06 - Pagamentos",
+      "description": "Pagamentos e webhook"
+    },
+    {
+      "name": "07 - Produtos e Pedidos",
+      "description": "Produtos e pedidos"
+    },
+    {
+      "name": "08 - Notificacoes",
+      "description": "Notificações do usuário"
+    }
+  ],
+  "paths": {
+    "/api/auth/email/register": {
+      "post": {
+        "tags": [
+          "01 - Auth"
+        ],
+        "summary": "Registrar usuário (email/senha)",
+        "operationId": "registerEmail",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Usuário registrado"
+          },
+          "400": {
+            "description": "Dados inválidos"
+          }
+        }
+      }
+    },
+    "/api/auth/email/login": {
+      "post": {
+        "tags": [
+          "01 - Auth"
+        ],
+        "summary": "Login (email/senha)",
+        "operationId": "loginEmail",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token retornado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais inválidas"
+          }
+        }
+      }
+    },
+    "/api/auth/verify": {
+      "post": {
+        "tags": [
+          "01 - Auth"
+        ],
+        "summary": "Verificar e registrar token Firebase",
+        "operationId": "verifyToken",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token verificado"
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "01 - Auth"
+        ],
+        "summary": "Perfil do usuário autenticado",
+        "operationId": "getMe",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Perfil retornado"
+          },
+          "401": {
+            "description": "Não autenticado"
+          }
+        }
+      }
+    },
+    "/api/auth/customers/complete-profile": {
+      "post": {
+        "tags": [
+          "01 - Auth"
+        ],
+        "summary": "Completar perfil de cliente",
+        "operationId": "completeProfileCustomer",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteProfileCustomer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Perfil completado"
+          }
+        }
+      }
+    },
+    "/api/auth/barbers/complete-profile": {
+      "post": {
+        "tags": [
+          "01 - Auth"
+        ],
+        "summary": "Completar perfil de barbeiro",
+        "operationId": "completeProfileBarber",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteProfileBarber"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Perfil completado"
+          }
+        }
+      }
+    },
+    "/api/customers": {
+      "get": {
+        "tags": [
+          "02 - Customers"
+        ],
+        "summary": "Listar clientes",
+        "operationId": "listCustomers",
+        "responses": {
+          "200": {
+            "description": "Lista de clientes"
+          }
+        }
+      }
+    },
+    "/api/customers/{customerId}": {
+      "get": {
+        "tags": [
+          "02 - Customers"
+        ],
+        "summary": "Buscar cliente por ID",
+        "operationId": "getCustomerById",
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{customer_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cliente encontrado"
+          },
+          "404": {
+            "description": "Não encontrado"
+          }
+        }
+      }
+    },
+    "/api/customers/me": {
+      "put": {
+        "tags": [
+          "02 - Customers"
+        ],
+        "summary": "Atualizar perfil do cliente",
+        "operationId": "updateCustomerProfile",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileCustomerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Perfil atualizado"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "02 - Customers"
+        ],
+        "summary": "Deletar conta do cliente",
+        "operationId": "deleteCustomer",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Conta deletada"
+          }
+        }
+      }
+    },
+    "/api/customers/me/upload-photo": {
+      "post": {
+        "tags": [
+          "02 - Customers"
+        ],
+        "summary": "Upload foto do cliente",
+        "operationId": "uploadCustomerPhoto",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Foto enviada"
+          }
+        }
+      }
+    },
+    "/api/barbers": {
+      "get": {
+        "tags": [
+          "03 - Barbers"
+        ],
+        "summary": "Listar barbeiros",
+        "operationId": "listBarbers",
+        "responses": {
+          "200": {
+            "description": "Lista de barbeiros"
+          }
+        }
+      }
+    },
+    "/api/barbers/{barberId}": {
+      "get": {
+        "tags": [
+          "03 - Barbers"
+        ],
+        "summary": "Buscar barbeiro por ID",
+        "operationId": "getBarberById",
+        "parameters": [
+          {
+            "name": "barberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{barber_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Barbeiro encontrado"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "03 - Barbers"
+        ],
+        "summary": "Atualizar barbeiro",
+        "operationId": "updateBarber",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "barberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{barber_id}}"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBarberRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Barbeiro atualizado"
+          }
+        }
+      }
+    },
+    "/api/barbers/barbershop/{barbershopId}": {
+      "get": {
+        "tags": [
+          "03 - Barbers"
+        ],
+        "summary": "Listar barbeiros de uma barbearia",
+        "operationId": "getBarbersByBarbershop",
+        "parameters": [
+          {
+            "name": "barbershopId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{barbershop_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de barbeiros"
+          }
+        }
+      }
+    },
+    "/api/barbers/me/my-activities": {
+      "get": {
+        "tags": [
+          "03 - Barbers"
+        ],
+        "summary": "Atividades vinculadas ao barbeiro autenticado",
+        "operationId": "getMyActivities",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de atividades"
+          }
+        }
+      }
+    },
+    "/api/barbers/me/assign-activities": {
+      "post": {
+        "tags": [
+          "03 - Barbers"
+        ],
+        "summary": "Vincular atividades ao barbeiro autenticado",
+        "operationId": "assignActivities",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignActivitiesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Atividades vinculadas"
+          }
+        }
+      }
+    },
+    "/api/barbershops": {
+      "get": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Listar todas as barbearias",
+        "operationId": "listBarbershops",
+        "responses": {
+          "200": {
+            "description": "Lista de barbearias"
+          }
+        }
+      }
+    },
+    "/api/barbershops/{barbershopId}": {
+      "get": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Buscar barbearia por ID",
+        "operationId": "getBarbershopById",
+        "parameters": [
+          {
+            "name": "barbershopId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{barbershop_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Barbearia encontrada"
+          }
+        }
+      }
+    },
+    "/api/barbershops/{barbershopId}/activities": {
+      "get": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Listar atividades de uma barbearia",
+        "operationId": "getBarbershopActivities",
+        "parameters": [
+          {
+            "name": "barbershopId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{barbershop_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de atividades"
+          }
+        }
+      }
+    },
+    "/api/barbershops/register-my-shop": {
+      "post": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Registrar barbearia (owner)",
+        "operationId": "registerBarbershop",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "cnpj",
+                  "address"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "Barbearia do Gabriel"
+                  },
+                  "cnpj": {
+                    "type": "string",
+                    "example": "12345678000199"
+                  },
+                  "address": {
+                    "type": "string",
+                    "example": "Rua das Flores, 123"
+                  },
+                  "logo": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Barbearia criada"
+          }
+        }
+      }
+    },
+    "/api/barbershops/my-shop": {
+      "put": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Atualizar barbearia",
+        "operationId": "updateBarbershop",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBarbershopRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Barbearia atualizada"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Fechar barbearia",
+        "operationId": "closeBarbershop",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseBarbershopRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Barbearia fechada"
+          }
+        }
+      }
+    },
+    "/api/barbershops/my-shop/activities": {
+      "post": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Criar atividade/serviço",
+        "operationId": "createActivity",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateActivityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Atividade criada"
+          }
+        }
+      }
+    },
+    "/api/barbershops/my-shop/activities/{activityId}": {
+      "put": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Atualizar atividade",
+        "operationId": "updateActivity",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{activity_id}}"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateActivityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Atividade atualizada"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Deletar atividade",
+        "operationId": "deleteActivity",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{activity_id}}"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Atividade deletada"
+          }
+        }
+      }
+    },
+    "/api/barbershops/my-shop/activities/{activityId}/upload-photo": {
+      "post": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Upload foto da atividade",
+        "operationId": "uploadActivityPhoto",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{activity_id}}"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Foto enviada"
+          }
+        }
+      }
+    },
+    "/api/barbershops/my-shop/remove-barber/{barberId}": {
+      "delete": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Remover barbeiro da barbearia",
+        "operationId": "removeBarberFromShop",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "barberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{barber_id}}"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Barbeiro removido"
+          }
+        }
+      }
+    },
+    "/api/barbershops/join-request": {
+      "post": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Solicitar entrada em barbearia (barbeiro)",
+        "operationId": "joinRequest",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Solicitação enviada"
+          }
+        }
+      }
+    },
+    "/api/barbershops/my-shop/pending-requests": {
+      "get": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Listar solicitações pendentes (owner)",
+        "operationId": "listPendingRequests",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de solicitações"
+          }
+        }
+      }
+    },
+    "/api/barbershops/my-shop/approve-request/{requestId}": {
+      "post": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Aprovar solicitação de barbeiro",
+        "operationId": "approveRequest",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{join_request_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Solicitação aprovada"
+          }
+        }
+      }
+    },
+    "/api/barbershops/leave-shop": {
+      "post": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Barbeiro sair da barbearia",
+        "operationId": "leaveShop",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saída registrada"
+          }
+        }
+      }
+    },
+    "/api/barbershops/my-shop/upload-logo": {
+      "post": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Upload logo da barbearia",
+        "operationId": "uploadLogo",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Logo enviada"
+          }
+        }
+      }
+    },
+    "/api/barbershops/my-shop/upload-banner": {
+      "post": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Upload banner da barbearia",
+        "operationId": "uploadBanner",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Banner enviado"
+          }
+        }
+      }
+    },
+    "/api/barbershops/my-shop/highlights": {
+      "post": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Adicionar highlight",
+        "operationId": "addHighlight",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Highlight adicionado"
+          }
+        }
+      }
+    },
+    "/api/barbershops/my-shop/highlights/{highlightId}": {
+      "delete": {
+        "tags": [
+          "04 - Barbershops"
+        ],
+        "summary": "Deletar highlight",
+        "operationId": "deleteHighlight",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "highlightId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{highlight_id}}"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Highlight deletado"
+          }
+        }
+      }
+    },
+    "/api/appointments": {
+      "post": {
+        "tags": [
+          "05 - Agendamentos"
+        ],
+        "summary": "Criar agendamento",
+        "operationId": "createAppointment",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAppointmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Agendamento criado"
+          }
+        }
+      }
+    },
+    "/api/appointments/{appointmentId}": {
+      "get": {
+        "tags": [
+          "05 - Agendamentos"
+        ],
+        "summary": "Buscar agendamento por ID",
+        "operationId": "getAppointmentById",
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{appointment_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agendamento encontrado"
+          }
+        }
+      }
+    },
+    "/api/appointments/my-appointments": {
+      "get": {
+        "tags": [
+          "05 - Agendamentos"
+        ],
+        "summary": "Meus agendamentos",
+        "operationId": "myAppointments",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de agendamentos"
+          }
+        }
+      }
+    },
+    "/api/appointments/barber/{barberId}": {
+      "get": {
+        "tags": [
+          "05 - Agendamentos"
+        ],
+        "summary": "Agendamentos de um barbeiro por data",
+        "operationId": "getAppointmentsByBarber",
+        "parameters": [
+          {
+            "name": "barberId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{barber_id}}"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": "2026-05-20"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de agendamentos"
+          }
+        }
+      }
+    },
+    "/api/appointments/barbershop/{barbershopId}": {
+      "get": {
+        "tags": [
+          "05 - Agendamentos"
+        ],
+        "summary": "Agendamentos de uma barbearia por data",
+        "operationId": "getAppointmentsByBarbershop",
+        "parameters": [
+          {
+            "name": "barbershopId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{barbershop_id}}"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": "2026-05-20"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de agendamentos"
+          }
+        }
+      }
+    },
+    "/api/appointments/{appointmentId}/cancel": {
+      "put": {
+        "tags": [
+          "05 - Agendamentos"
+        ],
+        "summary": "Cancelar agendamento",
+        "operationId": "cancelAppointment",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{appointment_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agendamento cancelado"
+          }
+        }
+      }
+    },
+    "/api/appointments/{appointmentId}/confirm": {
+      "put": {
+        "tags": [
+          "05 - Agendamentos"
+        ],
+        "summary": "Confirmar agendamento (barbeiro)",
+        "operationId": "confirmAppointment",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{appointment_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agendamento confirmado"
+          }
+        }
+      }
+    },
+    "/api/appointments/{appointmentId}/conclude": {
+      "put": {
+        "tags": [
+          "05 - Agendamentos"
+        ],
+        "summary": "Concluir agendamento (barbeiro)",
+        "operationId": "concludeAppointment",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "appointmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{appointment_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Agendamento concluído"
+          }
+        }
+      }
+    },
+    "/api/appointments/availability": {
+      "get": {
+        "tags": [
+          "05 - Agendamentos"
+        ],
+        "summary": "Verificar disponibilidade de horários",
+        "operationId": "getAvailability",
+        "parameters": [
+          {
+            "name": "barberId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{barber_id}}"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": "2026-05-20"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Slots disponíveis"
+          }
+        }
+      }
+    },
+    "/api/appointments/barber-blocks": {
+      "post": {
+        "tags": [
+          "05 - Agendamentos"
+        ],
+        "summary": "Criar bloqueio de horário",
+        "operationId": "createBarberBlock",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBarberBlockRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bloqueio criado"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "05 - Agendamentos"
+        ],
+        "summary": "Listar bloqueios de horário",
+        "operationId": "listBarberBlocks",
+        "parameters": [
+          {
+            "name": "barberId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{barber_id}}"
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "example": "2026-05-20"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de bloqueios"
+          }
+        }
+      }
+    },
+    "/api/appointments/barber-blocks/{blockId}": {
+      "delete": {
+        "tags": [
+          "05 - Agendamentos"
+        ],
+        "summary": "Deletar bloqueio de horário",
+        "operationId": "deleteBarberBlock",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "blockId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{block_id}}"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Bloqueio deletado"
+          }
+        }
+      }
+    },
+    "/api/payments/create": {
+      "post": {
+        "tags": [
+          "06 - Pagamentos"
+        ],
+        "summary": "Criar pagamento",
+        "operationId": "createPayment",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{customer_id}}",
+            "description": "UUID do usuário (não injetado pelo gateway, deve ser enviado pelo client)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pagamento criado"
+          }
+        }
+      }
+    },
+    "/api/payments/{paymentId}": {
+      "get": {
+        "tags": [
+          "06 - Pagamentos"
+        ],
+        "summary": "Buscar pagamento por ID",
+        "operationId": "getPaymentById",
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{payment_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pagamento encontrado"
+          }
+        }
+      }
+    },
+    "/api/payments/my-payments": {
+      "get": {
+        "tags": [
+          "06 - Pagamentos"
+        ],
+        "summary": "Meus pagamentos",
+        "operationId": "myPayments",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{customer_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pagamentos"
+          }
+        }
+      }
+    },
+    "/api/payments/webhook": {
+      "post": {
+        "tags": [
+          "06 - Pagamentos"
+        ],
+        "summary": "Webhook MercadoPago",
+        "operationId": "paymentWebhook",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Webhook processado"
+          }
+        }
+      }
+    },
+    "/api/products": {
+      "get": {
+        "tags": [
+          "07 - Produtos e Pedidos"
+        ],
+        "summary": "Listar produtos",
+        "operationId": "listProducts",
+        "parameters": [
+          {
+            "name": "barbershopId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{barbershop_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de produtos"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "07 - Produtos e Pedidos"
+        ],
+        "summary": "Criar produto",
+        "operationId": "createProduct",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Produto criado"
+          }
+        }
+      }
+    },
+    "/api/products/{productId}": {
+      "get": {
+        "tags": [
+          "07 - Produtos e Pedidos"
+        ],
+        "summary": "Buscar produto por ID",
+        "operationId": "getProductById",
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{product_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Produto encontrado"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "07 - Produtos e Pedidos"
+        ],
+        "summary": "Atualizar produto",
+        "operationId": "updateProduct",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{product_id}}"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Produto atualizado"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "07 - Produtos e Pedidos"
+        ],
+        "summary": "Deletar produto (soft delete)",
+        "operationId": "deleteProduct",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{product_id}}"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Produto deletado"
+          }
+        }
+      }
+    },
+    "/api/orders": {
+      "post": {
+        "tags": [
+          "07 - Produtos e Pedidos"
+        ],
+        "summary": "Criar pedido",
+        "operationId": "createOrder",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{customer_id}}"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pedido criado"
+          }
+        }
+      }
+    },
+    "/api/orders/my-orders": {
+      "get": {
+        "tags": [
+          "07 - Produtos e Pedidos"
+        ],
+        "summary": "Meus pedidos",
+        "operationId": "myOrders",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{customer_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos"
+          }
+        }
+      }
+    },
+    "/api/orders/shop-orders": {
+      "get": {
+        "tags": [
+          "07 - Produtos e Pedidos"
+        ],
+        "summary": "Pedidos de uma barbearia",
+        "operationId": "shopOrders",
+        "parameters": [
+          {
+            "name": "barbershopId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{barbershop_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos"
+          }
+        }
+      }
+    },
+    "/api/orders/{orderId}/status": {
+      "put": {
+        "tags": [
+          "07 - Produtos e Pedidos"
+        ],
+        "summary": "Atualizar status do pedido",
+        "operationId": "updateOrderStatus",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{order_id}}"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "PENDING",
+                  "CONFIRMED",
+                  "PREPARING",
+                  "READY",
+                  "DELIVERED",
+                  "CANCELLED"
+                ],
+                "example": "DELIVERED"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status atualizado"
+          }
+        }
+      }
+    },
+    "/api/notifications/my-notifications": {
+      "get": {
+        "tags": [
+          "08 - Notificacoes"
+        ],
+        "summary": "Minhas notificações",
+        "operationId": "myNotifications",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{customer_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de notificações"
+          }
+        }
+      }
+    },
+    "/api/notifications/unread-count": {
+      "get": {
+        "tags": [
+          "08 - Notificacoes"
+        ],
+        "summary": "Total de notificações não lidas",
+        "operationId": "unreadCount",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{customer_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contagem"
+          }
+        }
+      }
+    },
+    "/api/notifications/{notificationId}/read": {
+      "put": {
+        "tags": [
+          "08 - Notificacoes"
+        ],
+        "summary": "Marcar notificação como lida",
+        "operationId": "markNotificationRead",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "notificationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{notification_id}}"
+          },
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "{{customer_id}}"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notificação marcada como lida"
+          }
+        }
+      }
+    }
+  }
+}
