@@ -1,120 +1,144 @@
 {
-  "v": 1,
+  "v": 2,
+  "id": "env-cortaai-local-dev",
   "name": "CortaAi - Local Dev",
   "variables": [
     {
       "key": "base_url",
-      "value": "https://api.cortaai.shop",
+      "initialValue": "https://api.cortaai.shop",
+      "currentValue": "https://api.cortaai.shop",
       "secret": false
     },
     {
       "key": "customer_email",
-      "value": "gb.chaves@hotmail.com",
+      "initialValue": "gb.chaves@hotmail.com",
+      "currentValue": "gb.chaves@hotmail.com",
       "secret": false
     },
     {
       "key": "customer_password",
-      "value": "Senha@123",
+      "initialValue": "",
+      "currentValue": "Senha@123",
       "secret": true
     },
     {
       "key": "barber_email",
-      "value": "barbeiro@teste.com",
+      "initialValue": "barbeiro@teste.com",
+      "currentValue": "barbeiro@teste.com",
       "secret": false
     },
     {
       "key": "barber_password",
-      "value": "Senha@123",
+      "initialValue": "",
+      "currentValue": "Senha@123",
       "secret": true
     },
     {
       "key": "owner_email",
-      "value": "chaves.bsilba@gmail.com",
+      "initialValue": "chaves.bsilba@gmail.com",
+      "currentValue": "chaves.bsilba@gmail.com",
       "secret": false
     },
     {
       "key": "owner_password",
-      "value": "Senha@123",
+      "initialValue": "",
+      "currentValue": "Senha@123",
       "secret": true
     },
     {
       "key": "token",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": true
     },
     {
       "key": "customer_token",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": true
     },
     {
       "key": "barber_token",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": true
     },
     {
       "key": "owner_token",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": true
     },
     {
       "key": "customer_id",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": false
     },
     {
       "key": "barber_id",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": false
     },
     {
       "key": "barbershop_id",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": false
     },
     {
       "key": "activity_id",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": false
     },
     {
       "key": "appointment_id",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": false
     },
     {
       "key": "payment_id",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": false
     },
     {
       "key": "product_id",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": false
     },
     {
       "key": "order_id",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": false
     },
     {
       "key": "notification_id",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": false
     },
     {
       "key": "join_request_id",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": false
     },
     {
       "key": "block_id",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": false
     },
     {
       "key": "highlight_id",
-      "value": "",
+      "initialValue": "",
+      "currentValue": "",
       "secret": false
     }
   ]
