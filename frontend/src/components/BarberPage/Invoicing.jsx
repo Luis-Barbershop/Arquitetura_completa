@@ -11,7 +11,20 @@ function Invoicing({ barber }) {
   const [seriesError, setSeriesError] = useState(false);
 
   const barbershopId = barber?.barbershopId;
-  const isOwner = Boolean(barber?.isOwner ?? barber?.owner);
+  const isOwner = useMemo(() => {
+    const ownerFlag = barber?.isOwner ?? barber?.owner;
+    const ownerFromProfile = ownerFlag === true || ownerFlag === 'true';
+    const role = barber?.role;
+    const ownerFromRole = Array.isArray(role)
+      ? role.some((item) => String(item).toUpperCase().includes('OWNER'))
+      : String(role || '').toUpperCase().includes('OWNER');
+
+    const ownerFromStorage =
+      localStorage.getItem('isOwner') === 'true' ||
+      String(localStorage.getItem('userRole') || '').toUpperCase().includes('OWNER');
+
+    return ownerFromProfile || ownerFromRole || ownerFromStorage;
+  }, [barber]);
 
   useEffect(() => {
     const loadOverview = async () => {

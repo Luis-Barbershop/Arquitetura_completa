@@ -151,11 +151,6 @@ function BarberServicesPage() {
       return;
     }
 
-    if (!isOwner) {
-      showToast('Apenas o dono da barbearia pode cadastrar serviços.', 'warning');
-      return;
-    }
-
     const parsedPrice = Number(String(price).replace(',', '.').trim());
     const parsedDuration = Number(duration);
 
@@ -192,7 +187,7 @@ function BarberServicesPage() {
         null;
 
       if (status === 403) {
-        showToast('Seu usuario nao tem permissao ativa de dono no token atual. Faca logout e login novamente para atualizar o acesso e tente de novo.', 'error');
+        showToast('Apenas o dono da barbearia pode cadastrar servicos.', 'error');
       } else if (status === 400 && backendMessage) {
         showToast(`Nao foi possivel adicionar o servico: ${backendMessage}`, 'error');
       } else {
