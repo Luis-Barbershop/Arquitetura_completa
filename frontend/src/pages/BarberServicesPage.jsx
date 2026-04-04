@@ -25,7 +25,20 @@ function BarberServicesPage() {
 
   const toastTimerRef = useRef(null);
 
-  const isOwner = Boolean(barber?.isOwner ?? barber?.owner);
+  const isOwner = useMemo(() => {
+    const ownerFlag = barber?.isOwner ?? barber?.owner;
+    const ownerFromProfile = ownerFlag === true || ownerFlag === 'true';
+    const role = barber?.role;
+    const ownerFromRole = Array.isArray(role)
+      ? role.some((item) => String(item).toUpperCase().includes('OWNER'))
+      : String(role || '').toUpperCase().includes('OWNER');
+
+    const ownerFromStorage =
+      localStorage.getItem('isOwner') === 'true' ||
+      String(localStorage.getItem('userRole') || '').toUpperCase().includes('OWNER');
+
+    return ownerFromProfile || ownerFromRole || ownerFromStorage;
+  }, [barber]);
 
   const showToast = useCallback((message, type = 'info') => {
     setToast({ message, type });
@@ -305,7 +318,7 @@ function BarberServicesPage() {
                 placeholder="Ex: Corte degradê"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                disabled={!isOwner || isSaving}
+                disabled={isSaving}
                 required
               />
 
@@ -319,7 +332,7 @@ function BarberServicesPage() {
                 placeholder="0.00"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                disabled={!isOwner || isSaving}
+                disabled={isSaving}
                 required
               />
 
@@ -333,11 +346,11 @@ function BarberServicesPage() {
                 placeholder="30"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
-                disabled={!isOwner || isSaving}
+                disabled={isSaving}
                 required
               />
 
-              <button type="submit" className={styles.primaryButton} disabled={!isOwner || isSaving}>
+              <button type="submit" className={styles.primaryButton} disabled={isSaving}>
                 {isSaving ? 'Salvando...' : 'Adicionar serviço'}
               </button>
             </form>
