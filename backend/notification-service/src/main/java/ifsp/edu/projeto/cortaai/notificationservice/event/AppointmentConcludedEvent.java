@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -18,4 +19,9 @@ public class AppointmentConcludedEvent {
     private UUID customerId;
     private UUID barberId;
     private UUID barbershopId;
+    private String customerName;
+    private String customerEmail;
+    private String barberName;
+    private String barbershopName;
+    private LocalDateTime startTime;
 }

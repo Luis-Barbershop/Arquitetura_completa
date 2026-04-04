@@ -196,10 +196,19 @@ public class PaymentService {
                 }
 
                 // Publicar evento para notification-service
+                String customerEmail = null;
+                try {
+                    var customerInfo = userServiceClient.getUserById(transaction.getCustomerId());
+                    if (customerInfo != null) customerEmail = customerInfo.getEmail();
+                } catch (Exception e) {
+                    log.warn("Não foi possível buscar email do customer {}: {}", transaction.getCustomerId(), e.getMessage());
+                }
+
                 PaymentApprovedEvent event = new PaymentApprovedEvent(
                         transaction.getId(),
                         appointmentId,
                         transaction.getCustomerId(),
+                        customerEmail,
                         transaction.getAmount()
                 );
                 rabbitTemplate.convertAndSend(

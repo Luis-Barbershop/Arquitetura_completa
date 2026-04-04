@@ -10,7 +10,9 @@ public record AppointmentCreatedEvent(
         UUID barberId,
         UUID barbershopId,
         String customerName,
+        String customerEmail,
         String barberName,
+        String barberEmail,
         String barbershopName,
         LocalDateTime startTime,
         BigDecimal totalPrice

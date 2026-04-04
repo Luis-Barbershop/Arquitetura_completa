@@ -18,5 +18,6 @@ public class PaymentApprovedEvent {
     private UUID transactionId;
     private UUID appointmentId;
     private UUID customerId;
+    private String customerEmail;
     private BigDecimal amount;
 }

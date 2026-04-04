@@ -129,7 +129,8 @@ public class AppointmentService {
         // 10. Publicar evento no RabbitMQ
         AppointmentCreatedEvent event = new AppointmentCreatedEvent(
                 saved.getId(), saved.getCustomerId(), saved.getBarberId(),
-                saved.getBarbershopId(), saved.getCustomerName(), saved.getBarberName(),
+                saved.getBarbershopId(), saved.getCustomerName(), customer.getEmail(),
+                saved.getBarberName(), barber.getEmail(),
                 saved.getBarbershopName(), saved.getStartTime(), saved.getTotalPrice()
         );
         rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.created", event);
@@ -165,11 +166,30 @@ public class AppointmentService {
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointmentRepository.save(appointment);
 
+        // Buscar emails para o evento
+        String customerEmail = null;
+        String barberEmail = null;
+        try {
+            UserInfoDTO customerInfo = userServiceClient.getUserById(appointment.getCustomerId());
+            if (customerInfo != null) customerEmail = customerInfo.getEmail();
+        } catch (Exception e) {
+            log.warn("Não foi possível buscar email do customer: {}", e.getMessage());
+        }
+        try {
+            UserInfoDTO barberInfo = userServiceClient.getUserById(appointment.getBarberId());
+            if (barberInfo != null) barberEmail = barberInfo.getEmail();
+        } catch (Exception e) {
+            log.warn("Não foi possível buscar email do barber: {}", e.getMessage());
+        }
+
         // Publicar evento
         String cancelledBy = callerEmail;
         AppointmentCancelledEvent event = new AppointmentCancelledEvent(
                 appointment.getId(), appointment.getCustomerId(),
-                appointment.getBarberId(), cancelledBy
+                appointment.getBarberId(), cancelledBy,
+                appointment.getCustomerName(), customerEmail,
+                appointment.getBarberName(), barberEmail,
+                appointment.getBarbershopName(), appointment.getStartTime()
         );
         rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.cancelled", event);
         log.info("Evento AppointmentCancelledEvent publicado para appointment {}", appointment.getId());
@@ -190,10 +210,22 @@ public class AppointmentService {
         appointment.setStatus(AppointmentStatus.CONCLUDED);
         appointmentRepository.save(appointment);
 
+        // Buscar email do customer para o evento
+        String customerEmail = null;
+        try {
+            UserInfoDTO customerInfo = userServiceClient.getUserById(appointment.getCustomerId());
+            if (customerInfo != null) customerEmail = customerInfo.getEmail();
+        } catch (Exception e) {
+            log.warn("Não foi possível buscar email do customer: {}", e.getMessage());
+        }
+
         // Publicar evento
         AppointmentConcludedEvent event = new AppointmentConcludedEvent(
                 appointment.getId(), appointment.getCustomerId(),
-                appointment.getBarberId(), appointment.getBarbershopId()
+                appointment.getBarberId(), appointment.getBarbershopId(),
+                appointment.getCustomerName(), customerEmail,
+                appointment.getBarberName(), appointment.getBarbershopName(),
+                appointment.getStartTime()
         );
         rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.concluded", event);
         log.info("Evento AppointmentConcludedEvent publicado para appointment {}", appointment.getId());

@@ -21,7 +21,9 @@ public class AppointmentCreatedEvent {
     private UUID barberId;
     private UUID barbershopId;
     private String customerName;
+    private String customerEmail;
     private String barberName;
+    private String barberEmail;
     private String barbershopName;
     private LocalDateTime startTime;
     private BigDecimal totalPrice;
