@@ -5,17 +5,18 @@ export const getAllBarbershops = async () => {
         const response = await api.get("/barbershops");
         return response.data;
     } catch (error) {
-        console.log("Erro de API - API AllBarbershops");
-        return[];
-    };
+        console.error("Erro de API - API AllBarbershops", error);
+        return [];
+    }
 }
 
 export const getBarbershopById = async (id) => {
     try {
-        const response = await api.get("/barbershops/")
+        const response = await api.get(`/barbershops/${id}`);
+        return response.data;
     } catch (error) {
-         console.log("Erro de API - API GetBarbershopById");
-        return[];
+         console.error("Erro de API - API GetBarbershopById", error);
+        return null;
     }
 }
 
@@ -54,8 +55,8 @@ export const createBarbershop = async (shopData, imageFile) => {
 // Busca os barbeiros de uma loja específica (Público)
 export const getShopBarbers = async (shopId) => {
     try {
-        const response = await api.get(`/barbershops/${shopId}/barbers`);
-        return response.data;
+        const response = await api.get(`/barbers/barbershop/${shopId}`);
+        return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
         console.error("Erro ao buscar barbeiros da loja:", error);
         return [];

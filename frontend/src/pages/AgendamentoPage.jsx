@@ -6,6 +6,7 @@ import Styles from "./CSS/AgendamentoPage.module.css";
 import ServicesAgendamento from "../components/AgendamentoPage/ServicesAgendamento";
 
 import api from "../services/api"; 
+import { getShopBarbers, getShopServices } from "../services/barbershopService";
 
 const AgendamentoPage = () => {
   const { barbershopId } = useParams();
@@ -262,12 +263,13 @@ const AgendamentoPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const servicesResponse = await api.get(`/barbershops/${barbershopId}/activities`);
-        setServicesList(servicesResponse.data);
+        const [servicesData, barbersData] = await Promise.all([
+          getShopServices(barbershopId),
+          getShopBarbers(barbershopId),
+        ]);
 
-        const barbersResponse = await api.get(`/barbershops/${barbershopId}/barbers`);
-        setBarbersList(barbersResponse.data);
-
+        setServicesList(servicesData);
+        setBarbersList(barbersData);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
         alert("Erro ao carregar informações da barbearia.");
@@ -761,3 +763,4 @@ const AgendamentoPage = () => {
 };
 
 export default AgendamentoPage;
+

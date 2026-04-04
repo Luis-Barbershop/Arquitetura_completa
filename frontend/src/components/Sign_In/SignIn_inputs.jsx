@@ -76,16 +76,15 @@ function SignIn_inputs() {
     if (registered) {
         return (
             <div className={Styles.SignIn_inputs_container}>
-                <div style={{ textAlign: 'center', padding: '2rem' }}>
-                    <h3>✅ Cadastro realizado!</h3>
-                    <p style={{ marginTop: '1rem' }}>
-                        Um e-mail de verificação foi enviado para <strong>{email}</strong>.
+                <div className={Styles.registeredState}>
+                    <h3 className={Styles.registeredTitle}>Cadastro realizado!</h3>
+                    <p className={Styles.registeredText}>
+                        Um e-mail de verificacao foi enviado para <strong>{email}</strong>.
                     </p>
-                    <p style={{ marginTop: '0.5rem', color: '#888' }}>
+                    <p className={Styles.registeredHint}>
                         Verifique sua caixa de entrada (e o spam) e clique no link antes de fazer login.
                     </p>
                     <button
-                        style={{ marginTop: '1.5rem' }}
                         className={Styles.SignIn_button}
                         onClick={() => navigate("/login")}
                     >

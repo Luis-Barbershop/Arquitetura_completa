@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getShopServices, getMyAssignedActivities, assignActivities } from '../../services/barbershopService';
 import styles from './CSS/ManageMySkills.module.css';
 
-const ManageMySkills = ({ shopId }) => {
+const ManageMySkills = ({ shopId, refreshKey = 0 }) => {
     const [shopServices, setShopServices] = useState([]);
     const [myServicesIds, setMyServicesIds] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -33,7 +33,7 @@ const ManageMySkills = ({ shopId }) => {
         };
 
         if (shopId) loadData();
-    }, [shopId]);
+    }, [shopId, refreshKey]);
 
     const handleToggle = (serviceId) => {
         const normalizedId = String(serviceId);

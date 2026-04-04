@@ -22,6 +22,7 @@ function BarberServicesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState(null);
   const [servicePendingDelete, setServicePendingDelete] = useState(null);
+  const [skillsRefreshKey, setSkillsRefreshKey] = useState(0);
 
   const toastTimerRef = useRef(null);
 
@@ -177,6 +178,7 @@ function BarberServicesPage() {
       setPrice('');
       setDuration('30');
       await loadServices();
+      setSkillsRefreshKey((prev) => prev + 1);
       showToast('Servico adicionado com sucesso.', 'success');
     } catch (error) {
       console.error('Erro ao criar serviço:', error);
@@ -208,6 +210,7 @@ function BarberServicesPage() {
     try {
       await deleteService(servicePendingDelete.id);
       await loadServices();
+      setSkillsRefreshKey((prev) => prev + 1);
       showToast('Servico excluido com sucesso.', 'success');
     } catch (error) {
       console.error('Erro ao excluir serviço:', error);
@@ -362,7 +365,7 @@ function BarberServicesPage() {
                 Selecione e salve aqui os serviços que voce realmente executa. Esse vinculo
                 e obrigatorio para liberar o agendamento no fluxo do backend.
               </p>
-              <ManageMySkills shopId={barber.barbershopId} />
+              <ManageMySkills shopId={barber.barbershopId} refreshKey={skillsRefreshKey} />
             </article>
           </section>
         )}
@@ -407,3 +410,4 @@ function BarberServicesPage() {
 }
 
 export default BarberServicesPage;
+
