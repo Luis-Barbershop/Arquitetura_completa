@@ -204,7 +204,7 @@ public class PaymentService {
             if (newStatus == PaymentStatus.APPROVED) {
                 // Atualizar status no schedule-service via Feign
                 try {
-                    scheduleServiceClient.updatePaymentStatus(appointmentId, "PAID");
+                    scheduleServiceClient.updatePaymentStatus(appointmentId, "CONFIRMED");
                 } catch (Exception e) {
                     log.error("Falha ao atualizar payment status no schedule-service: {}", e.getMessage());
                 }

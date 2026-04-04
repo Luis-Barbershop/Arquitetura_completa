@@ -380,7 +380,14 @@ public class AppointmentService {
                 .orElseThrow(() -> new NotFoundException("Agendamento não encontrado."));
 
         try {
-            AppointmentStatus newStatus = AppointmentStatus.valueOf(status.toUpperCase());
+            String normalized = status == null ? "" : status.toUpperCase();
+            if ("PAID".equals(normalized)) {
+                normalized = "CONFIRMED";
+            } else if ("CONCLUDED".equals(normalized)) {
+                normalized = "COMPLETED";
+            }
+
+            AppointmentStatus newStatus = AppointmentStatus.valueOf(normalized);
             appointment.setStatus(newStatus);
             appointmentRepository.save(appointment);
             log.info("Status do appointment {} atualizado para {}", appointmentId, newStatus);
