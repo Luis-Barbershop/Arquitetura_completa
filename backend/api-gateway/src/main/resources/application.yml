@@ -90,6 +90,15 @@ spring:
 
         # ======== ROTAS DE NEGÓCIO ========
 
+        # Compat: clientes antigos ainda chamam /api/barbershops/{id}/barbers
+        # Encaminha para o endpoint canônico no user-service.
+        - id: legacy-barbershop-barbers
+          uri: lb://user-service
+          predicates:
+            - Path=/api/barbershops/*/barbers
+          filters:
+            - RewritePath=/api/barbershops/(?<barbershopId>[^/]+)/barbers, /api/barbers/barbershop/$\{barbershopId}
+
         # User Service (Auth, Cadastro, Perfil)
         - id: user-service
           uri: lb://user-service
