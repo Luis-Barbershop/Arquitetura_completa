@@ -58,6 +58,13 @@ public class BarbershopController {
         return ResponseEntity.ok(barbershopService.listActivities(shopId));
     }
 
+    @Operation(summary = "Lista os barbeiros de uma barbearia", description = "Retorna os barbeiros vinculados a uma barbearia específica.")
+    @GetMapping("/{shopId}/barbers")
+    public ResponseEntity<List<BarberPublicDTO>> listBarbers(
+            @Parameter(description = "UUID da barbearia") @PathVariable UUID shopId) {
+        return ResponseEntity.ok(barbershopService.listBarbers(shopId));
+    }
+
     @Operation(summary = "Avalia uma barbearia", description = "Permite que um cliente autenticado envie uma avaliação de 1 a 5 estrelas para uma barbearia.")
     @PostMapping("/{shopId}/reviews")
     public ResponseEntity<Void> createReview(

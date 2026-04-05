@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
 
 /**
  * Feign Client para comunicação com o user-service.
@@ -33,6 +34,9 @@ public interface UserServiceClient {
 
     @PutMapping("/{id}/barbershop")
     void updateUserBarbershopId(@PathVariable("id") UUID id, @RequestBody Map<String, String> body);
+
+    @GetMapping("/barbers/by-barbershop/{barbershopId}")
+    List<UserInfoDTO> getBarbersByBarbershop(@PathVariable("barbershopId") UUID barbershopId);
     
     @PutMapping("/make-owner/{uid}")
     ResponseEntity<Void> makeBarberOwner(@PathVariable("uid") String uid);

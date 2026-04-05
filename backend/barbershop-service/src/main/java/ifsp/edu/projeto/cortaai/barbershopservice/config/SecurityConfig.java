@@ -45,7 +45,8 @@ public class SecurityConfig {
                                 "/api/barbershops",
                                 "/api/barbershops/ping",
                                 "/api/barbershops/*",
-                                "/api/barbershops/*/activities"
+                                "/api/barbershops/*/activities",
+                                "/api/barbershops/*/barbers"
                         ).permitAll()
                         .requestMatchers("/api/internal/**").permitAll()
                         .anyRequest().authenticated()

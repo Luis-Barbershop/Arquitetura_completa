@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
 
 @Component
 public class UserServiceClientFallbackFactory implements FallbackFactory<UserServiceClient> {
@@ -32,6 +33,11 @@ public class UserServiceClientFallbackFactory implements FallbackFactory<UserSer
 
             @Override
             public void updateUserBarbershopId(UUID id, Map<String, String> body) {
+                throw unavailable(cause);
+            }
+
+            @Override
+            public List<UserInfoDTO> getBarbersByBarbershop(UUID barbershopId) {
                 throw unavailable(cause);
             }
 

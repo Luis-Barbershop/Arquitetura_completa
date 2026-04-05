@@ -146,6 +146,25 @@ public class BarbershopService {
     }
 
     @Transactional(readOnly = true)
+    public List<BarberPublicDTO> listBarbers(UUID shopId) {
+        if (!barbershopRepository.existsById(shopId)) {
+            throw new NotFoundException("Barbearia não encontrada.");
+        }
+
+        try {
+            return userServiceClient.getBarbersByBarbershop(shopId).stream()
+                    .map(barber -> new BarberPublicDTO(
+                            barber.getId(),
+                            barber.getName(),
+                            barber.getImageUrl()
+                    ))
+                    .collect(Collectors.toList());
+        } catch (Exception ex) {
+            throw new UserServiceUnavailableException("Não foi possível listar os barbeiros desta barbearia no momento.");
+        }
+    }
+
+    @Transactional(readOnly = true)
     public BarbershopDTO getBarbershop(UUID shopId) {
         Barbershop shop = barbershopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Barbearia não encontrada."));

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 /**
  * Endpoints internos para comunicação inter-serviço.
@@ -99,6 +100,22 @@ public class InternalUserController {
         if (barber.isPresent()) return ResponseEntity.ok(toUserInfoDTO(barber.get()));
 
         return ResponseEntity.notFound().build();
+    }
+
+    /** Lista barbeiros vinculados a uma barbearia específica. */
+    @Operation(summary = "Lista barbeiros por barbearia (interno)",
+               description = "Retorna todos os barbeiros com barbershopId igual ao informado.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de barbeiros retornada com sucesso")
+    })
+    @GetMapping("/barbers/by-barbershop/{barbershopId}")
+    public ResponseEntity<List<UserInfoDTO>> getBarbersByBarbershop(
+            @Parameter(description = "UUID da barbearia") @PathVariable UUID barbershopId) {
+        List<UserInfoDTO> barbers = barberRepository.findByBarbershopId(barbershopId)
+                .stream()
+                .map(this::toUserInfoDTO)
+                .toList();
+        return ResponseEntity.ok(barbers);
     }
 
     /**
