@@ -54,11 +54,28 @@ export const createBarbershop = async (shopData, imageFile) => {
 
 // Busca os barbeiros de uma loja específica (Público)
 export const getShopBarbers = async (shopId) => {
+    if (!shopId) return [];
+
+    const normalizeBarbersPayload = (payload) => {
+        if (Array.isArray(payload)) return payload;
+        if (Array.isArray(payload?.content)) return payload.content;
+        if (Array.isArray(payload?.data)) return payload.data;
+        return [];
+    };
+
     try {
         const response = await api.get(`/barbers/barbershop/${shopId}`);
-        return Array.isArray(response.data) ? response.data : [];
+        const parsed = normalizeBarbersPayload(response.data);
+        if (parsed.length > 0) return parsed;
     } catch (error) {
-        console.error("Erro ao buscar barbeiros da loja:", error);
+        console.warn("Falha na rota principal de barbeiros:", error?.response?.status || error?.message);
+    }
+
+    try {
+        const fallbackResponse = await api.get(`/barbershops/${shopId}/barbers`);
+        return normalizeBarbersPayload(fallbackResponse.data);
+    } catch (fallbackError) {
+        console.error("Erro ao buscar barbeiros da loja:", fallbackError);
         return [];
     }
 };
