@@ -58,7 +58,7 @@ function HomePage() {
 
   const handleLogout = () => {
     logoutUser();
-    navigate("/identificacao", { state: { mode: "login", role: "customer" } });
+    navigate("/");
   };
 
   const handleToggleFavorite = async (shopId, currentlyFavorite) => {

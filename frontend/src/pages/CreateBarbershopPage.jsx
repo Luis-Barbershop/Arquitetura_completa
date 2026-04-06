@@ -9,20 +9,83 @@ function CreateBarbershopPage() {
     
     const [name, setName] = useState("");
     const [cnpj, setCnpj] = useState("");
-    const [address, setAddress] = useState("");
     const [file, setFile] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    // ── Campos de endereço via ViaCEP ────────────────────────────────────────
+    const [cep, setCep] = useState("");
+    const [logradouro, setLogradouro] = useState("");
+    const [bairro, setBairro] = useState("");
+    const [cidade, setCidade] = useState("");
+    const [uf, setUf] = useState("");
+    const [numero, setNumero] = useState("");
+    const [complemento, setComplemento] = useState("");
+    const [cepLoading, setCepLoading] = useState(false);
+    const [cepError, setCepError] = useState("");
+
+    // ── Busca automática ao sair do campo CEP ────────────────────────────────
+    const handleCepBlur = async () => {
+        const cleaned = cep.replace(/\D/g, "");
+        if (cleaned.length !== 8) {
+            setCepError("CEP inválido. Informe 8 dígitos.");
+            return;
+        }
+        setCepError("");
+        setCepLoading(true);
+        try {
+            const res = await fetch(`https://viacep.com.br/ws/${cleaned}/json/`);
+            const data = await res.json();
+            if (data.erro) {
+                setCepError("CEP não encontrado.");
+                setLogradouro(""); setBairro(""); setCidade(""); setUf("");
+            } else {
+                setLogradouro(data.logradouro || "");
+                setBairro(data.bairro || "");
+                setCidade(data.localidade || "");
+                setUf(data.uf || "");
+            }
+        } catch {
+            setCepError("Erro ao consultar o CEP. Verifique sua conexão.");
+        } finally {
+            setCepLoading(false);
+        }
+    };
+
+    // ── Máscara de CEP ───────────────────────────────────────────────────────
+    const handleCepChange = (e) => {
+        const v = e.target.value.replace(/\D/g, "").slice(0, 8);
+        const masked = v.length > 5 ? `${v.slice(0, 5)}-${v.slice(5)}` : v;
+        setCep(masked);
+        setCepError("");
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
 
+        if (cep.replace(/\D/g, "").length !== 8 || !logradouro) {
+            toast.warn("Consulte um CEP válido antes de continuar.");
+            return;
+        }
+        if (!numero.trim()) {
+            toast.warn("Informe o número do endereço.");
+            return;
+        }
+
+        // Monta string de endereço completo para o backend
+        const addressParts = [
+            `${logradouro}, ${numero}`,
+            complemento ? complemento : null,
+            bairro,
+            `${cidade} - ${uf}`,
+            `CEP: ${cep}`,
+        ].filter(Boolean);
+        const address = addressParts.join(", ");
+
+        setLoading(true);
         try {
-            // Chama o serviço
             await createBarbershop({ name, cnpj, address }, file);
             
             toast.success("Barbearia criada com sucesso! Para liberar as permissoes de dono, entre novamente.");
-            // O backend coloca a role de dono no JWT. Forcamos novo login para atualizar o token.
             localStorage.clear();
             navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
         } catch (error) {
@@ -64,15 +127,112 @@ function CreateBarbershopPage() {
                         />
                     </div>
 
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Endereço Completo</label>
-                        <input 
-                            type="text" 
-                            value={address} 
-                            onChange={e => setAddress(e.target.value)} 
-                            required 
-                            style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#0f0f0f', color: 'white' }}
-                        />
+                    {/* ── Endereço via ViaCEP ── */}
+                    <div style={{ borderTop: '1px solid #444', paddingTop: '15px' }}>
+                        <p style={{ color: '#D4AF37', fontWeight: 600, marginBottom: '12px', fontSize: '14px' }}>
+                            📍 Endereço
+                        </p>
+
+                        {/* CEP */}
+                        <div style={{ marginBottom: '12px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px' }}>CEP *</label>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <input
+                                    type="text"
+                                    value={cep}
+                                    onChange={handleCepChange}
+                                    onBlur={handleCepBlur}
+                                    required
+                                    placeholder="00000-000"
+                                    maxLength={9}
+                                    style={{ flex: 1, padding: '10px', borderRadius: '5px', border: `1px solid ${cepError ? '#e74c3c' : '#444'}`, background: '#0f0f0f', color: 'white' }}
+                                />
+                                {cepLoading && (
+                                    <span style={{ color: '#D4AF37', fontSize: '13px', whiteSpace: 'nowrap' }}>Buscando...</span>
+                                )}
+                            </div>
+                            {cepError && <p style={{ color: '#e74c3c', fontSize: '12px', marginTop: '4px' }}>{cepError}</p>}
+                        </div>
+
+                        {/* Logradouro */}
+                        <div style={{ marginBottom: '12px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px' }}>Rua / Logradouro</label>
+                            <input
+                                type="text"
+                                value={logradouro}
+                                onChange={e => setLogradouro(e.target.value)}
+                                readOnly={!!logradouro}
+                                required
+                                placeholder="Preenchido automaticamente"
+                                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: logradouro ? '#1a1a1a' : '#0f0f0f', color: logradouro ? '#aaa' : 'white', boxSizing: 'border-box' }}
+                            />
+                        </div>
+
+                        {/* Número + Complemento lado a lado */}
+                        <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+                            <div style={{ flex: '0 0 120px' }}>
+                                <label style={{ display: 'block', marginBottom: '5px' }}>Número *</label>
+                                <input
+                                    type="text"
+                                    value={numero}
+                                    onChange={e => setNumero(e.target.value)}
+                                    required
+                                    placeholder="Ex: 123"
+                                    maxLength={10}
+                                    style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#0f0f0f', color: 'white', boxSizing: 'border-box' }}
+                                />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ display: 'block', marginBottom: '5px' }}>Complemento</label>
+                                <input
+                                    type="text"
+                                    value={complemento}
+                                    onChange={e => setComplemento(e.target.value)}
+                                    placeholder="Sala, Loja, Bloco..."
+                                    maxLength={60}
+                                    style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#0f0f0f', color: 'white', boxSizing: 'border-box' }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Bairro */}
+                        <div style={{ marginBottom: '12px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px' }}>Bairro</label>
+                            <input
+                                type="text"
+                                value={bairro}
+                                onChange={e => setBairro(e.target.value)}
+                                readOnly={!!bairro}
+                                required
+                                placeholder="Preenchido automaticamente"
+                                style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: bairro ? '#1a1a1a' : '#0f0f0f', color: bairro ? '#aaa' : 'white', boxSizing: 'border-box' }}
+                            />
+                        </div>
+
+                        {/* Cidade + UF lado a lado */}
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ display: 'block', marginBottom: '5px' }}>Cidade</label>
+                                <input
+                                    type="text"
+                                    value={cidade}
+                                    readOnly
+                                    required
+                                    placeholder="Preenchido automaticamente"
+                                    style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#1a1a1a', color: '#aaa', boxSizing: 'border-box' }}
+                                />
+                            </div>
+                            <div style={{ flex: '0 0 70px' }}>
+                                <label style={{ display: 'block', marginBottom: '5px' }}>UF</label>
+                                <input
+                                    type="text"
+                                    value={uf}
+                                    readOnly
+                                    placeholder="--"
+                                    style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#1a1a1a', color: '#aaa', boxSizing: 'border-box', textAlign: 'center' }}
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     <div>

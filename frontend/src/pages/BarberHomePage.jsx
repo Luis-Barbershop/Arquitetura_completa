@@ -153,7 +153,7 @@ function BarberHomePage() {
 
   const handleConfirmLogout = () => {
     logoutUser();
-    navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+    navigate('/');
   };
 
   if (loading) return <div className={styles.loadingContainer}>Carregando...</div>;

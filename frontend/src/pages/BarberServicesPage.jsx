@@ -76,7 +76,7 @@ function BarberServicesPage() {
 
   const handleLogout = () => {
     logoutUser();
-    navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+    navigate('/');
   };
 
   const loadServices = useCallback(async () => {

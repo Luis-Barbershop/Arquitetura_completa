@@ -31,7 +31,7 @@ function BarberDashboardPage() {
 
     const handleLogout = async () => {
         await logoutUser();
-        navigate('/identificacao');
+        navigate('/');
     };
 
     const handleTabChange = (tab) => {

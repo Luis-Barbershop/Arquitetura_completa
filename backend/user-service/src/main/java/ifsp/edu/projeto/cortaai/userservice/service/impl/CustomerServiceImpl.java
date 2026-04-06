@@ -1,5 +1,8 @@
 package ifsp.edu.projeto.cortaai.userservice.service.impl;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.UserRecord;
 import ifsp.edu.projeto.cortaai.userservice.dto.CustomerDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.UploadResultDTO;
 import ifsp.edu.projeto.cortaai.userservice.event.BeforeDeleteCustomer;
@@ -29,18 +32,21 @@ public class CustomerServiceImpl implements CustomerService {
     private final CustomerMapper customerMapper;
     private final StorageService storageService;
     private final FirebaseAuthService firebaseAuthService;
+    private final FirebaseAuth firebaseAuth;
 
     public CustomerServiceImpl(final CustomerRepository customerRepository,
                                final ApplicationEventPublisher publisher,
                                final CustomerMapper customerMapper,
                                final StorageService storageService,
-                               final FirebaseAuthService firebaseAuthService
+                               final FirebaseAuthService firebaseAuthService,
+                               final FirebaseAuth firebaseAuth
                                ) {
         this.customerRepository = customerRepository;
         this.publisher = publisher;
         this.customerMapper = customerMapper;
         this.storageService = storageService;
         this.firebaseAuthService = firebaseAuthService;
+        this.firebaseAuth = firebaseAuth;
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
@@ -48,6 +54,31 @@ public class CustomerServiceImpl implements CustomerService {
     private Customer findByFirebaseUid(String firebaseUid) {
         return customerRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new NotFoundException("Customer não encontrado para o UID: " + firebaseUid));
+    }
+
+    /**
+     * Retorna o Customer associado ao UID, criando um registro mínimo caso ainda não exista.
+     * Usado nos endpoints de favoritos para evitar 404 em usuários com perfil incompleto.
+     */
+    @Transactional
+    private Customer findOrCreateByFirebaseUid(String firebaseUid) {
+        return customerRepository.findByFirebaseUid(firebaseUid).orElseGet(() -> {
+            Customer novo = new Customer();
+            novo.setFirebaseUid(firebaseUid);
+            novo.setAuthProvider("FIREBASE");
+            // Tenta buscar nome/email no Firebase Admin SDK
+            try {
+                UserRecord userRecord = firebaseAuth.getUser(firebaseUid);
+                String name = userRecord.getDisplayName();
+                String email = userRecord.getEmail();
+                novo.setName((name != null && !name.isBlank()) ? name : "Usuário");
+                novo.setEmail((email != null && !email.isBlank()) ? email : (firebaseUid + "@firebase.local"));
+            } catch (FirebaseAuthException e) {
+                novo.setName("Usuário");
+                novo.setEmail(firebaseUid + "@firebase.local");
+            }
+            return customerRepository.save(novo);
+        });
     }
 
     // ── CustomerService ───────────────────────────────────────────────────────
@@ -116,14 +147,15 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional(readOnly = true)
     public List<UUID> listFavoriteBarbershopIdsByFirebaseUid(final String firebaseUid) {
-        final Customer customer = findByFirebaseUid(firebaseUid);
-        return new ArrayList<>(customer.getFavoriteBarbershopIds());
+        return customerRepository.findByFirebaseUid(firebaseUid)
+                .map(c -> new ArrayList<>(c.getFavoriteBarbershopIds()))
+                .orElse(new ArrayList<>());
     }
 
     @Override
     @Transactional
     public void addFavoriteBarbershopByFirebaseUid(final String firebaseUid, final UUID barbershopId) {
-        final Customer customer = findByFirebaseUid(firebaseUid);
+        final Customer customer = findOrCreateByFirebaseUid(firebaseUid);
         customer.getFavoriteBarbershopIds().add(barbershopId);
         customerRepository.save(customer);
     }
@@ -131,9 +163,10 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public void removeFavoriteBarbershopByFirebaseUid(final String firebaseUid, final UUID barbershopId) {
-        final Customer customer = findByFirebaseUid(firebaseUid);
-        customer.getFavoriteBarbershopIds().remove(barbershopId);
-        customerRepository.save(customer);
+        customerRepository.findByFirebaseUid(firebaseUid).ifPresent(customer -> {
+            customer.getFavoriteBarbershopIds().remove(barbershopId);
+            customerRepository.save(customer);
+        });
     }
 
     // ── Validações ────────────────────────────────────────────────────────────

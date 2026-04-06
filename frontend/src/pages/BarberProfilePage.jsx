@@ -26,7 +26,7 @@ function BarberProfilePage() {
 
     const handleLogout = async () => {
         await logoutUser();
-        navigate('/identificacao');
+        navigate('/');
     };
 
     if (loading) return <p style={{ padding: 32, color: '#fff' }}>Carregando perfil...</p>;
@@ -65,7 +65,7 @@ function BarberProfilePage() {
                         <div><strong>Telefone:</strong> {barber.tell || '—'}</div>
                         <div><strong>CPF:</strong> {barber.documentCPF || '—'}</div>
                         <div><strong>Barbearia:</strong> {barber.barbershopId ? `Vinculado (ID: ${barber.barbershopId})` : 'Sem barbearia'}</div>
-                        <div><strong>Função:</strong> {barber.role}</div>
+                        <div><strong>Função:</strong> {barber.isOwner ? 'Dono do estabelecimento' : 'Colaborador'}</div>
                         <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 8 }}>
                             Para atualizar sua foto de perfil, use o botão de upload disponível nas configurações.
                         </p>

@@ -1,9 +1,27 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { changePassword, logoutUser } from "../services/authService";
 import Styles from "./CSS/LoginPage.module.css";
 import FPStyles from "./CSS/ForgotPasswordPage.module.css";
 import CPStyles from "./CSS/ChangePasswordPage.module.css";
+
+// ─── Avalia força da senha ────────────────────────────────────────────────────
+function evaluatePasswordStrength(pwd) {
+    if (!pwd) return { score: 0, label: '', color: '' };
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/\d/.test(pwd)) score++;
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(pwd)) score++;
+    const map = [
+        { label: 'Muito fraca', color: '#e74c3c' },
+        { label: 'Fraca',       color: '#e67e22' },
+        { label: 'Média',       color: '#f1c40f' },
+        { label: 'Forte',       color: '#2ecc71' },
+        { label: 'Muito forte', color: '#27ae60' },
+    ];
+    return { score, ...map[score] };
+}
 
 function ChangePasswordPage() {
     const [newPassword, setNewPassword] = useState("");
@@ -15,12 +33,14 @@ function ChangePasswordPage() {
 
     const idToken = localStorage.getItem("token");
 
+    const passwordStrength = useMemo(() => evaluatePasswordStrength(newPassword), [newPassword]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
 
-        if (newPassword.length < 6) {
-            setError("A senha deve ter pelo menos 6 caracteres.");
+        if (passwordStrength.score < 4) {
+            setError("A senha não é forte o suficiente. Use no mínimo 8 caracteres, 1 maiúscula, 1 número e 1 caractere especial.");
             return;
         }
         if (newPassword !== confirmPassword) {
@@ -29,7 +49,7 @@ function ChangePasswordPage() {
         }
         if (!idToken) {
             setError("Sessao expirada. Faca login novamente.");
-            navigate("/login");
+            navigate("/");
             return;
         }
 
@@ -40,7 +60,7 @@ function ChangePasswordPage() {
             // Firebase invalida o token após alterar — deslogar após 3 segundos
             setTimeout(() => {
                 logoutUser();
-                navigate("/login");
+                navigate("/");
             }, 3000);
         } catch (err) {
             const msg = err.response?.data?.message || "Nao foi possivel alterar a senha. Tente novamente.";
@@ -64,14 +84,14 @@ function ChangePasswordPage() {
                     <p className={Styles.subtitle}>Crie uma nova senha forte para continuar acessando seus agendamentos com seguranca.</p>
 
                     <div className={Styles.tagRow}>
-                        <span className={Styles.softTag}>Minimo 6 caracteres</span>
-                        <span className={Styles.softTag}>Sessoes anteriores encerradas</span>
+                        <span className={Styles.softTag}>Mínimo 8 caracteres</span>
+                        <span className={Styles.softTag}>Sessões anteriores encerradas</span>
                     </div>
 
                     <ul className={Styles.featuresList}>
-                        <li>Use letras, numeros e simbolos</li>
-                        <li>Evite senhas ja utilizadas</li>
-                        <li>Voce sera redirecionado ao login</li>
+                        <li>Use letras, números e símbolos</li>
+                        <li>Evite senhas já utilizadas</li>
+                        <li>Você será redirecionado ao login</li>
                     </ul>
                 </aside>
 
@@ -93,14 +113,33 @@ function ChangePasswordPage() {
                                     <div className={CPStyles.inputWrapper}>
                                         <input
                                             type="password"
-                                            placeholder="Minimo 6 caracteres"
+                                            placeholder="Mín. 8 caracteres, 1 maiúscula, 1 número, 1 especial"
                                             value={newPassword}
                                             onChange={(e) => setNewPassword(e.target.value)}
                                             required
-                                            minLength={6}
+                                            minLength={8}
                                             className={FPStyles.input}
                                         />
                                     </div>
+                                    {/* Medidor de força da senha */}
+                                    {newPassword.length > 0 && (
+                                        <div style={{ marginTop: 8 }}>
+                                            <div style={{ display: 'flex', gap: 4 }}>
+                                                {[1, 2, 3, 4].map(i => (
+                                                    <div key={i} style={{
+                                                        flex: 1, height: 4, borderRadius: 2,
+                                                        background: i <= passwordStrength.score
+                                                            ? passwordStrength.color
+                                                            : 'rgba(255,255,255,0.15)',
+                                                        transition: 'background 0.3s',
+                                                    }} />
+                                                ))}
+                                            </div>
+                                            <p style={{ fontSize: 11, color: passwordStrength.color, marginTop: 4 }}>
+                                                {passwordStrength.label} — Mín. 8 caracteres, 1 maiúscula, 1 número, 1 especial
+                                            </p>
+                                        </div>
+                                    )}
                                 </label>
 
                                 <label className={FPStyles.fieldLabel}>

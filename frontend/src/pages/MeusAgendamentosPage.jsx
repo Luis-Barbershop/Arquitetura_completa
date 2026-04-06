@@ -200,7 +200,7 @@ const MeusAgendamentosPage = () => {
 
     const handleBarberLogout = () => {
         logoutUser();
-        navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+        navigate('/');
     };
 
     return (

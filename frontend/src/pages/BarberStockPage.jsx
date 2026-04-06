@@ -97,7 +97,7 @@ function BarberStockPage() {
 
   const handleLogout = () => {
     logoutUser();
-    navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+    navigate('/');
   };
 
   useEffect(() => {
