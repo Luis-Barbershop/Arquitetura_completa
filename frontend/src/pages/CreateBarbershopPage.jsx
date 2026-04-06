@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { createBarbershop } from '../services/barbershopService';
-// Vamos usar um estilo inline básico para ser rápido, mas compatível com seu tema dark
 import Styles from './CSS/HomePage.module.css'; 
 
 function CreateBarbershopPage() {
@@ -21,13 +21,13 @@ function CreateBarbershopPage() {
             // Chama o serviço
             await createBarbershop({ name, cnpj, address }, file);
             
-            alert("Barbearia criada com sucesso! Para liberar as permissoes de dono, entre novamente.");
+            toast.success("Barbearia criada com sucesso! Para liberar as permissoes de dono, entre novamente.");
             // O backend coloca a role de dono no JWT. Forcamos novo login para atualizar o token.
             localStorage.clear();
             navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
         } catch (error) {
             console.error(error);
-            alert("Erro ao criar barbearia. Verifique os dados.");
+            toast.error("Erro ao criar barbearia. Verifique os dados.");
         } finally {
             setLoading(false);
         }

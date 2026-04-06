@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiCalendar, FiCheckCircle, FiRefreshCw, FiScissors } from "react-icons/fi";
+import { toast } from "react-toastify";
 import Styles from "./CSS/AgendamentoPage.module.css";
 
 import ServicesAgendamento from "../components/AgendamentoPage/ServicesAgendamento";
@@ -255,7 +256,7 @@ const AgendamentoPage = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      alert("Você precisa estar logado para fazer um agendamento.");
+      toast.warn("Você precisa estar logado para fazer um agendamento.");
       navigate('/identificacao', { state: { mode: 'login', role: 'customer' } });
     }
   }, [navigate]);
@@ -272,7 +273,7 @@ const AgendamentoPage = () => {
         setBarbersList(barbersData);
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
-        alert("Erro ao carregar informações da barbearia.");
+        toast.error("Erro ao carregar informações da barbearia.");
       }
     };
 
@@ -335,7 +336,7 @@ const AgendamentoPage = () => {
   // Handler: Selecionar/Deselecionar Serviço
   const handleServiceToggle = (service) => {
     if (selectedBarber && !selectedBarberActivityIds.has(String(service.id))) {
-      alert("Este barbeiro nao executa esse servico. Escolha outro profissional ou outro servico.");
+      toast.warn("Este barbeiro nao executa esse servico. Escolha outro profissional ou outro servico.");
       return;
     }
 
@@ -352,7 +353,7 @@ const AgendamentoPage = () => {
 
   const handleOpenSummary = () => {
     if (!selectedBarber || !selectedDate || !selectedTime || selectedServices.length === 0) {
-      alert("Por favor, preencha todos os campos!");
+      toast.warn("Por favor, preencha todos os campos!");
       return;
     }
 
@@ -370,7 +371,7 @@ const AgendamentoPage = () => {
       setIsSubmittingAppointment(true);
       const customerId = localStorage.getItem('userId');
       if (!customerId) {
-        alert("Sessao invalida. Faca login novamente para agendar.");
+        toast.warn("Sessao invalida. Faca login novamente para agendar.");
         navigate('/identificacao', { state: { mode: 'login', role: 'customer' } });
         return;
       }
@@ -385,7 +386,7 @@ const AgendamentoPage = () => {
       const localDateObj = new Date(dateTimeString);
 
       if (isNaN(localDateObj.getTime())) {
-        alert("Erro interno ao processar a data. Tente selecionar o horário novamente.");
+        toast.error("Erro interno ao processar a data. Tente selecionar o horário novamente.");
         return;
       }
 
@@ -401,13 +402,13 @@ const AgendamentoPage = () => {
 
       await api.post("/appointments", appointmentData);
       setIsSummaryModalOpen(false);
-      alert("Agendamento realizado com sucesso!");
+      toast.success("Agendamento realizado com sucesso!");
       navigate("/meus-agendamentos");
     } catch (error) {
       if (error.response && error.response.data) {
-        alert(`Erro: ${error.response.data.message || "Falha ao agendar"}`);
+        toast.error(`Erro: ${error.response.data.message || "Falha ao agendar"}`);
       } else {
-        alert("Erro ao realizar agendamento. Tente novamente.");
+        toast.error("Erro ao realizar agendamento. Tente novamente.");
       }
     } finally {
       setIsSubmittingAppointment(false);
@@ -420,7 +421,7 @@ const AgendamentoPage = () => {
       setIsSubmittingAppointment(true);
       const customerId = localStorage.getItem('userId');
       if (!customerId) {
-        alert("Sessao invalida. Faca login novamente para agendar.");
+        toast.warn("Sessao invalida. Faca login novamente para agendar.");
         navigate('/identificacao', { state: { mode: 'login', role: 'customer' } });
         return;
       }
@@ -431,7 +432,7 @@ const AgendamentoPage = () => {
       const apiDate = formatDateToApi(selectedDate);
       const localDateObj = new Date(`${apiDate}T${timeString}`);
       if (isNaN(localDateObj.getTime())) {
-        alert("Erro interno ao processar a data. Tente selecionar o horário novamente.");
+        toast.error("Erro interno ao processar a data. Tente selecionar o horário novamente.");
         return;
       }
 
@@ -447,7 +448,7 @@ const AgendamentoPage = () => {
       const appointmentId = appointmentResponse.data?.id;
 
       if (!appointmentId) {
-        alert("Agendamento criado, mas não foi possível iniciar o pagamento. Tente pagar depois em 'Meus Agendamentos'.");
+        toast.warn("Agendamento criado, mas não foi possível iniciar o pagamento. Tente pagar depois em 'Meus Agendamentos'.");
         navigate("/meus-agendamentos");
         return;
       }
@@ -461,14 +462,14 @@ const AgendamentoPage = () => {
       if (checkoutUrl) {
         window.location.href = checkoutUrl;
       } else {
-        alert("Pagamento iniciado, mas o link de checkout não foi retornado. Verifique seus agendamentos.");
+        toast.warn("Pagamento iniciado, mas o link de checkout não foi retornado. Verifique seus agendamentos.");
         navigate("/meus-agendamentos");
       }
     } catch (error) {
       if (error.response?.data) {
-        alert(`Erro: ${error.response.data.message || "Falha ao iniciar pagamento"}`);
+        toast.error(`Erro: ${error.response.data.message || "Falha ao iniciar pagamento"}`);
       } else {
-        alert("Erro ao iniciar pagamento. Tente novamente.");
+        toast.error("Erro ao iniciar pagamento. Tente novamente.");
       }
     } finally {
       setIsSubmittingAppointment(false);

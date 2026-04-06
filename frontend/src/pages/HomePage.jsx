@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { FiHome, FiSearch, FiHeart, FiScissors, FiCalendar, FiLogOut, FiLock } from "react-icons/fi";
 import Barbershops from "../components/HomePage/Barbershops/Barbershops"
 import Favorite_barbershops from "../components/HomePage/Favorite_barbershops/Favorite_barbershops"
@@ -71,7 +72,7 @@ function HomePage() {
       }
     } catch (error) {
       console.error("Erro ao atualizar favorita:", error);
-      alert("Nao foi possivel atualizar suas favoritas agora.");
+      toast.error("Nao foi possivel atualizar suas favoritas agora.");
     }
   };
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
@@ -131,7 +132,7 @@ function BarberHomePage() {
     try {
       setIsSendingJoinRequest(true);
       await api.post('/barbershops/join-request', { cnpj: normalizedCnpj });
-      alert('Pedido enviado! Aguarde o dono aceitar.');
+      toast.success('Pedido enviado! Aguarde o dono aceitar.');
       setIsJoinModalOpen(false);
       setJoinCnpj('');
       setJoinError('');

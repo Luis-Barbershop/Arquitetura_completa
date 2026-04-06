@@ -160,8 +160,12 @@ function BarberServicesPage() {
       return;
     }
 
-    if (!Number.isFinite(parsedDuration) || parsedDuration <= 0) {
-      showToast('Informe uma duracao valida em minutos.', 'warning');
+    if (!Number.isFinite(parsedDuration) || parsedDuration < 5) {
+      showToast('Informe uma duracao valida em minutos (minimo 5).', 'warning');
+      return;
+    }
+    if (parsedDuration > 300) {
+      showToast('A duracao maxima de um servico e 300 minutos.', 'warning');
       return;
     }
 
@@ -340,6 +344,7 @@ function BarberServicesPage() {
                 className={styles.formInput}
                 type="number"
                 min="5"
+                max="300"
                 step="5"
                 placeholder="30"
                 value={duration}

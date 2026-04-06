@@ -11,6 +11,37 @@ const AUTH_ENDPOINTS = {
     emailExists: '/auth/email/exists',
 };
 
+// ─── TRADUÇÃO DE ERROS FIREBASE → PT-BR ──────────────────────────────────────
+// Converte códigos e mensagens brutas do Firebase (vindos do backend) para
+// mensagens amigáveis em português.
+export const translateFirebaseError = (rawMsg = '', fallback = 'Ocorreu um erro. Tente novamente.') => {
+    const msg = rawMsg.toUpperCase();
+    if (msg.includes('EMAIL_NOT_FOUND'))               return 'Nenhuma conta encontrada com este e-mail.';
+    if (msg.includes('INVALID_PASSWORD'))              return 'Senha incorreta. Tente novamente.';
+    if (msg.includes('INVALID_LOGIN_CREDENTIALS'))     return 'E-mail ou senha inválidos.';
+    if (msg.includes('USER_DISABLED'))                 return 'Esta conta foi desativada. Entre em contato com o suporte.';
+    if (msg.includes('TOO_MANY_ATTEMPTS_TRY_LATER') || msg.includes('TOO_MANY_REQUESTS')) return 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.';
+    if (msg.includes('WEAK_PASSWORD'))                 return 'A senha é muito fraca. Use pelo menos 6 caracteres.';
+    if (msg.includes('EMAIL_EXISTS') || msg.includes('EMAIL_ALREADY_IN_USE')) return 'Este e-mail já está cadastrado.';
+    if (msg.includes('INVALID_EMAIL'))                 return 'Endereço de e-mail inválido.';
+    if (msg.includes('OPERATION_NOT_ALLOWED'))         return 'Operação não permitida. Contate o suporte.';
+    if (msg.includes('EXPIRED_OOB_CODE'))              return 'O link expirou. Solicite um novo.';
+    if (msg.includes('INVALID_OOB_CODE'))              return 'Link inválido ou já utilizado.';
+    if (msg.includes('CREDENTIAL_TOO_OLD_LOGIN_AGAIN')) return 'Sessão expirada. Faça login novamente.';
+    if (msg.includes('auth/wrong-password'))           return 'Senha incorreta. Tente novamente.';
+    if (msg.includes('auth/user-not-found'))           return 'Nenhuma conta encontrada com este e-mail.';
+    if (msg.includes('auth/invalid-credential'))       return 'Credenciais inválidas. Verifique e-mail e senha.';
+    if (msg.includes('auth/email-already-in-use'))     return 'Este e-mail já está cadastrado.';
+    if (msg.includes('auth/weak-password'))            return 'A senha é muito fraca. Use pelo menos 6 caracteres.';
+    if (msg.includes('auth/too-many-requests'))        return 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.';
+    if (msg.includes('auth/popup-closed-by-user'))     return 'Login cancelado. Feche a janela e tente novamente.';
+    if (msg.includes('auth/popup-blocked'))            return 'Pop-up bloqueado pelo navegador. Permita pop-ups e tente novamente.';
+    if (msg.includes('auth/network-request-failed'))   return 'Sem conexão com a internet. Verifique sua rede.';
+    if (msg.includes('E-MAIL JÁ CADASTRADO') || msg.includes('JA CADASTRADO')) return 'Este e-mail já está cadastrado.';
+    if (msg.includes('VERIFICADO'))                    return 'E-mail ainda não verificado. Verifique sua caixa de entrada.';
+    return fallback;
+};
+
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 // Usa o Firebase Identity Toolkit via backend: POST /api/auth/email/login
 // Retorna { idToken, refreshToken, expiresIn, localId, email, registered }

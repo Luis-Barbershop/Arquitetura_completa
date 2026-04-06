@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiCalendar, FiCheckCircle, FiClock, FiRefreshCw, FiScissors, FiXCircle } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 import Styles from './CSS/MeusAgendamentos.module.css';
 import { getMyAppointments, cancelAppointment } from '../services/appointmentService';
 import { createBarbershopReview } from '../services/barbershopService';
@@ -72,7 +73,7 @@ const MeusAgendamentosPage = () => {
             setCancelingAppointmentId(null);
             carregarAgendamentos();
         } catch (error) {
-            alert("Erro ao cancelar. Tente novamente.");
+            toast.error("Erro ao cancelar. Tente novamente.");
         } finally {
             setIsSubmittingCancel(false);
         }
@@ -93,7 +94,7 @@ const MeusAgendamentosPage = () => {
 
     const handleSubmitReview = async () => {
         if (!reviewingAppointment?.barbershopId) {
-            alert('Nao foi possivel identificar a barbearia deste atendimento.');
+            toast.warn('Nao foi possivel identificar a barbearia deste atendimento.');
             return;
         }
 
@@ -106,12 +107,12 @@ const MeusAgendamentosPage = () => {
 
             setIsReviewModalOpen(false);
             setReviewingAppointment(null);
-            alert('Avaliacao enviada com sucesso!');
+            toast.success('Avaliacao enviada com sucesso!');
         } catch (error) {
             if (error?.response?.status === 409) {
-                alert('Voce ja avaliou esta barbearia.');
+                toast.warn('Voce ja avaliou esta barbearia.');
             } else {
-                alert('Nao foi possivel enviar sua avaliacao. Tente novamente.');
+                toast.error('Nao foi possivel enviar sua avaliacao. Tente novamente.');
             }
         } finally {
             setIsSubmittingReview(false);

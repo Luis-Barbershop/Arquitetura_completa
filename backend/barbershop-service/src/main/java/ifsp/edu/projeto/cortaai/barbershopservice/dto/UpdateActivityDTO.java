@@ -1,5 +1,7 @@
 package ifsp.edu.projeto.cortaai.barbershopservice.dto;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -18,7 +20,8 @@ public class UpdateActivityDTO {
     @Positive
     private BigDecimal price;
 
-    @Positive
+    @Min(value = 5, message = "A duração mínima é de 5 minutos.")
+    @Max(value = 300, message = "A duração máxima é de 300 minutos.")
     private Integer durationMinutes;
 }
 

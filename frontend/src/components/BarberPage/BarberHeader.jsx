@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import api from '../../services/api';
 import NotificationBell from './NotificationBell';
 import styles from '../../pages/CSS/BarberHomePage.module.css';
@@ -29,7 +30,7 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
             }
         } catch (err) {
             console.error('Erro ao conectar Mercado Pago:', err);
-            alert('Não foi possível iniciar a vinculação com o Mercado Pago. Tente novamente.');
+            toast.error('Não foi possível iniciar a vinculação com o Mercado Pago. Tente novamente.');
         }
     };
 

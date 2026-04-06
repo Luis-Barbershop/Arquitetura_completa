@@ -1,7 +1,7 @@
 import Styles from "./CSS/Login_inputs.module.css"
 import { useState } from "react"
 import { useNavigate, Link, useLocation } from "react-router-dom"
-import { loginUser, loginWithGoogle, checkEmailExists } from "../../services/authService"
+import { loginUser, loginWithGoogle, checkEmailExists, translateFirebaseError } from "../../services/authService"
 
 // Retorna a rota de destino com base no role salvo no localStorage
 function getRedirectPath() {
@@ -32,8 +32,6 @@ function Login_Inputs() {
             console.error(err);
 
             // ── Redirecionamento inteligente ──────────────────────────────────────
-            // Se o erro indica credenciais inválidas, verificamos se o e-mail
-            // sequer existe no banco antes de mostrar o erro ao usuário.
             const rawMsg = err.response?.data?.message || "";
             const isCredentialError = rawMsg.includes("INVALID_PASSWORD")
                 || rawMsg.includes("EMAIL_NOT_FOUND")
@@ -44,19 +42,16 @@ function Login_Inputs() {
                 try {
                     const { exists } = await checkEmailExists(email);
                     if (!exists) {
-                        // E-mail não existe → redireciona para cadastro pré-preenchido
                         navigate("/signin", {
                             state: { mode: "register", role, prefillEmail: email }
                         });
                         return;
                     }
-                } catch (_) {
-                    // Se o check falhar, exibe erro normal
-                }
+                } catch (_) { /* se o check falhar, exibe erro normal */ }
             }
 
-            const msg = rawMsg || "Falha no login. Verifique seus dados.";
-            setError(msg);
+            const friendlyMsg = translateFirebaseError(rawMsg, rawMsg || "Falha no login. Verifique seus dados.");
+            setError(friendlyMsg);
         }
     };
 
@@ -80,7 +75,10 @@ function Login_Inputs() {
                 });
                 return;
             }
-            const msg = err.response?.data?.message || err.message || "Falha no login com Google.";
+            const msg = translateFirebaseError(
+                err.response?.data?.message || err.message || '',
+                err.response?.data?.message || err.message || "Falha no login com Google."
+            );
             setError(msg);
         }
     };
@@ -131,6 +129,17 @@ function Login_Inputs() {
                 />
                 {loadingGoogle ? "Conectando..." : "Entrar com o Google"}
             </button>
+
+            <p style={{ textAlign: 'center', marginTop: 16, fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
+                Não tem uma conta?{' '}
+                <button
+                    type="button"
+                    onClick={() => navigate('/signin', { state: { mode: 'register', role, prefillEmail: email } })}
+                    style={{ background: 'none', border: 'none', color: '#e8a045', cursor: 'pointer', fontWeight: 600, fontSize: 14, padding: 0 }}
+                >
+                    Crie agora
+                </button>
+            </p>
         </div>
     )
 }

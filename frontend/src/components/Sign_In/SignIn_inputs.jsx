@@ -1,15 +1,38 @@
 import Styles from "./CSS/SignIn_inputs.module.css"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { registerCustomer, registerBarber } from "../../services/authService"
 
+// ─── Avalia força da senha ────────────────────────────────────────────────────
+function evaluatePasswordStrength(pwd) {
+    if (!pwd) return { score: 0, label: '', color: '' };
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/\d/.test(pwd)) score++;
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(pwd)) score++;
+    const map = [
+        { label: 'Muito fraca', color: '#e74c3c' },
+        { label: 'Fraca',       color: '#e67e22' },
+        { label: 'Média',       color: '#f1c40f' },
+        { label: 'Forte',       color: '#2ecc71' },
+        { label: 'Muito forte', color: '#27ae60' },
+    ];
+    return { score, ...map[score] };
+}
+
 function SignIn_inputs() {
 
+    const navigate = useNavigate();
+    const location = useLocation();
+    const userType = location.state?.role || "customer";
+
     const [step, setStep] = useState(1);
-    const [registered, setRegistered] = useState(false); // mostra tela de "verifique seu e-mail"
+    const [registered, setRegistered] = useState(false);
 
     const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
+    // Pré-preenche e-mail se vier do redirecionamento do login
+    const [email, setEmail] = useState(location.state?.prefillEmail || "");
     const [cpf, setCpf] = useState("");
 
     const [tell, setTell] = useState("");
@@ -21,10 +44,7 @@ function SignIn_inputs() {
 
     const [error, setError] = useState(null);
 
-    const navigate = useNavigate();
-    const location = useLocation();
-    const userType = location.state?.role || "customer";
-
+    const passwordStrength = useMemo(() => evaluatePasswordStrength(password), [password]);
 
     const handleNextStep = (e) => {
         e.preventDefault();
@@ -48,6 +68,10 @@ function SignIn_inputs() {
             return;
         }
 
+        if (passwordStrength.score < 4) {
+            setError("Senha fraca. Use pelo menos 8 caracteres, 1 maiúscula, 1 número e 1 caractere especial.");
+            return;
+        }
         try {
             if (userType === "customer") {
                 await registerCustomer({
@@ -201,6 +225,22 @@ function SignIn_inputs() {
                                 onChange={e => setPassword(e.target.value)}
                                 required
                             />
+                            {password && (
+                                <div style={{ marginTop: 6 }}>
+                                    <div style={{ display: 'flex', gap: 4 }}>
+                                        {[1,2,3,4].map(i => (
+                                            <div key={i} style={{
+                                                flex: 1, height: 4, borderRadius: 2,
+                                                background: i <= passwordStrength.score ? passwordStrength.color : 'rgba(255,255,255,0.15)',
+                                                transition: 'background 0.3s'
+                                            }} />
+                                        ))}
+                                    </div>
+                                    <p style={{ fontSize: 11, color: passwordStrength.color, marginTop: 4 }}>
+                                        {passwordStrength.label} — Min. 8 caracteres, 1 maiúscula, 1 número, 1 especial
+                                    </p>
+                                </div>
+                            )}
                         </label>
 
                         <label className={Styles.label_name}>

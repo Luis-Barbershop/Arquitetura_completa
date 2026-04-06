@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
@@ -228,7 +229,7 @@ function BarberStockPage() {
       setCostPrice('');
     } catch (error) {
       console.error('Erro ao criar produto no estoque:', error);
-      alert('Nao foi possivel salvar o produto. Verifique os dados e tente novamente.');
+      toast.error('Nao foi possivel salvar o produto. Verifique os dados e tente novamente.');
     } finally {
       setIsSaving(false);
     }
@@ -245,20 +246,19 @@ function BarberStockPage() {
       setItems((prev) => prev.map((item) => (item.id === id ? { ...item, quantity: nextQuantity } : item)));
     } catch (error) {
       console.error('Erro ao atualizar estoque:', error);
-      alert('Nao foi possivel atualizar a quantidade agora.');
+      toast.error('Nao foi possivel atualizar a quantidade agora.');
     }
   };
 
   const handleDeleteItem = async (itemId) => {
-    const confirmed = window.confirm('Deseja realmente excluir este produto do estoque?');
-    if (!confirmed) return;
+    if (!window.confirm('Deseja realmente excluir este produto do estoque?')) return;
 
     try {
       await api.delete(`/products/${itemId}`);
       setItems((prev) => prev.filter((item) => item.id !== itemId));
     } catch (error) {
       console.error('Erro ao excluir produto:', error);
-      alert('Nao foi possivel excluir o produto.');
+      toast.error('Nao foi possivel excluir o produto.');
     }
   };
 
