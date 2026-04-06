@@ -5,6 +5,7 @@ public enum AppointmentStatus {
     CONFIRMED,
     IN_PROGRESS,
     COMPLETED,
+    WALK_IN,
     @Deprecated
     CONCLUDED,
     CANCELLED,

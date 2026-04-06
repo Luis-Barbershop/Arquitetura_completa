@@ -149,4 +149,26 @@ public class AppointmentController {
             @Parameter(description = "Data para consulta (formato ISO: YYYY-MM-DD)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(appointmentService.getAvailability(barberId, date));
     }
+
+    @Operation(
+            summary = "Agendamento manual pelo barbeiro (walk-in)",
+            description = "Permite que um barbeiro crie um agendamento diretamente para um cliente presencial, " +
+                    "sem exigir que o cliente possua conta no sistema e sem gerar fluxo de pagamento. " +
+                    "O agendamento é registrado com status WALK_IN.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Agendamento walk-in criado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos ou horário indisponível",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Barbeiro, barbearia ou atividade não encontrada",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Horário já ocupado (conflito)",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    @PostMapping("/barber-booking")
+    public ResponseEntity<AppointmentDTO> createManualBooking(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "Dados do agendamento manual") @RequestBody @Valid BarberManualBookingDTO dto) {
+        AppointmentDTO created = appointmentService.createManualBooking(principal.getName(), dto);
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
+    }
 }

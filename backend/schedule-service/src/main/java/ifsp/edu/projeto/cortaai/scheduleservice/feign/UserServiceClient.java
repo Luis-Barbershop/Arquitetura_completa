@@ -15,5 +15,8 @@ public interface UserServiceClient {
 
     @GetMapping("/by-email/{email}")
     UserInfoDTO getUserByEmail(@PathVariable("email") String email);
+
+    @GetMapping("/by-firebase-uid/{uid}")
+    UserInfoDTO getUserByFirebaseUid(@PathVariable("uid") String uid);
 }
 

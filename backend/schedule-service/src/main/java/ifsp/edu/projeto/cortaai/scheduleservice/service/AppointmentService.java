@@ -140,6 +140,101 @@ public class AppointmentService {
         return appointmentMapper.toDTO(saved);
     }
 
+    // ========== AGENDAMENTO MANUAL (WALK-IN) ==========
+
+    /**
+     * Cria um agendamento manual pelo barbeiro, sem exigir customer cadastrado
+     * e sem gerar evento de pagamento. O status é WALK_IN.
+     *
+     * @param barberFirebaseUid UID do Firebase do barbeiro (extraído do token pelo gateway)
+     * @param dto               dados do agendamento manual
+     * @return AppointmentDTO   agendamento criado
+     */
+    public AppointmentDTO createManualBooking(String barberFirebaseUid, BarberManualBookingDTO dto) {
+
+        // 1. Resolver barbeiro pelo Firebase UID
+        UserInfoDTO barber = userServiceClient.getUserByFirebaseUid(barberFirebaseUid);
+        if (barber == null || !"BARBER".equalsIgnoreCase(barber.getUserType())) {
+            throw new NotFoundException("Barbeiro não encontrado ou tipo inválido.");
+        }
+
+        // 2. Validar barbershop + buscar activities via Feign
+        BarbershopInfoDTO shop = barbershopServiceClient.getBarbershopById(dto.getBarbershopId());
+        if (shop == null) {
+            throw new NotFoundException("Barbearia não encontrada.");
+        }
+
+        List<ActivityInfoDTO> activities = barbershopServiceClient
+                .getActivitiesByIds(dto.getBarbershopId(), dto.getActivityIds());
+
+        if (activities == null || activities.isEmpty()) {
+            throw new NotFoundException("Nenhuma atividade encontrada para os IDs informados.");
+        }
+
+        // 3. Calcular duração total e preço
+        int totalDuration = activities.stream()
+                .mapToInt(ActivityInfoDTO::getDurationMinutes)
+                .sum();
+
+        BigDecimal totalPrice = activities.stream()
+                .map(ActivityInfoDTO::getPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // 4. Calcular endTime
+        LocalDateTime endTime = dto.getStartTime().plusMinutes(totalDuration);
+
+        // 5. Verificar conflito de horário
+        boolean hasConflict = appointmentRepository.hasConflict(
+                barber.getId(), dto.getStartTime(), endTime);
+        if (hasConflict) {
+            throw new ConflictException("O barbeiro já possui um agendamento neste horário.");
+        }
+
+        // 6. Verificar BarberBlock
+        boolean isBlocked = barberBlockRepository
+                .existsByBarberIdAndStartTimeLessThanAndEndTimeGreaterThan(
+                        barber.getId(), endTime, dto.getStartTime());
+        if (isBlocked) {
+            throw new ConflictException("O barbeiro está indisponível neste período (bloqueio de agenda).");
+        }
+
+        // 7. Montar snapshot do cliente walk-in com UUID nulo (sem conta no sistema)
+        //    customerId preenchido com UUID do próprio barbeiro para satisfazer constraint NOT NULL
+        //    — identificação real é feita pelo customerName (clientName do DTO)
+        Appointment appointment = Appointment.builder()
+                .customerId(barber.getId())        // placeholder: barbeiro cria em nome do walk-in
+                .barberId(barber.getId())
+                .barbershopId(dto.getBarbershopId())
+                .customerName(dto.getClientName())  // nome real do cliente walk-in
+                .barberName(barber.getName())
+                .barbershopName(shop.getName())
+                .startTime(dto.getStartTime())
+                .endTime(endTime)
+                .totalPrice(totalPrice)
+                .status(AppointmentStatus.WALK_IN)
+                .build();
+
+        // 8. Criar AppointmentActivities (snapshots)
+        Set<AppointmentActivity> appointmentActivities = activities.stream()
+                .map(act -> AppointmentActivity.builder()
+                        .activityId(act.getId())
+                        .activityName(act.getActivityName())
+                        .price(act.getPrice())
+                        .durationMinutes(act.getDurationMinutes())
+                        .appointment(appointment)
+                        .build())
+                .collect(Collectors.toSet());
+
+        appointment.setActivities(appointmentActivities);
+
+        Appointment saved = appointmentRepository.save(appointment);
+        log.info("Agendamento manual (WALK_IN) criado: id={}, barbeiro={}, cliente='{}'",
+                saved.getId(), barber.getId(), dto.getClientName());
+
+        // 9. Sem evento de pagamento — WALK_IN não passa por gateway de pagamento
+        return appointmentMapper.toDTO(saved);
+    }
+
     // ========== CANCELAMENTO ==========
 
     public void cancelAppointment(String callerEmail, UUID appointmentId) {

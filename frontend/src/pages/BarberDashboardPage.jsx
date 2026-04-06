@@ -41,6 +41,7 @@ function BarberDashboardPage() {
         else if (tab === 'estoque') navigate('/barberHome/estoque');
         else if (tab === 'perfil') navigate('/barberHome/perfil');
         else if (tab === 'time') navigate('/barberHome/time');
+        else if (tab === 'novo-agendamento') navigate('/barberHome/novo-agendamento');
     };
 
     const cardStyle = {
@@ -85,6 +86,23 @@ function BarberDashboardPage() {
                     <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
                         📊 Relatórios detalhados em breve.<br />
                         Acesse a aba <strong>Minha Agenda</strong> para ver seus agendamentos completos.
+                    </p>
+                </div>
+
+                {/* Ação rápida: agendamento walk-in */}
+                <div style={{ marginTop: 28, textAlign: 'center' }}>
+                    <button
+                        onClick={() => navigate('/barberHome/novo-agendamento')}
+                        style={{
+                            background: '#ffd700', color: '#111', fontWeight: 700,
+                            fontSize: 15, border: 'none', borderRadius: 10,
+                            padding: '13px 32px', cursor: 'pointer',
+                        }}
+                    >
+                        ✂️ Novo Agendamento (Walk-in)
+                    </button>
+                    <p style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
+                        Registre um atendimento presencial sem app.
                     </p>
                 </div>
             </main>
