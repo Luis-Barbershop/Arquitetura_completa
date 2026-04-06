@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
+import { isCustomer, isOwnerUser } from '../services/userContext';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 
@@ -14,14 +15,19 @@ function BarberProfilePage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Guard: cliente não pode acessar páginas de barbeiro
+        if (isCustomer()) {
+            navigate('/homepage', { replace: true });
+            return;
+        }
         const token = localStorage.getItem('token');
         if (!token) {
-            navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+            navigate('/', { replace: true });
             return;
         }
         api.get('/auth/me')
             .then(res => { setBarber(res.data); setLoading(false); })
-            .catch(() => { setLoading(false); navigate('/identificacao'); });
+            .catch(() => { setLoading(false); navigate('/'); });
     }, [navigate]);
 
     const handleLogout = async () => {
@@ -37,6 +43,7 @@ function BarberProfilePage() {
                 barber={barber}
                 onLogout={handleLogout}
                 activeTab="perfil"
+                isOwner={isOwnerUser()}
                 onTabChange={(tab) => {
                     if (tab === 'home') navigate('/barberHome');
                     else if (tab === 'agenda') navigate('/meus-agendamentos');
@@ -72,7 +79,7 @@ function BarberProfilePage() {
                     </div>
                 )}
             </main>
-            <BarberNavbar activeTab="perfil" onTabChange={() => {}} />
+            <BarberNavbar activeTab="perfil" onTabChange={() => {}} isOwner={isOwnerUser()} />
         </div>
     );
 }

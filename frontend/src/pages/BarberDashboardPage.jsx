@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
+import { isCustomer, isOwnerUser } from '../services/userContext';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 
@@ -16,9 +17,20 @@ function BarberDashboardPage() {
     const [stats, setStats] = useState(null);
 
     useEffect(() => {
+        // Guard: cliente não pode acessar painel de barbeiro
+        if (isCustomer()) {
+            navigate('/homepage', { replace: true });
+            return;
+        }
+        // Guard: dashboard é exclusivo de owner
+        if (!isOwnerUser()) {
+            navigate('/barberHome', { replace: true });
+            return;
+        }
+
         const token = localStorage.getItem('token');
         if (!token) {
-            navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+            navigate('/', { replace: true });
             return;
         }
         api.get('/auth/me')
@@ -26,7 +38,7 @@ function BarberDashboardPage() {
                 setBarber(res.data);
                 setLoading(false);
             })
-            .catch(() => { setLoading(false); navigate('/identificacao'); });
+            .catch(() => { setLoading(false); navigate('/'); });
     }, [navigate]);
 
     const handleLogout = async () => {
@@ -53,7 +65,7 @@ function BarberDashboardPage() {
 
     return (
         <div style={{ minHeight: '100vh', background: '#0f0f1a', color: '#fff' }}>
-            <BarberHeader barber={barber} onLogout={handleLogout} activeTab="dashboards" onTabChange={handleTabChange} />
+            <BarberHeader barber={barber} onLogout={handleLogout} activeTab="dashboards" onTabChange={handleTabChange} isOwner={true} />
             <main style={{ maxWidth: 760, margin: '40px auto', padding: '0 16px' }}>
                 <h2 style={{ marginBottom: 8 }}>Dashboard</h2>
                 <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 28, fontSize: 14 }}>
@@ -106,7 +118,7 @@ function BarberDashboardPage() {
                     </p>
                 </div>
             </main>
-            <BarberNavbar activeTab="dashboards" onTabChange={handleTabChange} />
+            <BarberNavbar activeTab="dashboards" onTabChange={handleTabChange} isOwner={true} />
         </div>
     );
 }

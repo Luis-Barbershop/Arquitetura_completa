@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
+import { isCustomer, isOwnerUser } from '../services/userContext';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import styles from './CSS/BarberStockPage.module.css';
@@ -101,10 +102,21 @@ function BarberStockPage() {
   };
 
   useEffect(() => {
+    // Guard: cliente não pode acessar painel de barbeiro
+    if (isCustomer()) {
+      navigate('/homepage', { replace: true });
+      return;
+    }
+    // Guard: estoque é funcionalidade exclusiva de owner
+    if (!isOwnerUser()) {
+      navigate('/barberHome', { replace: true });
+      return;
+    }
+
     const token = localStorage.getItem('token');
 
     if (!token) {
-      navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+      navigate('/', { replace: true });
       return;
     }
 
@@ -116,7 +128,7 @@ function BarberStockPage() {
       .catch((err) => {
         console.error(err);
         setLoadingBarber(false);
-        navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+        navigate('/');
       });
   }, [navigate]);
 
@@ -274,6 +286,7 @@ function BarberStockPage() {
           onLogout={handleLogout}
           activeTab="estoque"
           onTabChange={handleTabChange}
+          isOwner={true}
         />
 
         <section className={styles.heroSection}>
@@ -472,7 +485,7 @@ function BarberStockPage() {
         </section>
       </div>
 
-      <BarberNavbar activeTab="estoque" onTabChange={handleTabChange} />
+      <BarberNavbar activeTab="estoque" onTabChange={handleTabChange} isOwner={true} />
     </div>
   );
 }

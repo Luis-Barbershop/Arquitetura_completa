@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
+import { isCustomer, isOwnerUser } from '../services/userContext';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import NoBarbershopPanel from '../components/BarberPage/NoBarbershopPanel';
 import styles from './CSS/BarberHomePage.module.css';
@@ -36,9 +37,15 @@ function BarberHomePage() {
   };
 
   useEffect(() => {
+    // Guard: cliente não pode acessar painel de barbeiro
+    if (isCustomer()) {
+      navigate('/homepage', { replace: true });
+      return;
+    }
+
     const token = localStorage.getItem('token');
     if (!token) {
-      navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+      navigate('/', { replace: true });
       return;
     }
 
@@ -51,7 +58,7 @@ function BarberHomePage() {
         console.error(err);
         setLoading(false);
         if (err.response?.status === 403) {
-          navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+          navigate('/');
         }
       });
   }, [navigate]);
@@ -169,6 +176,7 @@ function BarberHomePage() {
           onLogout={handleOpenLogoutModal}
           activeTab={activeTab}
           onTabChange={handleTabChange}
+          isOwner={isOwnerUser()}
         />
 
         {!hasLinkedBarbershop ? (
@@ -229,7 +237,7 @@ function BarberHomePage() {
         )}
       </div>
       {hasLinkedBarbershop && (
-        <BarberNavbar activeTab={activeTab} onTabChange={handleTabChange} />
+        <BarberNavbar activeTab={activeTab} onTabChange={handleTabChange} isOwner={isOwnerUser()} />
       )}
 
       {isJoinModalOpen && (

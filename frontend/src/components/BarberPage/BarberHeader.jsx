@@ -5,24 +5,38 @@ import api from '../../services/api';
 import NotificationBell from './NotificationBell';
 import styles from '../../pages/CSS/BarberHomePage.module.css';
 
-const navItems = [
-    { id: 'home', label: 'Home', short: 'HM' },
-    { id: 'agenda', label: 'Minha Agenda', short: 'AG' },
-    { id: 'dashboards', label: 'Dashboards', short: 'DB' },
-    { id: 'estoque', label: 'Estoque', short: 'ES' },
-    { id: 'servicos', label: 'Servicos', short: 'SV' },
-    { id: 'perfil', label: 'Meu Perfil', short: 'PF' },
-    { id: 'time', label: 'Meu Time', short: 'TM' },
+/** Tabs visíveis para TODOS os barbeiros */
+const commonNavItems = [
+    { id: 'home',    label: 'Home',        short: 'HM' },
+    { id: 'agenda',  label: 'Minha Agenda',short: 'AG' },
+    { id: 'servicos',label: 'Servicos',    short: 'SV' },
+    { id: 'perfil',  label: 'Meu Perfil',  short: 'PF' },
 ];
 
-function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
+/** Tabs exclusivas para OWNER */
+const ownerNavItems = [
+    { id: 'dashboards', label: 'Dashboards', short: 'DB' },
+    { id: 'estoque',    label: 'Estoque',    short: 'ES' },
+    { id: 'time',       label: 'Meu Time',   short: 'TM' },
+];
+
+/**
+ * @param {object}   barber      - dados do barbeiro logado
+ * @param {Function} onLogout    - callback de logout
+ * @param {string}   activeTab   - tab ativa
+ * @param {Function} onTabChange - callback ao trocar tab
+ * @param {boolean}  isOwner     - true = dono do estabelecimento
+ */
+function BarberHeader({ barber, onLogout, activeTab, onTabChange, isOwner = false }) {
     const navigate = useNavigate();
+    const navItems = isOwner
+        ? [...commonNavItems, ...ownerNavItems]
+        : commonNavItems;
 
     const handleMpConnect = async () => {
         const barberId = barber?.id;
         if (!barberId) return;
         try {
-            // Chama via api (com Authorization: Bearer token) para receber a URL
             const response = await api.get(`/payments/mp-connect?state=${barberId}`);
             const authUrl = response.data?.authorizationUrl;
             if (authUrl) {
@@ -47,13 +61,15 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
 
                 <div className={styles.headerRight}>
                     <NotificationBell />
-                    <button
-                        onClick={handleMpConnect}
-                        className={styles.mpButton}
-                        title="Vincular conta Mercado Pago para receber pagamentos online"
-                    >
-                        💳 Vincular MP
-                    </button>
+                    {isOwner && (
+                        <button
+                            onClick={handleMpConnect}
+                            className={styles.mpButton}
+                            title="Vincular conta Mercado Pago para receber pagamentos online"
+                        >
+                            💳 Vincular MP
+                        </button>
+                    )}
                     <button
                         onClick={() => navigate('/change-password')}
                         className={styles.changePasswordButton}

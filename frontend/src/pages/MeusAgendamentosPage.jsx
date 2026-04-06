@@ -8,6 +8,7 @@ import { createBarbershopReview } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import { logoutUser } from '../services/authService';
+import { isCustomer as checkIsCustomer, isOwnerUser, isLoggedIn } from '../services/userContext';
 
 const MeusAgendamentosPage = () => {
     const navigate = useNavigate();
@@ -23,12 +24,19 @@ const MeusAgendamentosPage = () => {
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
     const [reviewRating, setReviewRating] = useState(5);
     const [reviewComment, setReviewComment] = useState('');
-    
-    // Identificar o papel para ajustar os textos
-    const role = localStorage.getItem('role'); 
-    const isCustomer = role === 'ROLE_CUSTOMER';
+
+    // Determina o papel com base na chave correta do localStorage ('userRole')
+    const isCustomer = checkIsCustomer();
+    const isOwner = isOwnerUser();
     const userName = localStorage.getItem('userName') || (isCustomer ? 'Cliente' : 'Profissional');
     const firstName = userName.split(' ')[0];
+
+    // Guard: redireciona para login se não estiver logado
+    useEffect(() => {
+        if (!isLoggedIn()) {
+            navigate('/');
+        }
+    }, [navigate]);
 
     useEffect(() => {
         carregarAgendamentos();
@@ -213,6 +221,7 @@ const MeusAgendamentosPage = () => {
                         onLogout={handleBarberLogout}
                         activeTab="agenda"
                         onTabChange={handleBarberTabChange}
+                        isOwner={isOwner}
                     />
                 )}
 
@@ -453,7 +462,7 @@ const MeusAgendamentosPage = () => {
             </div>
 
             {!isCustomer && (
-                <BarberNavbar activeTab="agenda" onTabChange={handleBarberTabChange} />
+                <BarberNavbar activeTab="agenda" onTabChange={handleBarberTabChange} isOwner={isOwner} />
             )}
         </div>
     );

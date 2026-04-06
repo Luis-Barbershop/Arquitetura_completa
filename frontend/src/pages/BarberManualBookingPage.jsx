@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
+import { isCustomer, isOwnerUser } from '../services/userContext';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 
@@ -32,9 +33,14 @@ function BarberManualBookingPage() {
 
     // ── Auth guard + carrega barbeiro ──────────────────────────────────────
     useEffect(() => {
+        // Guard: cliente não pode acessar páginas de barbeiro
+        if (isCustomer()) {
+            navigate('/homepage', { replace: true });
+            return;
+        }
         const token = localStorage.getItem('token');
         if (!token) {
-            navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+            navigate('/', { replace: true });
             return;
         }
         api.get('/auth/me')
@@ -51,7 +57,7 @@ function BarberManualBookingPage() {
                 if (res?.data) setActivities(res.data);
             })
             .catch(() => {
-                navigate('/identificacao');
+                navigate('/');
             })
             .finally(() => setLoading(false));
     }, [navigate]);
@@ -173,6 +179,7 @@ function BarberManualBookingPage() {
                 barber={barber}
                 onLogout={handleLogout}
                 activeTab="agenda"
+                isOwner={isOwnerUser()}
                 onTabChange={handleTabChange}
             />
 
@@ -310,7 +317,7 @@ function BarberManualBookingPage() {
                 </form>
             </main>
 
-            <BarberNavbar activeTab="agenda" onTabChange={handleTabChange} />
+            <BarberNavbar activeTab="agenda" onTabChange={handleTabChange} isOwner={isOwnerUser()} />
         </div>
     );
 }

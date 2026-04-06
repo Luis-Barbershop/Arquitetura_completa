@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
+import { isCustomer, isOwnerUser } from '../services/userContext';
 import { createService, deleteService, getMyServices } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
@@ -93,10 +94,15 @@ function BarberServicesPage() {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    // Guard: cliente não pode acessar painel de barbeiro
+    if (isCustomer()) {
+      navigate('/homepage', { replace: true });
+      return;
+    }
 
+    const token = localStorage.getItem('token');
     if (!token) {
-      navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+      navigate('/', { replace: true });
       return;
     }
 
@@ -108,7 +114,7 @@ function BarberServicesPage() {
       .catch((err) => {
         console.error(err);
         setLoadingBarber(false);
-        navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+        navigate('/');
       });
   }, [navigate]);
 
@@ -236,6 +242,7 @@ function BarberServicesPage() {
           onLogout={handleLogout}
           activeTab="servicos"
           onTabChange={handleTabChange}
+          isOwner={isOwnerUser()}
         />
 
         <section className={styles.heroSection}>
@@ -409,7 +416,7 @@ function BarberServicesPage() {
         </div>
       )}
 
-      <BarberNavbar activeTab="servicos" onTabChange={handleTabChange} />
+      <BarberNavbar activeTab="servicos" onTabChange={handleTabChange} isOwner={isOwnerUser()} />
     </div>
   );
 }

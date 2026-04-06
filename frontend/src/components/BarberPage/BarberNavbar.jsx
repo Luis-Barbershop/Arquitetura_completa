@@ -1,17 +1,31 @@
 import React from 'react';
 import styles from './CSS/BarberNavbar.module.css';
 
-const navItems = [
-    { id: 'home', label: 'Home', short: 'HM' },
-    { id: 'agenda', label: 'Agenda', short: 'AG' },
-    { id: 'dashboards', label: 'Dash', short: 'DB' },
-    { id: 'estoque', label: 'Estoque', short: 'ES' },
-    { id: 'servicos', label: 'Servicos', short: 'SV' },
-    { id: 'perfil', label: 'Perfil', short: 'PF' },
-    { id: 'time', label: 'Time', short: 'TM' },
+/** Tabs visíveis para TODOS os barbeiros (colaborador ou owner) */
+const commonNavItems = [
+    { id: 'home',    label: 'Home',    short: 'HM' },
+    { id: 'agenda',  label: 'Agenda',  short: 'AG' },
+    { id: 'servicos',label: 'Servicos',short: 'SV' },
+    { id: 'perfil',  label: 'Perfil',  short: 'PF' },
 ];
 
-function BarberNavbar({ activeTab, onTabChange }) {
+/** Tabs exclusivas para OWNER */
+const ownerNavItems = [
+    { id: 'dashboards', label: 'Dash',    short: 'DB' },
+    { id: 'estoque',    label: 'Estoque', short: 'ES' },
+    { id: 'time',       label: 'Time',    short: 'TM' },
+];
+
+/**
+ * @param {string}   activeTab   - tab ativa no momento
+ * @param {Function} onTabChange - callback ao trocar tab
+ * @param {boolean}  isOwner     - true = dono do estabelecimento
+ */
+function BarberNavbar({ activeTab, onTabChange, isOwner = false }) {
+    const navItems = isOwner
+        ? [...commonNavItems, ...ownerNavItems]
+        : commonNavItems;
+
     return (
         <nav className={styles.navbarContainer}>
             <ul className={styles.navbarList}>
