@@ -2,6 +2,8 @@ package ifsp.edu.projeto.cortaai.notificationservice.controller;
 
 import ifsp.edu.projeto.cortaai.notificationservice.dto.NotificationDTO;
 import ifsp.edu.projeto.cortaai.notificationservice.exception.ApiErrorResponse;
+import ifsp.edu.projeto.cortaai.notificationservice.feign.UserInfoDTO;
+import ifsp.edu.projeto.cortaai.notificationservice.feign.UserServiceClient;
 import ifsp.edu.projeto.cortaai.notificationservice.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,52 +22,58 @@ import java.util.UUID;
 
 /**
  * Controller REST de notificações.
- * Endpoints públicos (expostos via Gateway).
+ * Recebe X-User-UID (Firebase UID injetado pelo Gateway) e resolve para o UUID do banco.
  */
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
-@Tag(name = "Notifications", description = "NOVO: Endpoints para consulta e gestão de notificações dos usuários (geradas via mensageria)")
+@Tag(name = "Notifications", description = "Endpoints para consulta e gestão de notificações dos usuários")
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final UserServiceClient userServiceClient;
 
     /**
-     * Lista todas as notificações do usuário logado.
-     * O userId vem do header X-User-Id (injetado pelo Gateway/JWT filter).
+     * Resolve o Firebase UID para o UUID interno do banco.
      */
-    @Operation(summary = "Listar minhas notificações", description = "Retorna todas as notificações (lidas e não lidas) do usuário logado.")
+    private UUID resolveUserId(String firebaseUid) {
+        UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        if (user == null || user.getId() == null) {
+            throw new RuntimeException("Usuário não encontrado para o UID: " + firebaseUid);
+        }
+        return user.getId();
+    }
+
+    @Operation(summary = "Listar minhas notificações",
+               description = "Retorna todas as notificações (lidas e não lidas) do usuário logado.")
     @GetMapping("/my-notifications")
     public ResponseEntity<List<NotificationDTO>> getMyNotifications(
-            @Parameter(description = "ID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-Id") UUID userId) {
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
+        UUID userId = resolveUserId(firebaseUid);
         return ResponseEntity.ok(notificationService.getMyNotifications(userId));
     }
 
-    /**
-     * Marca uma notificação como lida.
-     */
-    @Operation(summary = "Marcar notificação como lida", description = "Atualiza o status de uma notificação específica para 'lida'.")
+    @Operation(summary = "Marcar notificação como lida",
+               description = "Atualiza o status de uma notificação específica para 'lida'.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Notificação atualizada com sucesso"),
-            @ApiResponse(responseCode = "400", description = "Header X-User-Id ausente",
-                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Notificação não encontrada ou não pertence ao usuário",
+            @ApiResponse(responseCode = "404", description = "Notificação não encontrada",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @PutMapping("/{id}/read")
     public ResponseEntity<NotificationDTO> markAsRead(
             @Parameter(description = "UUID da notificação") @PathVariable UUID id,
-            @Parameter(description = "ID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-Id") UUID userId) {
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
+        UUID userId = resolveUserId(firebaseUid);
         return ResponseEntity.ok(notificationService.markAsRead(id, userId));
     }
 
-    /**
-     * Retorna a contagem de notificações não lidas.
-     */
-    @Operation(summary = "Contagem de não lidas", description = "Retorna o número total de notificações que o usuário ainda não leu. Útil para badges no frontend.")
+    @Operation(summary = "Contagem de não lidas",
+               description = "Retorna o número total de notificações não lidas. Útil para badges no frontend.")
     @GetMapping("/unread-count")
     public ResponseEntity<Map<String, Long>> getUnreadCount(
-            @Parameter(description = "ID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-Id") UUID userId) {
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
+        UUID userId = resolveUserId(firebaseUid);
         long count = notificationService.getUnreadCount(userId);
         return ResponseEntity.ok(Map.of("unreadCount", count));
     }

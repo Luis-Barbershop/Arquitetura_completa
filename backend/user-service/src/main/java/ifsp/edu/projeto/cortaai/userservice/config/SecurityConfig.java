@@ -53,6 +53,9 @@ public class SecurityConfig {
                         "/api/auth/email/login", "/api/auth/email/login/",
                         "/api/auth/email/verify-token", "/api/auth/email/verify-token/",
                         "/api/auth/email/register", "/api/auth/email/register/",
+                        // Recuperação de senha — não exige token
+                        "/api/auth/email/forgot-password", "/api/auth/email/forgot-password/",
+                        "/api/auth/firebase-test/forgot-password", "/api/auth/firebase-test/forgot-password/",
                         "/api/auth/firebase-test/sign-in-email", "/api/auth/firebase-test/sign-in-email/",
                         "/api/auth/firebase-test/verify-id-token", "/api/auth/firebase-test/verify-id-token/",
                         "/api/auth/firebase-test/register-email", "/api/auth/firebase-test/register-email/",

@@ -14,6 +14,9 @@ import MeusAgendamentosPage from './pages/MeusAgendamentosPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
+import BarberProfilePage from './pages/BarberProfilePage';
+import BarberTeamPage from './pages/BarberTeamPage';
+import BarberDashboardPage from './pages/BarberDashboardPage';
 import Site from './pages/Site';
 
 
@@ -35,6 +38,9 @@ function AppRoutes() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/change-password" element={<ChangePasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path='/barberHome/perfil' element={<BarberProfilePage />} />
+      <Route path='/barberHome/time' element={<BarberTeamPage />} />
+      <Route path='/barberHome/dashboard' element={<BarberDashboardPage />} />
     </Routes>
   )
 }

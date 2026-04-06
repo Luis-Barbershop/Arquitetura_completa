@@ -18,12 +18,14 @@ public class RabbitConfig {
     public static final String QUEUE_APPOINTMENT_CANCELLED = "notification.appointment.cancelled";
     public static final String QUEUE_APPOINTMENT_CONCLUDED = "notification.appointment.concluded";
     public static final String QUEUE_PAYMENT_APPROVED = "notification.payment.approved";
+    public static final String QUEUE_JOIN_REQUEST_CREATED = "notification.barbershop.join-request.created";
 
     // Routing keys
     public static final String RK_APPOINTMENT_CREATED = "appointment.created";
     public static final String RK_APPOINTMENT_CANCELLED = "appointment.cancelled";
     public static final String RK_APPOINTMENT_CONCLUDED = "appointment.concluded";
     public static final String RK_PAYMENT_APPROVED = "payment.approved";
+    public static final String RK_JOIN_REQUEST_CREATED = "barbershop.join-request.created";
 
     @Bean
     public TopicExchange exchange() {
@@ -51,6 +53,11 @@ public class RabbitConfig {
         return QueueBuilder.durable(QUEUE_PAYMENT_APPROVED).build();
     }
 
+    @Bean
+    public Queue joinRequestCreatedQueue() {
+        return QueueBuilder.durable(QUEUE_JOIN_REQUEST_CREATED).build();
+    }
+
     // --- Bindings ---
     @Bean
     public Binding bindAppointmentCreated() {
@@ -70,6 +77,11 @@ public class RabbitConfig {
     @Bean
     public Binding bindPaymentApproved() {
         return BindingBuilder.bind(paymentApprovedQueue()).to(exchange()).with(RK_PAYMENT_APPROVED);
+    }
+
+    @Bean
+    public Binding bindJoinRequestCreated() {
+        return BindingBuilder.bind(joinRequestCreatedQueue()).to(exchange()).with(RK_JOIN_REQUEST_CREATED);
     }
 
     // --- JSON converter ---

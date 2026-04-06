@@ -4,6 +4,7 @@ import ifsp.edu.projeto.cortaai.notificationservice.config.RabbitConfig;
 import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentCancelledEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentConcludedEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentCreatedEvent;
+import ifsp.edu.projeto.cortaai.notificationservice.event.JoinRequestCreatedEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.event.PaymentApprovedEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.service.DeduplicationService;
 import ifsp.edu.projeto.cortaai.notificationservice.service.NotificationService;
@@ -64,5 +65,15 @@ public class NotificationEventListener {
 
         notificationService.notifyPaymentApproved(
                 event.getCustomerId(), event.getCustomerEmail(), event.getAmount());
+    }
+
+    @RabbitListener(queues = RabbitConfig.QUEUE_JOIN_REQUEST_CREATED)
+    public void onJoinRequestCreated(JoinRequestCreatedEvent event) {
+        log.info("Evento recebido: barbershop.join-request.created requestId={} barberId={} ownerId={}",
+                event.getRequestId(), event.getBarberId(), event.getOwnerId());
+        if (deduplicationService.isDuplicate("JOIN_REQUEST_CREATED", event.getRequestId().toString())) return;
+
+        notificationService.notifyJoinRequestReceived(
+                event.getOwnerId(), event.getBarbershopName(), event.getBarberName());
     }
 }

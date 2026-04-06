@@ -41,6 +41,9 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             "/api/auth/email/login", "/api/auth/email/login/",
             "/api/auth/email/verify-token", "/api/auth/email/verify-token/",
             "/api/auth/email/register", "/api/auth/email/register/",
+            // Recuperação de senha — não exige token (usuário não está logado)
+            "/api/auth/email/forgot-password", "/api/auth/email/forgot-password/",
+            "/api/auth/firebase-test/forgot-password", "/api/auth/firebase-test/forgot-password/",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
@@ -61,7 +64,8 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
     private static final List<String> PUBLIC_BARBERSHOP_GET_PATHS = List.of(
             "/api/barbershops",
             "/api/barbershops/*",
-            "/api/barbershops/*/activities"
+            "/api/barbershops/*/activities",
+            "/api/barbershops/*/barbers"  // lista de barbeiros da barbearia (rota pública)
     );
 
     private final FirebaseAuth firebaseAuth;

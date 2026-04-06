@@ -195,6 +195,15 @@ public class BarbershopController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Rejeita uma solicitação de vínculo", description = "O dono da barbearia rejeita a entrada de um barbeiro específico na equipe.")
+    @PostMapping("/my-shop/reject-request/{requestId}")
+    public ResponseEntity<Void> rejectJoinRequest(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "UUID da solicitação de vínculo") @PathVariable UUID requestId) {
+        barbershopService.rejectJoinRequest(principal.getName(), requestId);
+        return ResponseEntity.noContent().build();
+    }
+
     // ========== FLUXO 3: SAIR DA LOJA ==========
 
     @Operation(summary = "Sai da barbearia voluntariamente", description = "Permite que um barbeiro autenticado saia (desvincule-se) da barbearia em que trabalha atualmente.")

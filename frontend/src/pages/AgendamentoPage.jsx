@@ -561,7 +561,7 @@ const AgendamentoPage = () => {
               ))}
             </div>
           ) : (
-            <p className={Styles.info_text}>Nenhum profissional encontrado.</p>
+            <p className={Styles.info_text}>No momento não há profissionais disponíveis para agendamento nesta barbearia.</p>
           )}
         </section>
 

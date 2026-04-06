@@ -7,5 +7,6 @@ public enum NotificationType {
     APPOINTMENT_CREATED,
     APPOINTMENT_CANCELLED,
     APPOINTMENT_CONCLUDED,
-    PAYMENT_APPROVED
+    PAYMENT_APPROVED,
+    JOIN_REQUEST_RECEIVED   // barbeiro solicitou entrada na barbearia do dono
 }

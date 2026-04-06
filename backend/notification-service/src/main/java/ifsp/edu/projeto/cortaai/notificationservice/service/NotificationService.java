@@ -179,6 +179,22 @@ public class NotificationService {
         return notificationRepository.countByUserIdAndReadFalse(userId);
     }
 
+    // ─── Pedido de entrada em barbearia ─────────────────────────────────────────
+
+    @Transactional
+    public void notifyJoinRequestReceived(
+            UUID ownerId, String barbershopName, String barberName) {
+
+        // IN_APP — dono da barbearia
+        createNotification(ownerId, NotificationType.JOIN_REQUEST_RECEIVED,
+                "Novo pedido de entrada!",
+                String.format("O barbeiro %s quer entrar na sua barbearia %s. Acesse 'Meu Time' para aprovar ou recusar.",
+                        barberName, barbershopName));
+
+        log.info("event=join-request-notification-created ownerId={} barberName={} shop={}",
+                ownerId, barberName, barbershopName);
+    }
+
     private NotificationDTO toDTO(Notification n) {
         return new NotificationDTO(
                 n.getId(), n.getUserId(), n.getType(), n.getTitle(),

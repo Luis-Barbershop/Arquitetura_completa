@@ -1,5 +1,7 @@
 package ifsp.edu.projeto.cortaai.barbershopservice.service;
 
+import ifsp.edu.projeto.cortaai.barbershopservice.config.RabbitConfig;
+import ifsp.edu.projeto.cortaai.barbershopservice.event.JoinRequestCreatedEvent;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.*;
 import ifsp.edu.projeto.cortaai.barbershopservice.exception.DomainConflictException;
 import ifsp.edu.projeto.cortaai.barbershopservice.exception.ForbiddenException;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,6 +46,7 @@ public class BarbershopService {
     private final ActivityMapper activityMapper;
     private final StorageService storageService;
     private final UserServiceClient userServiceClient;
+    private final RabbitTemplate rabbitTemplate;
 
     // ========== HELPERS ==========
 
@@ -326,7 +330,27 @@ public class BarbershopService {
         request.setBarberId(barber.getId());
         request.setBarbershop(shop);
         request.setStatus(JoinRequestStatus.PENDING);
-        joinRequestRepository.save(request);
+        BarbershopJoinRequest saved = joinRequestRepository.save(request);
+
+        // Publica evento para o notification-service notificar o dono da barbearia
+        try {
+            UserInfoDTO owner = resolveUser(shop.getOwnerId());
+            JoinRequestCreatedEvent event = new JoinRequestCreatedEvent(
+                    saved.getId(),
+                    barber.getId(),
+                    barber.getName(),
+                    barber.getEmail(),
+                    shop.getId(),
+                    shop.getName(),
+                    owner.getId()
+            );
+            rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.RK_JOIN_REQUEST_CREATED, event);
+            log.info("event=join-request-created-published requestId={} barberId={} shopId={} ownerId={}",
+                    saved.getId(), barber.getId(), shop.getId(), owner.getId());
+        } catch (Exception ex) {
+            // Falha na publicação do evento não deve reverter a solicitação
+            log.warn("event=join-request-rabbit-publish-failed requestId={} error={}", saved.getId(), ex.getMessage());
+        }
     }
 
     @Transactional(readOnly = true)
@@ -371,6 +395,21 @@ public class BarbershopService {
 
         // Atualiza barbershopId no user-service
         updateUserBarbershop(request.getBarberId(), shop.getId());
+    }
+
+    public void rejectJoinRequest(String ownerUid, UUID requestId) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        BarbershopJoinRequest request = joinRequestRepository.findById(requestId)
+                .orElseThrow(() -> new NotFoundException("Solicitação não encontrada."));
+
+        if (!request.getBarbershop().getId().equals(shop.getId())) {
+            throw new ForbiddenException("Esta solicitação não pertence à sua barbearia.");
+        }
+
+        request.setStatus(JoinRequestStatus.REJECTED);
+        joinRequestRepository.save(request);
     }
 
     // ========== FLUXO 3: SAIR DA LOJA ==========

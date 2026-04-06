@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import NotificationBell from './NotificationBell';
 import styles from '../../pages/CSS/BarberHomePage.module.css';
 
 const navItems = [
@@ -44,9 +45,7 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
                 </div>
 
                 <div className={styles.headerRight}>
-                    <button className={styles.notificationButton}>
-                        <img src="/Icons/bellicon.png" alt="Sino de Notificacao" />
-                    </button>
+                    <NotificationBell />
                     <button
                         onClick={handleMpConnect}
                         className={styles.mpButton}

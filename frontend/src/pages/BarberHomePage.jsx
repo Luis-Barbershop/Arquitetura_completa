@@ -82,6 +82,21 @@ function BarberHomePage() {
       return;
     }
 
+    if (tab === 'perfil') {
+      navigate('/barberHome/perfil');
+      return;
+    }
+
+    if (tab === 'time') {
+      navigate('/barberHome/time');
+      return;
+    }
+
+    if (tab === 'dashboards') {
+      navigate('/barberHome/dashboard');
+      return;
+    }
+
     setActiveTab(tab);
   };
 
