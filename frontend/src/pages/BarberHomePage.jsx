@@ -52,6 +52,13 @@ function BarberHomePage() {
     api.get('/auth/me')
       .then(response => {
         setBarber(response.data);
+        // Sincroniza isOwner e barbershopId no localStorage com o valor mais recente do servidor
+        if (response.data?.isOwner !== undefined && response.data?.isOwner !== null) {
+          localStorage.setItem('isOwner', String(response.data.isOwner));
+        }
+        if (response.data?.barbershopId) {
+          localStorage.setItem('barbershopId', String(response.data.barbershopId));
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -176,7 +183,7 @@ function BarberHomePage() {
           onLogout={handleOpenLogoutModal}
           activeTab={activeTab}
           onTabChange={handleTabChange}
-          isOwner={barber?.isOwner === true}
+          isOwner={Boolean(barber?.isOwner) || isOwnerUser()}
           barbershopId={barber?.barbershopId}
         />
 

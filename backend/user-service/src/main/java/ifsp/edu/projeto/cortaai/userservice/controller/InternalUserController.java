@@ -173,7 +173,18 @@ public class InternalUserController {
     }
     @PutMapping("/make-owner/{uid}")
     public ResponseEntity<Void> makeBarberOwner(@PathVariable String uid) {
+        // 1. Atualiza os custom claims do Firebase
         firebaseAuthService.setCustomUserClaims(uid, "BARBER", true);
+
+        // 2. Persiste isOwner=true e role=ROLE_OWNER no banco de dados do barbeiro
+        //    Sem isso, /auth/me sempre retornaria isOwner=false (lê do banco, não do Firebase)
+        barberRepository.findByFirebaseUid(uid).ifPresent(barber -> {
+            barber.setOwner(true);
+            barber.setRole("ROLE_OWNER");
+            barberRepository.save(barber);
+            log.info("Barber {} promovido a ROLE_OWNER no banco de dados.", uid);
+        });
+
         return ResponseEntity.ok().build();
     }
 
