@@ -46,8 +46,10 @@ public class BarberServiceImpl implements BarberService {
         // 1. Salva no banco e guarda a referência
         Barber savedBarber = barberRepository.save(barber);
 
-        // 2. Avisa o Firebase que esse UID agora é um Barbeiro
-        firebaseAuthService.setCustomUserClaims(savedBarber.getFirebaseUid(), "BARBER", false);
+        // 2. Atualiza as claims do Firebase — só se o barbeiro tiver UID Firebase
+        if (savedBarber.getFirebaseUid() != null) {
+            firebaseAuthService.setCustomUserClaims(savedBarber.getFirebaseUid(), "BARBER", false);
+        }
 
         // 3. Retorna o DTO
         return barberMapper.toDTO(savedBarber);
