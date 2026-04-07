@@ -166,3 +166,17 @@ firebase:
 # ==================================================
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:8080}
+
+# ==================================================
+# LOGGING — silencia spam de bibliotecas internas
+# ==================================================
+logging:
+  level:
+    # Eureka: resolve/refresh de cluster → WARN (elimina spam a cada 5 min)
+    com.netflix.discovery: WARN
+    com.netflix.eureka: WARN
+    # Spring Cloud Gateway: reduz verbosidade de rotas
+    org.springframework.cloud.gateway: WARN
+    # Netty (reactor): silencia logs de baixo nível de rede
+    reactor.netty: WARN
+    io.netty: WARN

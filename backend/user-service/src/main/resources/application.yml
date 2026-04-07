@@ -90,3 +90,12 @@ springdoc:
       description: API Gateway (local dev)
     - url: https://api.cortaai.shop
       description: API Gateway (produção)
+
+# ==================================================
+# LOGGING — silencia spam de bibliotecas internas
+# ==================================================
+logging:
+  level:
+    com.netflix.discovery: WARN
+    com.netflix.eureka: WARN
+    org.springframework.cloud.loadbalancer: WARN

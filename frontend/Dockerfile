@@ -16,6 +16,9 @@ RUN npm run build
 
 # ======== STAGE 2: Serve com Nginx ========
 FROM nginx:alpine
+# Silencia os scripts de entrypoint do nginx (checksums, reconfig automático)
+# Evita: "10-listen-on-ipv6-by-default.sh: info: Getting the checksum..."
+ENV NGINX_ENTRYPOINT_QUIET_LOGS=1
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80

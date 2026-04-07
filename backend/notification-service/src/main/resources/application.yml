@@ -22,10 +22,11 @@ spring:
       idle-timeout: 300000
       max-lifetime: 600000
   jpa:
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+    # Hibernate 6+ detecta o dialeto automaticamente pelo driver — não especificar
     hibernate:
       ddl-auto: update
     show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         format_sql: false
@@ -77,4 +78,13 @@ springdoc:
       description: API Gateway (local dev)
     - url: https://api.cortaai.shop
       description: API Gateway (produção)
+
+# ==================================================
+# LOGGING — silencia spam de bibliotecas internas
+# ==================================================
+logging:
+  level:
+    com.netflix.discovery: WARN
+    com.netflix.eureka: WARN
+    org.springframework.cloud.loadbalancer: WARN
 

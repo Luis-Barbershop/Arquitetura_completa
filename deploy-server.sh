@@ -13,9 +13,28 @@ echo "=========================================="
 echo "  CortaAi - Deploy no Servidor"
 echo "=========================================="
 
+# 0. Corrigir permissões do Docker config.json
+# Evita: WARNING: Error loading config file: open /DATA/.docker/config.json: permission denied
+echo ""
+echo "[0/8] Corrigindo permissões do Docker config..."
+DOCKER_CONFIG_DIR="/DATA/.docker"
+if [ -d "$DOCKER_CONFIG_DIR" ]; then
+    CURRENT_USER=$(whoami)
+    # Dá ownership ao usuário atual e restringe acesso (600 = só leitura/escrita do dono)
+    sudo chown -R "$CURRENT_USER":"$CURRENT_USER" "$DOCKER_CONFIG_DIR"
+    sudo chmod 700 "$DOCKER_CONFIG_DIR"
+    [ -f "$DOCKER_CONFIG_DIR/config.json" ] && sudo chmod 600 "$DOCKER_CONFIG_DIR/config.json"
+    echo "  ✅ Permissões Docker config corrigidas para usuário: $CURRENT_USER"
+else
+    # Diretório não existe — cria com as permissões corretas
+    mkdir -p "$DOCKER_CONFIG_DIR"
+    chmod 700 "$DOCKER_CONFIG_DIR"
+    echo "  ✅ Diretório $DOCKER_CONFIG_DIR criado com permissões corretas"
+fi
+
 # 1. Copiar docker-compose.server.yml como docker-compose.yml (local only)
 echo ""
-echo "[1/7] Configurando docker-compose para servidor..."
+echo "[1/8] Configurando docker-compose para servidor..."
 cp docker-compose.server.yml docker-compose.yml
 echo "  ✅ docker-compose.yml configurado com portas do servidor"
 

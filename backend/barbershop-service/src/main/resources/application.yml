@@ -95,7 +95,11 @@ springdoc:
 
 logging:
   level:
-    org.springframework.web.servlet.DispatcherServlet: DEBUG
-    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE
-    org.springframework.security: DEBUG
+    com.netflix.discovery: WARN
+    com.netflix.eureka: WARN
+    org.springframework.cloud.loadbalancer: WARN
+    # Remover DEBUG/TRACE de produção — usar apenas em dev local
+    org.springframework.web.servlet.DispatcherServlet: WARN
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: WARN
+    org.springframework.security: WARN
 
