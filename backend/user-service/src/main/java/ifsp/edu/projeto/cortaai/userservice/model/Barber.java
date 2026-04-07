@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.hibernate.annotations.JdbcTypeCode;
 import java.sql.Types;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -89,6 +90,9 @@ public class Barber implements UserDetails {
 
     @Column(name = "work_end_time")
     private LocalTime workEndTime;
+
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
 
     @Column(name = "image_url")
     private String imageUrl;

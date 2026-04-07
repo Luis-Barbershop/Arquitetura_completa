@@ -1,15 +1,16 @@
 package ifsp.edu.projeto.cortaai.userservice.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import java.time.LocalDate;
+
 /**
- * Dados complementares enviados por um cliente (customer) após login social.
- *
- * <p>No login com Google/Apple/etc., o Firebase não fornece CPF nem telefone.
- * O app deve chamar {@code POST /api/auth/customers/complete-profile} com este
- * DTO para completar o perfil antes de usar funcionalidades que exigem esses dados.
+ * Dados complementares enviados por um cliente após login social ou cadastro e-mail.
  */
 public record CompleteProfileCustomerDTO(
 
@@ -22,5 +23,10 @@ public record CompleteProfileCustomerDTO(
         String documentCPF,
 
         /** Nome de exibição (opcional — substitui o nome vindo do Firebase se fornecido). */
-        String name
+        String name,
+
+        @NotNull(message = "Data de nascimento é obrigatória")
+        @Past(message = "Data de nascimento deve ser no passado")
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDate birthDate
 ) {}

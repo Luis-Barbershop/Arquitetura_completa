@@ -183,11 +183,6 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
             // ── 4. Completar perfil com email explícito (não há SecurityContext aqui) ─
             AuthResponseDTO profile;
             if ("BARBER".equals(userType)) {
-                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm");
-                LocalTime start = request.workStartTime() != null
-                        ? LocalTime.parse(request.workStartTime(), fmt) : LocalTime.of(9, 0);
-                LocalTime end   = request.workEndTime() != null
-                        ? LocalTime.parse(request.workEndTime(), fmt)   : LocalTime.of(18, 0);
                 boolean isOwner = Boolean.TRUE.equals(request.isOwner());
 
                 profile = firebaseAuthService.completeBarberProfile(localId,
@@ -195,8 +190,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                                 request.tell(),
                                 request.documentCPF(),
                                 request.name(),
-                                start,
-                                end,
+                                null,   // birthDate — não enviado pelo fluxo de debug
                                 isOwner
                         ),
                         email);
@@ -205,7 +199,8 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                         new CompleteProfileCustomerDTO(
                                 request.tell(),
                                 request.documentCPF(),
-                                request.name()
+                                request.name(),
+                                null    // birthDate — não enviado pelo fluxo de debug
                         ),
                         email);
             }

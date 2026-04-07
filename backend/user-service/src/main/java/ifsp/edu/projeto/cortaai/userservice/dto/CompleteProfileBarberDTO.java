@@ -3,16 +3,15 @@ package ifsp.edu.projeto.cortaai.userservice.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalTime;
+import java.time.LocalDate;
 
 /**
- * Dados complementares enviados por um barbeiro após login social.
- *
- * <p>Análogo ao {@link CompleteProfileCustomerDTO}, mas inclui também
- * os horários de trabalho necessários para agendamentos.
+ * Dados complementares enviados por um barbeiro após login social ou cadastro e-mail.
+ * Horários de expediente são configurados posteriormente no perfil.
  */
 public record CompleteProfileBarberDTO(
 
@@ -27,13 +26,10 @@ public record CompleteProfileBarberDTO(
         /** Nome de exibição (opcional). */
         String name,
 
-        @NotNull(message = "Horário de início é obrigatório")
-        @JsonFormat(pattern = "HH:mm")
-        LocalTime workStartTime,
-
-        @NotNull(message = "Horário de término é obrigatório")
-        @JsonFormat(pattern = "HH:mm")
-        LocalTime workEndTime,
+        @NotNull(message = "Data de nascimento é obrigatória")
+        @Past(message = "Data de nascimento deve ser no passado")
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        LocalDate birthDate,
 
         /** Indica se este barbeiro também é dono da barbearia. */
         boolean isOwner

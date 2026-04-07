@@ -179,6 +179,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         }
         customer.setTell(dto.tell());
         customer.setDocumentCPF(dto.documentCPF());
+        if (dto.birthDate() != null) customer.setBirthDate(dto.birthDate());
         customer.setAuthProvider(customer.getAuthProvider() != null ? customer.getAuthProvider() : "EMAIL");
 
         customerRepository.saveAndFlush(customer);
@@ -224,8 +225,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         }
         barber.setTell(dto.tell());
         barber.setDocumentCPF(dto.documentCPF());
-        barber.setWorkStartTime(dto.workStartTime());
-        barber.setWorkEndTime(dto.workEndTime());
+        if (dto.birthDate() != null) barber.setBirthDate(dto.birthDate());
         barber.setOwner(dto.isOwner());
         barber.setAuthProvider(barber.getAuthProvider() != null ? barber.getAuthProvider() : "EMAIL");
 
@@ -345,7 +345,8 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
     // ─── Conversão para AuthResponseDTO ──────────────────────────────────────
 
     private AuthResponseDTO toAuthResponse(Customer customer, boolean emailVerified, boolean verificationRequired) {
-        boolean complete = customer.getTell() != null && customer.getDocumentCPF() != null;
+        boolean complete = customer.getTell() != null && customer.getDocumentCPF() != null
+                && customer.getBirthDate() != null;
         return new AuthResponseDTO(
                 customer.getId(),
                 customer.getName(),
@@ -366,7 +367,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
 
     private AuthResponseDTO toAuthResponse(Barber barber, boolean emailVerified, boolean verificationRequired) {
         boolean complete = barber.getTell() != null && barber.getDocumentCPF() != null
-                && barber.getWorkStartTime() != null && barber.getWorkEndTime() != null;
+                && barber.getBirthDate() != null;
         return new AuthResponseDTO(
                 barber.getId(),
                 barber.getName(),

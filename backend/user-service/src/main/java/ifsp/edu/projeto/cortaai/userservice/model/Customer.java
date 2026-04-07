@@ -11,6 +11,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.sql.Types;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -73,6 +74,9 @@ public class Customer {
 
     @Column(name = "image_url_public_id", length = 255)
     private String imageUrlPublicId;
+
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
 
     @ElementCollection
     @CollectionTable(

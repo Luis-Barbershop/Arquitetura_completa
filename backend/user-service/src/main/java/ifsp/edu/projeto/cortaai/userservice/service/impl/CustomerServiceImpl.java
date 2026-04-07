@@ -108,6 +108,9 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setTell(customerDTO.getTell());
         customer.setEmail(customerDTO.getEmail());
         customer.setDocumentCPF(customerDTO.getDocumentCPF());
+        if (customerDTO.getBirthDate() != null) {
+            customer.setBirthDate(customerDTO.getBirthDate());
+        }
 
         if (customerDTO.getImageUrl() != null) {
             customer.setImageUrl(customerDTO.getImageUrl());
