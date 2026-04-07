@@ -41,9 +41,15 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             "/api/auth/email/login", "/api/auth/email/login/",
             "/api/auth/email/verify-token", "/api/auth/email/verify-token/",
             "/api/auth/email/register", "/api/auth/email/register/",
-            // Recuperação de senha — não exige token (usuário não está logado)
+            // Verificação de e-mail cadastrado — usada no redirect inteligente do login
+            "/api/auth/email/exists", "/api/auth/email/exists/",
+            // Recuperação e alteração de senha — não exigem token de Authorization
             "/api/auth/email/forgot-password", "/api/auth/email/forgot-password/",
+            "/api/auth/email/change-password", "/api/auth/email/change-password/",
             "/api/auth/firebase-test/forgot-password", "/api/auth/firebase-test/forgot-password/",
+            "/api/auth/firebase-test/sign-in-email", "/api/auth/firebase-test/sign-in-email/",
+            "/api/auth/firebase-test/verify-id-token", "/api/auth/firebase-test/verify-id-token/",
+            "/api/auth/firebase-test/register-email", "/api/auth/firebase-test/register-email/",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",

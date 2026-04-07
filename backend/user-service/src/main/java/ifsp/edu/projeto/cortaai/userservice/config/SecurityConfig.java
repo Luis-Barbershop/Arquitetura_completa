@@ -53,8 +53,9 @@ public class SecurityConfig {
                         "/api/auth/email/login", "/api/auth/email/login/",
                         "/api/auth/email/verify-token", "/api/auth/email/verify-token/",
                         "/api/auth/email/register", "/api/auth/email/register/",
-                        // Recuperação de senha — não exige token
+                        // Recuperação e alteração de senha — não exige token
                         "/api/auth/email/forgot-password", "/api/auth/email/forgot-password/",
+                        "/api/auth/email/change-password", "/api/auth/email/change-password/",
                         "/api/auth/firebase-test/forgot-password", "/api/auth/firebase-test/forgot-password/",
                         "/api/auth/firebase-test/sign-in-email", "/api/auth/firebase-test/sign-in-email/",
                         "/api/auth/firebase-test/verify-id-token", "/api/auth/firebase-test/verify-id-token/",
@@ -63,6 +64,10 @@ public class SecurityConfig {
                         "/api/barbers/login", "/api/barbers/login/",
                         "/api/customers/register", "/api/customers/register/",
                         "/api/barbers/register", "/api/barbers/register/"
+                ).permitAll()
+                // Verificação de e-mail — GET público (usado no redirect inteligente do login)
+                .requestMatchers(HttpMethod.GET,
+                        "/api/auth/email/exists", "/api/auth/email/exists/"
                 ).permitAll()
                 // Complete-profile exige autenticação (Gateway injeta X-User-UID)
                 .requestMatchers(HttpMethod.POST,
