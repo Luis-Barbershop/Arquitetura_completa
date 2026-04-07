@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { createBarbershop } from '../services/barbershopService';
+import { refreshSession } from '../services/authService';
 import Styles from './CSS/HomePage.module.css'; 
 
 function CreateBarbershopPage() {
@@ -84,10 +85,12 @@ function CreateBarbershopPage() {
         setLoading(true);
         try {
             await createBarbershop({ name, cnpj, address }, file);
-            
-            toast.success("Barbearia criada com sucesso! Para liberar as permissoes de dono, entre novamente.");
-            localStorage.clear();
-            navigate('/identificacao', { state: { mode: 'login', role: 'barber' } });
+
+            // Atualiza role/isOwner no localStorage sem precisar de logout
+            await refreshSession();
+
+            toast.success("Barbearia criada com sucesso!");
+            navigate('/barberHome', { replace: true, state: { activeTab: 'home' } });
         } catch (error) {
             console.error(error);
             toast.error("Erro ao criar barbearia. Verifique os dados.");

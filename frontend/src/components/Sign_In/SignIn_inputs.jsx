@@ -27,11 +27,12 @@ function SignIn_inputs() {
     const location = useLocation();
     const userType = location.state?.role || "customer";
 
-    const [step, setStep] = useState(1);
+    // Se vier de um redirect de Google (step:2), salta direto para a etapa 2
+    const [step, setStep] = useState(location.state?.step === 2 ? 2 : 1);
     const [registered, setRegistered] = useState(false);
 
-    const [name, setName] = useState("");
-    // Pré-preenche e-mail se vier do redirecionamento do login
+    // Pré-preenche nome e e-mail vindos do Google ou de outros redirects
+    const [name, setName] = useState(location.state?.prefillName || "");
     const [email, setEmail] = useState(location.state?.prefillEmail || "");
     const [cpf, setCpf] = useState("");
 
@@ -65,9 +66,9 @@ function SignIn_inputs() {
         } catch (err) {
             setLoadingGoogle(false);
             if (err.code === 'PROFILE_INCOMPLETE') {
-                // Conta Google existe mas cadastro está incompleto — mantém no fluxo de cadastro
-                setEmail(err.profileData?.email || email);
-                setError('Seu cadastro está incompleto. Preencha os campos abaixo para continuar.');
+                // Conta Google existe mas cadastro está incompleto — salta para a etapa 2
+                if (err.profileData?.email) setEmail(err.profileData.email);
+                setStep(2);
                 return;
             }
             if (err.code === 'ROLE_CONFLICT') {
@@ -76,12 +77,10 @@ function SignIn_inputs() {
                 return;
             }
             if (err.code === 'USER_NOT_FOUND') {
-                // Usuário Google não cadastrado — pré-preenche e-mail e nome do Google
-                setEmail(err.googleData?.email || email);
-                if (err.googleData?.displayName) {
-                    setName(err.googleData.displayName);
-                }
-                setError('Conta Google não encontrada. Complete seu cadastro abaixo.');
+                // Usuário Google não cadastrado — pré-preenche e salta para a etapa 2
+                if (err.googleData?.email) setEmail(err.googleData.email);
+                if (err.googleData?.displayName) setName(err.googleData.displayName);
+                setStep(2);
                 return;
             }
             const msg = translateFirebaseError(

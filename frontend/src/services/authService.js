@@ -42,6 +42,23 @@ export const translateFirebaseError = (rawMsg = '', fallback = 'Ocorreu um erro.
     return fallback;
 };
 
+// ─── REFRESH DE SESSÃO ───────────────────────────────────────────────────────
+// Após operações que mudam o role do usuário no backend (ex: criar barbearia),
+// re-verifica o token para atualizar userRole e isOwner no localStorage.
+export const refreshSession = async () => {
+    const idToken = localStorage.getItem('token');
+    if (!idToken) return;
+    try {
+        const verifyResponse = await api.post(AUTH_ENDPOINTS.verify, { idToken });
+        const role = verifyResponse.data?.role || localStorage.getItem('userRole');
+        const isOwner = verifyResponse.data?.isOwner || false;
+        localStorage.setItem('userRole', role);
+        localStorage.setItem('isOwner', String(isOwner));
+    } catch (_) {
+        // Se falhar o re-verify, mantém os valores atuais silenciosamente
+    }
+};
+
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 // Usa o Firebase Identity Toolkit via backend: POST /api/auth/email/login
 // Retorna { idToken, refreshToken, expiresIn, localId, email, registered }

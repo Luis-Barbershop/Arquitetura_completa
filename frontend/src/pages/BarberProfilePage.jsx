@@ -43,7 +43,8 @@ function BarberProfilePage() {
                 barber={barber}
                 onLogout={handleLogout}
                 activeTab="perfil"
-                isOwner={isOwnerUser()}
+                isOwner={barber?.isOwner === true || isOwnerUser()}
+                barbershopId={barber?.barbershopId}
                 onTabChange={(tab) => {
                     if (tab === 'home') navigate('/barberHome');
                     else if (tab === 'agenda') navigate('/meus-agendamentos');
@@ -79,7 +80,14 @@ function BarberProfilePage() {
                     </div>
                 )}
             </main>
-            <BarberNavbar activeTab="perfil" onTabChange={() => {}} isOwner={isOwnerUser()} />
+            <BarberNavbar activeTab="perfil" onTabChange={(tab) => {
+                    if (tab === 'home') navigate('/barberHome');
+                    else if (tab === 'agenda') navigate('/meus-agendamentos');
+                    else if (tab === 'servicos') navigate('/barberHome/servicos');
+                    else if (tab === 'estoque') navigate('/barberHome/estoque');
+                    else if (tab === 'time') navigate('/barberHome/time');
+                    else if (tab === 'dashboards') navigate('/barberHome/dashboard');
+                }} isOwner={barber?.isOwner === true || isOwnerUser()} barbershopId={barber?.barbershopId} />
         </div>
     );
 }

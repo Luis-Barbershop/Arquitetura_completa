@@ -176,7 +176,7 @@ function BarberHomePage() {
           onLogout={handleOpenLogoutModal}
           activeTab={activeTab}
           onTabChange={handleTabChange}
-          isOwner={isOwnerUser()}
+          isOwner={barber?.isOwner === true || isOwnerUser()}
           barbershopId={barber?.barbershopId}
         />
 
@@ -238,7 +238,7 @@ function BarberHomePage() {
         )}
       </div>
       {hasLinkedBarbershop && (
-        <BarberNavbar activeTab={activeTab} onTabChange={handleTabChange} isOwner={isOwnerUser()} barbershopId={barber?.barbershopId} />
+        <BarberNavbar activeTab={activeTab} onTabChange={handleTabChange} isOwner={barber?.isOwner === true || isOwnerUser()} barbershopId={barber?.barbershopId} />
       )}
 
       {isJoinModalOpen && (

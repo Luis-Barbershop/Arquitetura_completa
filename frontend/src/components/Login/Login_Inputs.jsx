@@ -110,14 +110,16 @@ function Login_Inputs() {
 
             if (err.code === "USER_NOT_FOUND") {
                 // Usuário autenticado no Google mas não cadastrado no CortaAI
-                // Redireciona para o cadastro compatível com a intenção armazenada
+                // Pula direto para a etapa 2 do cadastro (telefone + senha), sem mostrar etapa 1
                 const intent = sessionStorage.getItem('user_intent') || role;
                 sessionStorage.removeItem('user_intent');
                 navigate("/signin", {
                     state: {
                         mode: "register",
+                        step: 2,                               // ← salta etapa 1
                         role: intent,
                         prefillEmail: err.googleData?.email || "",
+                        prefillName: err.googleData?.displayName || "",
                         googleData: err.googleData,
                     }
                 });
@@ -191,7 +193,6 @@ function Login_Inputs() {
 
             {/* Alternância de perfil: permite trocar entre portal Barbeiro e portal Cliente */}
             <p style={{ textAlign: 'center', marginTop: 8, fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
-                {role === 'barber' ? 'É cliente?' : 'É barbeiro?'}{' '}
                 <button
                     type="button"
                     onClick={() => navigate('/login', {
@@ -199,7 +200,7 @@ function Login_Inputs() {
                     })}
                     style={{ background: 'none', border: 'none', color: '#a0c4ff', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}
                 >
-                    {role === 'barber' ? 'Acessar como Cliente' : 'Acessar como Barbeiro'}
+                    {role === 'barber' ? 'Entrar como Cliente' : 'Entrar como Barbeiro'}
                 </button>
             </p>
         </div>
