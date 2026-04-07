@@ -1,5 +1,5 @@
 import Styles from "./CSS/SignIn_inputs.module.css"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import {
     registerCustomer,
@@ -38,14 +38,30 @@ function SignIn_inputs() {
     const [step, setStep] = useState(location.state?.step === 2 ? 2 : 1);
     const [registered, setRegistered] = useState(false);
 
-    // Dados do Google (idToken já está no Firebase, só precisa completar perfil)
+    // Dados do Google — lidos diretamente do location.state para refletir
+    // re-navegações dentro da mesma rota (navigate dentro de /signin)
     const isGoogleFlow = !!(location.state?.googleData);
-    const [googleData] = useState(location.state?.googleData || null);
+    const googleData = location.state?.googleData || null;
 
     // Pré-preenche nome e e-mail vindos do Google ou de outros redirects
     const [name, setName] = useState(location.state?.prefillName || "");
     const [email, setEmail] = useState(location.state?.prefillEmail || "");
     const [cpf, setCpf] = useState("");
+
+    // Quando o navigate() é chamado dentro da própria rota /signin (ex: handleGoogleSignIn
+    // USER_NOT_FOUND), o componente NÃO re-monta — só o location muda.
+    // Este effect garante que step, name, email e googleData sejam atualizados.
+    useEffect(() => {
+        if (location.state?.step === 2) {
+            setStep(2);
+        }
+        if (location.state?.prefillName) {
+            setName(location.state.prefillName);
+        }
+        if (location.state?.prefillEmail) {
+            setEmail(location.state.prefillEmail);
+        }
+    }, [location.state]);
 
     const [tell, setTell] = useState("");
     const [password, setPassword] = useState("");
@@ -296,19 +312,33 @@ function SignIn_inputs() {
                 </>
             )}                {step === 2 && (
                     <>
-                        {/* CPF aparece no step 2 apenas no fluxo Google (step 1 foi pulado) */}
+                        {/* No fluxo Google o step 1 foi pulado — mostra nome e CPF aqui */}
                         {isGoogleFlow && (
-                            <label className={Styles.label_name}>
-                                <p>CPF</p>
-                                <input
-                                    className={Styles.formInput}
-                                    type="text"
-                                    value={cpf}
-                                    onChange={e => setCpf(e.target.value)}
-                                    placeholder="Somente números"
-                                    required
-                                />
-                            </label>
+                            <>
+                                <label className={Styles.label_name}>
+                                    <p>Nome completo</p>
+                                    <input
+                                        className={Styles.formInput}
+                                        type="text"
+                                        value={name}
+                                        onChange={e => setName(e.target.value)}
+                                        placeholder="Seu nome completo"
+                                        required
+                                    />
+                                </label>
+
+                                <label className={Styles.label_name}>
+                                    <p>CPF</p>
+                                    <input
+                                        className={Styles.formInput}
+                                        type="text"
+                                        value={cpf}
+                                        onChange={e => setCpf(e.target.value)}
+                                        placeholder="Somente números"
+                                        required
+                                    />
+                                </label>
+                            </>
                         )}
 
                         <label className={Styles.label_name}>
