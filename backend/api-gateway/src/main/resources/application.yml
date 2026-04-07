@@ -9,6 +9,11 @@ spring:
   codec:
     max-in-memory-size: 20MB
   cloud:
+    loadbalancer:
+      cache:
+        type: caffeine
+        caffeine:
+          spec: maximumSize=1000,expireAfterWrite=5s
     gateway:
       # Desabilita o filtro JSON-to-gRPC que causa ClassNotFoundException
       # (Firebase traz grpc-api transitivo mas não grpc-netty)

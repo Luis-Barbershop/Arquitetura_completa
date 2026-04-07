@@ -10,6 +10,11 @@ spring:
   application:
     name: barbershop-service
   cloud:
+    loadbalancer:
+      cache:
+        type: caffeine
+        caffeine:
+          spec: maximumSize=1000,expireAfterWrite=5s
     openfeign:
       circuitbreaker:
         enabled: true
@@ -31,10 +36,11 @@ spring:
       idle-timeout: 300000
       max-lifetime: 600000
   jpa:
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+    # Hibernate 6+ detecta o dialeto automaticamente pelo driver — não especificar
     hibernate:
       ddl-auto: update
     show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         format_sql: false

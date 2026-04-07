@@ -10,6 +10,12 @@ server:
 spring:
   application:
     name: user-service
+  cloud:
+    loadbalancer:
+      cache:
+        type: caffeine
+        caffeine:
+          spec: maximumSize=1000,expireAfterWrite=5s
   main:
     lazy-initialization: false
 
@@ -26,7 +32,7 @@ spring:
       max-lifetime: 600000
 
   jpa:
-    database-platform: org.hibernate.dialect.MySQL8Dialect
+    # Hibernate 6+ detecta o dialeto automaticamente pelo driver — não especificar
     hibernate:
       ddl-auto: update
     open-in-view: false
