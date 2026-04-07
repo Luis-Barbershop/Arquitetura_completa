@@ -260,6 +260,24 @@ public class PaymentService {
     }
 
     @Transactional(readOnly = true)
+    public List<TransactionDTO> getMyPaymentsByFirebaseUid(String firebaseUid) {
+        UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        if (user == null || user.getId() == null) {
+            return List.of();
+        }
+        return getMyPayments(user.getId());
+    }
+
+    @Transactional
+    public TransactionDTO createPaymentByFirebaseUid(UUID appointmentId, String firebaseUid, String paymentMethod) {
+        UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        if (user == null || user.getId() == null) {
+            throw new RuntimeException("Usuário não encontrado para Firebase UID: " + firebaseUid);
+        }
+        return createPayment(appointmentId, user.getId(), paymentMethod);
+    }
+
+    @Transactional(readOnly = true)
     public FinancialOverviewDTO getBarbershopOverview(UUID barbershopId, LocalDate from, LocalDate to) {
         LocalDate startDate = from != null ? from : LocalDate.now();
         LocalDate endDate = to != null ? to : startDate;
@@ -344,6 +362,16 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public boolean canAccessBarbershopFinancials(UUID userId, UUID barbershopId, boolean ownerOnly) {
         UserInfoDTO user = userServiceClient.getUserById(userId);
+        return checkBarbershopAccess(user, barbershopId, ownerOnly);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean canAccessBarbershopFinancials(String firebaseUid, UUID barbershopId, boolean ownerOnly) {
+        UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        return checkBarbershopAccess(user, barbershopId, ownerOnly);
+    }
+
+    private boolean checkBarbershopAccess(UserInfoDTO user, UUID barbershopId, boolean ownerOnly) {
         if (user == null || user.getUserType() == null) {
             return false;
         }

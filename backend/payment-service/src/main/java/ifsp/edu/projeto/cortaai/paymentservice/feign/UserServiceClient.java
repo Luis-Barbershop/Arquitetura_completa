@@ -22,4 +22,7 @@ public interface UserServiceClient {
 
     @GetMapping("/api/internal/users/{userId}")
     UserInfoDTO getUserById(@PathVariable("userId") UUID userId);
+
+    @GetMapping("/api/internal/users/by-firebase-uid/{uid}")
+    UserInfoDTO getUserByFirebaseUid(@PathVariable("uid") String uid);
 }

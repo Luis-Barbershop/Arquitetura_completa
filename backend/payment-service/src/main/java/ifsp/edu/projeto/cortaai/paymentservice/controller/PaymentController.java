@@ -54,8 +54,8 @@ public class PaymentController {
     @PostMapping("/create")
     public ResponseEntity<TransactionDTO> createPayment(
             @Parameter(description = "Dados para criação do pagamento (ex: ID do agendamento, método de pagamento)") @Valid @RequestBody CreatePaymentDTO dto,
-            @Parameter(description = "ID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-Id") UUID userId) {
-        TransactionDTO transaction = paymentService.createPayment(dto.appointmentId(), userId, dto.paymentMethod());
+            @Parameter(description = "Firebase UID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
+        TransactionDTO transaction = paymentService.createPaymentByFirebaseUid(dto.appointmentId(), firebaseUid, dto.paymentMethod());
         return ResponseEntity.ok(transaction);
     }
 
@@ -80,18 +80,18 @@ public class PaymentController {
     @Operation(summary = "Listar meus pagamentos", description = "Lista todas as transações de pagamento vinculadas ao usuário autenticado (identificado pelo header X-User-Id).")
     @GetMapping("/my-payments")
     public ResponseEntity<List<TransactionDTO>> getMyPayments(
-            @Parameter(description = "ID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-Id") UUID userId) {
-        return ResponseEntity.ok(paymentService.getMyPayments(userId));
+            @Parameter(description = "Firebase UID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
+        return ResponseEntity.ok(paymentService.getMyPaymentsByFirebaseUid(firebaseUid));
     }
 
     @Operation(summary = "Resumo financeiro da barbearia", description = "Retorna receita de serviços, gastos com produtos (estoque interno), valor atual dos bens em estoque e resultado operacional no período.")
     @GetMapping("/my-shop/overview")
     public ResponseEntity<FinancialOverviewDTO> getMyShopOverview(
-            @Parameter(description = "ID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
+            @Parameter(description = "Firebase UID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @Parameter(description = "UUID da barbearia") @RequestParam UUID barbershopId,
             @Parameter(description = "Data inicial (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @Parameter(description = "Data final (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        if (!paymentService.canAccessBarbershopFinancials(userId, barbershopId, false)) {
+        if (!paymentService.canAccessBarbershopFinancials(firebaseUid, barbershopId, false)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para acessar o financeiro desta barbearia.");
         }
         return ResponseEntity.ok(paymentService.getBarbershopOverview(barbershopId, from, to));
@@ -100,12 +100,12 @@ public class PaymentController {
     @Operation(summary = "Serie financeira da barbearia", description = "Retorna série de receita de serviços aprovados por período para uso em gráficos internos.")
     @GetMapping("/my-shop/series")
     public ResponseEntity<FinancialSeriesDTO> getMyShopSeries(
-            @Parameter(description = "ID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-Id") UUID userId,
+            @Parameter(description = "Firebase UID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @Parameter(description = "UUID da barbearia") @RequestParam UUID barbershopId,
             @Parameter(description = "Data inicial (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @Parameter(description = "Data final (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @Parameter(description = "Agrupamento: DAY ou WEEK") @RequestParam(required = false, defaultValue = "DAY") String groupBy) {
-        if (!paymentService.canAccessBarbershopFinancials(userId, barbershopId, true)) {
+        if (!paymentService.canAccessBarbershopFinancials(firebaseUid, barbershopId, true)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "A serie financeira e restrita ao owner da barbearia.");
         }
         return ResponseEntity.ok(paymentService.getBarbershopSeries(barbershopId, from, to, groupBy));

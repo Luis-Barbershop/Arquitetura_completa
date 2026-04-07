@@ -18,7 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -45,9 +44,9 @@ public class AppointmentController {
     })
     @PostMapping
     public ResponseEntity<AppointmentDTO> createAppointment(
-            @Parameter(hidden = true) Principal principal,
+            @Parameter(hidden = true) @RequestHeader("X-User-Email") String userEmail,
             @Parameter(description = "Dados para criação do agendamento") @RequestBody @Valid CreateAppointmentDTO dto) {
-        AppointmentDTO created = appointmentService.createAppointment(principal.getName(), dto);
+        AppointmentDTO created = appointmentService.createAppointment(userEmail, dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
@@ -65,8 +64,9 @@ public class AppointmentController {
 
     @Operation(summary = "Listar meus agendamentos", description = "Retorna todos os agendamentos vinculados ao usuário logado, independentemente de ser um Customer ou Barber.")
     @GetMapping("/my-appointments")
-    public ResponseEntity<List<AppointmentDTO>> getMyAppointments(@Parameter(hidden = true) Principal principal) {
-        return ResponseEntity.ok(appointmentService.getMyAppointments(principal.getName()));
+    public ResponseEntity<List<AppointmentDTO>> getMyAppointments(
+            @Parameter(hidden = true) @RequestHeader("X-User-Email") String userEmail) {
+        return ResponseEntity.ok(appointmentService.getMyAppointments(userEmail));
     }
 
     @Operation(summary = "Consultar agenda do barbeiro", description = "Retorna a agenda de um barbeiro específico. A consulta agora exige obrigatoriamente um filtro por data para evitar sobrecarga de dados.")
@@ -95,9 +95,9 @@ public class AppointmentController {
     })
     @PutMapping("/{id}/cancel")
     public ResponseEntity<Void> cancelAppointment(
-            @Parameter(hidden = true) Principal principal,
+            @Parameter(hidden = true) @RequestHeader("X-User-Email") String userEmail,
             @Parameter(description = "UUID do agendamento") @PathVariable UUID id) {
-        appointmentService.cancelAppointment(principal.getName(), id);
+        appointmentService.cancelAppointment(userEmail, id);
         return ResponseEntity.noContent().build();
     }
 
@@ -111,18 +111,18 @@ public class AppointmentController {
     })
     @PutMapping("/{id}/conclude")
     public ResponseEntity<Void> concludeAppointment(
-            @Parameter(hidden = true) Principal principal,
+            @Parameter(hidden = true) @RequestHeader("X-User-Email") String userEmail,
             @Parameter(description = "UUID do agendamento") @PathVariable UUID id) {
-        appointmentService.concludeAppointment(principal.getName(), id);
+        appointmentService.concludeAppointment(userEmail, id);
         return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Completar agendamento", description = "Alias canônico para concluir um agendamento de forma explícita e segura.")
     @PutMapping("/{id}/complete")
     public ResponseEntity<Void> completeAppointment(
-            @Parameter(hidden = true) Principal principal,
+            @Parameter(hidden = true) @RequestHeader("X-User-Email") String userEmail,
             @Parameter(description = "UUID do agendamento") @PathVariable UUID id) {
-        appointmentService.concludeAppointment(principal.getName(), id);
+        appointmentService.concludeAppointment(userEmail, id);
         return ResponseEntity.noContent().build();
     }
 
@@ -136,9 +136,9 @@ public class AppointmentController {
     })
     @PutMapping("/{id}/confirm")
     public ResponseEntity<Void> confirmAppointment(
-            @Parameter(hidden = true) Principal principal,
+            @Parameter(hidden = true) @RequestHeader("X-User-Email") String userEmail,
             @Parameter(description = "UUID do agendamento") @PathVariable UUID id) {
-        appointmentService.confirmAppointment(principal.getName(), id);
+        appointmentService.confirmAppointment(userEmail, id);
         return ResponseEntity.noContent().build();
     }
 
@@ -166,9 +166,9 @@ public class AppointmentController {
     })
     @PostMapping("/barber-booking")
     public ResponseEntity<AppointmentDTO> createManualBooking(
-            @Parameter(hidden = true) Principal principal,
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @Parameter(description = "Dados do agendamento manual") @RequestBody @Valid BarberManualBookingDTO dto) {
-        AppointmentDTO created = appointmentService.createManualBooking(principal.getName(), dto);
+        AppointmentDTO created = appointmentService.createManualBooking(firebaseUid, dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 }

@@ -51,7 +51,12 @@ export const refreshSession = async () => {
     const idToken = localStorage.getItem('token');
     if (!idToken) return;
     try {
-        const verifyResponse = await api.post(AUTH_ENDPOINTS.verify, { idToken });
+        // Detecta o tipo de conta para evitar 403 "Acesse o portal correto"
+        const storedRole = (localStorage.getItem('userRole') || '').toUpperCase();
+        const userType = (storedRole.includes('BARBER') || storedRole.includes('OWNER'))
+            ? 'BARBER'
+            : 'CUSTOMER';
+        const verifyResponse = await api.post(AUTH_ENDPOINTS.verify, { idToken, userType });
         const role = verifyResponse.data?.role || localStorage.getItem('userRole');
         const isOwner = verifyResponse.data?.isOwner || false;
         localStorage.setItem('userRole', role);

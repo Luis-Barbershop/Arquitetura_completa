@@ -19,7 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -42,9 +41,9 @@ public class BarberBlockController {
     })
     @PostMapping
     public ResponseEntity<BarberBlockDTO> createBlock(
-            @Parameter(hidden = true) Principal principal,
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @Parameter(description = "Dados do bloqueio (horários e motivo)") @RequestBody @Valid CreateBarberBlockDTO dto) {
-        BarberBlockDTO created = barberBlockService.createBlock(principal.getName(), dto);
+        BarberBlockDTO created = barberBlockService.createBlock(firebaseUid, dto);
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
@@ -64,9 +63,9 @@ public class BarberBlockController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBlock(
-            @Parameter(hidden = true) Principal principal,
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @Parameter(description = "UUID do bloqueio") @PathVariable UUID id) {
-        barberBlockService.deleteBlock(principal.getName(), id);
+        barberBlockService.deleteBlock(firebaseUid, id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -25,9 +25,9 @@ public class BarberBlockService {
     private final UserServiceClient userServiceClient;
     private final AppointmentMapper appointmentMapper;
 
-    public BarberBlockDTO createBlock(String callerEmail, CreateBarberBlockDTO dto) {
+    public BarberBlockDTO createBlock(String callerFirebaseUid, CreateBarberBlockDTO dto) {
         // Verificar que caller é o próprio barbeiro
-        UserInfoDTO caller = userServiceClient.getUserByEmail(callerEmail);
+        UserInfoDTO caller = userServiceClient.getUserByFirebaseUid(callerFirebaseUid);
         if (!caller.getId().equals(dto.getBarberId())) {
             throw new NotFoundException("Você só pode criar bloqueios para sua própria agenda.");
         }
@@ -66,12 +66,12 @@ public class BarberBlockService {
         return appointmentMapper.toBlockDTOList(blocks);
     }
 
-    public void deleteBlock(String callerEmail, UUID blockId) {
+    public void deleteBlock(String callerFirebaseUid, UUID blockId) {
         BarberBlock block = barberBlockRepository.findById(blockId)
                 .orElseThrow(() -> new NotFoundException("Bloqueio não encontrado."));
 
         // Verificar que caller é o dono do bloqueio
-        UserInfoDTO caller = userServiceClient.getUserByEmail(callerEmail);
+        UserInfoDTO caller = userServiceClient.getUserByFirebaseUid(callerFirebaseUid);
         if (!caller.getId().equals(block.getBarberId())) {
             throw new NotFoundException("Você só pode remover bloqueios da sua própria agenda.");
         }
