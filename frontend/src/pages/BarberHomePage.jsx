@@ -237,7 +237,7 @@ function BarberHomePage() {
         )}
       </div>
       {hasLinkedBarbershop && (
-        <BarberNavbar activeTab={activeTab} onTabChange={handleTabChange} isOwner={isOwnerUser()} />
+        <BarberNavbar activeTab={activeTab} onTabChange={handleTabChange} isOwner={isOwnerUser()} barbershopId={barber?.barbershopId} />
       )}
 
       {isJoinModalOpen && (

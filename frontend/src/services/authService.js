@@ -55,8 +55,27 @@ export const loginUser = async (email, password) => {
     localStorage.setItem('userId', localId);
     localStorage.setItem('userEmail', userEmail);
 
-    // Verifica o estado no backend para bloquear acesso quando emailVerified=false.
-    const verifyResponse = await api.post(AUTH_ENDPOINTS.verify, { idToken, userType: null });
+    // Lê a intenção do usuário (BARBER ou CUSTOMER) para cross-validation no backend
+    const userIntent = sessionStorage.getItem('user_intent')?.toUpperCase() || null;
+
+    let verifyResponse;
+    try {
+        verifyResponse = await api.post(AUTH_ENDPOINTS.verify, { idToken, userType: userIntent });
+    } catch (verifyErr) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userEmail');
+        // 403 = conflito de perfil (barber tentando entrar como customer, ou vice-versa)
+        if (verifyErr?.response?.status === 403) {
+            const serverMsg = verifyErr.response?.data?.message || '';
+            const conflictError = new Error(serverMsg || 'Perfil incompatível. Acesse o portal correto.');
+            conflictError.code = 'ROLE_CONFLICT';
+            conflictError.serverMessage = serverMsg;
+            throw conflictError;
+        }
+        throw verifyErr;
+    }
+
     if (verifyResponse?.data?.verificationRequired) {
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
@@ -71,6 +90,8 @@ export const loginUser = async (email, password) => {
     const isOwner = verifyResponse.data?.isOwner || false;
     localStorage.setItem('userRole', role);
     localStorage.setItem('isOwner', String(isOwner));
+    // Limpa a intenção após login bem-sucedido
+    sessionStorage.removeItem('user_intent');
 
     return { ...response.data, profile: verifyResponse.data };
 };
@@ -157,8 +178,11 @@ export const loginWithGoogle = async () => {
     localStorage.setItem('userId', result.user.uid);
     localStorage.setItem('userEmail', result.user.email);
 
+    // Lê a intenção do usuário (BARBER ou CUSTOMER) para cross-validation no backend
+    const userIntent = sessionStorage.getItem('user_intent')?.toUpperCase() || null;
+
     try {
-        const verifyResponse = await api.post(AUTH_ENDPOINTS.verify, { idToken, userType: null });
+        const verifyResponse = await api.post(AUTH_ENDPOINTS.verify, { idToken, userType: userIntent });
 
         if (verifyResponse?.data?.verificationRequired) {
             localStorage.removeItem('token');
@@ -174,6 +198,8 @@ export const loginWithGoogle = async () => {
         const isOwner = verifyResponse.data?.isOwner || false;
         localStorage.setItem('userRole', role);
         localStorage.setItem('isOwner', String(isOwner));
+        // Limpa a intenção após login bem-sucedido
+        sessionStorage.removeItem('user_intent');
 
         return {
             idToken,
@@ -184,6 +210,17 @@ export const loginWithGoogle = async () => {
             profile: verifyResponse.data,
         };
     } catch (err) {
+        // 403 = conflito de perfil (barber tentando entrar como customer, ou vice-versa)
+        if (err?.response?.status === 403) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userEmail');
+            const serverMsg = err.response?.data?.message || '';
+            const conflictError = new Error(serverMsg || 'Perfil incompatível. Acesse o portal correto.');
+            conflictError.code = 'ROLE_CONFLICT';
+            conflictError.serverMessage = serverMsg;
+            throw conflictError;
+        }
         // Se o backend retornar 404, o usuário não existe — sinaliza redirecionamento para cadastro
         if (err?.response?.status === 404) {
             localStorage.removeItem('token');

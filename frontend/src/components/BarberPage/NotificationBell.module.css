@@ -24,7 +24,8 @@
 .bellIcon {
     width: 24px;
     height: 24px;
-    filter: brightness(0) invert(1);
+    /* Converte o ícone para a cor âmbar/dourada da marca (#e8a045) */
+    filter: brightness(0) saturate(100%) invert(67%) sepia(56%) saturate(700%) hue-rotate(5deg) brightness(103%) contrast(95%);
 }
 
 .badge {

@@ -24,12 +24,22 @@ function Login_Inputs() {
         e.preventDefault();
         setError(null);
 
+        // Persiste a intenção do usuário antes de tentar login (para cross-validation e redirect)
+        sessionStorage.setItem('user_intent', role);
+
         try {
             await loginUser(email, password);
             navigate(getRedirectPath());
 
         } catch (err) {
             console.error(err);
+
+            // ── Conflito de perfil (barbeiro no portal cliente ou vice-versa) ─────
+            if (err.code === 'ROLE_CONFLICT') {
+                sessionStorage.removeItem('user_intent');
+                setError(err.serverMessage || 'Você possui uma conta em outro portal. Verifique o link de acesso correto.');
+                return;
+            }
 
             // ── Redirecionamento inteligente ──────────────────────────────────────
             const rawMsg = err.response?.data?.message || "";
@@ -58,17 +68,32 @@ function Login_Inputs() {
     const handleGoogleLogin = async () => {
         setError(null);
         setLoadingGoogle(true);
+
+        // Persiste a intenção antes do popup Google (o popup pode mudar o contexto)
+        sessionStorage.setItem('user_intent', role);
+
         try {
             await loginWithGoogle();
             navigate(getRedirectPath());
         } catch (err) {
             setLoadingGoogle(false);
+
+            // ── Conflito de perfil ────────────────────────────────────────────────
+            if (err.code === 'ROLE_CONFLICT') {
+                sessionStorage.removeItem('user_intent');
+                setError(err.serverMessage || 'Você possui uma conta em outro portal. Verifique o link de acesso correto.');
+                return;
+            }
+
             if (err.code === "USER_NOT_FOUND") {
                 // Usuário autenticado no Google mas não cadastrado no CortaAI
+                // Redireciona para o cadastro compatível com a intenção armazenada
+                const intent = sessionStorage.getItem('user_intent') || role;
+                sessionStorage.removeItem('user_intent');
                 navigate("/signin", {
                     state: {
                         mode: "register",
-                        role,
+                        role: intent,
                         prefillEmail: err.googleData?.email || "",
                         googleData: err.googleData,
                     }

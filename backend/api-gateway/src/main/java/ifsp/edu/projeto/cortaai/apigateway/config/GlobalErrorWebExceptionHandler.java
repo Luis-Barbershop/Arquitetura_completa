@@ -80,7 +80,10 @@ public class GlobalErrorWebExceptionHandler implements ErrorWebExceptionHandler 
         }
         if (ex instanceof ConnectException
                 || ex.getClass().getName().contains("ServiceUnavailable")
-                || ex.getClass().getName().contains("RetryExhausted")) {
+                || ex.getClass().getName().contains("RetryExhausted")
+                || ex.getClass().getName().contains("ServiceInstanceNotFound")
+                || ex.getClass().getName().contains("NoAvailableServerException")
+                || ex.getClass().getName().contains("LoadBalancerClientException")) {
             return HttpStatus.SERVICE_UNAVAILABLE;
         }
         if (ex.getClass().getName().contains("TimeoutException")) {
@@ -98,6 +101,9 @@ public class GlobalErrorWebExceptionHandler implements ErrorWebExceptionHandler 
         }
         if (status == HttpStatus.GATEWAY_TIMEOUT) {
             return "O serviço de destino não respondeu a tempo.";
+        }
+        if (status == HttpStatus.BAD_GATEWAY) {
+            return "Serviço de destino indisponível. Tente novamente em alguns instantes.";
         }
         String msg = ex.getMessage();
         return msg != null ? msg : "Erro no gateway ao encaminhar a requisição.";

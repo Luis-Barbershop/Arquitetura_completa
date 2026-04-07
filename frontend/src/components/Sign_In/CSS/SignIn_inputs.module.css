@@ -187,3 +187,61 @@
         grid-template-columns: 1fr;
     }
 }
+/* -- Botao Google -------------------------------------------- */
+.googleButton {
+    width: 100%;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    background-color: #1a1a1a;
+    border: 1px solid #2e2e2e;
+    border-radius: 12px;
+    color: #e0e0e0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.97rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+    margin-bottom: 0.4rem;
+}
+
+.googleButton:hover:not(:disabled) {
+    border-color: #c19006;
+    background-color: rgba(193, 144, 6, 0.07);
+}
+
+.googleButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.googleIcon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* -- Divisor "ou" -------------------------------------------- */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin: 0.4rem 0 0.8rem;
+}
+
+.dividerLine {
+    flex: 1;
+    height: 1px;
+    background-color: #2e2e2e;
+}
+
+.dividerText {
+    color: #666;
+    font-size: 0.8rem;
+    font-family: 'Roboto', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}

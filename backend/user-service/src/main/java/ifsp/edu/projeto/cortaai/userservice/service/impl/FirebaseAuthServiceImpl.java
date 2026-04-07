@@ -8,6 +8,7 @@ import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileCustomerDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseAuthRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.exception.NotFoundException;
+import ifsp.edu.projeto.cortaai.userservice.exception.RoleConflictException;
 import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository;
@@ -87,6 +88,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         Optional<Barber> barberByUid = barberRepository.findByFirebaseUid(uid);
         if (barberByUid.isPresent()) {
             log.info("Barber encontrado por UID={}", uid);
+            assertRoleCompatible(request.userType(), "BARBER");
             return toAuthResponse(barberByUid.get(), emailVerified, false);
         }
 
@@ -94,6 +96,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         Optional<Customer> customerByUid = customerRepository.findByFirebaseUid(uid);
         if (customerByUid.isPresent()) {
             log.info("Customer encontrado por UID={}", uid);
+            assertRoleCompatible(request.userType(), "CUSTOMER");
             return toAuthResponse(customerByUid.get(), emailVerified, false);
         }
 
@@ -105,12 +108,14 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             if (barberByEmail.isPresent()) {
                 Barber existing = barberByEmail.get();
                 log.info("Encontrado barber existente por email={} (migração). Retornando dados sem atualizar.", email);
+                assertRoleCompatible(request.userType(), "BARBER");
                 return toAuthResponse(existing, emailVerified, false);
             }
             Optional<Customer> customerByEmail = customerRepository.findByEmail(email);
             if (customerByEmail.isPresent()) {
                 Customer existing = customerByEmail.get();
                 log.info("Encontrado customer existente por email={} (migração). Retornando dados sem atualizar.", email);
+                assertRoleCompatible(request.userType(), "CUSTOMER");
                 return toAuthResponse(existing, emailVerified, false);
             }
         }
@@ -314,6 +319,25 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
 
     private boolean isEmailVerificationRequired(String provider, boolean emailVerified) {
         return "EMAIL".equalsIgnoreCase(provider) && !emailVerified;
+    }
+
+    /**
+     * Valida que o {@code requestedType} enviado pelo frontend é compatível
+     * com o {@code actualType} registrado no banco.
+     * <p>
+     * Se forem incompatíveis → lança {@link RoleConflictException} (HTTP 403).
+     * Se {@code requestedType} for null/blank, não há conflito (sem preferência declarada).
+     */
+    private void assertRoleCompatible(String requestedType, String actualType) {
+        if (requestedType == null || requestedType.isBlank()) return;
+        String normalized = requestedType.trim().toUpperCase();
+        if (!normalized.equals(actualType.toUpperCase())) {
+            String portal = "BARBER".equals(actualType) ? "barbeiro" : "cliente";
+            throw new RoleConflictException(
+                "Você possui uma conta de " + portal + ". Acesse o portal correto.",
+                actualType
+            );
+        }
     }
 
     // ─── Conversão para AuthResponseDTO ──────────────────────────────────────

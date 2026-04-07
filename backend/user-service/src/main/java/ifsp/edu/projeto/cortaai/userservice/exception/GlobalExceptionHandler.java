@@ -43,6 +43,12 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, "Acesso negado: " + ex.getMessage(), ex, request);
     }
 
+    @ExceptionHandler(RoleConflictException.class)
+    public ResponseEntity<ApiErrorResponse> handleRoleConflict(RoleConflictException ex, HttpServletRequest request) {
+        log.warn("Conflito de perfil: {} (perfil real: {})", ex.getMessage(), ex.getActualRole());
+        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), ex, request);
+    }
+
     // ─── 404 — Não encontrado ─────────────────────────────────────────────────
 
     @ExceptionHandler(NotFoundException.class)

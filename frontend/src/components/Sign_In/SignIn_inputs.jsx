@@ -1,7 +1,7 @@
 import Styles from "./CSS/SignIn_inputs.module.css"
 import { useState, useMemo } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { registerCustomer, registerBarber } from "../../services/authService"
+import { registerCustomer, registerBarber, loginWithGoogle, translateFirebaseError } from "../../services/authService"
 
 // ─── Avalia força da senha ────────────────────────────────────────────────────
 function evaluatePasswordStrength(pwd) {
@@ -43,8 +43,48 @@ function SignIn_inputs() {
     const [workEnd, setWorkEnd] = useState("18:00");
 
     const [error, setError] = useState(null);
+    const [loadingGoogle, setLoadingGoogle] = useState(false);
 
     const passwordStrength = useMemo(() => evaluatePasswordStrength(password), [password]);
+
+    // Retorna a rota certa após login Google bem-sucedido
+    function getRedirectPath() {
+        const role = localStorage.getItem('userRole') || 'ROLE_CUSTOMER';
+        if (role === 'ROLE_OWNER' || role === 'ROLE_BARBER') return '/barberHome';
+        return '/homepage';
+    }
+
+    const handleGoogleSignIn = async () => {
+        setError(null);
+        setLoadingGoogle(true);
+        // Persiste intenção para cross-validation e redirect correto
+        sessionStorage.setItem('user_intent', userType);
+        try {
+            await loginWithGoogle();
+            navigate(getRedirectPath());
+        } catch (err) {
+            setLoadingGoogle(false);
+            if (err.code === 'ROLE_CONFLICT') {
+                sessionStorage.removeItem('user_intent');
+                setError(err.serverMessage || 'Você possui uma conta em outro portal. Acesse o portal correto.');
+                return;
+            }
+            if (err.code === 'USER_NOT_FOUND') {
+                // Usuário Google não cadastrado — pré-preenche e-mail e nome do Google
+                setEmail(err.googleData?.email || email);
+                if (err.googleData?.displayName) {
+                    setName(err.googleData.displayName);
+                }
+                setError('Conta Google não encontrada. Complete seu cadastro abaixo.');
+                return;
+            }
+            const msg = translateFirebaseError(
+                err.response?.data?.message || err.message || '',
+                'Falha ao entrar com o Google. Tente novamente.'
+            );
+            setError(msg);
+        }
+    };
 
     const handleNextStep = (e) => {
         e.preventDefault();
@@ -128,6 +168,31 @@ function SignIn_inputs() {
             </div>
 
             <h3 className={Styles.formType}>Cadastro de {userType === "barber" ? "Barbeiro" : "Cliente"}</h3>
+
+            {step === 1 && (
+                <>
+                    <button
+                        type="button"
+                        className={Styles.googleButton}
+                        onClick={handleGoogleSignIn}
+                        disabled={loadingGoogle}
+                    >
+                        <img
+                            src="/Icons/google_icon.svg"
+                            alt="Google"
+                            className={Styles.googleIcon}
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                        {loadingGoogle ? "Conectando..." : "Cadastrar com o Google"}
+                    </button>
+
+                    <div className={Styles.divider}>
+                        <span className={Styles.dividerLine} />
+                        <span className={Styles.dividerText}>ou</span>
+                        <span className={Styles.dividerLine} />
+                    </div>
+                </>
+            )}
 
             <form onSubmit={step === 1 ? handleNextStep : handleRegister}>
                 {step === 1 && (
