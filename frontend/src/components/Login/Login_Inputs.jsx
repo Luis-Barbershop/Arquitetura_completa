@@ -51,9 +51,27 @@ function Login_Inputs() {
 
             // ── Perfil incompleto — redireciona para finalizar cadastro ──────────
             if (err.code === 'PROFILE_INCOMPLETE') {
+                const profileData = err.profileData || {};
+                const profileRole = profileData.role?.includes('BARBER') || profileData.role?.includes('OWNER')
+                    ? 'barber'
+                    : role;
+
                 toast.warn(`PROFILE_INCOMPLETE: ${authError.message}`);
                 navigate('/signin', {
-                    state: { mode: 'register', role, prefillEmail: email }
+                    state: {
+                        mode: 'complete-profile',
+                        step: 2,
+                        role: profileRole,
+                        prefillEmail: profileData.email || email,
+                        prefillName: profileData.name || '',
+                        // Reusa o mesmo fluxo de complete-profile já usado no login com Google.
+                        googleData: {
+                            idToken: localStorage.getItem('token'),
+                            uid: localStorage.getItem('userId'),
+                            email: profileData.email || localStorage.getItem('userEmail') || email,
+                            displayName: profileData.name || '',
+                        },
+                    }
                 });
                 return;
             }

@@ -874,7 +874,7 @@
         },
         "responses": {
           "200": {
-            "description": "Perfil completado"
+            "description": "Perfil completo"
           }
         }
       }

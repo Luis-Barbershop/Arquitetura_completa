@@ -6,6 +6,7 @@ function SignInPage() {
     const location = useLocation();
     const role = location.state?.role || "customer";
     const roleLabel = role === "barber" ? "Barbeiro" : "Cliente";
+    const isCompleteProfileMode = location.state?.mode === "complete-profile";
 
     return (
         <div className={Styles.registerStage}>
@@ -16,9 +17,17 @@ function SignInPage() {
                         <span>CortaAI</span>
                     </div>
 
-                    <p className={Styles.kicker}>NOVO CADASTRO</p>
-                    <h1 className={Styles.title}>Crie sua conta e comece a agendar em minutos.</h1>
-                    <p className={Styles.subtitle}>Configure seu perfil, organize seus atendimentos e entre no ecossistema CortaAI.</p>
+                    <p className={Styles.kicker}>{isCompleteProfileMode ? "COMPLETAR PERFIL" : "NOVO CADASTRO"}</p>
+                    <h1 className={Styles.title}>
+                        {isCompleteProfileMode
+                            ? "Falta pouco: complete seu perfil para continuar."
+                            : "Crie sua conta e comece a agendar em minutos."}
+                    </h1>
+                    <p className={Styles.subtitle}>
+                        {isCompleteProfileMode
+                            ? "Preencha os dados pendentes para concluir o acesso a sua conta."
+                            : "Configure seu perfil, organize seus atendimentos e entre no ecossistema CortaAI."}
+                    </p>
 
                     <div className={Styles.tagRow}>
                         <span className={Styles.roleTag}>Perfil: <strong>{roleLabel}</strong></span>
@@ -38,8 +47,8 @@ function SignInPage() {
                 </aside>
 
                 <section className={Styles.formPanel}>
-                    <h2>Criar conta</h2>
-                    <p>Preencha os dados abaixo para finalizar seu cadastro.</p>
+                    <h2>{isCompleteProfileMode ? "Completar perfil" : "Criar conta"}</h2>
+                    <p>{isCompleteProfileMode ? "Preencha os dados abaixo para concluir seu acesso." : "Preencha os dados abaixo para finalizar seu cadastro."}</p>
 
                     <div className={Styles.formCard}>
                         <SignIn_inputs />
