@@ -65,7 +65,7 @@ function BarberDashboardPage() {
 
     return (
         <div style={{ minHeight: '100vh', background: '#0f0f1a', color: '#fff' }}>
-            <BarberHeader barber={barber} onLogout={handleLogout} activeTab="dashboards" onTabChange={handleTabChange} isOwner={true} />
+            <BarberHeader barber={barber} onLogout={handleLogout} activeTab="dashboards" onTabChange={handleTabChange} isOwner={true} barbershopId={barber?.barbershopId} />
             <main style={{ maxWidth: 760, margin: '40px auto', padding: '0 16px' }}>
                 <h2 style={{ marginBottom: 8 }}>Dashboard</h2>
                 <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 28, fontSize: 14 }}>
@@ -118,7 +118,7 @@ function BarberDashboardPage() {
                     </p>
                 </div>
             </main>
-            <BarberNavbar activeTab="dashboards" onTabChange={handleTabChange} isOwner={true} />
+            <BarberNavbar activeTab="dashboards" onTabChange={handleTabChange} isOwner={true} barbershopId={barber?.barbershopId} />
         </div>
     );
 }

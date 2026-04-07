@@ -39,10 +39,10 @@ function SignIn_inputs() {
     const [step, setStep] = useState(location.state?.step === 2 ? 2 : 1);
     const [registered, setRegistered] = useState(false);
 
-    // Dados do Google — lidos diretamente do location.state para refletir
-    // re-navegações dentro da mesma rota (navigate dentro de /signin)
-    const isGoogleFlow = !!(location.state?.googleData);
-    const googleData = location.state?.googleData || null;
+    // Dados do Google — guardados em state para sobreviver a re-navegações
+    // dentro da mesma rota (/signin → /signin) sem re-montar o componente.
+    const [googleData, setGoogleData] = useState(location.state?.googleData || null);
+    const isGoogleFlow = !!googleData;
 
     // ── Step 1: dados de acesso ───────────────────────────────────────────────
     const [email, setEmail] = useState(location.state?.prefillEmail || "");
@@ -55,13 +55,14 @@ function SignIn_inputs() {
     const [cpf, setCpf]             = useState("");
     const [birthDate, setBirthDate] = useState("");
 
-    // Quando o navigate() é chamado dentro da própria rota /signin (ex: handleGoogleSignIn
-    // USER_NOT_FOUND), o componente NÃO re-monta — só o location muda.
-    // Este effect garante que step, name, email sejam atualizados.
+    // Quando o navigate() é chamado dentro da própria rota /signin (ex: USER_NOT_FOUND
+    // ou PROFILE_INCOMPLETE do Google), o componente NÃO re-monta — só o location muda.
+    // Este effect sincroniza step, nome, e-mail e googleData com o novo location.state.
     useEffect(() => {
         if (location.state?.step === 2) setStep(2);
         if (location.state?.prefillName)  setName(location.state.prefillName);
         if (location.state?.prefillEmail) setEmail(location.state.prefillEmail);
+        if (location.state?.googleData)   setGoogleData(location.state.googleData);
     }, [location.state]);
 
     const [error, setError] = useState(null);
@@ -87,7 +88,19 @@ function SignIn_inputs() {
         } catch (err) {
             setLoadingGoogle(false);
             if (err.code === 'PROFILE_INCOMPLETE') {
-                if (err.profileData?.email) setEmail(err.profileData.email);
+                // Usuário já existe no Firebase mas sem perfil no CortaAI.
+                // Salva o googleData no state e vai direto para o step 2.
+                // NÃO navega — mantém na página para não perder o state.
+                // O idToken já está em localStorage.token (salvo pelo loginWithGoogle).
+                const gData = err.googleData || {
+                    idToken:     localStorage.getItem('token'),
+                    uid:         localStorage.getItem('userId'),
+                    email:       err.profileData?.email || localStorage.getItem('userEmail'),
+                    displayName: err.profileData?.name  || '',
+                };
+                if (gData.email) setEmail(gData.email);
+                if (gData.displayName) setName(gData.displayName);
+                setGoogleData(gData);
                 setStep(2);
                 return;
             }
@@ -97,7 +110,8 @@ function SignIn_inputs() {
                 return;
             }
             if (err.code === 'USER_NOT_FOUND') {
-                // Usuário Google não cadastrado — pula direto para step 2 com dados pré-preenchidos
+                // Usuário Google não cadastrado — pula direto para step 2 com dados pré-preenchidos.
+                // Usa navigate para passar googleData; o useEffect acima sincroniza o state.
                 navigate('/signin', {
                     state: {
                         mode: 'register',
@@ -212,10 +226,18 @@ function SignIn_inputs() {
 
     return (
         <div className={Styles.SignIn_inputs_container}>
-            <div className={Styles.stepHeader}>
-                <span className={step === 1 ? Styles.activeStep : Styles.step}>1. Conta e acesso</span>
-                <span className={step === 2 ? Styles.activeStep : Styles.step}>2. Dados pessoais</span>
-            </div>
+            {/* No fluxo Google não há step 1 de e-mail/senha, então omitimos o indicador */}
+            {!isGoogleFlow && (
+                <div className={Styles.stepHeader}>
+                    <span className={step === 1 ? Styles.activeStep : Styles.step}>1. Conta e acesso</span>
+                    <span className={step === 2 ? Styles.activeStep : Styles.step}>2. Dados pessoais</span>
+                </div>
+            )}
+            {isGoogleFlow && (
+                <div className={Styles.stepHeader}>
+                    <span className={Styles.activeStep}>Dados pessoais — conta Google</span>
+                </div>
+            )}
 
             <h3 className={Styles.formType}>Cadastro de {userType === "barber" ? "Barbeiro" : "Cliente"}</h3>
 

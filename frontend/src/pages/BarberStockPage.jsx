@@ -287,6 +287,7 @@ function BarberStockPage() {
           activeTab="estoque"
           onTabChange={handleTabChange}
           isOwner={true}
+          barbershopId={barber?.barbershopId}
         />
 
         <section className={styles.heroSection}>
@@ -485,7 +486,7 @@ function BarberStockPage() {
         </section>
       </div>
 
-      <BarberNavbar activeTab="estoque" onTabChange={handleTabChange} isOwner={true} />
+      <BarberNavbar activeTab="estoque" onTabChange={handleTabChange} isOwner={true} barbershopId={barber?.barbershopId} />
     </div>
   );
 }
