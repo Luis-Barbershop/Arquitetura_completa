@@ -74,7 +74,8 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                     false,
                     true,
                     null,  // barbershopId
-                    null   // isOwner
+                    null,  // isOwner
+                    null   // actAsBarber
             );
         }
 
@@ -136,7 +137,8 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 emailVerified,
                 false,
                 null,  // barbershopId
-                null   // isOwner
+                null,  // isOwner
+                null   // actAsBarber
         );
     }
 
@@ -357,7 +359,8 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 emailVerified,
                 verificationRequired,
                 null,   // barbershopId — customers não têm
-                null    // isOwner — customers não têm
+                null,   // isOwner — customers não têm
+                null    // actAsBarber — customers não têm
         );
     }
 
@@ -377,7 +380,8 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 emailVerified,
                 verificationRequired,
                 barber.getBarbershopId(),   // ← campo chave para o frontend saber se tem barbearia
-                barber.isOwner()            // ← campo chave para mostrar painel de dono
+                barber.isOwner(),           // ← campo chave para mostrar painel de dono
+                barber.isActAsBarber()      // ← se o owner aparece na lista de barbeiros
         );
     }
 }

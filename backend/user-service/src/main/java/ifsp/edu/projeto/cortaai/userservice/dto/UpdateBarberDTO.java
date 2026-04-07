@@ -22,5 +22,11 @@ public class UpdateBarberDTO {
     @Email(message = "Email inválido.")
     @Size(max = 70)
     private String email;
+
+    /**
+     * Se o dono do estabelecimento deseja aparecer como barbeiro disponível
+     * para agendamentos. Ignorado para barbeiros não-owners (sempre true).
+     */
+    private Boolean actAsBarber;
 }
 

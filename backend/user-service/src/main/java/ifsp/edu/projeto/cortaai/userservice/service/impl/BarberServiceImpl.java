@@ -38,6 +38,11 @@ public class BarberServiceImpl implements BarberService {
         if (dto.getTell() != null)  barber.setTell(dto.getTell());
         if (dto.getEmail() != null) barber.setEmail(dto.getEmail());
 
+        // actAsBarber só é relevante para owners; barbeiros comuns sempre atuam como barbeiro
+        if (dto.getActAsBarber() != null) {
+            barber.setActAsBarber(barber.isOwner() ? dto.getActAsBarber() : true);
+        }
+
         // 1. Salva no banco e guarda a referência
         Barber savedBarber = barberRepository.save(barber);
 
@@ -70,6 +75,8 @@ public class BarberServiceImpl implements BarberService {
     @Override
     public List<BarberDTO> findByBarbershopId(UUID barbershopId) {
         return barberRepository.findByBarbershopId(barbershopId).stream()
+                // Owners que optaram por não atuar como barbeiro são excluídos da lista de seleção
+                .filter(b -> !b.isOwner() || b.isActAsBarber())
                 .map(barberMapper::toDTO)
                 .collect(Collectors.toList());
     }

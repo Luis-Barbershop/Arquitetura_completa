@@ -67,6 +67,15 @@ public class Barber implements UserDetails {
     @Column(name = "is_owner")
     private boolean isOwner = false;
 
+    /**
+     * Indica se o dono do estabelecimento também atua como barbeiro
+     * (aparece na lista de profissionais disponíveis para agendamento).
+     * Padrão: true — o owner aparece como barbeiro até que configure o contrário.
+     */
+    @Builder.Default
+    @Column(name = "act_as_barber", columnDefinition = "BOOLEAN DEFAULT TRUE")
+    private boolean actAsBarber = true;
+
     @Builder.Default
     @Column(length = 20)
     private String role = "ROLE_BARBER";

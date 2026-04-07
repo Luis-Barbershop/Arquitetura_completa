@@ -23,5 +23,6 @@ public record AuthResponseDTO(
         boolean verificationRequired,
         // Campos extras para barbeiros (null para customers)
         UUID barbershopId,
-        Boolean isOwner
+        Boolean isOwner,
+        Boolean actAsBarber    // null para customers; true/false para barbeiros/owners
 ) {}

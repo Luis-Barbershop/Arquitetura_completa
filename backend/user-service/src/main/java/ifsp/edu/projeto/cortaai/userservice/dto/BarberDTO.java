@@ -10,6 +10,7 @@ public record BarberDTO(
         String tell,
         String documentCPF,
         Boolean isOwner,
+        Boolean actAsBarber,
         UUID barbershopId,
         LocalTime workStartTime,
         LocalTime workEndTime,
