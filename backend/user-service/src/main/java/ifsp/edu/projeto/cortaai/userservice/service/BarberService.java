@@ -17,6 +17,7 @@ public interface BarberService {
 
     // Habilidades do barbeiro
     Set<UUID> getAssignedActivityIds(String firebaseUid);
+    Set<UUID> getAssignedActivityIdsById(UUID barberId);
     Set<UUID> assignActivities(String firebaseUid, AssignActivitiesDTO dto);
 
     // Validações

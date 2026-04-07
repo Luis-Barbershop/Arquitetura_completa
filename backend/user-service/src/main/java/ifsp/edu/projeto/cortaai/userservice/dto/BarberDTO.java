@@ -1,6 +1,8 @@
 package ifsp.edu.projeto.cortaai.userservice.dto;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Set;
 import java.util.UUID;
 
 public record BarberDTO(
@@ -9,12 +11,14 @@ public record BarberDTO(
         String email,
         String tell,
         String documentCPF,
+        LocalDate birthDate,
         Boolean isOwner,
         Boolean actAsBarber,
         UUID barbershopId,
         LocalTime workStartTime,
         LocalTime workEndTime,
-        String imageUrl
+        String imageUrl,
+        Set<UUID> assignedActivityIds
 ) {}
 
 

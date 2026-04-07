@@ -42,14 +42,19 @@ const AgendamentoPage = () => {
   const [paymentChoice, setPaymentChoice] = useState(null);
 
   const selectedBarberData = barbersList.find((barber) => String(barber.id) === String(selectedBarber));
-  const selectedBarberActivities = useMemo(
-    () => (selectedBarber && barberActivitiesById[selectedBarber] ? barberActivitiesById[selectedBarber] : []),
-    [selectedBarber, barberActivitiesById]
-  );
-  const selectedBarberActivityIds = useMemo(
-    () => new Set(selectedBarberActivities.map((activity) => String(activity.id))),
-    [selectedBarberActivities]
-  );
+  const selectedBarberActivityIds = useMemo(() => {
+    if (!selectedBarber) return new Set();
+    // Caso 1: barbeiro carregado via rota primária já traz assignedActivityIds (UUID[])
+    if (selectedBarberData?.assignedActivityIds) {
+      return new Set(selectedBarberData.assignedActivityIds.map(String));
+    }
+    // Caso 2: atividades carregadas via chamada extra (array de UUIDs ou objetos {id})
+    const cached = barberActivitiesById[selectedBarber];
+    if (!cached) return new Set();
+    return new Set(
+      cached.map((item) => String(typeof item === 'object' ? item.id : item))
+    );
+  }, [selectedBarber, selectedBarberData, barberActivitiesById]);
   const totalDuration = selectedServices.reduce((acc, curr) => acc + curr.durationMinutes, 0);
   const totalPrice = selectedServices.reduce((acc, curr) => acc + curr.price, 0);
 
@@ -212,10 +217,14 @@ const AgendamentoPage = () => {
   useEffect(() => {
     const fetchSelectedBarberActivities = async () => {
       if (!selectedBarber) return;
+      // Se o barbeiro já veio com assignedActivityIds na listagem, não precisa chamar extra
+      if (selectedBarberData?.assignedActivityIds) return;
+      // Evita re-buscar se já foi carregado via endpoint extra
       if (barberActivitiesById[selectedBarber]) return;
 
       try {
         setIsLoadingBarberActivities(true);
+        // Endpoint retorna Set<UUID> (array de strings)
         const response = await api.get(`/barbers/${selectedBarber}/activities`);
         const activities = Array.isArray(response.data) ? response.data : [];
 
@@ -235,12 +244,13 @@ const AgendamentoPage = () => {
     };
 
     fetchSelectedBarberActivities();
-  }, [selectedBarber, barberActivitiesById]);
+  }, [selectedBarber, selectedBarberData, barberActivitiesById]);
 
   useEffect(() => {
     if (!selectedBarber) return;
-
-    if (!barberActivitiesById[selectedBarber]) return;
+    // Só filtra quando já temos os activityIds (do DTO ou do cache de chamada extra)
+    const hasActivityData = selectedBarberData?.assignedActivityIds || barberActivitiesById[selectedBarber];
+    if (!hasActivityData) return;
 
     setSelectedServices((prev) => {
       const filtered = prev.filter((service) => selectedBarberActivityIds.has(String(service.id)));
@@ -250,7 +260,7 @@ const AgendamentoPage = () => {
 
       return filtered;
     });
-  }, [selectedBarber, barberActivitiesById, selectedBarberActivityIds]);
+  }, [selectedBarber, selectedBarberData, barberActivitiesById, selectedBarberActivityIds]);
 
  
   useEffect(() => {

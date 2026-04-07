@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-
 /**
  * Endpoints de gerenciamento de perfil de barbeiros.
  *
@@ -73,6 +72,22 @@ public class BarberController {
     public ResponseEntity<List<BarberDTO>> getBarbersByBarbershop(
             @Parameter(description = "UUID da barbearia") @PathVariable UUID barbershopId) {
         return ResponseEntity.ok(barberService.findByBarbershopId(barbershopId));
+    }
+
+    @Operation(
+            summary = "Lista os IDs das atividades atribuídas a um barbeiro (público)",
+            description = "Retorna o conjunto de UUIDs das atividades que o barbeiro executa. " +
+                          "Usado pelo cliente na tela de agendamento para filtrar quais serviços cada barbeiro oferece."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    @GetMapping("/{id}/activities")
+    public ResponseEntity<Set<UUID>> getBarberActivities(
+            @Parameter(description = "UUID do barbeiro") @PathVariable UUID id) {
+        return ResponseEntity.ok(barberService.getAssignedActivityIdsById(id));
     }
 
     // ========== HABILIDADES DO BARBEIRO AUTENTICADO ==========

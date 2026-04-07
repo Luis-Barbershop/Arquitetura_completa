@@ -37,6 +37,15 @@ public class BarberServiceImpl implements BarberService {
         if (dto.getName() != null)  barber.setName(dto.getName());
         if (dto.getTell() != null)  barber.setTell(dto.getTell());
         if (dto.getEmail() != null) barber.setEmail(dto.getEmail());
+        if (dto.getBirthDate() != null) barber.setBirthDate(dto.getBirthDate());
+
+        // Horários de expediente — editáveis somente quando vinculado a uma barbearia
+        if (dto.getWorkStartTime() != null && barber.getBarbershopId() != null) {
+            barber.setWorkStartTime(dto.getWorkStartTime());
+        }
+        if (dto.getWorkEndTime() != null && barber.getBarbershopId() != null) {
+            barber.setWorkEndTime(dto.getWorkEndTime());
+        }
 
         // actAsBarber só é relevante para owners; barbeiros comuns sempre atuam como barbeiro
         if (dto.getActAsBarber() != null) {
@@ -103,6 +112,13 @@ public class BarberServiceImpl implements BarberService {
     @Override
     public Set<UUID> getAssignedActivityIds(String firebaseUid) {
         Barber barber = barberRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
+        return barber.getAssignedActivityIds();
+    }
+
+    @Override
+    public Set<UUID> getAssignedActivityIdsById(UUID barberId) {
+        Barber barber = barberRepository.findById(barberId)
                 .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
         return barber.getAssignedActivityIds();
     }
