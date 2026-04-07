@@ -2,6 +2,7 @@ import Styles from "./CSS/Login_inputs.module.css"
 import { useState } from "react"
 import { useNavigate, Link, useLocation } from "react-router-dom"
 import { loginUser, loginWithGoogle, checkEmailExists, translateFirebaseError } from "../../services/authService"
+import { toast } from "react-toastify"
 
 // Retorna a rota de destino com base no role salvo no localStorage
 function getRedirectPath() {
@@ -20,6 +21,15 @@ function Login_Inputs() {
     const location = useLocation();
     const role = location.state?.role || "customer";
 
+    // Centraliza detalhes do erro de auth para facilitar debug do /auth/verify.
+    const getAuthErrorDetails = (err) => ({
+        code: err?.code || err?.response?.data?.code || "UNKNOWN_AUTH_ERROR",
+        status: err?.response?.status || null,
+        message: err?.serverMessage || err?.response?.data?.message || err?.message || "Erro desconhecido no login.",
+        profileComplete: err?.profileData?.profileComplete,
+        roleReturned: err?.profileData?.role,
+    });
+
    const handleLogin = async (e) => {
         e.preventDefault();
         setError(null);
@@ -32,10 +42,16 @@ function Login_Inputs() {
             navigate(getRedirectPath());
 
         } catch (err) {
-            console.error(err);
+            const authError = getAuthErrorDetails(err);
+            console.log("[LOGIN_AUTH_ERROR]", {
+                intent: role,
+                email,
+                ...authError,
+            });
 
             // ── Perfil incompleto — redireciona para finalizar cadastro ──────────
             if (err.code === 'PROFILE_INCOMPLETE') {
+                toast.warn(`PROFILE_INCOMPLETE: ${authError.message}`);
                 navigate('/signin', {
                     state: { mode: 'register', role, prefillEmail: email }
                 });
@@ -45,7 +61,9 @@ function Login_Inputs() {
             // ── Conflito de perfil (barbeiro no portal cliente ou vice-versa) ─────
             if (err.code === 'ROLE_CONFLICT') {
                 sessionStorage.removeItem('user_intent');
-                setError(err.serverMessage || 'Você possui uma conta em outro portal. Verifique o link de acesso correto.');
+                const conflictMsg = err.serverMessage || 'Você possui uma conta em outro portal. Verifique o link de acesso correto.';
+                toast.error(`ROLE_CONFLICT: ${conflictMsg}`);
+                setError(conflictMsg);
                 return;
             }
 
@@ -65,10 +83,11 @@ function Login_Inputs() {
                         });
                         return;
                     }
-                } catch (_) { /* se o check falhar, exibe erro normal */ }
+                } catch { /* se o check falhar, exibe erro normal */ }
             }
 
             const friendlyMsg = translateFirebaseError(rawMsg, rawMsg || "Falha no login. Verifique seus dados.");
+            toast.error(`${authError.code}: ${friendlyMsg}`);
             setError(friendlyMsg);
         }
     };

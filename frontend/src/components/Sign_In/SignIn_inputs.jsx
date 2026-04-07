@@ -1,9 +1,11 @@
 import Styles from "./CSS/SignIn_inputs.module.css"
 import { useState, useMemo, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
+import { toast } from "react-toastify"
 import {
     registerCustomer,
     registerBarber,
+    loginUser,
     loginWithGoogle,
     completeProfileCustomer,
     completeProfileBarber,
@@ -17,7 +19,7 @@ function evaluatePasswordStrength(pwd) {
     if (pwd.length >= 8) score++;
     if (/[A-Z]/.test(pwd)) score++;
     if (/\d/.test(pwd)) score++;
-    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(pwd)) score++;
+    if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pwd)) score++;
     const map = [
         { label: 'Muito fraca', color: '#e74c3c' },
         { label: 'Fraca',       color: '#e67e22' },
@@ -192,15 +194,39 @@ function SignIn_inputs() {
                 await registerCustomer({
                     name, email, documentCPF: cpf, tell, password, birthDate,
                 });
+                setRegistered(true);
             } else {
                 await registerBarber({
                     name, email, documentCPF: cpf, tell, password, birthDate,
                 });
+
+                try {
+                    // Garante que o verify use o portal correto e persista token/role no localStorage.
+                    sessionStorage.setItem('user_intent', 'barber');
+                    await loginUser(email, password);
+                    navigate('/barberHome');
+                } catch (loginErr) {
+                    loginErr.code = loginErr.code || 'AUTO_LOGIN_FAILED';
+                    throw loginErr;
+                }
             }
-            setRegistered(true);
         } catch (err) {
             console.error(err);
-            setError(err.response?.data?.message || "Erro ao cadastrar. Verifique os dados.");
+            const rawMsg = err?.serverMessage || err?.response?.data?.message || err?.message || '';
+
+            if (err?.code === 'AUTO_LOGIN_FAILED') {
+                const autoLoginMsg = translateFirebaseError(
+                    rawMsg,
+                    'Cadastro concluido, mas o login automatico falhou. Tente entrar manualmente.'
+                );
+                console.log('[AUTO_LOGIN_FAILED]', { email, userType, message: rawMsg });
+                toast.warn(`AUTO_LOGIN_FAILED: ${autoLoginMsg}`);
+                setError(autoLoginMsg);
+                return;
+            }
+
+            const registerMsg = translateFirebaseError(rawMsg, 'Erro ao cadastrar. Verifique os dados.');
+            setError(registerMsg);
         }
     };
 
