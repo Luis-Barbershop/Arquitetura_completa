@@ -557,14 +557,30 @@
     transform: translateY(-1px);
 }
 
-@media (max-width: 760px) {
-    .pageContainer {
-        padding: 12px;
+/* ── Tablet / telas médias (761px – 1024px) ─────────────────────────────────
+   O headerNav ainda aparece (desktop mode), mas os botões de texto do header
+   ficam compactos para não transbordar */
+@media (min-width: 761px) and (max-width: 1024px) {
+    .mpButton,
+    .changePasswordButton {
+        padding: 8px 10px;
+        font-size: 0.77rem;
     }
 
-    .withNavbar {
-        padding-bottom: 98px;
+    .headerRight {
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
+
+    .headerNavItem,
+    .headerNavItemActive {
+        padding: 0 0.6rem;
+        font-size: 0.76rem;
+    }
+}
+
+@media (max-width: 760px) {
 
     .header {
         padding: 0.9rem;
@@ -574,6 +590,23 @@
 
     .headerNav {
         display: none;
+    }
+
+    /* No mobile esconde os botões de texto do header — só sino e logout ficam */
+    .mpButton,
+    .changePasswordButton {
+        display: none;
+    }
+
+    /* Logout vira ícone compacto */
+    .logoutButton {
+        padding: 8px 12px;
+        font-size: 0.78rem;
+    }
+
+    .headerRight {
+        gap: 6px;
+        flex-shrink: 0;
     }
 
     .headerBrandBadge {
