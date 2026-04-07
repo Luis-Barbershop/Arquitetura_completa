@@ -180,6 +180,7 @@ function BarberManualBookingPage() {
                 onLogout={handleLogout}
                 activeTab="agenda"
                 isOwner={barber?.isOwner === true}
+                barbershopId={barber?.barbershopId}
                 onTabChange={handleTabChange}
             />
 
@@ -317,7 +318,12 @@ function BarberManualBookingPage() {
                 </form>
             </main>
 
-            <BarberNavbar activeTab="agenda" onTabChange={handleTabChange} isOwner={isOwnerUser()} />
+            <BarberNavbar
+                activeTab="agenda"
+                onTabChange={handleTabChange}
+                isOwner={isOwnerUser()}
+                barbershopId={barber?.barbershopId}
+            />
         </div>
     );
 }

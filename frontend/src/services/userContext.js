@@ -44,6 +44,12 @@ export const isOwnerUser = () => {
 export const isLoggedIn = () => !!localStorage.getItem('token');
 
 /**
+ * Retorna o barbershopId do barbeiro logado (salvo no localStorage após login/verify).
+ * Retorna null se não houver barbearia vinculada ou se o usuário for cliente.
+ */
+export const getBarbershopId = () => localStorage.getItem('barbershopId') || null;
+
+/**
  * Retorna o objeto de acesso do barbeiro:
  *   { canManageTeam, canManageStock, canViewDashboard, canManageShopServices }
  * Para clientes, todos os campos são false.

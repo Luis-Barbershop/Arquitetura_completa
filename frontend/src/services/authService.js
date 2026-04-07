@@ -61,6 +61,10 @@ export const refreshSession = async () => {
         const isOwner = verifyResponse.data?.isOwner || false;
         localStorage.setItem('userRole', role);
         localStorage.setItem('isOwner', String(isOwner));
+        if (verifyResponse.data?.barbershopId)
+            localStorage.setItem('barbershopId', String(verifyResponse.data.barbershopId));
+        if (verifyResponse.data?.name)
+            localStorage.setItem('userName', verifyResponse.data.name);
     } catch (_) {
         // Se falhar o re-verify, mantém os valores atuais silenciosamente
     }
@@ -114,6 +118,10 @@ export const loginUser = async (email, password) => {
     const isOwner = verifyResponse.data?.isOwner || false;
     localStorage.setItem('userRole', role);
     localStorage.setItem('isOwner', String(isOwner));
+    if (verifyResponse.data?.barbershopId)
+        localStorage.setItem('barbershopId', String(verifyResponse.data.barbershopId));
+    if (verifyResponse.data?.name)
+        localStorage.setItem('userName', verifyResponse.data.name);
     // Limpa a intenção após login bem-sucedido
     sessionStorage.removeItem('user_intent');
 
@@ -260,6 +268,10 @@ export const loginWithGoogle = async () => {
         const isOwner = verifyResponse.data?.isOwner || false;
         localStorage.setItem('userRole', role);
         localStorage.setItem('isOwner', String(isOwner));
+        if (verifyResponse.data?.barbershopId)
+            localStorage.setItem('barbershopId', String(verifyResponse.data.barbershopId));
+        if (verifyResponse.data?.name)
+            localStorage.setItem('userName', verifyResponse.data.name);
         // Limpa a intenção após login bem-sucedido
         sessionStorage.removeItem('user_intent');
 

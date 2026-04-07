@@ -8,7 +8,7 @@ import { createBarbershopReview } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import { logoutUser } from '../services/authService';
-import { isCustomer as checkIsCustomer, isOwnerUser, isLoggedIn } from '../services/userContext';
+import { isCustomer as checkIsCustomer, isOwnerUser, isLoggedIn, getBarbershopId } from '../services/userContext';
 
 const MeusAgendamentosPage = () => {
     const navigate = useNavigate();
@@ -28,6 +28,7 @@ const MeusAgendamentosPage = () => {
     // Determina o papel com base na chave correta do localStorage ('userRole')
     const isCustomer = checkIsCustomer();
     const isOwner = isOwnerUser();
+    const barbershopId = getBarbershopId();
     const userName = localStorage.getItem('userName') || (isCustomer ? 'Cliente' : 'Profissional');
     const firstName = userName.split(' ')[0];
 
@@ -203,6 +204,21 @@ const MeusAgendamentosPage = () => {
             return;
         }
 
+        if (tab === 'perfil') {
+            navigate('/barberHome/perfil');
+            return;
+        }
+
+        if (tab === 'time') {
+            navigate('/barberHome/time');
+            return;
+        }
+
+        if (tab === 'dashboards') {
+            navigate('/barberHome/dashboard');
+            return;
+        }
+
         navigate('/barberHome', { state: { activeTab: tab } });
     };
 
@@ -222,6 +238,7 @@ const MeusAgendamentosPage = () => {
                         activeTab="agenda"
                         onTabChange={handleBarberTabChange}
                         isOwner={isOwner}
+                        barbershopId={barbershopId}
                     />
                 )}
 
@@ -462,7 +479,12 @@ const MeusAgendamentosPage = () => {
             </div>
 
             {!isCustomer && (
-                <BarberNavbar activeTab="agenda" onTabChange={handleBarberTabChange} isOwner={isOwner} />
+                <BarberNavbar
+                    activeTab="agenda"
+                    onTabChange={handleBarberTabChange}
+                    isOwner={isOwner}
+                    barbershopId={barbershopId}
+                />
             )}
         </div>
     );

@@ -243,6 +243,7 @@ function BarberServicesPage() {
           activeTab="servicos"
           onTabChange={handleTabChange}
           isOwner={isOwner}
+          barbershopId={barber?.barbershopId}
         />
 
         <section className={styles.heroSection}>
@@ -416,7 +417,12 @@ function BarberServicesPage() {
         </div>
       )}
 
-      <BarberNavbar activeTab="servicos" onTabChange={handleTabChange} isOwner={isOwnerUser()} />
+      <BarberNavbar
+        activeTab="servicos"
+        onTabChange={handleTabChange}
+        isOwner={isOwnerUser()}
+        barbershopId={barber?.barbershopId}
+      />
     </div>
   );
 }
