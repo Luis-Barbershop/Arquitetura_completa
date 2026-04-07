@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDate;
 
 /**
  * Dados para criar um novo usuário no Firebase Authentication via e-mail/senha
@@ -42,11 +43,14 @@ public record FirebaseEmailRegisterRequestDTO(
         @NotBlank(message = "documentCPF é obrigatório")
         String documentCPF,
 
+        /** Data de nascimento no formato yyyy-MM-dd. */
+        LocalDate birthDate,
+
         // ── Campos exclusivos de BARBER (ignorados para CUSTOMER) ──────────────
-        /** Horário de início no formato {@code HH:mm} (ex.: "09:00"). Obrigatório para BARBER. */
+        /** Horário de início no formato {@code HH:mm} (opcional; pode ser preenchido depois). */
         String workStartTime,
 
-        /** Horário de término no formato {@code HH:mm} (ex.: "18:00"). Obrigatório para BARBER. */
+        /** Horário de término no formato {@code HH:mm} (opcional; pode ser preenchido depois). */
         String workEndTime,
 
         /** Se o barbeiro é também dono da barbearia. Default {@code false}. */

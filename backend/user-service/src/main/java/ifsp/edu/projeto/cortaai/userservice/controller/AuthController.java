@@ -115,7 +115,7 @@ public class AuthController {
 
     @Operation(
             summary = "Completa o perfil do barbeiro após login social",
-            description = "Preenche CPF, telefone e horários de trabalho do barbeiro. Deve ser chamado quando `profileComplete = false`."
+            description = "Preenche CPF, telefone e data de nascimento do barbeiro. Horários de trabalho podem ser configurados depois no perfil. Deve ser chamado quando `profileComplete = false`."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Perfil atualizado com sucesso"),

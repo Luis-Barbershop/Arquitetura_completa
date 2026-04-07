@@ -73,9 +73,10 @@ public class FirebaseTestController {
 					2. Provisiona no backend via `/api/auth/verify`.
 					3. Completa o perfil via `/api/auth/{customers|barbers}/complete-profile`.
 
-					**Campos obrigatórios para CUSTOMER**: email, password, userType="CUSTOMER", name, tell, documentCPF.
+					**Campos obrigatórios para CUSTOMER**: email, password, userType="CUSTOMER", name, tell, documentCPF, birthDate.
 
-					**Campos obrigatórios para BARBER**: todos acima + workStartTime (HH:mm), workEndTime (HH:mm).
+					**Campos obrigatórios para BARBER**: todos acima.
+					workStartTime/workEndTime são opcionais e podem ser preenchidos depois no perfil.
 					isOwner é opcional (default false).
 
 					O `idToken` retornado pode ser usado no botão **Authorize** do Swagger para testar rotas protegidas.

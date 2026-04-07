@@ -190,7 +190,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                                 request.tell(),
                                 request.documentCPF(),
                                 request.name(),
-                                null,   // birthDate — não enviado pelo fluxo de debug
+                                request.birthDate(),
                                 isOwner
                         ),
                         email);
@@ -200,7 +200,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                                 request.tell(),
                                 request.documentCPF(),
                                 request.name(),
-                                null    // birthDate — não enviado pelo fluxo de debug
+                                request.birthDate()
                         ),
                         email);
             }
