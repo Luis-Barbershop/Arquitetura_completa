@@ -34,7 +34,8 @@ function SignIn_inputs() {
     const location = useLocation();
     const userType = location.state?.role || "customer";
 
-    // Se vier de um redirect de Google (step:2), salta direto para a etapa 2
+    // step 1 = "Conta e acesso" (e-mail/senha ou botão Google)
+    // step 2 = "Dados pessoais" (nome, tel, CPF, nascimento)
     const [step, setStep] = useState(location.state?.step === 2 ? 2 : 1);
     const [registered, setRegistered] = useState(false);
 
@@ -43,32 +44,25 @@ function SignIn_inputs() {
     const isGoogleFlow = !!(location.state?.googleData);
     const googleData = location.state?.googleData || null;
 
-    // Pré-preenche nome e e-mail vindos do Google ou de outros redirects
-    const [name, setName] = useState(location.state?.prefillName || "");
+    // ── Step 1: dados de acesso ───────────────────────────────────────────────
     const [email, setEmail] = useState(location.state?.prefillEmail || "");
-    const [cpf, setCpf] = useState("");
-
-    // Quando o navigate() é chamado dentro da própria rota /signin (ex: handleGoogleSignIn
-    // USER_NOT_FOUND), o componente NÃO re-monta — só o location muda.
-    // Este effect garante que step, name, email e googleData sejam atualizados.
-    useEffect(() => {
-        if (location.state?.step === 2) {
-            setStep(2);
-        }
-        if (location.state?.prefillName) {
-            setName(location.state.prefillName);
-        }
-        if (location.state?.prefillEmail) {
-            setEmail(location.state.prefillEmail);
-        }
-    }, [location.state]);
-
-    const [tell, setTell] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
-    const [workStart, setWorkStart] = useState("09:00");
-    const [workEnd, setWorkEnd] = useState("18:00");
+    // ── Step 2: dados pessoais ────────────────────────────────────────────────
+    const [name, setName]           = useState(location.state?.prefillName || "");
+    const [tell, setTell]           = useState("");
+    const [cpf, setCpf]             = useState("");
+    const [birthDate, setBirthDate] = useState("");
+
+    // Quando o navigate() é chamado dentro da própria rota /signin (ex: handleGoogleSignIn
+    // USER_NOT_FOUND), o componente NÃO re-monta — só o location muda.
+    // Este effect garante que step, name, email sejam atualizados.
+    useEffect(() => {
+        if (location.state?.step === 2) setStep(2);
+        if (location.state?.prefillName)  setName(location.state.prefillName);
+        if (location.state?.prefillEmail) setEmail(location.state.prefillEmail);
+    }, [location.state]);
 
     const [error, setError] = useState(null);
     const [loadingGoogle, setLoadingGoogle] = useState(false);
@@ -82,10 +76,10 @@ function SignIn_inputs() {
         return '/homepage';
     }
 
+    // ── Google ────────────────────────────────────────────────────────────────
     const handleGoogleSignIn = async () => {
         setError(null);
         setLoadingGoogle(true);
-        // Persiste intenção para cross-validation e redirect correto
         sessionStorage.setItem('user_intent', userType);
         try {
             await loginWithGoogle();
@@ -93,7 +87,6 @@ function SignIn_inputs() {
         } catch (err) {
             setLoadingGoogle(false);
             if (err.code === 'PROFILE_INCOMPLETE') {
-                // Conta Google existe mas cadastro está incompleto — salta para a etapa 2
                 if (err.profileData?.email) setEmail(err.profileData.email);
                 setStep(2);
                 return;
@@ -104,7 +97,7 @@ function SignIn_inputs() {
                 return;
             }
             if (err.code === 'USER_NOT_FOUND') {
-                // Usuário Google não cadastrado — pré-preenche e navega para step 2 com googleData
+                // Usuário Google não cadastrado — pula direto para step 2 com dados pré-preenchidos
                 navigate('/signin', {
                     state: {
                         mode: 'register',
@@ -125,26 +118,31 @@ function SignIn_inputs() {
         }
     };
 
+    // ── Step 1: valida e-mail/senha e avança para step 2 ─────────────────────
     const handleNextStep = (e) => {
         e.preventDefault();
-
-        if (!name || !email || !cpf) {
-            setError("Preencha todos os campos.");
+        if (!email) { setError("Informe o e-mail."); return; }
+        if (password !== confirmPassword) { setError("As senhas não coincidem."); return; }
+        if (passwordStrength.score < 4) {
+            setError("Senha fraca. Use ao menos 8 caracteres, 1 maiúscula, 1 número e 1 caractere especial.");
             return;
         }
-
         setError(null);
         setStep(2);
     };
 
-
+    // ── Step 2: cadastro final ────────────────────────────────────────────────
     const handleRegister = async (e) => {
         e.preventDefault();
         setError(null);
 
+        if (!name || !cpf || !tell || !birthDate) {
+            setError("Preencha todos os campos obrigatórios.");
+            return;
+        }
+
         // ── Fluxo Google: usuário já existe no Firebase, só completa o perfil ──
         if (isGoogleFlow && googleData?.idToken) {
-            // Garante que o idToken do Google está no localStorage para o interceptor do axios
             localStorage.setItem('token', googleData.idToken);
             localStorage.setItem('userId', googleData.uid || '');
             localStorage.setItem('userEmail', googleData.email || '');
@@ -152,14 +150,13 @@ function SignIn_inputs() {
                 let profileData;
                 if (userType === "barber") {
                     profileData = await completeProfileBarber({
-                        tell, documentCPF: cpf, name,
-                        workStartTime: workStart,
-                        workEndTime: workEnd,
+                        tell, documentCPF: cpf, name, birthDate,
                     });
                 } else {
-                    profileData = await completeProfileCustomer({ tell, documentCPF: cpf, name });
+                    profileData = await completeProfileCustomer({
+                        tell, documentCPF: cpf, name, birthDate,
+                    });
                 }
-                // Atualiza role e isOwner vindos do perfil completo
                 const role = profileData?.role || (userType === "barber" ? "ROLE_BARBER" : "ROLE_CUSTOMER");
                 localStorage.setItem('userRole', role);
                 localStorage.setItem('isOwner', String(profileData?.isOwner || false));
@@ -167,9 +164,7 @@ function SignIn_inputs() {
                 navigate(getRedirectPath());
             } catch (err) {
                 console.error(err);
-                const msg = err.response?.data?.message || "Erro ao completar perfil. Verifique os dados.";
-                setError(msg);
-                // Limpa token para não deixar estado inconsistente
+                setError(err.response?.data?.message || "Erro ao completar perfil. Verifique os dados.");
                 localStorage.removeItem('token');
                 localStorage.removeItem('userId');
                 localStorage.removeItem('userEmail');
@@ -177,56 +172,37 @@ function SignIn_inputs() {
             return;
         }
 
-        // ── Fluxo normal e-mail/senha ─────────────────────────────────────────
-        if (password !== confirmPassword) {
-            setError("As senhas não coincidem.");
-            return;
-        }
-
-        if (passwordStrength.score < 4) {
-            setError("Senha fraca. Use pelo menos 8 caracteres, 1 maiúscula, 1 número e 1 caractere especial.");
-            return;
-        }
+        // ── Fluxo e-mail/senha ────────────────────────────────────────────────
         try {
             if (userType === "customer") {
                 await registerCustomer({
-                    name, email, documentCPF: cpf, tell, password
+                    name, email, documentCPF: cpf, tell, password, birthDate,
                 });
             } else {
                 await registerBarber({
-                    name, email, documentCPF: cpf, tell, password,
-                    workStartTime: workStart,
-                    workEndTime: workEnd,
+                    name, email, documentCPF: cpf, tell, password, birthDate,
                 });
             }
-
-            // Cadastro feito — Firebase enviou e-mail de verificação automaticamente
-            // Usuário precisa verificar antes de fazer login
             setRegistered(true);
-
         } catch (err) {
             console.error(err);
-            const msg = err.response?.data?.message || "Erro ao cadastrar. Verifique os dados.";
-            setError(msg);
+            setError(err.response?.data?.message || "Erro ao cadastrar. Verifique os dados.");
         }
     };
 
-    // ── Tela pós-cadastro: avisa para verificar o e-mail ─────────────────────
+    // ── Tela pós-cadastro ─────────────────────────────────────────────────────
     if (registered) {
         return (
             <div className={Styles.SignIn_inputs_container}>
                 <div className={Styles.registeredState}>
                     <h3 className={Styles.registeredTitle}>Cadastro realizado!</h3>
                     <p className={Styles.registeredText}>
-                        Um e-mail de verificacao foi enviado para <strong>{email}</strong>.
+                        Um e-mail de verificação foi enviado para <strong>{email}</strong>.
                     </p>
                     <p className={Styles.registeredHint}>
                         Verifique sua caixa de entrada (e o spam) e clique no link antes de fazer login.
                     </p>
-                    <button
-                        className={Styles.SignIn_button}
-                        onClick={() => navigate("/login")}
-                    >
+                    <button className={Styles.SignIn_button} onClick={() => navigate("/login")}>
                         Ir para o Login
                     </button>
                 </div>
@@ -234,116 +210,124 @@ function SignIn_inputs() {
         );
     }
 
-
     return (
         <div className={Styles.SignIn_inputs_container}>
             <div className={Styles.stepHeader}>
-                <span className={step === 1 ? Styles.activeStep : Styles.step}>1. Dados pessoais</span>
-                <span className={step === 2 ? Styles.activeStep : Styles.step}>2. Conta e acesso</span>
+                <span className={step === 1 ? Styles.activeStep : Styles.step}>1. Conta e acesso</span>
+                <span className={step === 2 ? Styles.activeStep : Styles.step}>2. Dados pessoais</span>
             </div>
 
             <h3 className={Styles.formType}>Cadastro de {userType === "barber" ? "Barbeiro" : "Cliente"}</h3>
 
             <form onSubmit={step === 1 ? handleNextStep : handleRegister}>
-            {step === 1 && (
-                <>
-                    <label className={Styles.label_name}>
-                        <p>Nome completo</p>
-                        <input 
-                            className={Styles.formInput}
-                            type="text"
-                            value={name}
-                            onChange={e => setName(e.target.value)}
-                            placeholder="Digite seu nome completo"
-                            required
-                        />
-                    </label>
 
-                    <label className={Styles.label_email}>
-                        <p>E-mail</p>
-                        <input 
-                            className={Styles.formInput}
-                            type="email"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            placeholder="seuemail@exemplo.com"
-                            required
-                        />
-                    </label>
-
-                    <label className={Styles.label_name}>
-                        <p>CPF</p>
-                        <input
-                            className={Styles.formInput}
-                            type="text"
-                            value={cpf}
-                            onChange={e => setCpf(e.target.value)}
-                            placeholder="Somente números"
-                            required
-                        />
-                    </label>
-
-                    {error && <p className={Styles.error_message}>{error}</p>}
-
-                    <button type="submit" className={Styles.SignIn_button}>
-                        Continuar
-                    </button>
-
-                    <div className={Styles.divider}>
-                        <span className={Styles.dividerLine} />
-                        <span className={Styles.dividerText}>ou</span>
-                        <span className={Styles.dividerLine} />
-                    </div>
-
-                    <button
-                        type="button"
-                        className={Styles.googleButton}
-                        onClick={handleGoogleSignIn}
-                        disabled={loadingGoogle}
-                    >
-                        <img
-                            src="/Icons/google_icon.svg"
-                            alt="Google"
-                            className={Styles.googleIcon}
-                            onError={(e) => { e.target.style.display = 'none'; }}
-                        />
-                        {loadingGoogle ? "Conectando..." : "Cadastrar com o Google"}
-                    </button>
-                </>
-            )}                {step === 2 && (
+                {/* ── STEP 1: Conta e acesso ───────────────────────────────── */}
+                {step === 1 && (
                     <>
-                        {/* No fluxo Google o step 1 foi pulado — mostra nome e CPF aqui */}
-                        {isGoogleFlow && (
-                            <>
-                                <label className={Styles.label_name}>
-                                    <p>Nome completo</p>
-                                    <input
-                                        className={Styles.formInput}
-                                        type="text"
-                                        value={name}
-                                        onChange={e => setName(e.target.value)}
-                                        placeholder="Seu nome completo"
-                                        required
-                                    />
-                                </label>
+                        <label className={Styles.label_email}>
+                            <p>E-mail</p>
+                            <input
+                                className={Styles.formInput}
+                                type="email"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                                placeholder="seuemail@exemplo.com"
+                                required
+                            />
+                        </label>
 
-                                <label className={Styles.label_name}>
-                                    <p>CPF</p>
-                                    <input
-                                        className={Styles.formInput}
-                                        type="text"
-                                        value={cpf}
-                                        onChange={e => setCpf(e.target.value)}
-                                        placeholder="Somente números"
-                                        required
-                                    />
-                                </label>
-                            </>
-                        )}
+                        <label className={Styles.label_name}>
+                            <p>Senha</p>
+                            <input
+                                className={Styles.formInput}
+                                type="password"
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                placeholder="Mínimo 8 caracteres"
+                                required
+                            />
+                            {password && (
+                                <div style={{ marginTop: 6 }}>
+                                    <div style={{ display: 'flex', gap: 4 }}>
+                                        {[1,2,3,4].map(i => (
+                                            <div key={i} style={{
+                                                flex: 1, height: 4, borderRadius: 2,
+                                                background: i <= passwordStrength.score ? passwordStrength.color : 'rgba(255,255,255,0.15)',
+                                                transition: 'background 0.3s'
+                                            }} />
+                                        ))}
+                                    </div>
+                                    <p style={{ fontSize: 11, color: passwordStrength.color, marginTop: 4 }}>
+                                        {passwordStrength.label} — Min. 8 caracteres, 1 maiúscula, 1 número, 1 especial
+                                    </p>
+                                </div>
+                            )}
+                        </label>
+
+                        <label className={Styles.label_name}>
+                            <p>Confirmar senha</p>
+                            <input
+                                className={Styles.formInput}
+                                type="password"
+                                value={confirmPassword}
+                                onChange={e => setConfirmPassword(e.target.value)}
+                                placeholder="Repita a senha"
+                                required
+                            />
+                            {confirmPassword && password !== confirmPassword && (
+                                <p className={Styles.error_message} style={{ marginTop: 4 }}>
+                                    As senhas não coincidem.
+                                </p>
+                            )}
+                        </label>
+
+                        {error && <p className={Styles.error_message}>{error}</p>}
+
+                        <button type="submit" className={Styles.SignIn_button}>
+                            Continuar
+                        </button>
+
+                        <div className={Styles.divider}>
+                            <span className={Styles.dividerLine} />
+                            <span className={Styles.dividerText}>ou</span>
+                            <span className={Styles.dividerLine} />
+                        </div>
+
+                        <button
+                            type="button"
+                            className={Styles.googleButton}
+                            onClick={handleGoogleSignIn}
+                            disabled={loadingGoogle}
+                        >
+                            <img
+                                src="/Icons/google_icon.svg"
+                                alt="Google"
+                                className={Styles.googleIcon}
+                                onError={e => { e.target.style.display = 'none'; }}
+                            />
+                            {loadingGoogle ? "Conectando..." : "Cadastrar com o Google"}
+                        </button>
+                    </>
+                )}
+
+                {/* ── STEP 2: Dados pessoais ───────────────────────────────── */}
+                {step === 2 && (
+                    <>
+                        <label className={Styles.label_name}>
+                            <p>Nome completo</p>
+                            <input
+                                className={Styles.formInput}
+                                type="text"
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                                placeholder="Seu nome completo"
+                                required
+                            />
+                        </label>
 
                         <label className={Styles.label_name}>
                             <p>Telefone</p>
-                            <input 
+                            <input
                                 className={Styles.formInput}
                                 type="text"
                                 value={tell}
@@ -353,93 +337,44 @@ function SignIn_inputs() {
                             />
                         </label>
 
-                        {userType === "barber" && (
-                            <>
-                                <label className={Styles.label_name}>
-                                    <p>Inicio de expediente</p>
-                                    <input 
-                                        className={Styles.formInput}
-                                        type="time"
-                                        value={workStart}
-                                        onChange={e => setWorkStart(e.target.value)}
-                                        required
-                                    />
-                                </label>
+                        <label className={Styles.label_name}>
+                            <p>CPF</p>
+                            <input
+                                className={Styles.formInput}
+                                type="text"
+                                value={cpf}
+                                onChange={e => setCpf(e.target.value)}
+                                placeholder="Somente números"
+                                required
+                            />
+                        </label>
 
-                                <label className={Styles.label_name}>
-                                    <p>Fim de expediente</p>
-                                    <input 
-                                        className={Styles.formInput}
-                                        type="time"
-                                        value={workEnd}
-                                        onChange={e => setWorkEnd(e.target.value)}
-                                        required
-                                    />
-                                </label>
-                            </>
-                        )}
-
-                        {/* Senha e confirmar senha só aparecem no fluxo normal (não Google) */}
-                        {!isGoogleFlow && (
-                            <>
-                                <label className={Styles.label_name}>
-                                    <p>Senha</p>
-                                    <input 
-                                        className={Styles.formInput}
-                                        type="password"
-                                        value={password}
-                                        onChange={e => setPassword(e.target.value)}
-                                        required
-                                    />
-                                    {password && (
-                                        <div style={{ marginTop: 6 }}>
-                                            <div style={{ display: 'flex', gap: 4 }}>
-                                                {[1,2,3,4].map(i => (
-                                                    <div key={i} style={{
-                                                        flex: 1, height: 4, borderRadius: 2,
-                                                        background: i <= passwordStrength.score ? passwordStrength.color : 'rgba(255,255,255,0.15)',
-                                                        transition: 'background 0.3s'
-                                                    }} />
-                                                ))}
-                                            </div>
-                                            <p style={{ fontSize: 11, color: passwordStrength.color, marginTop: 4 }}>
-                                                {passwordStrength.label} — Min. 8 caracteres, 1 maiúscula, 1 número, 1 especial
-                                            </p>
-                                        </div>
-                                    )}
-                                </label>
-
-                                <label className={Styles.label_name}>
-                                    <p>Confirmar senha</p>
-                                    <input 
-                                        className={Styles.formInput}
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={e => setConfirmPassword(e.target.value)}
-                                        required
-                                    />
-                                    {confirmPassword && password !== confirmPassword && (
-                                        <p className={Styles.error_message} style={{ marginTop: 4 }}>
-                                            As senhas não coincidem.
-                                        </p>
-                                    )}
-                                </label>
-                            </>
-                        )}
+                        <label className={Styles.label_name}>
+                            <p>Data de nascimento</p>
+                            <input
+                                className={Styles.formInput}
+                                type="date"
+                                value={birthDate}
+                                onChange={e => setBirthDate(e.target.value)}
+                                max={new Date().toISOString().split('T')[0]}
+                                required
+                            />
+                        </label>
 
                         {error && <p className={Styles.error_message}>{error}</p>}
 
                         <div className={Styles.actionsRow}>
+                            {/* Fluxo Google não tem senha no step 1 — não faz sentido voltar */}
                             {!isGoogleFlow && (
-                                <button type="button" className={Styles.secondaryButton} onClick={() => setStep(1)}>
+                                <button
+                                    type="button"
+                                    className={Styles.secondaryButton}
+                                    onClick={() => setStep(1)}
+                                >
                                     Voltar
                                 </button>
                             )}
-                            <button
-                                type="submit"
-                                className={Styles.SignIn_button}
-                                disabled={!isGoogleFlow && !!(confirmPassword && password !== confirmPassword)}
-                            >
+                            <button type="submit" className={Styles.SignIn_button}>
                                 {isGoogleFlow ? "Finalizar cadastro" : "Cadastrar"}
                             </button>
                         </div>

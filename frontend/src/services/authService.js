@@ -142,6 +142,7 @@ export const registerCustomer = async (userData) => {
         name:        userData.name,
         tell:        cleanTell,
         documentCPF: cleanCPF,
+        birthDate:   userData.birthDate || null,
     });
 
     return response.data;
@@ -160,8 +161,7 @@ export const registerBarber = async (barberData) => {
         name:          barberData.name,
         tell:          cleanTell,
         documentCPF:   cleanCPF,
-        workStartTime: barberData.workStartTime, // "09:00"
-        workEndTime:   barberData.workEndTime,   // "18:00"
+        birthDate:     barberData.birthDate || null,
         isOwner:       barberData.isOwner ?? false,
     });
 
@@ -199,28 +199,28 @@ export const checkEmailExists = async (email) => {
 // ─── COMPLETAR PERFIL (CUSTOMER) — pós-login Google ─────────────────────────
 // Usa: POST /api/auth/customers/complete-profile (exige Bearer token no header)
 // O idToken do Google deve estar em localStorage.token antes de chamar.
-export const completeProfileCustomer = async ({ tell, documentCPF, name }) => {
+export const completeProfileCustomer = async ({ tell, documentCPF, name, birthDate }) => {
     const cleanCPF  = documentCPF ? documentCPF.replace(/\D/g, '') : '';
     const cleanTell = tell        ? tell.replace(/\D/g, '')         : '';
     const response = await api.post(AUTH_ENDPOINTS.completeProfileCustomer, {
         tell: cleanTell,
         documentCPF: cleanCPF,
         name,
+        birthDate: birthDate || null,
     });
     return response.data;
 };
 
 // ─── COMPLETAR PERFIL (BARBER) — pós-login Google ────────────────────────────
 // Usa: POST /api/auth/barbers/complete-profile (exige Bearer token no header)
-export const completeProfileBarber = async ({ tell, documentCPF, name, workStartTime, workEndTime, isOwner }) => {
+export const completeProfileBarber = async ({ tell, documentCPF, name, birthDate, isOwner }) => {
     const cleanCPF  = documentCPF ? documentCPF.replace(/\D/g, '') : '';
     const cleanTell = tell        ? tell.replace(/\D/g, '')         : '';
     const response = await api.post(AUTH_ENDPOINTS.completeProfileBarber, {
         tell: cleanTell,
         documentCPF: cleanCPF,
         name,
-        workStartTime,
-        workEndTime,
+        birthDate: birthDate || null,
         isOwner: isOwner ?? false,
     });
     return response.data;
