@@ -17,6 +17,7 @@ import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseTokenDebugResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.ForgotPasswordRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.ResendVerificationRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseDebugService;
 import lombok.RequiredArgsConstructor;
@@ -377,6 +378,72 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
             return new EmailExistsResponseDTO(true, "CUSTOMER");
         }
         return new EmailExistsResponseDTO(false, null);
+    }
+
+    @Override
+    public void resendVerificationEmail(ResendVerificationRequestDTO request) {
+        if (firebaseWebApiKey == null || firebaseWebApiKey.isBlank()) {
+            throw new IllegalArgumentException("A propriedade firebase.web-api-key não está configurada.");
+        }
+        try {
+            // 1. Sign-in silencioso para obter idToken fresco
+            Map<String, Object> signInPayload = Map.of(
+                    "email", request.email(),
+                    "password", request.password(),
+                    "returnSecureToken", true
+            );
+            String signInBody = objectMapper.writeValueAsString(signInPayload);
+            HttpRequest signInRequest = HttpRequest.newBuilder()
+                    .uri(URI.create("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + firebaseWebApiKey))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(signInBody))
+                    .build();
+            HttpResponse<String> signInResponse = HTTP_CLIENT.send(signInRequest, HttpResponse.BodyHandlers.ofString());
+            JsonNode signInRoot = objectMapper.readTree(signInResponse.body());
+
+            if (signInResponse.statusCode() >= 400) {
+                String code = signInRoot.path("error").path("message").asText("");
+                String msg = switch (code) {
+                    case "EMAIL_NOT_FOUND" -> "E-mail não encontrado.";
+                    case "INVALID_PASSWORD", "INVALID_LOGIN_CREDENTIALS" -> "Credenciais inválidas.";
+                    case "USER_DISABLED" -> "Conta desativada.";
+                    default -> "Erro ao autenticar: " + code;
+                };
+                throw new SecurityException(msg);
+            }
+
+            String idToken = signInRoot.path("idToken").asText(null);
+            if (idToken == null) {
+                throw new SecurityException("Não foi possível obter o token de autenticação.");
+            }
+
+            // 2. Enviar e-mail de verificação
+            Map<String, Object> verifyPayload = new java.util.HashMap<>();
+            verifyPayload.put("requestType", "VERIFY_EMAIL");
+            verifyPayload.put("idToken", idToken);
+            verifyPayload.put("continueUrl", "https://web.cortaai.shop/verify-email");
+            String verifyBody = objectMapper.writeValueAsString(verifyPayload);
+            HttpRequest verifyRequest = HttpRequest.newBuilder()
+                    .uri(URI.create("https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=" + firebaseWebApiKey))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(verifyBody))
+                    .build();
+            HttpResponse<String> verifyResponse = HTTP_CLIENT.send(verifyRequest, HttpResponse.BodyHandlers.ofString());
+
+            if (verifyResponse.statusCode() >= 400) {
+                JsonNode verifyRoot = objectMapper.readTree(verifyResponse.body());
+                String code = verifyRoot.path("error").path("message").asText("");
+                throw new SecurityException("Erro ao reenviar verificação: " + code);
+            }
+
+            log.info("event=resend-verification-email-sent email={}", request.email());
+
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Requisição ao Firebase foi interrompida.", ex);
+        } catch (IOException ex) {
+            throw new RuntimeException("Falha ao comunicar com o Firebase: " + ex.getMessage(), ex);
+        }
     }
 }
 

@@ -1,11 +1,9 @@
 import Styles from "./CSS/SignIn_inputs.module.css"
 import { useState, useMemo, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { toast } from "react-toastify"
 import {
     registerCustomer,
     registerBarber,
-    loginUser,
     loginWithGoogle,
     completeProfileCustomer,
     completeProfileBarber,
@@ -39,7 +37,6 @@ function SignIn_inputs() {
     // step 1 = "Conta e acesso" (e-mail/senha ou botão Google)
     // step 2 = "Dados pessoais" (nome, tel, CPF, nascimento)
     const [step, setStep] = useState(location.state?.step === 2 ? 2 : 1);
-    const [registered, setRegistered] = useState(false);
 
     // Dados do Google — guardados em state para sobreviver a re-navegações
     // dentro da mesma rota (/signin → /signin) sem re-montar o componente.
@@ -194,61 +191,22 @@ function SignIn_inputs() {
                 await registerCustomer({
                     name, email, documentCPF: cpf, tell, password, birthDate,
                 });
-                setRegistered(true);
             } else {
                 await registerBarber({
                     name, email, documentCPF: cpf, tell, password, birthDate,
                 });
-
-                try {
-                    // Garante que o verify use o portal correto e persista token/role no localStorage.
-                    sessionStorage.setItem('user_intent', 'barber');
-                    await loginUser(email, password);
-                    navigate('/barberHome');
-                } catch (loginErr) {
-                    loginErr.code = loginErr.code || 'AUTO_LOGIN_FAILED';
-                    throw loginErr;
-                }
             }
+            // Redireciona para tela de "aguardando verificação de e-mail"
+            navigate('/verify-email', {
+                state: { mode: 'waiting', email, password, role: userType }
+            });
         } catch (err) {
             console.error(err);
-            const rawMsg = err?.serverMessage || err?.response?.data?.message || err?.message || '';
-
-            if (err?.code === 'AUTO_LOGIN_FAILED') {
-                const autoLoginMsg = translateFirebaseError(
-                    rawMsg,
-                    'Cadastro concluido, mas o login automatico falhou. Tente entrar manualmente.'
-                );
-                console.log('[AUTO_LOGIN_FAILED]', { email, userType, message: rawMsg });
-                toast.warn(`AUTO_LOGIN_FAILED: ${autoLoginMsg}`);
-                setError(autoLoginMsg);
-                return;
-            }
-
+            const rawMsg = err?.response?.data?.message || err?.message || '';
             const registerMsg = translateFirebaseError(rawMsg, 'Erro ao cadastrar. Verifique os dados.');
             setError(registerMsg);
         }
     };
-
-    // ── Tela pós-cadastro ─────────────────────────────────────────────────────
-    if (registered) {
-        return (
-            <div className={Styles.SignIn_inputs_container}>
-                <div className={Styles.registeredState}>
-                    <h3 className={Styles.registeredTitle}>Cadastro realizado!</h3>
-                    <p className={Styles.registeredText}>
-                        Um e-mail de verificação foi enviado para <strong>{email}</strong>.
-                    </p>
-                    <p className={Styles.registeredHint}>
-                        Verifique sua caixa de entrada (e o spam) e clique no link antes de fazer login.
-                    </p>
-                    <button className={Styles.SignIn_button} onClick={() => navigate("/login")}>
-                        Ir para o Login
-                    </button>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className={Styles.SignIn_inputs_container}>

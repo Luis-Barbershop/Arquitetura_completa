@@ -85,6 +85,14 @@ function Login_Inputs() {
                 return;
             }
 
+            // ── E-mail não verificado → tela de espera ───────────────────────────
+            if (err.code === 'VERIFICATION_REQUIRED' || err.verificationRequired || err.response?.data?.verificationRequired) {
+                navigate('/verify-email', {
+                    state: { mode: 'waiting', email: err.verificationEmail || email, role }
+                });
+                return;
+            }
+
             // ── Redirecionamento inteligente ──────────────────────────────────────
             const rawMsg = err.response?.data?.message || "";
             const isCredentialError = rawMsg.includes("INVALID_PASSWORD")

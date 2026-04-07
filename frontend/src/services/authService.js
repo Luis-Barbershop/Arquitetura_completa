@@ -9,6 +9,7 @@ const AUTH_ENDPOINTS = {
     forgotPassword: '/auth/email/forgot-password',
     changePassword: '/auth/email/change-password',
     emailExists: '/auth/email/exists',
+    resendVerification: '/auth/email/resend-verification',
     completeProfileCustomer: '/auth/customers/complete-profile',
     completeProfileBarber: '/auth/barbers/complete-profile',
 };
@@ -109,6 +110,8 @@ export const loginUser = async (email, password) => {
         localStorage.removeItem('userId');
         localStorage.removeItem('userEmail');
         const error = new Error('E-mail ainda não verificado. Verifique sua caixa de entrada e tente novamente.');
+        error.code = 'VERIFICATION_REQUIRED';
+        error.verificationEmail = userEmail;
         error.response = { data: { message: error.message } };
         throw error;
     }
@@ -232,6 +235,14 @@ export const completeProfileBarber = async ({ tell, documentCPF, name, birthDate
         isOwner: isOwner ?? false,
     });
     return response.data;
+};
+
+// ─── REENVIAR E-MAIL DE VERIFICAÇÃO ──────────────────────────────────────────
+// Usa: POST /api/auth/email/resend-verification (público, sem auth)
+// O backend faz sign-in silencioso para obter idToken e reenvia o link.
+// Parâmetro `password` é necessário pois o Firebase exige autenticação para enviar o link.
+export const resendVerificationEmail = async (email, password) => {
+    await api.post(AUTH_ENDPOINTS.resendVerification, { email, password });
 };
 
 // ─── LOGIN COM GOOGLE ─────────────────────────────────────────────────────────

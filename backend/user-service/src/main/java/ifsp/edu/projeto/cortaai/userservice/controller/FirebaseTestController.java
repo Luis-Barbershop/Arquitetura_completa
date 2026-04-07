@@ -9,6 +9,7 @@ import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseTokenDebugRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseTokenDebugResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.ForgotPasswordRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.ResendVerificationRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseDebugService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -165,5 +166,30 @@ public class FirebaseTestController {
 			@RequestParam("email") String email) {
 		return ResponseEntity.ok(firebaseDebugService.checkEmailExists(email));
 	}
-}
 
+	@Operation(
+			summary = "Reenviar e-mail de verificação",
+			description = """
+					Reenvia o link de verificação de e-mail para o usuário.
+					
+					Faz sign-in silencioso com e-mail/senha para obter o idToken e então
+					chama `accounts:sendOobCode` com `requestType=VERIFY_EMAIL`.
+					
+					**Usado quando o usuário não recebeu o e-mail de verificação após o cadastro.**
+					
+					**Esta rota é pública** — não requer token no header.
+					"""
+	)
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "E-mail de verificação reenviado com sucesso"),
+			@ApiResponse(responseCode = "400", description = "Dados inválidos"),
+			@ApiResponse(responseCode = "401", description = "Credenciais inválidas")
+	})
+	@SecurityRequirements
+	@PostMapping("/resend-verification")
+	public ResponseEntity<Void> resendVerification(
+			@RequestBody @Valid ResendVerificationRequestDTO request) {
+		firebaseDebugService.resendVerificationEmail(request);
+		return ResponseEntity.noContent().build();
+	}
+}

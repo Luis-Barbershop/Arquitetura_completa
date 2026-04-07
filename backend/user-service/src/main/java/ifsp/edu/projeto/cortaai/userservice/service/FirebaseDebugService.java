@@ -8,6 +8,7 @@ import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseTokenDebugResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.ForgotPasswordRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.ResendVerificationRequestDTO;
 
 public interface FirebaseDebugService {
 
@@ -39,5 +40,11 @@ public interface FirebaseDebugService {
      * Usado pelo front-end para o redirecionamento inteligente de cadastro.
      */
     EmailExistsResponseDTO checkEmailExists(String email);
+
+    /**
+     * Reenvia o e-mail de verificação para o usuário.
+     * Faz sign-in silencioso para obter o idToken e chama accounts:sendOobCode VERIFY_EMAIL.
+     */
+    void resendVerificationEmail(ResendVerificationRequestDTO request);
 }
 
