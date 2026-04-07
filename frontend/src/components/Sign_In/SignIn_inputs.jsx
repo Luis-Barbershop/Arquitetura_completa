@@ -1,7 +1,14 @@
 import Styles from "./CSS/SignIn_inputs.module.css"
 import { useState, useMemo } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { registerCustomer, registerBarber, loginWithGoogle, translateFirebaseError } from "../../services/authService"
+import {
+    registerCustomer,
+    registerBarber,
+    loginWithGoogle,
+    completeProfileCustomer,
+    completeProfileBarber,
+    translateFirebaseError
+} from "../../services/authService"
 
 // ─── Avalia força da senha ────────────────────────────────────────────────────
 function evaluatePasswordStrength(pwd) {
@@ -30,6 +37,10 @@ function SignIn_inputs() {
     // Se vier de um redirect de Google (step:2), salta direto para a etapa 2
     const [step, setStep] = useState(location.state?.step === 2 ? 2 : 1);
     const [registered, setRegistered] = useState(false);
+
+    // Dados do Google (idToken já está no Firebase, só precisa completar perfil)
+    const isGoogleFlow = !!(location.state?.googleData);
+    const [googleData] = useState(location.state?.googleData || null);
 
     // Pré-preenche nome e e-mail vindos do Google ou de outros redirects
     const [name, setName] = useState(location.state?.prefillName || "");
@@ -77,10 +88,17 @@ function SignIn_inputs() {
                 return;
             }
             if (err.code === 'USER_NOT_FOUND') {
-                // Usuário Google não cadastrado — pré-preenche e salta para a etapa 2
-                if (err.googleData?.email) setEmail(err.googleData.email);
-                if (err.googleData?.displayName) setName(err.googleData.displayName);
-                setStep(2);
+                // Usuário Google não cadastrado — pré-preenche e navega para step 2 com googleData
+                navigate('/signin', {
+                    state: {
+                        mode: 'register',
+                        step: 2,
+                        role: userType,
+                        prefillEmail: err.googleData?.email || '',
+                        prefillName:  err.googleData?.displayName || '',
+                        googleData:   err.googleData,
+                    }
+                });
                 return;
             }
             const msg = translateFirebaseError(
@@ -108,6 +126,42 @@ function SignIn_inputs() {
         e.preventDefault();
         setError(null);
 
+        // ── Fluxo Google: usuário já existe no Firebase, só completa o perfil ──
+        if (isGoogleFlow && googleData?.idToken) {
+            // Garante que o idToken do Google está no localStorage para o interceptor do axios
+            localStorage.setItem('token', googleData.idToken);
+            localStorage.setItem('userId', googleData.uid || '');
+            localStorage.setItem('userEmail', googleData.email || '');
+            try {
+                let profileData;
+                if (userType === "barber") {
+                    profileData = await completeProfileBarber({
+                        tell, documentCPF: cpf, name,
+                        workStartTime: workStart,
+                        workEndTime: workEnd,
+                    });
+                } else {
+                    profileData = await completeProfileCustomer({ tell, documentCPF: cpf, name });
+                }
+                // Atualiza role e isOwner vindos do perfil completo
+                const role = profileData?.role || (userType === "barber" ? "ROLE_BARBER" : "ROLE_CUSTOMER");
+                localStorage.setItem('userRole', role);
+                localStorage.setItem('isOwner', String(profileData?.isOwner || false));
+                sessionStorage.removeItem('user_intent');
+                navigate(getRedirectPath());
+            } catch (err) {
+                console.error(err);
+                const msg = err.response?.data?.message || "Erro ao completar perfil. Verifique os dados.";
+                setError(msg);
+                // Limpa token para não deixar estado inconsistente
+                localStorage.removeItem('token');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userEmail');
+            }
+            return;
+        }
+
+        // ── Fluxo normal e-mail/senha ─────────────────────────────────────────
         if (password !== confirmPassword) {
             setError("As senhas não coincidem.");
             return;
@@ -242,6 +296,21 @@ function SignIn_inputs() {
                 </>
             )}                {step === 2 && (
                     <>
+                        {/* CPF aparece no step 2 apenas no fluxo Google (step 1 foi pulado) */}
+                        {isGoogleFlow && (
+                            <label className={Styles.label_name}>
+                                <p>CPF</p>
+                                <input
+                                    className={Styles.formInput}
+                                    type="text"
+                                    value={cpf}
+                                    onChange={e => setCpf(e.target.value)}
+                                    placeholder="Somente números"
+                                    required
+                                />
+                            </label>
+                        )}
+
                         <label className={Styles.label_name}>
                             <p>Telefone</p>
                             <input 
@@ -280,61 +349,68 @@ function SignIn_inputs() {
                             </>
                         )}
 
-                        <label className={Styles.label_name}>
-                            <p>Senha</p>
-                            <input 
-                                className={Styles.formInput}
-                                type="password"
-                                value={password}
-                                onChange={e => setPassword(e.target.value)}
-                                required
-                            />
-                            {password && (
-                                <div style={{ marginTop: 6 }}>
-                                    <div style={{ display: 'flex', gap: 4 }}>
-                                        {[1,2,3,4].map(i => (
-                                            <div key={i} style={{
-                                                flex: 1, height: 4, borderRadius: 2,
-                                                background: i <= passwordStrength.score ? passwordStrength.color : 'rgba(255,255,255,0.15)',
-                                                transition: 'background 0.3s'
-                                            }} />
-                                        ))}
-                                    </div>
-                                    <p style={{ fontSize: 11, color: passwordStrength.color, marginTop: 4 }}>
-                                        {passwordStrength.label} — Min. 8 caracteres, 1 maiúscula, 1 número, 1 especial
-                                    </p>
-                                </div>
-                            )}
-                        </label>
+                        {/* Senha e confirmar senha só aparecem no fluxo normal (não Google) */}
+                        {!isGoogleFlow && (
+                            <>
+                                <label className={Styles.label_name}>
+                                    <p>Senha</p>
+                                    <input 
+                                        className={Styles.formInput}
+                                        type="password"
+                                        value={password}
+                                        onChange={e => setPassword(e.target.value)}
+                                        required
+                                    />
+                                    {password && (
+                                        <div style={{ marginTop: 6 }}>
+                                            <div style={{ display: 'flex', gap: 4 }}>
+                                                {[1,2,3,4].map(i => (
+                                                    <div key={i} style={{
+                                                        flex: 1, height: 4, borderRadius: 2,
+                                                        background: i <= passwordStrength.score ? passwordStrength.color : 'rgba(255,255,255,0.15)',
+                                                        transition: 'background 0.3s'
+                                                    }} />
+                                                ))}
+                                            </div>
+                                            <p style={{ fontSize: 11, color: passwordStrength.color, marginTop: 4 }}>
+                                                {passwordStrength.label} — Min. 8 caracteres, 1 maiúscula, 1 número, 1 especial
+                                            </p>
+                                        </div>
+                                    )}
+                                </label>
 
-                        <label className={Styles.label_name}>
-                            <p>Confirmar senha</p>
-                            <input 
-                                className={Styles.formInput}
-                                type="password"
-                                value={confirmPassword}
-                                onChange={e => setConfirmPassword(e.target.value)}
-                                required
-                            />
-                            {confirmPassword && password !== confirmPassword && (
-                                <p className={Styles.error_message} style={{ marginTop: 4 }}>
-                                    As senhas não coincidem.
-                                </p>
-                            )}
-                        </label>
+                                <label className={Styles.label_name}>
+                                    <p>Confirmar senha</p>
+                                    <input 
+                                        className={Styles.formInput}
+                                        type="password"
+                                        value={confirmPassword}
+                                        onChange={e => setConfirmPassword(e.target.value)}
+                                        required
+                                    />
+                                    {confirmPassword && password !== confirmPassword && (
+                                        <p className={Styles.error_message} style={{ marginTop: 4 }}>
+                                            As senhas não coincidem.
+                                        </p>
+                                    )}
+                                </label>
+                            </>
+                        )}
 
                         {error && <p className={Styles.error_message}>{error}</p>}
 
                         <div className={Styles.actionsRow}>
-                            <button type="button" className={Styles.secondaryButton} onClick={() => setStep(1)}>
-                                Voltar
-                            </button>
+                            {!isGoogleFlow && (
+                                <button type="button" className={Styles.secondaryButton} onClick={() => setStep(1)}>
+                                    Voltar
+                                </button>
+                            )}
                             <button
                                 type="submit"
                                 className={Styles.SignIn_button}
-                                disabled={!!(confirmPassword && password !== confirmPassword)}
+                                disabled={!isGoogleFlow && !!(confirmPassword && password !== confirmPassword)}
                             >
-                                Cadastrar
+                                {isGoogleFlow ? "Finalizar cadastro" : "Cadastrar"}
                             </button>
                         </div>
                     </>

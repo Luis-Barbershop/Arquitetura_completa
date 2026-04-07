@@ -9,6 +9,8 @@ const AUTH_ENDPOINTS = {
     forgotPassword: '/auth/email/forgot-password',
     changePassword: '/auth/email/change-password',
     emailExists: '/auth/email/exists',
+    completeProfileCustomer: '/auth/customers/complete-profile',
+    completeProfileBarber: '/auth/barbers/complete-profile',
 };
 
 // ─── TRADUÇÃO DE ERROS FIREBASE → PT-BR ──────────────────────────────────────
@@ -186,6 +188,36 @@ export const changePassword = async (idToken, newPassword) => {
 // Usado pelo redirecionamento inteligente no login.
 export const checkEmailExists = async (email) => {
     const response = await api.get(AUTH_ENDPOINTS.emailExists, { params: { email } });
+    return response.data;
+};
+
+// ─── COMPLETAR PERFIL (CUSTOMER) — pós-login Google ─────────────────────────
+// Usa: POST /api/auth/customers/complete-profile (exige Bearer token no header)
+// O idToken do Google deve estar em localStorage.token antes de chamar.
+export const completeProfileCustomer = async ({ tell, documentCPF, name }) => {
+    const cleanCPF  = documentCPF ? documentCPF.replace(/\D/g, '') : '';
+    const cleanTell = tell        ? tell.replace(/\D/g, '')         : '';
+    const response = await api.post(AUTH_ENDPOINTS.completeProfileCustomer, {
+        tell: cleanTell,
+        documentCPF: cleanCPF,
+        name,
+    });
+    return response.data;
+};
+
+// ─── COMPLETAR PERFIL (BARBER) — pós-login Google ────────────────────────────
+// Usa: POST /api/auth/barbers/complete-profile (exige Bearer token no header)
+export const completeProfileBarber = async ({ tell, documentCPF, name, workStartTime, workEndTime, isOwner }) => {
+    const cleanCPF  = documentCPF ? documentCPF.replace(/\D/g, '') : '';
+    const cleanTell = tell        ? tell.replace(/\D/g, '')         : '';
+    const response = await api.post(AUTH_ENDPOINTS.completeProfileBarber, {
+        tell: cleanTell,
+        documentCPF: cleanCPF,
+        name,
+        workStartTime,
+        workEndTime,
+        isOwner: isOwner ?? false,
+    });
     return response.data;
 };
 

@@ -176,7 +176,7 @@ function BarberHomePage() {
           onLogout={handleOpenLogoutModal}
           activeTab={activeTab}
           onTabChange={handleTabChange}
-          isOwner={barber?.isOwner === true || isOwnerUser()}
+          isOwner={barber?.isOwner === true}
           barbershopId={barber?.barbershopId}
         />
 

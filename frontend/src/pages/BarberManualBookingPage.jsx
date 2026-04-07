@@ -179,7 +179,7 @@ function BarberManualBookingPage() {
                 barber={barber}
                 onLogout={handleLogout}
                 activeTab="agenda"
-                isOwner={isOwnerUser()}
+                isOwner={barber?.isOwner === true}
                 onTabChange={handleTabChange}
             />
 

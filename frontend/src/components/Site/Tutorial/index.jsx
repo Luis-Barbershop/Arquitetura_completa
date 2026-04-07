@@ -2,7 +2,7 @@ import Style from './Tutorial.module.css'
 
 function Tutorial() {
   return (
-    <div className={Style.Container}>
+    <div id="como-funciona" className={Style.Container}>
       <div className={Style.header}>
         <p className={Style.title}>O FUTURO DA BAREARIA</p>
         <h2>Simplicidade em Cada <span style={{ color: '#c19006', fontStyle: 'italic' }}>Movimento.</span></h2>

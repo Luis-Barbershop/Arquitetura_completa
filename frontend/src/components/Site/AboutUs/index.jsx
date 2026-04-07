@@ -1,7 +1,7 @@
 import Styles from './AboutUs.module.css'
 function AboutUs() {
     return (
-        <div className={Styles.aboutUs}>
+        <div id="sobre" className={Styles.aboutUs}>
             <div className={Styles.titleContainer}>
                 <h1 className={Styles.title}>
                     Sobre Nós

@@ -2,9 +2,17 @@ import Styles from './Header.module.css'
 import { useNavigate } from 'react-router-dom';
 
 function HeaderSite() {
- const navigate = useNavigate();
+  const navigate = useNavigate();
+
   const handleNavigation = (action) => {
     navigate('/identificacao', { state: { mode: action } });
+  };
+
+  const scrollTo = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   return (
@@ -14,14 +22,12 @@ function HeaderSite() {
         </div>
 
         <div className={Styles.nav}>
-            
-                <ul>
-                    <li>INICIO</li>
-                    <li>SOBRE NÓS</li>
-                    <li>NOSSOS SERVIÇOS</li>
-                    <li>COMO FUNCIONA</li>
-                </ul>
-            
+            <ul>
+                <li onClick={() => scrollTo('inicio')}>INICIO</li>
+                <li onClick={() => scrollTo('sobre')}>SOBRE NÓS</li>
+                <li onClick={() => scrollTo('servicos')}>NOSSOS SERVIÇOS</li>
+                <li onClick={() => scrollTo('como-funciona')}>COMO FUNCIONA</li>
+            </ul>
         </div>
 
         <div className={Styles.buttons}>

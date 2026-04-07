@@ -242,7 +242,7 @@ function BarberServicesPage() {
           onLogout={handleLogout}
           activeTab="servicos"
           onTabChange={handleTabChange}
-          isOwner={isOwnerUser()}
+          isOwner={isOwner}
         />
 
         <section className={styles.heroSection}>

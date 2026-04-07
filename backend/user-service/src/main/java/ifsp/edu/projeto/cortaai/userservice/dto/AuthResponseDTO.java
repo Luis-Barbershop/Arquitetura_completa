@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.userservice.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
 
 /**
@@ -23,6 +24,7 @@ public record AuthResponseDTO(
         boolean verificationRequired,
         // Campos extras para barbeiros (null para customers)
         UUID barbershopId,
+        @JsonProperty("isOwner")
         Boolean isOwner,
         Boolean actAsBarber    // null para customers; true/false para barbeiros/owners
 ) {}
