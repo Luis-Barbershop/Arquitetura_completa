@@ -177,6 +177,7 @@ function BarberHomePage() {
           activeTab={activeTab}
           onTabChange={handleTabChange}
           isOwner={isOwnerUser()}
+          barbershopId={barber?.barbershopId}
         />
 
         {!hasLinkedBarbershop ? (

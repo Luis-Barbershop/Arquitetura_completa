@@ -93,6 +93,14 @@ export const loginUser = async (email, password) => {
     // Limpa a intenção após login bem-sucedido
     sessionStorage.removeItem('user_intent');
 
+    // ── Guarda de perfil incompleto ───────────────────────────────────────────
+    if (verifyResponse.data?.profileComplete === false) {
+        const incompleteError = new Error('Cadastro incompleto. Complete seu perfil para continuar.');
+        incompleteError.code = 'PROFILE_INCOMPLETE';
+        incompleteError.profileData = verifyResponse.data;
+        throw incompleteError;
+    }
+
     return { ...response.data, profile: verifyResponse.data };
 };
 
@@ -200,6 +208,16 @@ export const loginWithGoogle = async () => {
         localStorage.setItem('isOwner', String(isOwner));
         // Limpa a intenção após login bem-sucedido
         sessionStorage.removeItem('user_intent');
+
+        // ── Guarda de perfil incompleto ───────────────────────────────────────
+        // Se o cadastro não foi finalizado (sem CPF/telefone), bloqueia o acesso
+        // e redireciona para completar o perfil.
+        if (verifyResponse.data?.profileComplete === false) {
+            const incompleteError = new Error('Cadastro incompleto. Complete seu perfil para continuar.');
+            incompleteError.code = 'PROFILE_INCOMPLETE';
+            incompleteError.profileData = verifyResponse.data;
+            throw incompleteError;
+        }
 
         return {
             idToken,

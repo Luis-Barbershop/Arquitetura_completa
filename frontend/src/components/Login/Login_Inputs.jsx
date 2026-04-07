@@ -34,6 +34,14 @@ function Login_Inputs() {
         } catch (err) {
             console.error(err);
 
+            // ── Perfil incompleto — redireciona para finalizar cadastro ──────────
+            if (err.code === 'PROFILE_INCOMPLETE') {
+                navigate('/signin', {
+                    state: { mode: 'register', role, prefillEmail: email }
+                });
+                return;
+            }
+
             // ── Conflito de perfil (barbeiro no portal cliente ou vice-versa) ─────
             if (err.code === 'ROLE_CONFLICT') {
                 sessionStorage.removeItem('user_intent');
@@ -77,6 +85,21 @@ function Login_Inputs() {
             navigate(getRedirectPath());
         } catch (err) {
             setLoadingGoogle(false);
+
+            // ── Perfil incompleto — redireciona para finalizar cadastro ──────────
+            if (err.code === 'PROFILE_INCOMPLETE') {
+                const profileData = err.profileData || {};
+                navigate('/signin', {
+                    state: {
+                        mode: 'register',
+                        role: profileData.role?.includes('BARBER') || profileData.role?.includes('OWNER')
+                            ? 'barber'
+                            : role,
+                        prefillEmail: profileData.email || '',
+                    }
+                });
+                return;
+            }
 
             // ── Conflito de perfil ────────────────────────────────────────────────
             if (err.code === 'ROLE_CONFLICT') {
@@ -163,6 +186,20 @@ function Login_Inputs() {
                     style={{ background: 'none', border: 'none', color: '#e8a045', cursor: 'pointer', fontWeight: 600, fontSize: 14, padding: 0 }}
                 >
                     Crie agora
+                </button>
+            </p>
+
+            {/* Alternância de perfil: permite trocar entre portal Barbeiro e portal Cliente */}
+            <p style={{ textAlign: 'center', marginTop: 8, fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
+                {role === 'barber' ? 'É cliente?' : 'É barbeiro?'}{' '}
+                <button
+                    type="button"
+                    onClick={() => navigate('/login', {
+                        state: { role: role === 'barber' ? 'customer' : 'barber' }
+                    })}
+                    style={{ background: 'none', border: 'none', color: '#a0c4ff', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}
+                >
+                    {role === 'barber' ? 'Acessar como Cliente' : 'Acessar como Barbeiro'}
                 </button>
             </p>
         </div>

@@ -64,6 +64,12 @@ function SignIn_inputs() {
             navigate(getRedirectPath());
         } catch (err) {
             setLoadingGoogle(false);
+            if (err.code === 'PROFILE_INCOMPLETE') {
+                // Conta Google existe mas cadastro está incompleto — mantém no fluxo de cadastro
+                setEmail(err.profileData?.email || email);
+                setError('Seu cadastro está incompleto. Preencha os campos abaixo para continuar.');
+                return;
+            }
             if (err.code === 'ROLE_CONFLICT') {
                 sessionStorage.removeItem('user_intent');
                 setError(err.serverMessage || 'Você possui uma conta em outro portal. Acesse o portal correto.');
@@ -169,8 +175,57 @@ function SignIn_inputs() {
 
             <h3 className={Styles.formType}>Cadastro de {userType === "barber" ? "Barbeiro" : "Cliente"}</h3>
 
+            <form onSubmit={step === 1 ? handleNextStep : handleRegister}>
             {step === 1 && (
                 <>
+                    <label className={Styles.label_name}>
+                        <p>Nome completo</p>
+                        <input 
+                            className={Styles.formInput}
+                            type="text"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            placeholder="Digite seu nome completo"
+                            required
+                        />
+                    </label>
+
+                    <label className={Styles.label_email}>
+                        <p>E-mail</p>
+                        <input 
+                            className={Styles.formInput}
+                            type="email"
+                            value={email}
+                            onChange={e => setEmail(e.target.value)}
+                            placeholder="seuemail@exemplo.com"
+                            required
+                        />
+                    </label>
+
+                    <label className={Styles.label_name}>
+                        <p>CPF</p>
+                        <input
+                            className={Styles.formInput}
+                            type="text"
+                            value={cpf}
+                            onChange={e => setCpf(e.target.value)}
+                            placeholder="Somente números"
+                            required
+                        />
+                    </label>
+
+                    {error && <p className={Styles.error_message}>{error}</p>}
+
+                    <button type="submit" className={Styles.SignIn_button}>
+                        Continuar
+                    </button>
+
+                    <div className={Styles.divider}>
+                        <span className={Styles.dividerLine} />
+                        <span className={Styles.dividerText}>ou</span>
+                        <span className={Styles.dividerLine} />
+                    </div>
+
                     <button
                         type="button"
                         className={Styles.googleButton}
@@ -185,63 +240,8 @@ function SignIn_inputs() {
                         />
                         {loadingGoogle ? "Conectando..." : "Cadastrar com o Google"}
                     </button>
-
-                    <div className={Styles.divider}>
-                        <span className={Styles.dividerLine} />
-                        <span className={Styles.dividerText}>ou</span>
-                        <span className={Styles.dividerLine} />
-                    </div>
                 </>
-            )}
-
-            <form onSubmit={step === 1 ? handleNextStep : handleRegister}>
-                {step === 1 && (
-                    <>
-                        <label className={Styles.label_name}>
-                            <p>Nome completo</p>
-                            <input 
-                                className={Styles.formInput}
-                                type="text"
-                                value={name}
-                                onChange={e => setName(e.target.value)}
-                                placeholder="Digite seu nome completo"
-                                required
-                            />
-                        </label>
-
-                        <label className={Styles.label_email}>
-                            <p>E-mail</p>
-                            <input 
-                                className={Styles.formInput}
-                                type="email"
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                                placeholder="seuemail@exemplo.com"
-                                required
-                            />
-                        </label>
-
-                        <label className={Styles.label_name}>
-                            <p>CPF</p>
-                            <input
-                                className={Styles.formInput}
-                                type="text"
-                                value={cpf}
-                                onChange={e => setCpf(e.target.value)}
-                                placeholder="Somente números"
-                                required
-                            />
-                        </label>
-
-                        {error && <p className={Styles.error_message}>{error}</p>}
-
-                        <button type="submit" className={Styles.SignIn_button}>
-                            Continuar
-                        </button>
-                    </>
-                )}
-
-                {step === 2 && (
+            )}                {step === 2 && (
                     <>
                         <label className={Styles.label_name}>
                             <p>Telefone</p>
@@ -317,6 +317,11 @@ function SignIn_inputs() {
                                 onChange={e => setConfirmPassword(e.target.value)}
                                 required
                             />
+                            {confirmPassword && password !== confirmPassword && (
+                                <p className={Styles.error_message} style={{ marginTop: 4 }}>
+                                    As senhas não coincidem.
+                                </p>
+                            )}
                         </label>
 
                         {error && <p className={Styles.error_message}>{error}</p>}
@@ -325,7 +330,11 @@ function SignIn_inputs() {
                             <button type="button" className={Styles.secondaryButton} onClick={() => setStep(1)}>
                                 Voltar
                             </button>
-                            <button type="submit" className={Styles.SignIn_button}>
+                            <button
+                                type="submit"
+                                className={Styles.SignIn_button}
+                                disabled={!!(confirmPassword && password !== confirmPassword)}
+                            >
                                 Cadastrar
                             </button>
                         </div>

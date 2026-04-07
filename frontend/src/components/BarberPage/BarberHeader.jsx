@@ -5,12 +5,16 @@ import api from '../../services/api';
 import NotificationBell from './NotificationBell';
 import styles from '../../pages/CSS/BarberHomePage.module.css';
 
-/** Tabs visíveis para TODOS os barbeiros */
-const commonNavItems = [
-    { id: 'home',    label: 'Home',        short: 'HM' },
-    { id: 'agenda',  label: 'Minha Agenda',short: 'AG' },
-    { id: 'servicos',label: 'Servicos',    short: 'SV' },
-    { id: 'perfil',  label: 'Meu Perfil',  short: 'PF' },
+/** Tabs visíveis para TODOS os barbeiros, com ou sem barbearia vinculada */
+const baseNavItems = [
+    { id: 'home',    label: 'Home',       short: 'HM' },
+    { id: 'perfil',  label: 'Meu Perfil', short: 'PF' },
+];
+
+/** Tabs que exigem barbearia vinculada (barbershopId presente) */
+const linkedNavItems = [
+    { id: 'agenda',  label: 'Minha Agenda', short: 'AG' },
+    { id: 'servicos',label: 'Servicos',     short: 'SV' },
 ];
 
 /** Tabs exclusivas para OWNER */
@@ -25,10 +29,17 @@ const ownerNavItems = [
  * @param {Function} onLogout    - callback de logout
  * @param {string}   activeTab   - tab ativa
  * @param {Function} onTabChange - callback ao trocar tab
- * @param {boolean}  isOwner     - true = dono do estabelecimento
+ * @param {string|number} barbershopId - ID da barbearia vinculada (undefined = sem barbearia)
  */
-function BarberHeader({ barber, onLogout, activeTab, onTabChange, isOwner = false }) {
+function BarberHeader({ barber, onLogout, activeTab, onTabChange, isOwner = false, barbershopId }) {
     const navigate = useNavigate();
+
+    // Monta a lista de tabs respeitando a mesma lógica do BarberNavbar:
+    // Agenda e Serviços só aparecem quando o barbeiro já tem barbearia vinculada
+    const commonNavItems = barbershopId
+        ? [...baseNavItems, ...linkedNavItems]
+        : baseNavItems;
+
     const navItems = isOwner
         ? [...commonNavItems, ...ownerNavItems]
         : commonNavItems;
