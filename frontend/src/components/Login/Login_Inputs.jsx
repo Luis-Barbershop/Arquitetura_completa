@@ -2,7 +2,6 @@ import Styles from "./CSS/Login_inputs.module.css"
 import { useState } from "react"
 import { useNavigate, Link, useLocation } from "react-router-dom"
 import { loginUser, loginWithGoogle, checkEmailExists, translateFirebaseError } from "../../services/authService"
-import { toast } from "react-toastify"
 
 // Retorna a rota de destino com base no role salvo no localStorage
 function getRedirectPath() {
@@ -52,25 +51,22 @@ function Login_Inputs() {
             // ── Perfil incompleto — redireciona para finalizar cadastro ──────────
             if (err.code === 'PROFILE_INCOMPLETE') {
                 const profileData = err.profileData || {};
-                const profileRole = profileData.role?.includes('BARBER') || profileData.role?.includes('OWNER')
-                    ? 'barber'
-                    : role;
-
-                toast.warn(`PROFILE_INCOMPLETE: ${authError.message}`);
+                const gData = {
+                    idToken:     localStorage.getItem('token'),
+                    uid:         localStorage.getItem('userId'),
+                    email:       profileData.email || localStorage.getItem('userEmail') || email,
+                    displayName: profileData.name  || '',
+                };
                 navigate('/signin', {
                     state: {
                         mode: 'complete-profile',
                         step: 2,
-                        role: profileRole,
-                        prefillEmail: profileData.email || email,
-                        prefillName: profileData.name || '',
-                        // Reusa o mesmo fluxo de complete-profile já usado no login com Google.
-                        googleData: {
-                            idToken: localStorage.getItem('token'),
-                            uid: localStorage.getItem('userId'),
-                            email: profileData.email || localStorage.getItem('userEmail') || email,
-                            displayName: profileData.name || '',
-                        },
+                        role: profileData.role?.includes('BARBER') || profileData.role?.includes('OWNER')
+                            ? 'barber'
+                            : role,
+                        prefillEmail: gData.email,
+                        prefillName:  gData.displayName,
+                        googleData:   gData,
                     }
                 });
                 return;
@@ -79,16 +75,15 @@ function Login_Inputs() {
             // ── Conflito de perfil (barbeiro no portal cliente ou vice-versa) ─────
             if (err.code === 'ROLE_CONFLICT') {
                 sessionStorage.removeItem('user_intent');
-                const conflictMsg = err.serverMessage || 'Você possui uma conta em outro portal. Verifique o link de acesso correto.';
-                toast.error(`ROLE_CONFLICT: ${conflictMsg}`);
-                setError(conflictMsg);
+                setError(err.serverMessage || 'Você possui uma conta em outro portal. Verifique o link de acesso correto.');
                 return;
             }
 
             // ── E-mail não verificado → tela de espera ───────────────────────────
             if (err.code === 'VERIFICATION_REQUIRED' || err.verificationRequired || err.response?.data?.verificationRequired) {
                 navigate('/verify-email', {
-                    state: { mode: 'waiting', email: err.verificationEmail || email, role }
+                    // Passa a senha para que o reenvio não precise pedí-la de novo
+                    state: { mode: 'waiting', email: err.verificationEmail || email, password, role }
                 });
                 return;
             }
@@ -113,7 +108,6 @@ function Login_Inputs() {
             }
 
             const friendlyMsg = translateFirebaseError(rawMsg, rawMsg || "Falha no login. Verifique seus dados.");
-            toast.error(`${authError.code}: ${friendlyMsg}`);
             setError(friendlyMsg);
         }
     };
@@ -131,16 +125,25 @@ function Login_Inputs() {
         } catch (err) {
             setLoadingGoogle(false);
 
-            // ── Perfil incompleto — redireciona para finalizar cadastro ──────────
+            // ── Perfil incompleto — redireciona para finalizar cadastro (step 2) ─
             if (err.code === 'PROFILE_INCOMPLETE') {
                 const profileData = err.profileData || {};
+                const gData = {
+                    idToken:     localStorage.getItem('token'),
+                    uid:         localStorage.getItem('userId'),
+                    email:       profileData.email || localStorage.getItem('userEmail') || '',
+                    displayName: profileData.name  || '',
+                };
                 navigate('/signin', {
                     state: {
-                        mode: 'register',
+                        mode: 'complete-profile',
+                        step: 2,
                         role: profileData.role?.includes('BARBER') || profileData.role?.includes('OWNER')
                             ? 'barber'
                             : role,
-                        prefillEmail: profileData.email || '',
+                        prefillEmail: gData.email,
+                        prefillName:  gData.displayName,
+                        googleData:   gData,
                     }
                 });
                 return;

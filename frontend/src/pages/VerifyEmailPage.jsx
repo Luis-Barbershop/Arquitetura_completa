@@ -67,7 +67,14 @@ function VerifyEmailPage() {
     const [errorMsg, setErrorMsg] = useState("");
 
     useEffect(() => {
-        if (!isVerify) return; // não aplica no modo waiting
+        if (!isVerify) {
+            // Nem modo waiting nem oobCode → acesso direto inválido
+            if (!isWaiting) {
+                setStatus("error");
+                setErrorMsg("Link inválido ou expirado. Solicite um novo e-mail de verificação.");
+            }
+            return;
+        }
 
         const oobCode = searchParams.get("oobCode");
         if (!oobCode) {
@@ -82,7 +89,7 @@ function VerifyEmailPage() {
                 setStatus("error");
                 setErrorMsg("Parece que este e-mail já foi verificado! :(");
             });
-    }, [searchParams, isVerify]);
+    }, [searchParams, isVerify, isWaiting]);
 
     // ─────────────────────────────────────────────────────────────────────────
     // RENDER: modo "waiting"
