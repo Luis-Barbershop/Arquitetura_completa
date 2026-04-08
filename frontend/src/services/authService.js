@@ -129,7 +129,20 @@ export const loginUser = async (email, password) => {
     sessionStorage.removeItem('user_intent');
 
     // ── Guarda de perfil incompleto ───────────────────────────────────────────
+    // Salvaguarda extra: se o e-mail ainda não foi verificado (ex: estado inconsistente
+    // onde verificationRequired veio false mas emailVerified também é false),
+    // bloqueia com VERIFICATION_REQUIRED em vez de permitir completar perfil.
     if (verifyResponse.data?.profileComplete === false) {
+        if (verifyResponse.data?.emailVerified === false) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userEmail');
+            const verifyError = new Error('E-mail ainda não verificado. Verifique sua caixa de entrada e tente novamente.');
+            verifyError.code = 'VERIFICATION_REQUIRED';
+            verifyError.verificationEmail = userEmail;
+            verifyError.response = { data: { message: verifyError.message } };
+            throw verifyError;
+        }
         const incompleteError = new Error('Cadastro incompleto. Complete seu perfil para continuar.');
         incompleteError.code = 'PROFILE_INCOMPLETE';
         incompleteError.profileData = verifyResponse.data;

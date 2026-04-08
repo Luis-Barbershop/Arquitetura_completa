@@ -249,7 +249,9 @@ function VerifyEmailPage() {
                         </p>
                         <button
                             className={Styles.ctaButton}
-                            onClick={() => navigate("/identificacao", { state: { mode: "login" } })}
+                            onClick={() => navigate("/login", {
+                                state: { role: location.state?.role || 'customer' }
+                            })}
                         >
                             Fazer login agora
                         </button>

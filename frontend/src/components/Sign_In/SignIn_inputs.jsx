@@ -174,6 +174,16 @@ function SignIn_inputs() {
                 localStorage.setItem('userRole', role);
                 localStorage.setItem('isOwner', String(profileData?.isOwner || false));
                 sessionStorage.removeItem('user_intent');
+
+                // Se o e-mail ainda não foi verificado (conta email/senha com perfil incompleto),
+                // redireciona para aguardar confirmação em vez de liberar acesso direto.
+                if (profileData?.emailVerified === false) {
+                    navigate('/verify-email', {
+                        state: { mode: 'waiting', email: googleData.email || '', role: userType }
+                    });
+                    return;
+                }
+
                 navigate(getRedirectPath());
             } catch (err) {
                 console.error(err);

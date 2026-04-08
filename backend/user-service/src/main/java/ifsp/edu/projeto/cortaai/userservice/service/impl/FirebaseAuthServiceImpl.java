@@ -3,6 +3,7 @@ package ifsp.edu.projeto.cortaai.userservice.service.impl;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.auth.UserRecord;
 import ifsp.edu.projeto.cortaai.userservice.dto.AuthResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileCustomerDTO;
@@ -183,7 +184,16 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         customer.setAuthProvider(customer.getAuthProvider() != null ? customer.getAuthProvider() : "EMAIL");
 
         customerRepository.saveAndFlush(customer);
-        return toAuthResponse(customer, true, false);
+
+        // Consulta o estado real de emailVerified no Firebase Admin SDK
+        boolean emailVerified = true;
+        try {
+            UserRecord userRecord = firebaseAuth.getUser(firebaseUid);
+            emailVerified = userRecord.isEmailVerified();
+        } catch (Exception e) {
+            log.warn("Não foi possível consultar emailVerified para uid={}: {}", firebaseUid, e.getMessage());
+        }
+        return toAuthResponse(customer, emailVerified, false);
     }
 
     @Override
@@ -230,7 +240,16 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         barber.setAuthProvider(barber.getAuthProvider() != null ? barber.getAuthProvider() : "EMAIL");
 
         barberRepository.saveAndFlush(barber);
-        return toAuthResponse(barber, true, false);
+
+        // Consulta o estado real de emailVerified no Firebase Admin SDK
+        boolean emailVerified = true;
+        try {
+            UserRecord userRecord = firebaseAuth.getUser(firebaseUid);
+            emailVerified = userRecord.isEmailVerified();
+        } catch (Exception e) {
+            log.warn("Não foi possível consultar emailVerified para uid={}: {}", firebaseUid, e.getMessage());
+        }
+        return toAuthResponse(barber, emailVerified, false);
     }
 
     @Override
