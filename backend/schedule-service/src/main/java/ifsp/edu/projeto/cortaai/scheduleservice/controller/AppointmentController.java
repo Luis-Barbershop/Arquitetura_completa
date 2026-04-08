@@ -142,12 +142,13 @@ public class AppointmentController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Consultar horários disponíveis", description = "Verifica os horários (slots) que ainda estão livres para agendamento com um barbeiro específico numa determinada data.")
+    @Operation(summary = "Consultar horários disponíveis", description = "Verifica os horários (slots) que ainda estão livres para agendamento com um barbeiro específico numa determinada data. O parâmetro 'duration' (em minutos) filtra apenas os blocos de tempo que cabem a duração total dos serviços selecionados.")
     @GetMapping("/availability")
     public ResponseEntity<List<TimeSlotDTO>> getAvailability(
             @Parameter(description = "UUID do barbeiro") @RequestParam UUID barberId,
-            @Parameter(description = "Data para consulta (formato ISO: YYYY-MM-DD)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(appointmentService.getAvailability(barberId, date));
+            @Parameter(description = "Data para consulta (formato ISO: YYYY-MM-DD)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @Parameter(description = "Duração total dos serviços em minutos (padrão: 30)") @RequestParam(defaultValue = "30") int duration) {
+        return ResponseEntity.ok(appointmentService.getAvailability(barberId, date, duration));
     }
 
     @Operation(

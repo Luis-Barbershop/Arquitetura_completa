@@ -229,6 +229,26 @@
     background: #221c12;
 }
 
+.barberCardDisabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    border-color: #2e2e2e !important;
+    background: #141414 !important;
+    pointer-events: none;
+    position: relative;
+}
+
+.barberUnavailableTag {
+    font-size: 0.65rem;
+    font-family: 'Roboto', sans-serif;
+    color: #888;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
 .barberAvatar {
     width: 36px;
     height: 36px;

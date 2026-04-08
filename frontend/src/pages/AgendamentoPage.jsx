@@ -27,14 +27,28 @@ const AgendamentoPage = () => {
   const [selectedTime, setSelectedTime] = useState("");
 
   const fetchDateSlots = async (barberId, dateObj, durationMinutes) => {
-    const response = await api.get(`/barbers/${barberId}/availability`, {
+    // Endpoint correto: /appointments/availability?barberId=&date=&duration=
+    const response = await api.get(`/appointments/availability`, {
       params: {
+        barberId,
         date: formatDateToApi(dateObj),
-        duration: durationMinutes,
+        duration: durationMinutes || 30,
       },
     });
 
-    return Array.isArray(response.data) ? response.data : [];
+    const data = Array.isArray(response.data) ? response.data : [];
+    // TimeSlotDTO: { startTime: "2026-04-08T09:00:00", endTime: ..., available: true }
+    // Filtra apenas slots disponíveis e extrai o horário "HH:mm"
+    return data
+      .filter(slot => slot.available)
+      .map(slot => {
+        const raw = slot.startTime; // "2026-04-08T09:00:00" ou "09:00:00"
+        if (!raw) return null;
+        // Pega apenas a parte HH:mm — funciona tanto para ISO datetime quanto para time puro
+        const timePart = raw.includes('T') ? raw.split('T')[1] : raw;
+        return timePart.substring(0, 5); // "09:00"
+      })
+      .filter(Boolean);
   };
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [isSubmittingAppointment, setIsSubmittingAppointment] = useState(false);
@@ -345,20 +359,28 @@ const AgendamentoPage = () => {
 
   // Handler: Selecionar/Deselecionar Serviço
   const handleServiceToggle = (service) => {
-    if (selectedBarber && !selectedBarberActivityIds.has(String(service.id))) {
-      toast.warn("Este barbeiro nao executa esse servico. Escolha outro profissional ou outro servico.");
-      return;
-    }
-
     setSelectedServices(prev => {
       const exists = prev.some(s => s.id === service.id);
-      if (exists) {
-        return prev.filter(s => s.id !== service.id); // Remove
-      } else {
-        return [...prev, service]; // Adiciona
+      const next = exists
+        ? prev.filter(s => s.id !== service.id)   // Remove o serviço
+        : [...prev, service];                       // Adiciona o serviço
+
+      // Se há um barbeiro selecionado, verifica se ele consegue fazer todos os serviços resultantes
+      if (selectedBarber) {
+        const barberData = barbersList.find(b => String(b.id) === String(selectedBarber));
+        const barberActivityIds = new Set((barberData?.assignedActivityIds || []).map(String));
+        const canStillDoAll = next.every(s => barberActivityIds.has(String(s.id)));
+        if (!canStillDoAll) {
+          // Desmarca o barbeiro para que o usuário escolha outro
+          setSelectedBarber(null);
+          toast.info("O profissional selecionado não realiza todos os serviços. Por favor, escolha outro profissional.");
+        }
       }
+
+      return next;
     });
     setSelectedTime("");
+    setSelectedDate(null);
   };
 
   const handleOpenSummary = () => {
@@ -556,21 +578,49 @@ const AgendamentoPage = () => {
         <section className={Styles.section}>
           <h3 className={Styles.section_title}>2. Profissional</h3>
           {barbersList.length > 0 ? (
-            <div className={Styles.barberGrid}>
-              {barbersList.map((barber) => (
-                <button
-                  key={barber.id}
-                  className={`${Styles.barberCard} ${String(selectedBarber) === String(barber.id) ? Styles.barberCardSelected : ''}`}
-                  onClick={() => {
-                    setSelectedBarber(barber.id);
-                    setSelectedTime("");
-                  }}
-                >
-                  <span className={Styles.barberAvatar}>{getInitials(barber.name)}</span>
-                  <span className={Styles.barberName}>{barber.name}</span>
-                </button>
-              ))}
-            </div>
+            <>
+              {selectedServices.length > 0 && (
+                <p className={Styles.info_text} style={{ marginBottom: '0.6rem' }}>
+                  Mostrando apenas profissionais que realizam{' '}
+                  <strong>todos os serviços selecionados</strong>.
+                </p>
+              )}
+              <div className={Styles.barberGrid}>
+                {barbersList.map((barber) => {
+                  // Se há serviços selecionados, verifica se o barbeiro executa todos
+                  const barberActivityIds = new Set(
+                    (barber.assignedActivityIds || []).map(String)
+                  );
+                  const canDoAllServices =
+                    selectedServices.length === 0 ||
+                    selectedServices.every(s => barberActivityIds.has(String(s.id)));
+
+                  // Barbeiros que não atendem os serviços ficam desabilitados (não somem)
+                  const isDisabled = selectedServices.length > 0 && !canDoAllServices;
+                  const isSelected = String(selectedBarber) === String(barber.id);
+
+                  return (
+                    <button
+                      key={barber.id}
+                      className={`${Styles.barberCard} ${isSelected ? Styles.barberCardSelected : ''} ${isDisabled ? Styles.barberCardDisabled : ''}`}
+                      onClick={() => {
+                        if (isDisabled) return;
+                        setSelectedBarber(barber.id);
+                        setSelectedTime("");
+                      }}
+                      title={isDisabled ? 'Este profissional não realiza todos os serviços selecionados' : barber.name}
+                      disabled={isDisabled}
+                    >
+                      <span className={Styles.barberAvatar}>{getInitials(barber.name)}</span>
+                      <span className={Styles.barberName}>{barber.name}</span>
+                      {isDisabled && (
+                        <span className={Styles.barberUnavailableTag}>Não realiza</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
           ) : (
             <p className={Styles.info_text}>No momento não há profissionais disponíveis para agendamento nesta barbearia.</p>
           )}

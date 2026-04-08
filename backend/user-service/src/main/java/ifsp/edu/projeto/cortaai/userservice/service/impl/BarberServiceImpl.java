@@ -39,11 +39,11 @@ public class BarberServiceImpl implements BarberService {
         if (dto.getEmail() != null) barber.setEmail(dto.getEmail());
         if (dto.getBirthDate() != null) barber.setBirthDate(dto.getBirthDate());
 
-        // Horários de expediente — editáveis somente quando vinculado a uma barbearia
-        if (dto.getWorkStartTime() != null && barber.getBarbershopId() != null) {
+        // Horários de expediente — editáveis por qualquer barbeiro (owner, colaborador ou sem barbearia)
+        if (dto.getWorkStartTime() != null) {
             barber.setWorkStartTime(dto.getWorkStartTime());
         }
-        if (dto.getWorkEndTime() != null && barber.getBarbershopId() != null) {
+        if (dto.getWorkEndTime() != null) {
             barber.setWorkEndTime(dto.getWorkEndTime());
         }
 

@@ -353,22 +353,42 @@ public class AppointmentService {
 
     // ========== DISPONIBILIDADE ==========
 
+    /**
+     * Retorna os slots disponíveis para um barbeiro em um dia.
+     *
+     * <p>Lógica:
+     * <ol>
+     *   <li>Busca workStart / workEnd do barbeiro via Feign (com cache Redis).</li>
+     *   <li>Gera slots de {@code SLOT_STEP_MINUTES} (15 min) dentro do expediente.</li>
+     *   <li>Para cada slot de início, verifica se os próximos {@code durationMinutes} estão livres
+     *       (sem agendamento nem bloqueio ativos).</li>
+     *   <li>Retorna apenas os slots em que o bloco completo cabe.</li>
+     * </ol>
+     *
+     * @param barberId        UUID do barbeiro
+     * @param date            data solicitada
+     * @param durationMinutes duração total dos serviços selecionados (mín. 15)
+     */
     @Transactional(readOnly = true)
-    public List<TimeSlotDTO> getAvailability(UUID barberId, LocalDate date) {
+    public List<TimeSlotDTO> getAvailability(UUID barberId, LocalDate date, int durationMinutes) {
+        // Granularidade dos slots oferecidos (a cada 15 min)
+        final int SLOT_STEP_MINUTES = 15;
+        // Duração mínima para não gerar slots sem sentido
+        final int effectiveDuration = Math.max(durationMinutes, SLOT_STEP_MINUTES);
 
-        // 1. Buscar horários de trabalho do barbeiro (cache Redis 5min)
+        // 1. Buscar horários de trabalho do barbeiro (cache Redis 5 min)
         UserInfoDTO barber = getBarberWorkHoursCached(barberId);
 
         LocalTime workStart = barber.getWorkStartTime();
-        LocalTime workEnd = barber.getWorkEndTime();
+        LocalTime workEnd   = barber.getWorkEndTime();
 
         if (workStart == null || workEnd == null) {
-            return List.of(); // Barbeiro sem horário de trabalho configurado
+            return List.of(); // Barbeiro sem horário configurado
         }
 
-        // 2. Buscar agendamentos do dia
+        // 2. Buscar agendamentos ativos do dia
         LocalDateTime dayStart = date.atStartOfDay();
-        LocalDateTime dayEnd = date.atTime(23, 59, 59);
+        LocalDateTime dayEnd   = date.atTime(23, 59, 59);
 
         List<Appointment> dayAppointments = appointmentRepository
                 .findByBarberIdAndStartTimeBetween(barberId, dayStart, dayEnd)
@@ -381,19 +401,27 @@ public class AppointmentService {
         List<BarberBlock> dayBlocks = barberBlockRepository
                 .findByBarberIdAndStartTimeBetween(barberId, dayStart, dayEnd);
 
-        // 4. Gerar slots de 30 min
+        // 4. Gerar slots de SLOT_STEP_MINUTES dentro do expediente
+        //    Só inclui slots cujo bloco completo (start → start+duration) não ultrapassa workEnd
+        //    e não colide com nenhum agendamento/bloqueio ativo.
         List<TimeSlotDTO> slots = new ArrayList<>();
         LocalDateTime slotStart = date.atTime(workStart);
         LocalDateTime workEndDateTime = date.atTime(workEnd);
 
-        while (slotStart.plusMinutes(30).compareTo(workEndDateTime) <= 0) {
-            LocalDateTime slotEnd = slotStart.plusMinutes(30);
+        // Não oferece horários no passado (exceto testes/seed)
+        LocalDateTime now = LocalDateTime.now();
 
-            boolean occupied = isSlotOccupied(slotStart, slotEnd, dayAppointments, dayBlocks);
+        while (true) {
+            LocalDateTime slotEnd = slotStart.plusMinutes(effectiveDuration);
+            // Para quando o bloco ultrapassaria o fim do expediente
+            if (slotEnd.compareTo(workEndDateTime) > 0) break;
 
-            slots.add(new TimeSlotDTO(slotStart, slotEnd, !occupied));
+            boolean occupied = isRangeOccupied(slotStart, slotEnd, dayAppointments, dayBlocks);
+            boolean inPast   = slotStart.isBefore(now);
 
-            slotStart = slotEnd;
+            slots.add(new TimeSlotDTO(slotStart, slotEnd, !occupied && !inPast));
+
+            slotStart = slotStart.plusMinutes(SLOT_STEP_MINUTES);
         }
 
         return slots;
@@ -404,7 +432,7 @@ public class AppointmentService {
         return userServiceClient.getUserById(barberId);
     }
 
-    private boolean isSlotOccupied(LocalDateTime slotStart, LocalDateTime slotEnd,
+    private boolean isRangeOccupied(LocalDateTime slotStart, LocalDateTime slotEnd,
                                     List<Appointment> appointments, List<BarberBlock> blocks) {
         // Verifica sobreposição com agendamentos
         for (Appointment a : appointments) {
