@@ -42,6 +42,11 @@ public class UserServiceClientFallbackFactory implements FallbackFactory<UserSer
             }
 
             @Override
+            public UserInfoDTO getBarberByCpf(String cpf) {
+                throw unavailable(cause);
+            }
+
+            @Override
             public ResponseEntity<Void> makeBarberOwner(String uid) {
                 throw unavailable(cause);
             }

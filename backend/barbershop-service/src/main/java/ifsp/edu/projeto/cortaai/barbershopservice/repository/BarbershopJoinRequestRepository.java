@@ -2,6 +2,7 @@ package ifsp.edu.projeto.cortaai.barbershopservice.repository;
 
 import ifsp.edu.projeto.cortaai.barbershopservice.model.BarbershopJoinRequest;
 import ifsp.edu.projeto.cortaai.barbershopservice.model.enums.JoinRequestStatus;
+import ifsp.edu.projeto.cortaai.barbershopservice.model.enums.JoinRequestType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,5 +30,13 @@ public interface BarbershopJoinRequestRepository extends JpaRepository<Barbersho
     @Query("SELECT r FROM BarbershopJoinRequest r WHERE r.barberId = :barberId")
     List<BarbershopJoinRequest> findByBarberId(
             @Param("barberId") UUID barberId
+    );
+
+    /** Busca convites (INVITE) pendentes para um barbeiro específico. */
+    @Query("SELECT r FROM BarbershopJoinRequest r WHERE r.barberId = :barberId AND r.status = :status AND r.requestType = :type")
+    List<BarbershopJoinRequest> findByBarberIdAndStatusAndRequestType(
+            @Param("barberId") UUID barberId,
+            @Param("status") JoinRequestStatus status,
+            @Param("type") JoinRequestType type
     );
 }

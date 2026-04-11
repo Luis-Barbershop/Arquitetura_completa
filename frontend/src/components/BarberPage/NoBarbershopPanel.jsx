@@ -1,12 +1,12 @@
 import React from 'react';
 import styles from '../../pages/CSS/BarberHomePage.module.css';
 
-function NoBarbershopPanel({ onCreateShop, onJoinShop }) {
+function NoBarbershopPanel({ onCreateShop, onGoToProfile }) {
     return (
         <section className={styles.noBarbershopPanel}>
             <p className={styles.noBarbershopKicker}>PAINEL DO PROFISSIONAL</p>
             <h2 className={styles.noBarbershopTitle}>Voce ainda nao esta vinculado a uma barbearia</h2>
-            <p className={styles.noBarbershopSubtitle}>Comece criando seu proprio espaco ou solicitando entrada em uma equipe existente.</p>
+            <p className={styles.noBarbershopSubtitle}>Crie seu proprio espaco ou aguarde o convite de um dono de barbearia pelo seu CPF.</p>
 
             <div className={styles.noBarbershopActions}>
                 <article className={styles.actionCard}>
@@ -18,10 +18,10 @@ function NoBarbershopPanel({ onCreateShop, onJoinShop }) {
                 </article>
 
                 <article className={styles.actionCard}>
-                    <h3>Entrar em uma barbearia</h3>
-                    <p>Ja trabalha em uma equipe? Envie o CNPJ para solicitar vinculacao.</p>
-                    <button onClick={onJoinShop} className={styles.joinShopButton}>
-                        Solicitar entrada
+                    <h3>Aguardando convite?</h3>
+                    <p>Verifique se ha convites pendentes no seu perfil.</p>
+                    <button onClick={onGoToProfile} className={styles.joinShopButton}>
+                        Ver meu perfil
                     </button>
                 </article>
             </div>

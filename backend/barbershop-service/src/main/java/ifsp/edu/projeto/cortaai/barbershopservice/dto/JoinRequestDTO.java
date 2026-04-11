@@ -12,5 +12,11 @@ public class JoinRequestDTO {
     private String barberName;
     private String barberEmail;
     private String status;
+    /** Tipo: JOIN (barbeiro pediu) ou INVITE (owner convidou). */
+    private String requestType;
+    /** UUID da barbearia — útil para o barbeiro saber de qual barbearia é o convite. */
+    private UUID barbershopId;
+    /** Nome da barbearia — exibido ao barbeiro na tela de convites pendentes. */
+    private String barbershopName;
 }
 

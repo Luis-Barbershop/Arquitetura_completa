@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
 import { isCustomer, isOwnerUser } from '../services/userContext';
@@ -19,22 +18,9 @@ function BarberHomePage() {
   const [barber, setBarber] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'home');
-  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
-  const [joinCnpj, setJoinCnpj] = useState('');
-  const [joinError, setJoinError] = useState('');
-  const [isSendingJoinRequest, setIsSendingJoinRequest] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const navigate = useNavigate();
   const showInsights = import.meta.env.VITE_ENABLE_BARBER_INSIGHTS === 'true';
-
-  const formatCnpj = (value) => {
-    const digits = value.replace(/\D/g, '').slice(0, 14);
-    return digits
-      .replace(/(\d{2})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1/$2')
-      .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
-  };
 
   useEffect(() => {
     // Guard: cliente não pode acessar painel de barbeiro
@@ -116,46 +102,7 @@ function BarberHomePage() {
   };
 
   const handleCreateShop = () => navigate('/create-barbershop');
-
-  const handleOpenJoinModal = () => {
-    setJoinError('');
-    setJoinCnpj('');
-    setIsJoinModalOpen(true);
-  };
-
-  const handleCloseJoinModal = () => {
-    if (isSendingJoinRequest) return;
-    setIsJoinModalOpen(false);
-    setJoinError('');
-  };
-
-  const handleJoinCnpjChange = (e) => {
-    setJoinCnpj(formatCnpj(e.target.value));
-    if (joinError) setJoinError('');
-  };
-
-  const handleSubmitJoinRequest = async (e) => {
-    e.preventDefault();
-    const normalizedCnpj = joinCnpj.replace(/\D/g, '');
-
-    if (normalizedCnpj.length !== 14) {
-      setJoinError('Informe um CNPJ valido com 14 numeros.');
-      return;
-    }
-
-    try {
-      setIsSendingJoinRequest(true);
-      await api.post('/barbershops/join-request', { cnpj: normalizedCnpj });
-      toast.success('Pedido enviado! Aguarde o dono aceitar.');
-      setIsJoinModalOpen(false);
-      setJoinCnpj('');
-      setJoinError('');
-    } catch (error) {
-      setJoinError('Erro ao enviar pedido. Verifique o CNPJ e tente novamente.');
-    } finally {
-      setIsSendingJoinRequest(false);
-    }
-  };
+  const handleGoToProfile = () => navigate('/barberHome/perfil');
 
   const handleOpenLogoutModal = () => {
     setIsLogoutModalOpen(true);
@@ -190,7 +137,7 @@ function BarberHomePage() {
         {!hasLinkedBarbershop ? (
           <NoBarbershopPanel
             onCreateShop={handleCreateShop}
-            onJoinShop={handleOpenJoinModal}
+            onGoToProfile={handleGoToProfile}
           />
         ) : (
             <>
@@ -246,42 +193,6 @@ function BarberHomePage() {
       </div>
       {hasLinkedBarbershop && (
         <BarberNavbar activeTab={activeTab} onTabChange={handleTabChange} isOwner={barber?.isOwner === true || isOwnerUser()} barbershopId={barber?.barbershopId} />
-      )}
-
-      {isJoinModalOpen && (
-        <div className={styles.modalBackdrop} onClick={handleCloseJoinModal}>
-          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <p className={styles.modalKicker}>SOLICITAR ENTRADA</p>
-            <h3 className={styles.modalTitle}>Entrar em uma barbearia</h3>
-            <p className={styles.modalSubtitle}>Digite o CNPJ da barbearia para enviar seu pedido de vinculacao.</p>
-
-            <form onSubmit={handleSubmitJoinRequest} className={styles.modalForm}>
-              <label htmlFor="join-cnpj" className={styles.modalLabel}>CNPJ</label>
-              <input
-                id="join-cnpj"
-                type="text"
-                inputMode="numeric"
-                className={styles.modalInput}
-                placeholder="00.000.000/0000-00"
-                value={joinCnpj}
-                onChange={handleJoinCnpjChange}
-                maxLength={18}
-                autoFocus
-              />
-
-              {joinError && <p className={styles.modalError}>{joinError}</p>}
-
-              <div className={styles.modalActions}>
-                <button type="button" className={styles.modalSecondaryButton} onClick={handleCloseJoinModal}>
-                  Cancelar
-                </button>
-                <button type="submit" className={styles.modalPrimaryButton} disabled={isSendingJoinRequest}>
-                  {isSendingJoinRequest ? 'Enviando...' : 'Enviar solicitacao'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
 
       {isLogoutModalOpen && (

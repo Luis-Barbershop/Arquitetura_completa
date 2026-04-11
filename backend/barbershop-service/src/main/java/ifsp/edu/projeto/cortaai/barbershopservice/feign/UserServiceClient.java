@@ -37,6 +37,9 @@ public interface UserServiceClient {
 
     @GetMapping("/barbers/by-barbershop/{barbershopId}")
     List<UserInfoDTO> getBarbersByBarbershop(@PathVariable("barbershopId") UUID barbershopId);
+
+    @GetMapping("/barbers/by-cpf/{cpf}")
+    UserInfoDTO getBarberByCpf(@PathVariable("cpf") String cpf);
     
     @PutMapping("/make-owner/{uid}")
     ResponseEntity<Void> makeBarberOwner(@PathVariable("uid") String uid);

@@ -12,6 +12,7 @@ import ifsp.edu.projeto.cortaai.barbershopservice.mapper.ActivityMapper;
 import ifsp.edu.projeto.cortaai.barbershopservice.mapper.BarbershopMapper;
 import ifsp.edu.projeto.cortaai.barbershopservice.model.*;
 import ifsp.edu.projeto.cortaai.barbershopservice.model.enums.JoinRequestStatus;
+import ifsp.edu.projeto.cortaai.barbershopservice.model.enums.JoinRequestType;
 import ifsp.edu.projeto.cortaai.barbershopservice.repository.*;
 import ifsp.edu.projeto.cortaai.barbershopservice.service.storage.StorageService;
 import lombok.RequiredArgsConstructor;
@@ -330,6 +331,7 @@ public class BarbershopService {
         request.setBarberId(barber.getId());
         request.setBarbershop(shop);
         request.setStatus(JoinRequestStatus.PENDING);
+        request.setRequestType(JoinRequestType.JOIN);
         BarbershopJoinRequest saved = joinRequestRepository.save(request);
 
         // Publica evento para o notification-service notificar o dono da barbearia
@@ -410,6 +412,137 @@ public class BarbershopService {
 
         request.setStatus(JoinRequestStatus.REJECTED);
         joinRequestRepository.save(request);
+    }
+
+    // ========== FLUXO 2B: CONVITE DO OWNER (INVITE) ==========
+
+    /**
+     * Owner convida um barbeiro pelo CPF.
+     * Cria um BarbershopJoinRequest do tipo INVITE com status PENDING.
+     * O barbeiro verá o convite no seu perfil e poderá aceitar ou recusar.
+     */
+    public void inviteBarberByCpf(String ownerUid, String cpf) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
+        Barbershop shop = findOwnerShop(owner.getId());
+
+        String cleanCpf = cpf.replaceAll("\\D", "");
+        if (cleanCpf.length() != 11) {
+            throw new DomainConflictException("CPF inválido. Informe 11 dígitos.");
+        }
+
+        // Busca o barbeiro pelo CPF no user-service
+        UserInfoDTO barber;
+        try {
+            barber = userServiceClient.getBarberByCpf(cleanCpf);
+        } catch (FeignException.NotFound ex) {
+            throw new NotFoundException("Nenhum barbeiro cadastrado com este CPF.");
+        } catch (Exception ex) {
+            throw new UserServiceUnavailableException("Não foi possível consultar o barbeiro no momento.");
+        }
+        if (barber == null) {
+            throw new NotFoundException("Nenhum barbeiro cadastrado com este CPF.");
+        }
+
+        // Validações
+        if (barber.getId().equals(owner.getId())) {
+            throw new DomainConflictException("Você não pode convidar a si mesmo.");
+        }
+        if (barber.getBarbershopId() != null) {
+            throw new DomainConflictException("Este barbeiro já faz parte de uma barbearia.");
+        }
+
+        // Verifica se já existe um convite/pedido pendente
+        joinRequestRepository.findByBarberIdAndBarbershopId(barber.getId(), shop.getId())
+                .ifPresent(req -> {
+                    if (req.getStatus() == JoinRequestStatus.PENDING) {
+                        throw new DomainConflictException("Já existe um convite pendente para este barbeiro.");
+                    }
+                });
+
+        BarbershopJoinRequest request = new BarbershopJoinRequest();
+        request.setBarberId(barber.getId());
+        request.setBarbershop(shop);
+        request.setStatus(JoinRequestStatus.PENDING);
+        request.setRequestType(JoinRequestType.INVITE);
+        joinRequestRepository.save(request);
+
+        log.info("event=barber-invited ownerId={} barberId={} shopId={} cpf=***",
+                owner.getId(), barber.getId(), shop.getId());
+    }
+
+    /**
+     * Lista os convites (INVITE) pendentes para o barbeiro autenticado.
+     */
+    @Transactional(readOnly = true)
+    public List<JoinRequestDTO> getMyPendingInvites(String barberUid) {
+        UserInfoDTO barber = resolveUserByUid(barberUid);
+
+        List<BarbershopJoinRequest> invites = joinRequestRepository
+                .findByBarberIdAndStatusAndRequestType(barber.getId(), JoinRequestStatus.PENDING, JoinRequestType.INVITE);
+
+        return invites.stream().map(req -> {
+            JoinRequestDTO dto = new JoinRequestDTO();
+            dto.setRequestId(req.getId());
+            dto.setBarberId(req.getBarberId());
+            dto.setStatus(req.getStatus().name());
+            dto.setRequestType(req.getRequestType().name());
+            dto.setBarbershopId(req.getBarbershop().getId());
+            dto.setBarbershopName(req.getBarbershop().getName());
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * Barbeiro aceita um convite (INVITE) de uma barbearia.
+     */
+    public void acceptInvite(String barberUid, UUID requestId) {
+        UserInfoDTO barber = resolveUserByUid(barberUid);
+
+        BarbershopJoinRequest request = joinRequestRepository.findById(requestId)
+                .orElseThrow(() -> new NotFoundException("Convite não encontrado."));
+
+        if (!request.getBarberId().equals(barber.getId())) {
+            throw new ForbiddenException("Este convite não pertence a você.");
+        }
+        if (request.getRequestType() != JoinRequestType.INVITE) {
+            throw new ForbiddenException("Esta solicitação não é um convite.");
+        }
+        if (request.getStatus() != JoinRequestStatus.PENDING) {
+            throw new DomainConflictException("Este convite já foi processado.");
+        }
+        if (barber.getBarbershopId() != null) {
+            throw new DomainConflictException("Você já faz parte de uma barbearia. Saia antes de aceitar outro convite.");
+        }
+
+        request.setStatus(JoinRequestStatus.APPROVED);
+        joinRequestRepository.save(request);
+
+        // Atualiza barbershopId no user-service
+        updateUserBarbershop(barber.getId(), request.getBarbershop().getId());
+
+        log.info("event=invite-accepted barberId={} shopId={}", barber.getId(), request.getBarbershop().getId());
+    }
+
+    /**
+     * Barbeiro recusa um convite (INVITE) de uma barbearia.
+     */
+    public void rejectInvite(String barberUid, UUID requestId) {
+        UserInfoDTO barber = resolveUserByUid(barberUid);
+
+        BarbershopJoinRequest request = joinRequestRepository.findById(requestId)
+                .orElseThrow(() -> new NotFoundException("Convite não encontrado."));
+
+        if (!request.getBarberId().equals(barber.getId())) {
+            throw new ForbiddenException("Este convite não pertence a você.");
+        }
+        if (request.getRequestType() != JoinRequestType.INVITE) {
+            throw new ForbiddenException("Esta solicitação não é um convite.");
+        }
+
+        request.setStatus(JoinRequestStatus.REJECTED);
+        joinRequestRepository.save(request);
+
+        log.info("event=invite-rejected barberId={} shopId={}", barber.getId(), request.getBarbershop().getId());
     }
 
     // ========== FLUXO 3: SAIR DA LOJA ==========

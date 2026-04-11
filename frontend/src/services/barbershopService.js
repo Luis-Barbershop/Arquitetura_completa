@@ -154,3 +154,56 @@ export const assignActivities = async (activityIds) => {
     const response = await api.post('/barbers/me/assign-activities', { activityIds });
     return response.data;
 };
+
+// ── Fluxo de convite (Owner → Barbeiro) ────────────────────────────────────
+
+/** Owner convida barbeiro pelo CPF */
+export const inviteBarberByCpf = async (cpf) => {
+    const response = await api.post('/barbershops/my-shop/invite-barber', { cpf });
+    return response.data;
+};
+
+/** Barbeiro lista convites pendentes recebidos */
+export const getMyInvites = async () => {
+    try {
+        const response = await api.get('/barbershops/my-invites');
+        return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+        console.error('Erro ao buscar convites:', error);
+        return [];
+    }
+};
+
+/** Barbeiro aceita convite */
+export const acceptInvite = async (requestId) => {
+    const response = await api.post(`/barbershops/accept-invite/${requestId}`);
+    return response.data;
+};
+
+/** Barbeiro recusa convite */
+export const rejectInvite = async (requestId) => {
+    const response = await api.post(`/barbershops/reject-invite/${requestId}`);
+    return response.data;
+};
+
+// ── Agenda semanal (blocos de horário por dia) ─────────────────────────────
+
+/** Busca a agenda semanal do barbeiro autenticado */
+export const getMyWorkSchedule = async () => {
+    try {
+        const response = await api.get('/barbers/me/work-schedule');
+        return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+        console.error('Erro ao buscar agenda semanal:', error);
+        return [];
+    }
+};
+
+/**
+ * Salva (substitui) toda a agenda semanal do barbeiro.
+ * @param {Array} schedule - Array de { dayOfWeek: 'MONDAY', blocks: [{startTime:'09:00', endTime:'12:00'}] }
+ */
+export const saveMyWorkSchedule = async (data) => {
+    const response = await api.put('/barbers/me/work-schedule', data);
+    return response.data;
+};

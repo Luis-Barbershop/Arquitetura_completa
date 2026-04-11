@@ -1,10 +1,9 @@
 package ifsp.edu.projeto.cortaai.userservice.controller;
 
-import ifsp.edu.projeto.cortaai.userservice.dto.AssignActivitiesDTO;
-import ifsp.edu.projeto.cortaai.userservice.dto.BarberDTO;
-import ifsp.edu.projeto.cortaai.userservice.dto.UpdateBarberDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.*;
 import ifsp.edu.projeto.cortaai.userservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.userservice.service.BarberService;
+import ifsp.edu.projeto.cortaai.userservice.service.BarberWorkScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,6 +31,7 @@ import java.util.UUID;
 public class BarberController {
 
     private final BarberService barberService;
+    private final BarberWorkScheduleService workScheduleService;
 
     @Operation(summary = "Atualiza o perfil de um barbeiro",
                description = "Atualização parcial (patch-like). Envie somente os campos que deseja alterar.")
@@ -123,5 +123,39 @@ public class BarberController {
             @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @RequestBody @Valid AssignActivitiesDTO dto) {
         return ResponseEntity.ok(barberService.assignActivities(firebaseUid, dto));
+    }
+
+    // ========== AGENDA SEMANAL (BLOCOS DE HORÁRIO) ==========
+
+    @Operation(
+            summary = "Retorna a agenda semanal do barbeiro autenticado",
+            description = "Lista todos os blocos de horário configurados por dia da semana."
+    )
+    @GetMapping("/me/work-schedule")
+    public ResponseEntity<List<DayScheduleDTO>> getMyWorkSchedule(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
+        return ResponseEntity.ok(workScheduleService.getSchedule(firebaseUid));
+    }
+
+    @Operation(
+            summary = "Salva (substitui) toda a agenda semanal do barbeiro autenticado",
+            description = "Recebe os dias da semana com seus blocos de horário e substitui completamente a agenda anterior. " +
+                          "Exemplo: Segunda 09:00–12:00 e 13:00–18:00, Terça 08:00–17:00."
+    )
+    @PutMapping("/me/work-schedule")
+    public ResponseEntity<List<DayScheduleDTO>> saveMyWorkSchedule(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
+            @RequestBody @Valid SaveWeekScheduleDTO dto) {
+        return ResponseEntity.ok(workScheduleService.saveSchedule(firebaseUid, dto));
+    }
+
+    @Operation(
+            summary = "Retorna a agenda semanal de um barbeiro por ID (público/inter-serviço)",
+            description = "Usado pelo schedule-service para gerar slots disponíveis."
+    )
+    @GetMapping("/{id}/work-schedule")
+    public ResponseEntity<List<DayScheduleDTO>> getBarberWorkSchedule(
+            @Parameter(description = "UUID do barbeiro") @PathVariable UUID id) {
+        return ResponseEntity.ok(workScheduleService.getScheduleByBarberId(id));
     }
 }

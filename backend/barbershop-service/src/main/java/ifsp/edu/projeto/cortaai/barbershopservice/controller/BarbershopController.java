@@ -213,6 +213,59 @@ public class BarbershopController {
         return ResponseEntity.noContent().build();
     }
 
+    // ========== FLUXO 2B: CONVITE DO OWNER (INVITE) ==========
+
+    @Operation(summary = "Convida um barbeiro pelo CPF", description = "O dono da barbearia informa o CPF de um barbeiro cadastrado para convidá-lo a fazer parte da equipe. O barbeiro verá o convite no perfil e poderá aceitar ou recusar.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "202", description = "Convite enviado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "CPF inválido",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado com este CPF",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Barbeiro já vinculado ou convite duplicado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    @PostMapping("/my-shop/invite-barber")
+    public ResponseEntity<Void> inviteBarber(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "CPF do barbeiro a convidar") @RequestBody @Valid InviteBarberDTO dto) {
+        barbershopService.inviteBarberByCpf(principal.getName(), dto.getCpf());
+        return ResponseEntity.accepted().build();
+    }
+
+    @Operation(summary = "Lista convites pendentes do barbeiro autenticado", description = "Retorna os convites (INVITE) pendentes que o barbeiro recebeu de barbearias. Exibido na tela de perfil do barbeiro.")
+    @GetMapping("/my-invites")
+    public ResponseEntity<List<JoinRequestDTO>> getMyInvites(@Parameter(hidden = true) Principal principal) {
+        return ResponseEntity.ok(barbershopService.getMyPendingInvites(principal.getName()));
+    }
+
+    @Operation(summary = "Aceita um convite de barbearia", description = "O barbeiro autenticado aceita o convite e fica vinculado à barbearia.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Convite aceito, barbeiro vinculado"),
+            @ApiResponse(responseCode = "404", description = "Convite não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Convite não pertence a você",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Barbeiro já vinculado a outra barbearia",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    @PostMapping("/accept-invite/{requestId}")
+    public ResponseEntity<Void> acceptInvite(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "UUID do convite") @PathVariable UUID requestId) {
+        barbershopService.acceptInvite(principal.getName(), requestId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Recusa um convite de barbearia", description = "O barbeiro autenticado recusa o convite.")
+    @PostMapping("/reject-invite/{requestId}")
+    public ResponseEntity<Void> rejectInvite(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "UUID do convite") @PathVariable UUID requestId) {
+        barbershopService.rejectInvite(principal.getName(), requestId);
+        return ResponseEntity.noContent().build();
+    }
+
     // ========== FLUXO 4: GESTÃO DE IMAGENS ==========
 
     @Operation(summary = "Faz o upload da logo da barbearia", description = "Atualiza a foto de logo da barbearia do dono logado.")

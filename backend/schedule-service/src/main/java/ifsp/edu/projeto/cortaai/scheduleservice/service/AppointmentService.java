@@ -371,19 +371,40 @@ public class AppointmentService {
      */
     @Transactional(readOnly = true)
     public List<TimeSlotDTO> getAvailability(UUID barberId, LocalDate date, int durationMinutes) {
-        // Granularidade dos slots oferecidos (a cada 15 min)
         final int SLOT_STEP_MINUTES = 15;
-        // Duração mínima para não gerar slots sem sentido
         final int effectiveDuration = Math.max(durationMinutes, SLOT_STEP_MINUTES);
 
-        // 1. Buscar horários de trabalho do barbeiro (cache Redis 5 min)
-        UserInfoDTO barber = getBarberWorkHoursCached(barberId);
+        // 1. Buscar blocos de horário do barbeiro para o dia da semana solicitado
+        java.time.DayOfWeek dayOfWeek = date.getDayOfWeek();
+        List<DayScheduleDTO> weekSchedule;
+        try {
+            weekSchedule = userServiceClient.getBarberWorkSchedule(barberId);
+        } catch (Exception ex) {
+            log.warn("Falha ao buscar agenda semanal do barbeiro {}, usando horário legado", barberId, ex);
+            weekSchedule = null;
+        }
 
-        LocalTime workStart = barber.getWorkStartTime();
-        LocalTime workEnd   = barber.getWorkEndTime();
+        // Determina os blocos de trabalho para o dia solicitado
+        List<WorkBlockDTO> dayBlocks;
+        if (weekSchedule != null && !weekSchedule.isEmpty()) {
+            dayBlocks = weekSchedule.stream()
+                    .filter(d -> d.getDayOfWeek() == dayOfWeek)
+                    .flatMap(d -> d.getBlocks().stream())
+                    .sorted(Comparator.comparing(WorkBlockDTO::getStartTime))
+                    .collect(Collectors.toList());
+        } else {
+            // Fallback para horário legado (workStartTime/workEndTime)
+            UserInfoDTO barber = getBarberWorkHoursCached(barberId);
+            LocalTime workStart = barber.getWorkStartTime();
+            LocalTime workEnd   = barber.getWorkEndTime();
+            if (workStart == null || workEnd == null) {
+                return List.of();
+            }
+            dayBlocks = List.of(new WorkBlockDTO(workStart, workEnd));
+        }
 
-        if (workStart == null || workEnd == null) {
-            return List.of(); // Barbeiro sem horário configurado
+        if (dayBlocks.isEmpty()) {
+            return List.of(); // Barbeiro não trabalha neste dia
         }
 
         // 2. Buscar agendamentos ativos do dia
@@ -398,30 +419,28 @@ public class AppointmentService {
                 .collect(Collectors.toList());
 
         // 3. Buscar bloqueios do dia
-        List<BarberBlock> dayBlocks = barberBlockRepository
+        List<BarberBlock> dayBlocksSchedule = barberBlockRepository
                 .findByBarberIdAndStartTimeBetween(barberId, dayStart, dayEnd);
 
-        // 4. Gerar slots de SLOT_STEP_MINUTES dentro do expediente
-        //    Só inclui slots cujo bloco completo (start → start+duration) não ultrapassa workEnd
-        //    e não colide com nenhum agendamento/bloqueio ativo.
+        // 4. Gerar slots dentro de cada bloco de trabalho
         List<TimeSlotDTO> slots = new ArrayList<>();
-        LocalDateTime slotStart = date.atTime(workStart);
-        LocalDateTime workEndDateTime = date.atTime(workEnd);
-
-        // Não oferece horários no passado (exceto testes/seed)
         LocalDateTime now = LocalDateTime.now();
 
-        while (true) {
-            LocalDateTime slotEnd = slotStart.plusMinutes(effectiveDuration);
-            // Para quando o bloco ultrapassaria o fim do expediente
-            if (slotEnd.compareTo(workEndDateTime) > 0) break;
+        for (WorkBlockDTO workBlock : dayBlocks) {
+            LocalDateTime slotStart = date.atTime(workBlock.getStartTime());
+            LocalDateTime blockEnd  = date.atTime(workBlock.getEndTime());
 
-            boolean occupied = isRangeOccupied(slotStart, slotEnd, dayAppointments, dayBlocks);
-            boolean inPast   = slotStart.isBefore(now);
+            while (true) {
+                LocalDateTime slotEnd = slotStart.plusMinutes(effectiveDuration);
+                if (slotEnd.compareTo(blockEnd) > 0) break;
 
-            slots.add(new TimeSlotDTO(slotStart, slotEnd, !occupied && !inPast));
+                boolean occupied = isRangeOccupied(slotStart, slotEnd, dayAppointments, dayBlocksSchedule);
+                boolean inPast   = slotStart.isBefore(now);
 
-            slotStart = slotStart.plusMinutes(SLOT_STEP_MINUTES);
+                slots.add(new TimeSlotDTO(slotStart, slotEnd, !occupied && !inPast));
+
+                slotStart = slotStart.plusMinutes(SLOT_STEP_MINUTES);
+            }
         }
 
         return slots;

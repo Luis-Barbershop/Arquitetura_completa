@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.userservice.controller;
 
+import ifsp.edu.projeto.cortaai.userservice.dto.DayScheduleDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.UserInfoDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.SaveMpCredentialsDTO;
 import ifsp.edu.projeto.cortaai.userservice.exception.ApiErrorResponse;
@@ -7,6 +8,7 @@ import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository;
 import ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository;
+import ifsp.edu.projeto.cortaai.userservice.service.BarberWorkScheduleService;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,6 +43,7 @@ public class InternalUserController {
     private final CustomerRepository customerRepository;
     private final BarberRepository barberRepository;
     private final FirebaseAuthService firebaseAuthService;
+    private final BarberWorkScheduleService workScheduleService;
 
     /** Busca usuário por ID (Customer ou Barber). */
     @Operation(summary = "Busca usuário por ID", description = "Retorna o UserInfoDTO de um Customer ou Barber pelo UUID.")
@@ -213,8 +216,32 @@ public class InternalUserController {
         return ResponseEntity.ok().build();
     }
 
+    /** Busca barbeiro por CPF (usado pelo barbershop-service para convites). */
+    @Operation(summary = "Busca barbeiro por CPF (interno)",
+               description = "Retorna o UserInfoDTO de um Barber pelo CPF. Usado pelo barbershop-service no fluxo de convite.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Barbeiro encontrado"),
+            @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado")
+    })
+    @GetMapping("/barbers/by-cpf/{cpf}")
+    public ResponseEntity<UserInfoDTO> getBarberByCpf(
+            @Parameter(description = "CPF do barbeiro (somente dígitos)") @PathVariable String cpf) {
+        String cleanCpf = cpf.replaceAll("\\D", "");
+        Optional<Barber> barber = barberRepository.findByDocumentCPF(cleanCpf);
+        if (barber.isPresent()) return ResponseEntity.ok(toUserInfoDTO(barber.get()));
+        return ResponseEntity.notFound().build();
+    }
+
 
     // ── conversores ──────────────────────────────────────────────────────────
+
+    // ── Agenda semanal (blocos de horário) ────────────────────────────────────
+    @Operation(summary = "Retorna a agenda semanal de um barbeiro (inter-serviço)")
+    @GetMapping("/barbers/{id}/work-schedule")
+    public ResponseEntity<java.util.List<DayScheduleDTO>> getBarberWorkSchedule(
+            @PathVariable UUID id) {
+        return ResponseEntity.ok(workScheduleService.getScheduleByBarberId(id));
+    }
 
     private UserInfoDTO toUserInfoDTO(Customer customer) {
         return new UserInfoDTO(

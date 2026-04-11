@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.barbershopservice.model;
 
 import ifsp.edu.projeto.cortaai.barbershopservice.model.enums.JoinRequestStatus;
+import ifsp.edu.projeto.cortaai.barbershopservice.model.enums.JoinRequestType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -41,6 +42,11 @@ public class BarbershopJoinRequest {
     @Column(nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
     private JoinRequestStatus status;
+
+    /** Tipo da solicitação: JOIN (barbeiro pede) ou INVITE (owner convida). */
+    @Column(name = "request_type", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    private JoinRequestType requestType;
 
     @CreatedDate
     @Column(name = "date_created", nullable = false, updatable = false)
