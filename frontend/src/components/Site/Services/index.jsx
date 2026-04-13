@@ -11,7 +11,7 @@ function Services() {
         <div className={Styles.card1}>
           <div className={Styles.titleCard}>
             <div className={Styles.iconContainer}>
-              <img src="/public/Icons/pencil.png" alt="Pincel Barbeiro" />
+              <img src="/Icons/pencil.png" alt="Pincel Barbeiro" />
             </div>
             <h3>SERVIÇOS PARA PROFISSIONAIS:</h3>
           </div>
@@ -40,7 +40,7 @@ function Services() {
         <div className={Styles.card2}>
           <div className={Styles.titleCard}>
             <div className={Styles.iconContainer}>
-              <img src="/public/Icons/chair.png" alt="Cadeira de Barbeiro" />
+              <img src="/Icons/chair.png" alt="Cadeira de Barbeiro" />
             </div>
             <h3>SERVIÇOS PARA OS CLIENTES:</h3>
           </div>
