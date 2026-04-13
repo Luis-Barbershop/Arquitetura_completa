@@ -13,8 +13,9 @@ const baseNavItems = [
 
 /** Tabs que exigem barbearia vinculada (barbershopId presente) */
 const linkedNavItems = [
-    { id: 'agenda',  label: 'Minha Agenda', short: 'AG' },
-    { id: 'servicos',label: 'Servicos',     short: 'SV' },
+    { id: 'agenda',            label: 'Minha Agenda',    short: 'AG' },
+    { id: 'novo-agendamento',  label: 'Novo Walk-in',    short: '✂️' },
+    { id: 'servicos',          label: 'Servicos',        short: 'SV' },
 ];
 
 /** Tabs exclusivas para OWNER */

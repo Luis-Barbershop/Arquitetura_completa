@@ -10,14 +10,16 @@ const NAV_PATHS = {
     estoque: '/barberHome/estoque',
     time: '/barberHome/time',
     dashboards: '/barberHome/dashboard',
+    'novo-agendamento': '/barberHome/novo-agendamento',
 };
 
 /** Tabs visíveis para TODOS os barbeiros com barbearia vinculada */
 const linkedNavItems = [
-    { id: 'home',    label: 'Home',    short: 'HM' },
-    { id: 'agenda',  label: 'Agenda',  short: 'AG' },
-    { id: 'servicos',label: 'Servicos',short: 'SV' },
-    { id: 'perfil',  label: 'Perfil',  short: 'PF' },
+    { id: 'home',              label: 'Home',    short: 'HM' },
+    { id: 'agenda',            label: 'Agenda',  short: 'AG' },
+    { id: 'novo-agendamento',  label: 'Novo',    short: '✂️' },
+    { id: 'servicos',          label: 'Servicos',short: 'SV' },
+    { id: 'perfil',            label: 'Perfil',  short: 'PF' },
 ];
 
 /** Tabs visíveis para barbeiros SEM barbearia vinculada */

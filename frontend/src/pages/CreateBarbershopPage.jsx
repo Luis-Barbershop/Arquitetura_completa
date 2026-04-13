@@ -123,9 +123,20 @@ function CreateBarbershopPage() {
                         <input 
                             type="text" 
                             value={cnpj} 
-                            onChange={e => setCnpj(e.target.value)} 
+                            onChange={e => {
+                                const digits = e.target.value.replace(/\D/g, '').slice(0, 14);
+                                // Mascara: 00.000.000/0001-00
+                                let masked = digits;
+                                if (digits.length > 2) masked = digits.slice(0, 2) + '.' + digits.slice(2);
+                                if (digits.length > 5) masked = masked.slice(0, 6) + '.' + digits.slice(5);
+                                if (digits.length > 8) masked = masked.slice(0, 10) + '/' + digits.slice(8);
+                                if (digits.length > 12) masked = masked.slice(0, 15) + '-' + digits.slice(12);
+                                setCnpj(masked);
+                            }}
                             required 
                             placeholder="00.000.000/0001-00"
+                            maxLength={18}
+                            inputMode="numeric"
                             style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #444', background: '#0f0f0f', color: 'white' }}
                         />
                     </div>

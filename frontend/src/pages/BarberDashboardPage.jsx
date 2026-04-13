@@ -5,6 +5,7 @@ import { logoutUser } from '../services/authService';
 import { isCustomer, isOwnerUser } from '../services/userContext';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
+import styles from './CSS/BarberHomePage.module.css';
 
 /**
  * Página de Dashboard / Relatórios do Barbeiro.
@@ -61,17 +62,19 @@ function BarberDashboardPage() {
         textAlign: 'center', flex: '1 1 140px'
     };
 
-    if (loading) return <p style={{ padding: 32, color: '#fff' }}>Carregando...</p>;
+    if (loading) return <div className={styles.loadingContainer}>Carregando...</div>;
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0f0f1a', color: '#fff' }}>
+        <div className={`${styles.pageContainer} ${styles.withNavbar}`}>
+            <div className={styles.contentWrapper}>
             <BarberHeader barber={barber} onLogout={handleLogout} activeTab="dashboards" onTabChange={handleTabChange} isOwner={true} barbershopId={barber?.barbershopId} />
-            <main style={{ maxWidth: 760, margin: '40px auto', padding: '0 16px' }}>
-                <h2 style={{ marginBottom: 8 }}>Dashboard</h2>
-                <p style={{ color: 'rgba(255,255,255,0.5)', marginBottom: 28, fontSize: 14 }}>
-                    Resumo da sua atividade recente.
-                </p>
 
+            <section className={styles.heroSection}>
+                <p className={styles.heroKicker}>DASHBOARD</p>
+                <h1>Resumo da sua atividade</h1>
+            </section>
+
+            <section className={styles.dashboardSection}>
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 32 }}>
                     <div style={cardStyle}>
                         <p style={{ fontSize: 28, fontWeight: 700, margin: '0 0 6px' }}>—</p>
@@ -106,7 +109,7 @@ function BarberDashboardPage() {
                     <button
                         onClick={() => navigate('/barberHome/novo-agendamento')}
                         style={{
-                            background: '#ffd700', color: '#111', fontWeight: 700,
+                            background: '#d4af37', color: '#1a1a1a', fontWeight: 700,
                             fontSize: 15, border: 'none', borderRadius: 10,
                             padding: '13px 32px', cursor: 'pointer',
                         }}
@@ -117,7 +120,8 @@ function BarberDashboardPage() {
                         Registre um atendimento presencial sem app.
                     </p>
                 </div>
-            </main>
+            </section>
+            </div>
             <BarberNavbar activeTab="dashboards" onTabChange={handleTabChange} isOwner={true} barbershopId={barber?.barbershopId} />
         </div>
     );

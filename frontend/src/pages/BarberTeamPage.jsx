@@ -133,6 +133,7 @@ function BarberTeamPage() {
         else if (tab === 'estoque') navigate('/barberHome/estoque');
         else if (tab === 'perfil') navigate('/barberHome/perfil');
         else if (tab === 'dashboards') navigate('/barberHome/dashboard');
+        else if (tab === 'novo-agendamento') navigate('/barberHome/novo-agendamento');
     };
 
     if (loading) return <p style={{ padding: 32, color: '#fff' }}>Carregando...</p>;

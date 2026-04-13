@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { FiHome, FiSearch, FiHeart, FiScissors, FiCalendar, FiLogOut, FiLock } from "react-icons/fi";
+import { FiHome, FiHeart, FiScissors, FiCalendar, FiLogOut, FiLock } from "react-icons/fi";
 import Barbershops from "../components/HomePage/Barbershops/Barbershops"
 import Favorite_barbershops from "../components/HomePage/Favorite_barbershops/Favorite_barbershops"
 import SearchBar from "../components/HomePage/SearchBar"
@@ -16,7 +16,6 @@ import Styles from "./CSS/HomePage.module.css"
 
 const desktopNavItems = [
   { key: "topo", label: "Topo", icon: FiHome },
-  { key: "buscar", label: "Buscar", icon: FiSearch },
   { key: "favoritas", label: "Favoritas", icon: FiHeart },
   { key: "barbearias", label: "Barbearias", icon: FiScissors },
 ];
@@ -82,7 +81,6 @@ function HomePage() {
 
   const handleDesktopNavigation = (itemKey) => {
     if (itemKey === "topo") scrollToSection(heroRef, "topo");
-    if (itemKey === "buscar") scrollToSection(searchRef, "buscar");
     if (itemKey === "favoritas") scrollToSection(favoritesRef, "favoritas");
     if (itemKey === "barbearias") scrollToSection(shopsRef, "barbearias");
   };

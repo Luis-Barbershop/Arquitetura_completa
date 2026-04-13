@@ -347,8 +347,10 @@ function SignIn_inputs() {
                                 className={Styles.formInput}
                                 type="text"
                                 value={tell}
-                                onChange={e => setTell(e.target.value)}
+                                onChange={e => setTell(e.target.value.replace(/\D/g, '').slice(0, 11))}
                                 placeholder="11999999999"
+                                maxLength={11}
+                                inputMode="numeric"
                                 required
                             />
                         </label>
@@ -359,8 +361,10 @@ function SignIn_inputs() {
                                 className={Styles.formInput}
                                 type="text"
                                 value={cpf}
-                                onChange={e => setCpf(e.target.value)}
-                                placeholder="Somente números"
+                                onChange={e => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                                placeholder="Somente números (11 dígitos)"
+                                maxLength={11}
+                                inputMode="numeric"
                                 required
                             />
                         </label>

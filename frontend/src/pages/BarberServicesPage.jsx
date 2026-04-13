@@ -72,6 +72,11 @@ function BarberServicesPage() {
       return;
     }
 
+    if (tab === 'novo-agendamento') {
+      navigate('/barberHome/novo-agendamento');
+      return;
+    }
+
     navigate('/barberHome', { state: { activeTab: tab } });
   };
 

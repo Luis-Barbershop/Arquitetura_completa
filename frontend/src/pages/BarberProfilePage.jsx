@@ -21,6 +21,47 @@ const DAYS_OF_WEEK = [
 
 const EMPTY_BLOCK = { startTime: '', endTime: '' };
 
+/* ── Componente spinner numérico (horas / minutos) ──────────────────────── */
+function TimeSpinner({ value, onChange, min, max, disabled, label }) {
+    const numVal = value === '' ? min : parseInt(value, 10);
+    const inc = () => { const next = numVal >= max ? min : numVal + 1; onChange(String(next).padStart(2, '0')); };
+    const dec = () => { const next = numVal <= min ? max : numVal - 1; onChange(String(next).padStart(2, '0')); };
+    const handleInput = (e) => {
+        const raw = e.target.value.replace(/\D/g, '').slice(0, 2);
+        if (raw === '') { onChange(''); return; }
+        const n = Math.min(Math.max(parseInt(raw, 10), min), max);
+        onChange(String(n).padStart(2, '0'));
+    };
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            {label && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>{label}</span>}
+            <button type="button" onClick={inc} disabled={disabled} style={spinBtnStyle} aria-label="incrementar">▲</button>
+            <input type="text" inputMode="numeric" value={value === '' ? '' : String(numVal).padStart(2, '0')}
+                onChange={handleInput} disabled={disabled} style={spinInputStyle(disabled)} maxLength={2} />
+            <button type="button" onClick={dec} disabled={disabled} style={spinBtnStyle} aria-label="decrementar">▼</button>
+        </div>
+    );
+}
+
+/* ── Componente seletor de horário HH:MM ────────────────────────────────── */
+function TimePicker({ value, onChange, disabled }) {
+    const parts = value ? value.split(':') : ['', ''];
+    const hh = parts[0] || '';
+    const mm = parts[1] || '';
+    const update = (newHH, newMM) => {
+        if (newHH !== '' && newMM !== '') onChange(`${newHH}:${newMM}`);
+        else if (newHH === '' && newMM === '') onChange('');
+        else onChange(`${newHH || '00'}:${newMM || '00'}`);
+    };
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '4px 8px', border: '1px solid #2a2a2a' }}>
+            <TimeSpinner value={hh} onChange={v => update(v, mm || '00')} min={0} max={23} disabled={disabled} label="h" />
+            <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 18, fontWeight: 700, margin: '0 2px', paddingTop: 12 }}>:</span>
+            <TimeSpinner value={mm} onChange={v => update(hh || '00', v)} min={0} max={59} disabled={disabled} label="m" />
+        </div>
+    );
+}
+
 /**
  * Página de Perfil do Barbeiro — exibe e permite editar dados pessoais e horário de trabalho.
  * Disponível para: Barbeiro colaborador, Owner e qualquer barbeiro (com ou sem barbearia).
@@ -39,6 +80,11 @@ function BarberProfilePage() {
     const [weekSchedule, setWeekSchedule] = useState({});
     const [savingSchedule, setSavingSchedule] = useState(false);
     const [loadingSchedule, setLoadingSchedule] = useState(false);
+
+    // ── Copiar horário de um dia para outros ───────────────────────────────────
+    const [copySource, setCopySource] = useState(null);
+    const [copyTargets, setCopyTargets] = useState([]);
+    const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
 
     // ── Convites pendentes (barbeiro sem barbearia) ────────────────────────────
     const [pendingInvites, setPendingInvites] = useState([]);
@@ -133,6 +179,28 @@ function BarberProfilePage() {
             return { ...prev, [dayKey]: blocks };
         });
     }, []);
+
+    // ── Copiar horário de um dia para outros ───────────────────────────────────
+    const handleOpenCopyModal = (dayKey) => {
+        setCopySource(dayKey);
+        setCopyTargets([]);
+        setIsCopyModalOpen(true);
+    };
+    const handleCopyConfirm = () => {
+        if (!copySource || copyTargets.length === 0) return;
+        const srcBlocks = weekSchedule[copySource];
+        if (!srcBlocks || srcBlocks.length === 0) { toast.warn('O dia de origem não tem blocos.'); return; }
+        setWeekSchedule(prev => {
+            const copy = { ...prev };
+            copyTargets.forEach(target => { copy[target] = srcBlocks.map(b => ({ ...b })); });
+            return copy;
+        });
+        setIsCopyModalOpen(false);
+        toast.success(`Horário copiado para ${copyTargets.length} dia(s)!`);
+    };
+    const toggleCopyTarget = (dayKey) => {
+        setCopyTargets(prev => prev.includes(dayKey) ? prev.filter(k => k !== dayKey) : [...prev, dayKey]);
+    };
 
     // ── Carrega convites pendentes quando barbeiro não está vinculado ───────
     useEffect(() => {
@@ -260,6 +328,7 @@ function BarberProfilePage() {
         else if (tab === 'estoque')   navigate('/barberHome/estoque');
         else if (tab === 'time')      navigate('/barberHome/time');
         else if (tab === 'dashboards') navigate('/barberHome/dashboard');
+        else if (tab === 'novo-agendamento') navigate('/barberHome/novo-agendamento');
     };
 
     if (loading) return <div className={styles.loadingContainer}>Carregando perfil...</div>;
@@ -306,9 +375,6 @@ function BarberProfilePage() {
                                     <strong>Função:</strong>{' '}
                                     {barber.isOwner ? 'Dono do estabelecimento' : 'Colaborador'}
                                 </div>
-                                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-                                    Para atualizar sua foto, use o botão de upload nas configurações.
-                                </p>
                             </div>
 
                             {/* ── Convites pendentes (barbeiro sem barbearia) ─ */}
@@ -413,44 +479,25 @@ function BarberProfilePage() {
                                                     <span style={{ fontSize: 13, fontWeight: 600, color: '#d4af37' }}>
                                                         {label}
                                                     </span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => addBlock(key)}
-                                                        style={addBlockBtnStyle}
-                                                        title="Adicionar bloco de horário"
-                                                    >
-                                                        + Bloco
-                                                    </button>
+                                                    <div style={{ display: 'flex', gap: 6 }}>
+                                                        <button type="button" onClick={() => handleOpenCopyModal(key)}
+                                                            style={{ ...addBlockBtnStyle, color: '#9b8ce6', borderColor: 'rgba(155,140,230,0.45)' }}
+                                                            title="Copiar este horário para outros dias">
+                                                            📋 Copiar
+                                                        </button>
+                                                        <button type="button" onClick={() => addBlock(key)} style={addBlockBtnStyle} title="Adicionar bloco de horário">
+                                                            + Bloco
+                                                        </button>
+                                                    </div>
                                                 </div>
 
                                                 {(weekSchedule[key] || []).map((block, idx) => (
-                                                    <div key={idx} style={blockRowStyle}>
-                                                        <input
-                                                            type="time"
-                                                            value={block.startTime}
-                                                            onChange={e => updateBlock(key, idx, 'startTime', e.target.value)}
-                                                            disabled={savingSchedule}
-                                                            style={timeInputStyle(savingSchedule)}
-                                                            required
-                                                        />
+                                                    <div key={idx} style={{ ...blockRowStyle, flexWrap: 'wrap' }}>
+                                                        <TimePicker value={block.startTime} onChange={v => updateBlock(key, idx, 'startTime', v)} disabled={savingSchedule} />
                                                         <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, userSelect: 'none' }}>até</span>
-                                                        <input
-                                                            type="time"
-                                                            value={block.endTime}
-                                                            onChange={e => updateBlock(key, idx, 'endTime', e.target.value)}
-                                                            disabled={savingSchedule}
-                                                            style={timeInputStyle(savingSchedule)}
-                                                            required
-                                                        />
+                                                        <TimePicker value={block.endTime} onChange={v => updateBlock(key, idx, 'endTime', v)} disabled={savingSchedule} />
                                                         {(weekSchedule[key] || []).length > 1 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => removeBlock(key, idx)}
-                                                                style={removeBlockBtnStyle}
-                                                                title="Remover bloco"
-                                                            >
-                                                                ✕
-                                                            </button>
+                                                            <button type="button" onClick={() => removeBlock(key, idx)} style={removeBlockBtnStyle} title="Remover bloco">✕</button>
                                                         )}
                                                     </div>
                                                 ))}
@@ -526,11 +573,63 @@ function BarberProfilePage() {
                     barbershopId={barber?.barbershopId}
                 />
             )}
+
+            {/* ── Modal copiar horário ──────────────────────────────────── */}
+            {isCopyModalOpen && (
+                <div style={modalBackdropStyle} onClick={() => setIsCopyModalOpen(false)}>
+                    <div style={modalCardStyle} onClick={e => e.stopPropagation()}>
+                        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>📋 Copiar horário</p>
+                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>
+                            Copiar de <strong style={{ color: '#d4af37' }}>{DAYS_OF_WEEK.find(d => d.key === copySource)?.label}</strong> para:
+                        </p>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+                            {DAYS_OF_WEEK.filter(d => d.key !== copySource).map(({ key, label }) => {
+                                const selected = copyTargets.includes(key);
+                                return (
+                                    <button key={key} type="button" onClick={() => toggleCopyTarget(key)}
+                                        style={{
+                                            width: 48, height: 40, borderRadius: 10, fontSize: 12, fontWeight: 600,
+                                            border: selected ? '1px solid #9b8ce6' : '1px solid #2f2f2f',
+                                            background: selected ? 'rgba(155,140,230,0.18)' : 'rgba(255,255,255,0.03)',
+                                            color: selected ? '#9b8ce6' : 'rgba(255,255,255,0.45)',
+                                            cursor: 'pointer', transition: 'all 0.2s',
+                                        }}>
+                                        {label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                            <button onClick={() => setIsCopyModalOpen(false)}
+                                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: '1px solid #3a3a3a', background: 'transparent', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                                Cancelar
+                            </button>
+                            <button onClick={handleCopyConfirm} disabled={copyTargets.length === 0}
+                                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: 'none', background: copyTargets.length === 0 ? 'rgba(155,140,230,0.2)' : '#9b8ce6', color: copyTargets.length === 0 ? 'rgba(255,255,255,0.3)' : '#fff', cursor: copyTargets.length === 0 ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 700 }}>
+                                Copiar ({copyTargets.length})
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
 
 // ── Estilos inline compartilhados ──────────────────────────────────────────────
+const spinBtnStyle = {
+    width: 32, height: 22, borderRadius: 6, border: '1px solid #2f2f2f',
+    background: 'rgba(255,255,255,0.06)', color: '#d4af37', fontSize: 10,
+    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontWeight: 700, transition: 'background 0.15s',
+};
+const spinInputStyle = (disabled) => ({
+    width: 38, height: 32, borderRadius: 8, border: '1px solid #3a3a3a',
+    background: disabled ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.08)',
+    color: disabled ? 'rgba(255,255,255,0.3)' : '#fff', fontSize: 16, fontWeight: 700,
+    textAlign: 'center', outline: 'none',
+});
+
 const cardStyle = {
     background: 'rgba(255,255,255,0.04)',
     border: '1px solid #2f2f2f',
@@ -567,20 +666,6 @@ const blockRowStyle = {
     gap: 8,
     marginBottom: 6,
 };
-
-const timeInputStyle = (disabled) => ({
-    padding: '7px 10px',
-    borderRadius: 8,
-    border: `1px solid ${disabled ? '#2a2a2a' : '#3a3a3a'}`,
-    background: disabled ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)',
-    color: disabled ? 'rgba(255,255,255,0.3)' : '#fff',
-    fontSize: 14,
-    outline: 'none',
-    cursor: disabled ? 'not-allowed' : 'default',
-    colorScheme: 'dark',
-    flex: 1,
-    minWidth: 0,
-});
 
 const addBlockBtnStyle = {
     background: 'none',
@@ -632,5 +717,14 @@ const saveButtonStyle = (disabled) => ({
     cursor: disabled ? 'not-allowed' : 'pointer',
     transition: 'background 0.2s',
 });
+
+const modalBackdropStyle = {
+    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+    background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+};
+const modalCardStyle = {
+    background: '#1a1a2e', borderRadius: 16, padding: 24, maxWidth: 380, width: '90%',
+    border: '1px solid #2f2f2f', color: '#fff',
+};
 
 export default BarberProfilePage;

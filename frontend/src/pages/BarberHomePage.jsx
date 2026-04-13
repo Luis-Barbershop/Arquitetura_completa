@@ -64,7 +64,7 @@ function BarberHomePage() {
 
   const handleTabChange = (tab) => {
     if (tab === 'home') {
-      setActiveTab('home');
+      // Já estamos na home — não faz nada (evita re-render desnecessário)
       return;
     }
 
@@ -98,7 +98,10 @@ function BarberHomePage() {
       return;
     }
 
-    setActiveTab(tab);
+    if (tab === 'novo-agendamento') {
+      navigate('/barberHome/novo-agendamento');
+      return;
+    }
   };
 
   const handleCreateShop = () => navigate('/create-barbershop');

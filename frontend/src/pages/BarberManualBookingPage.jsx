@@ -6,11 +6,13 @@ import { logoutUser } from '../services/authService';
 import { isCustomer, isOwnerUser } from '../services/userContext';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
+import styles from './CSS/BarberHomePage.module.css';
 
 /**
  * Página de agendamento manual (walk-in) pelo barbeiro.
  * Permite cadastrar um atendimento presencial sem exigir
  * que o cliente tenha conta no sistema.
+ * Acessível a TODOS os barbeiros vinculados a uma barbearia.
  */
 function BarberManualBookingPage() {
     const navigate = useNavigate();
@@ -51,10 +53,15 @@ function BarberManualBookingPage() {
             .then(barberData => {
                 const shopId = barberData?.barbershopId;
                 if (!shopId) return;
-                return api.get(`/barbershops/${shopId}/activities`);
-            })
-            .then(res => {
-                if (res?.data) setActivities(res.data);
+                return api.get(`/barbershops/${shopId}/activities`).then(res => {
+                    let allActivities = res?.data || [];
+                    // Filtra apenas serviços atribuídos ao barbeiro (se campo existir)
+                    const assigned = barberData?.assignedActivityIds;
+                    if (assigned && Array.isArray(assigned) && assigned.length > 0) {
+                        allActivities = allActivities.filter(a => assigned.includes(a.id));
+                    }
+                    setActivities(allActivities);
+                });
             })
             .catch(() => {
                 navigate('/');
@@ -76,6 +83,7 @@ function BarberManualBookingPage() {
     };
 
     const handleTabChange = (tab) => {
+        if (tab === 'novo-agendamento') return; // já estamos aqui
         if (tab === 'home') navigate('/barberHome');
         else if (tab === 'agenda') navigate('/meus-agendamentos');
         else if (tab === 'servicos') navigate('/barberHome/servicos');
@@ -171,26 +179,30 @@ function BarberManualBookingPage() {
         transition: 'all 0.15s ease',
     });
 
-    if (loading) return <p style={{ padding: 32, color: '#fff' }}>Carregando...</p>;
+    if (loading) return <div className={styles.loadingContainer}>Carregando...</div>;
+
+    const hasLinkedBarbershop = Boolean(barber?.barbershopId);
 
     return (
-        <div style={{ minHeight: '100vh', background: '#0f0f1a', color: '#fff' }}>
+        <div className={`${styles.pageContainer} ${hasLinkedBarbershop ? styles.withNavbar : styles.withoutNavbar}`}>
+            <div className={styles.contentWrapper}>
             <BarberHeader
                 barber={barber}
                 onLogout={handleLogout}
-                activeTab="agenda"
+                activeTab="novo-agendamento"
                 isOwner={barber?.isOwner === true}
                 barbershopId={barber?.barbershopId}
                 onTabChange={handleTabChange}
             />
 
-            <main style={{ maxWidth: 640, margin: '40px auto', padding: '0 16px 60px' }}>
-                <h2 style={{ marginBottom: 4 }}>Novo Agendamento (Walk-in)</h2>
-                <p style={{ color: 'rgba(255,255,255,0.45)', marginBottom: 28, fontSize: 14 }}>
-                    Registre um atendimento presencial sem precisar que o cliente tenha conta no app.
-                </p>
+            <section className={styles.heroSection}>
+                <p className={styles.heroKicker}>NOVO AGENDAMENTO</p>
+                <h1>Walk-in</h1>
+                <p>Registre um atendimento presencial sem precisar que o cliente tenha conta no app.</p>
+            </section>
 
-                <form onSubmit={handleSubmit}>
+            <section className={styles.dashboardSection}>
+            <form onSubmit={handleSubmit} style={{ maxWidth: 600 }}>
 
                     {/* ── Dados do cliente ── */}
                     <div style={cardStyle}>
@@ -316,14 +328,17 @@ function BarberManualBookingPage() {
                         {submitting ? 'Registrando...' : 'Registrar atendimento'}
                     </button>
                 </form>
-            </main>
+            </section>
+            </div>
 
+            {hasLinkedBarbershop && (
             <BarberNavbar
-                activeTab="agenda"
+                activeTab="novo-agendamento"
                 onTabChange={handleTabChange}
                 isOwner={isOwnerUser()}
                 barbershopId={barber?.barbershopId}
             />
+            )}
         </div>
     );
 }
