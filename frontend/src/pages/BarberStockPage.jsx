@@ -98,7 +98,19 @@ function BarberStockPage() {
       return;
     }
 
-    navigate('/barberHome', { state: { activeTab: tab } });
+    if (tab === 'perfil') {
+      navigate('/barberHome/perfil');
+      return;
+    }
+
+    if (tab === 'time') {
+      navigate('/barberHome/time');
+      return;
+    }
+
+    if (tab === 'dashboards') {
+      navigate('/barberHome/dashboard');
+    }
   };
 
   const handleLogout = () => {
@@ -420,7 +432,7 @@ function BarberStockPage() {
             <div className={styles.panelHeader}>
               <h2>Inventario de produtos</h2>
               <span className={styles.lowStockBadge}>
-                {lowStockItems.length} com estoque baixo
+                {lowStockItems.length === 0 ? 'Nenhum com estoque baixo' : `${lowStockItems.length} com estoque baixo`}
               </span>
             </div>
 
@@ -476,8 +488,9 @@ function BarberStockPage() {
                           type="button"
                           className={styles.deleteButton}
                           onClick={() => handleDeleteItem(item.id)}
+                          aria-label="Excluir item"
                         >
-                          Excluir
+                          🗑
                         </button>
                       </div>
                     </li>

@@ -293,6 +293,17 @@ public class BarbershopService {
         UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
+        UserInfoDTO targetBarber = resolveUser(barberId);
+        if (!"BARBER".equalsIgnoreCase(targetBarber.getUserType())) {
+            throw new DomainConflictException("Somente barbeiros podem ser removidos da equipe.");
+        }
+        if (targetBarber.getId().equals(owner.getId())) {
+            throw new ForbiddenException("O dono nao pode remover a si mesmo. Utilize o encerramento da barbearia.");
+        }
+        if (targetBarber.getBarbershopId() == null || !targetBarber.getBarbershopId().equals(shop.getId())) {
+            throw new ForbiddenException("Este barbeiro nao pertence a sua barbearia.");
+        }
+
         // Remove a associação do barbeiro com a barbearia no user-service
         updateUserBarbershop(barberId, null);
     }
@@ -300,6 +311,25 @@ public class BarbershopService {
     public void closeBarbershop(String ownerUid, CloseBarbershopRequestDTO dto) {
         UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
+
+        if (dto == null || dto.getPassword() == null || dto.getPassword().isBlank()) {
+            throw new DomainConflictException("A confirmacao de senha e obrigatoria para encerrar a barbearia.");
+        }
+
+        // Desvincula barbeiros associados antes de apagar a barbearia para evitar inconsistencias.
+        List<UserInfoDTO> linkedBarbers;
+        try {
+            linkedBarbers = userServiceClient.getBarbersByBarbershop(shop.getId());
+        } catch (Exception ex) {
+            throw new UserServiceUnavailableException("Nao foi possivel consultar a equipe vinculada para encerrar a barbearia.");
+        }
+
+        for (UserInfoDTO linked : linkedBarbers) {
+            if (linked == null || linked.getId() == null || linked.getId().equals(owner.getId())) {
+                continue;
+            }
+            updateUserBarbershop(linked.getId(), null);
+        }
 
         // Remove a associação do dono
         updateUserBarbershop(owner.getId(), null);

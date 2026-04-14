@@ -2,6 +2,7 @@ package ifsp.edu.projeto.cortaai.scheduleservice.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,6 +38,7 @@ public class BarberManualBookingDTO {
     private String clientName;
 
     /** Telefone do cliente para contato. Opcional. */
-    @Size(max = 20, message = "O telefone deve ter no máximo 20 caracteres.")
+    @Size(min = 11, max = 11, message = "O telefone deve conter exatamente 11 dígitos.")
+    @Pattern(regexp = "^\\d{11}$", message = "O telefone deve conter apenas números (11 dígitos).")
     private String clientPhone;
 }

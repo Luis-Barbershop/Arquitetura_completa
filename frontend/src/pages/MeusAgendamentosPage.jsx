@@ -81,7 +81,7 @@ const MeusAgendamentosPage = () => {
             setIsCancelModalOpen(false);
             setCancelingAppointmentId(null);
             carregarAgendamentos();
-        } catch (error) {
+        } catch {
             toast.error("Erro ao cancelar. Tente novamente.");
         } finally {
             setIsSubmittingCancel(false);
@@ -140,6 +140,7 @@ const MeusAgendamentosPage = () => {
     const translateStatus = (status) => {
         const map = {
             'SCHEDULED': 'Agendado',
+            'WALK_IN': 'Walk-in',
             'CANCELLED': 'Cancelado',
             'COMPLETED': 'Concluído'
         };
@@ -182,6 +183,7 @@ const MeusAgendamentosPage = () => {
     const filterItems = [
         { key: 'ALL', label: 'Todos' },
         { key: 'SCHEDULED', label: 'Agendados' },
+        { key: 'WALK_IN', label: 'Walk-in' },
         { key: 'COMPLETED', label: 'Concluidos' },
         { key: 'CANCELLED', label: 'Cancelados' },
     ];
@@ -216,6 +218,11 @@ const MeusAgendamentosPage = () => {
 
         if (tab === 'dashboards') {
             navigate('/barberHome/dashboard');
+            return;
+        }
+
+        if (tab === 'novo-agendamento') {
+            navigate('/barberHome/novo-agendamento');
             return;
         }
 

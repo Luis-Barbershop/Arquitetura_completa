@@ -340,18 +340,18 @@
 .deleteButton {
     height: 32px;
     border-radius: 10px;
-    border: 1px solid #7f3131;
-    background: #351515;
-    color: #ffb2b2;
-    padding: 0 11px;
+    border: 1px solid #575757;
+    background: #2d2d2d;
+    color: #d4d4d4;
+    padding: 0 10px;
     cursor: pointer;
-    font-size: 0.78rem;
+    font-size: 0.9rem;
     font-family: "Space Grotesk", sans-serif;
     font-weight: 700;
 }
 
 .deleteButton:hover {
-    background: #4a1f1f;
+    background: #3a3a3a;
 }
 
 .form {

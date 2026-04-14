@@ -1,9 +1,9 @@
 import Styles from './CSS/Buttonsbarber.module.css'
 
-function Buttonsbarber() {
+function Buttonsbarber({ onReportsClick, onMyBookingsClick }) {
   return (
     <div className={Styles.containerButtons}>
-        <button className={Styles.button}>
+        <button type="button" className={Styles.button} onClick={onReportsClick}>
             <div>
                 <div className={Styles.iconReport}>
                     <img src="/Icons/bar.png" alt="Barrinhas" />
@@ -12,12 +12,12 @@ function Buttonsbarber() {
             </div>
         </button>
 
-        <button className={Styles.button}>
+        <button type="button" className={Styles.button} onClick={onMyBookingsClick}>
             <div>
                 <div className={Styles.iconscheduling}>
-                    <img src="/Icons/plusIcon.png" alt="" />
+                    <img src="/Icons/plusIcon.png" alt="Agenda" />
                 </div>
-                <h3>Novos Agendamentos</h3>
+                <h3>Meus Agendamentos</h3>
             </div>
         </button>
 

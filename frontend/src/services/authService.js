@@ -66,7 +66,9 @@ export const refreshSession = async () => {
             localStorage.setItem('barbershopId', String(verifyResponse.data.barbershopId));
         if (verifyResponse.data?.name)
             localStorage.setItem('userName', verifyResponse.data.name);
-    } catch (_) {
+        if (verifyResponse.data?.authProvider)
+            localStorage.setItem('authProvider', verifyResponse.data.authProvider);
+    } catch {
         // Se falhar o re-verify, mantém os valores atuais silenciosamente
     }
 };
@@ -125,6 +127,8 @@ export const loginUser = async (email, password) => {
         localStorage.setItem('barbershopId', String(verifyResponse.data.barbershopId));
     if (verifyResponse.data?.name)
         localStorage.setItem('userName', verifyResponse.data.name);
+    if (verifyResponse.data?.authProvider)
+        localStorage.setItem('authProvider', verifyResponse.data.authProvider);
     // Limpa a intenção após login bem-sucedido
     sessionStorage.removeItem('user_intent');
 
@@ -296,6 +300,8 @@ export const loginWithGoogle = async () => {
             localStorage.setItem('barbershopId', String(verifyResponse.data.barbershopId));
         if (verifyResponse.data?.name)
             localStorage.setItem('userName', verifyResponse.data.name);
+        if (verifyResponse.data?.authProvider)
+            localStorage.setItem('authProvider', verifyResponse.data.authProvider);
         // Limpa a intenção após login bem-sucedido
         sessionStorage.removeItem('user_intent');
 

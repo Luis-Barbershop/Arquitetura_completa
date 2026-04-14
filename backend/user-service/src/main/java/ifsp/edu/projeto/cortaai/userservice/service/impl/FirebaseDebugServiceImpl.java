@@ -30,8 +30,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +50,9 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
 
     @Value("${firebase.web-api-key:}")
     private String firebaseWebApiKey;
+
+    @Value("${app.web-base-url:https://web.cortaai.shop}")
+    private String appWebBaseUrl;
 
     @Override
     public FirebaseEmailSignInResponseDTO signInWithEmailPassword(FirebaseEmailSignInRequestDTO request) {
@@ -231,7 +233,8 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
         try {
             Map<String, Object> payload = Map.of(
                     "requestType", "PASSWORD_RESET",
-                    "email", request.email()
+                    "email", request.email(),
+                    "continueUrl", appWebBaseUrl + "/login"
             );
             String body = objectMapper.writeValueAsString(payload);
             HttpRequest httpRequest = HttpRequest.newBuilder()
@@ -269,6 +272,12 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
             throw new IllegalArgumentException("A propriedade firebase.web-api-key não está configurada.");
         }
         try {
+            FirebaseToken decodedToken = firebaseAuth.verifyIdToken(request.idToken());
+            String signInProvider = extractSignInProvider(decodedToken);
+            if (signInProvider != null && !"password".equalsIgnoreCase(signInProvider)) {
+                throw new IllegalArgumentException("Contas de login social nao podem alterar senha por esta rota.");
+            }
+
             Map<String, Object> payload = Map.of(
                     "idToken", request.idToken(),
                     "password", request.newPassword(),
@@ -301,9 +310,28 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Requisição ao Firebase foi interrompida.", ex);
+        } catch (FirebaseAuthException ex) {
+            throw new SecurityException("Token de sessao invalido ou expirado. Faca login novamente.");
         } catch (IOException ex) {
             throw new RuntimeException("Falha ao comunicar com o Firebase: " + ex.getMessage(), ex);
         }
+    }
+
+    private String extractSignInProvider(FirebaseToken token) {
+        if (token == null || token.getClaims() == null) {
+            return null;
+        }
+
+        Object firebaseClaim = token.getClaims().get("firebase");
+        if (!(firebaseClaim instanceof Map<?, ?> firebaseMap)) {
+            return null;
+        }
+
+        Object provider = firebaseMap.get("sign_in_provider");
+        if (provider == null) {
+            return null;
+        }
+        return String.valueOf(provider).toLowerCase(Locale.ROOT);
     }
 
     /**

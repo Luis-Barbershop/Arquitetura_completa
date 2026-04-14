@@ -77,7 +77,19 @@ function BarberServicesPage() {
       return;
     }
 
-    navigate('/barberHome', { state: { activeTab: tab } });
+    if (tab === 'perfil') {
+      navigate('/barberHome/perfil');
+      return;
+    }
+
+    if (tab === 'time') {
+      navigate('/barberHome/time');
+      return;
+    }
+
+    if (tab === 'dashboards') {
+      navigate('/barberHome/dashboard');
+    }
   };
 
   const handleLogout = () => {

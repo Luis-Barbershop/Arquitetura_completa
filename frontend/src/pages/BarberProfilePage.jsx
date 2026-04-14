@@ -21,43 +21,19 @@ const DAYS_OF_WEEK = [
 
 const EMPTY_BLOCK = { startTime: '', endTime: '' };
 
-/* ── Componente spinner numérico (horas / minutos) ──────────────────────── */
-function TimeSpinner({ value, onChange, min, max, disabled, label }) {
-    const numVal = value === '' ? min : parseInt(value, 10);
-    const inc = () => { const next = numVal >= max ? min : numVal + 1; onChange(String(next).padStart(2, '0')); };
-    const dec = () => { const next = numVal <= min ? max : numVal - 1; onChange(String(next).padStart(2, '0')); };
-    const handleInput = (e) => {
-        const raw = e.target.value.replace(/\D/g, '').slice(0, 2);
-        if (raw === '') { onChange(''); return; }
-        const n = Math.min(Math.max(parseInt(raw, 10), min), max);
-        onChange(String(n).padStart(2, '0'));
-    };
-    return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            {label && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>{label}</span>}
-            <button type="button" onClick={inc} disabled={disabled} style={spinBtnStyle} aria-label="incrementar">▲</button>
-            <input type="text" inputMode="numeric" value={value === '' ? '' : String(numVal).padStart(2, '0')}
-                onChange={handleInput} disabled={disabled} style={spinInputStyle(disabled)} maxLength={2} />
-            <button type="button" onClick={dec} disabled={disabled} style={spinBtnStyle} aria-label="decrementar">▼</button>
-        </div>
-    );
-}
-
 /* ── Componente seletor de horário HH:MM ────────────────────────────────── */
 function TimePicker({ value, onChange, disabled }) {
-    const parts = value ? value.split(':') : ['', ''];
-    const hh = parts[0] || '';
-    const mm = parts[1] || '';
-    const update = (newHH, newMM) => {
-        if (newHH !== '' && newMM !== '') onChange(`${newHH}:${newMM}`);
-        else if (newHH === '' && newMM === '') onChange('');
-        else onChange(`${newHH || '00'}:${newMM || '00'}`);
-    };
+    const safeValue = value && value.length >= 5 ? value.substring(0, 5) : '';
     return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '4px 8px', border: '1px solid #2a2a2a' }}>
-            <TimeSpinner value={hh} onChange={v => update(v, mm || '00')} min={0} max={23} disabled={disabled} label="h" />
-            <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 18, fontWeight: 700, margin: '0 2px', paddingTop: 12 }}>:</span>
-            <TimeSpinner value={mm} onChange={v => update(hh || '00', v)} min={0} max={59} disabled={disabled} label="m" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '6px 8px', border: '1px solid #2a2a2a' }}>
+            <input
+                type="time"
+                step={60}
+                value={safeValue}
+                onChange={(e) => onChange(e.target.value)}
+                disabled={disabled}
+                style={timeInputStyle(disabled)}
+            />
         </div>
     );
 }
@@ -320,6 +296,8 @@ function BarberProfilePage() {
     };
 
     const hasLinkedBarbershop = !!barber?.barbershopId;
+    const phoneValue = barber?.tell || barber?.phone || barber?.phoneNumber || '—';
+    const cpfValue = barber?.documentCPF || barber?.documentCpf || barber?.cpf || '—';
 
     const handleTabChange = (tab) => {
         if (tab === 'home')       navigate('/barberHome');
@@ -365,12 +343,9 @@ function BarberProfilePage() {
                                 )}
                                 <div><strong>Nome:</strong> {barber.name}</div>
                                 <div><strong>E-mail:</strong> {barber.email}</div>
-                                <div><strong>Telefone:</strong> {barber.tell || '—'}</div>
-                                <div><strong>CPF:</strong> {barber.documentCPF || '—'}</div>
-                                <div>
-                                    <strong>Barbearia:</strong>{' '}
-                                    {barber.barbershopId ? `Vinculado (ID: ${barber.barbershopId})` : 'Sem barbearia'}
-                                </div>
+                                <div><strong>Telefone:</strong> {phoneValue}</div>
+                                <div><strong>CPF:</strong> {cpfValue}</div>
+                                <div><strong>Barbearia:</strong> {barber.barbershopId ? 'Vinculado' : 'Sem barbearia'}</div>
                                 <div>
                                     <strong>Função:</strong>{' '}
                                     {barber.isOwner ? 'Dono do estabelecimento' : 'Colaborador'}
@@ -617,17 +592,18 @@ function BarberProfilePage() {
 }
 
 // ── Estilos inline compartilhados ──────────────────────────────────────────────
-const spinBtnStyle = {
-    width: 32, height: 22, borderRadius: 6, border: '1px solid #2f2f2f',
-    background: 'rgba(255,255,255,0.06)', color: '#d4af37', fontSize: 10,
-    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontWeight: 700, transition: 'background 0.15s',
-};
-const spinInputStyle = (disabled) => ({
-    width: 38, height: 32, borderRadius: 8, border: '1px solid #3a3a3a',
+const timeInputStyle = (disabled) => ({
+    width: 124,
+    height: 34,
+    borderRadius: 8,
+    border: '1px solid #3a3a3a',
     background: disabled ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.08)',
-    color: disabled ? 'rgba(255,255,255,0.3)' : '#fff', fontSize: 16, fontWeight: 700,
-    textAlign: 'center', outline: 'none',
+    color: disabled ? 'rgba(255,255,255,0.3)' : '#fff',
+    fontSize: 13,
+    fontWeight: 700,
+    textAlign: 'center',
+    outline: 'none',
+    padding: '0 8px',
 });
 
 const cardStyle = {

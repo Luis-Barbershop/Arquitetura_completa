@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AppointmentService {
 
+    private static final UUID WALK_IN_CUSTOMER_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
     private final AppointmentRepository appointmentRepository;
     private final BarberBlockRepository barberBlockRepository;
     private final AppointmentMapper appointmentMapper;
@@ -158,6 +160,22 @@ public class AppointmentService {
             throw new NotFoundException("Barbeiro não encontrado ou tipo inválido.");
         }
 
+        if (barber.getBarbershopId() == null || !barber.getBarbershopId().equals(dto.getBarbershopId())) {
+            throw new ConflictException("O barbeiro só pode registrar walk-in na barbearia em que está vinculado.");
+        }
+
+        Set<UUID> assignedActivityIds = userServiceClient.getBarberAssignedActivities(barber.getId());
+        if (assignedActivityIds == null || assignedActivityIds.isEmpty()) {
+            throw new ConflictException("O barbeiro não possui serviços atribuídos para registrar walk-in.");
+        }
+
+        List<UUID> invalidActivities = dto.getActivityIds().stream()
+                .filter(activityId -> !assignedActivityIds.contains(activityId))
+                .toList();
+        if (!invalidActivities.isEmpty()) {
+            throw new ConflictException("Foram informados serviços que não estão atribuídos ao barbeiro.");
+        }
+
         // 2. Validar barbershop + buscar activities via Feign
         BarbershopInfoDTO shop = barbershopServiceClient.getBarbershopById(dto.getBarbershopId());
         if (shop == null) {
@@ -198,11 +216,10 @@ public class AppointmentService {
             throw new ConflictException("O barbeiro está indisponível neste período (bloqueio de agenda).");
         }
 
-        // 7. Montar snapshot do cliente walk-in com UUID nulo (sem conta no sistema)
-        //    customerId preenchido com UUID do próprio barbeiro para satisfazer constraint NOT NULL
-        //    — identificação real é feita pelo customerName (clientName do DTO)
+        // 7. Snapshot do cliente walk-in usa UUID sintético fixo.
+        //    Não representa um cliente cadastrado e evita distorcer métricas por vincular ao barbeiro.
         Appointment appointment = Appointment.builder()
-                .customerId(barber.getId())        // placeholder: barbeiro cria em nome do walk-in
+                .customerId(WALK_IN_CUSTOMER_ID)
                 .barberId(barber.getId())
                 .barbershopId(dto.getBarbershopId())
                 .customerName(dto.getClientName())  // nome real do cliente walk-in
@@ -228,8 +245,8 @@ public class AppointmentService {
         appointment.setActivities(appointmentActivities);
 
         Appointment saved = appointmentRepository.save(appointment);
-        log.info("Agendamento manual (WALK_IN) criado: id={}, barbeiro={}, cliente='{}'",
-                saved.getId(), barber.getId(), dto.getClientName());
+        log.info("Agendamento manual (WALK_IN) criado: id={}, barbeiro={}, cliente='{}', telefone='{}'",
+                saved.getId(), barber.getId(), dto.getClientName(), dto.getClientPhone());
 
         // 9. Sem evento de pagamento — WALK_IN não passa por gateway de pagamento
         return appointmentMapper.toDTO(saved);

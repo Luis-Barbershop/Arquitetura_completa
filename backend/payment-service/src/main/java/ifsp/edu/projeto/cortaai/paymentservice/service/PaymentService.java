@@ -24,7 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -263,7 +265,10 @@ public class PaymentService {
     public List<TransactionDTO> getMyPaymentsByFirebaseUid(String firebaseUid) {
         UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
         if (user == null || user.getId() == null) {
-            return List.of();
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario nao autenticado.");
+        }
+        if (!"CUSTOMER".equalsIgnoreCase(user.getUserType())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas clientes podem consultar os proprios pagamentos.");
         }
         return getMyPayments(user.getId());
     }
@@ -272,9 +277,37 @@ public class PaymentService {
     public TransactionDTO createPaymentByFirebaseUid(UUID appointmentId, String firebaseUid, String paymentMethod) {
         UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
         if (user == null || user.getId() == null) {
-            throw new RuntimeException("Usuário não encontrado para Firebase UID: " + firebaseUid);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario nao autenticado.");
+        }
+        if (!"CUSTOMER".equalsIgnoreCase(user.getUserType())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas clientes podem criar pagamentos.");
         }
         return createPayment(appointmentId, user.getId(), paymentMethod);
+    }
+
+    @Transactional(readOnly = true)
+    public FinancialOverviewDTO getBarbershopOverviewByFirebaseUid(
+            String firebaseUid,
+            UUID barbershopId,
+            LocalDate from,
+            LocalDate to) {
+        if (!canAccessBarbershopFinancials(firebaseUid, barbershopId, false)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissao para acessar o financeiro desta barbearia.");
+        }
+        return getBarbershopOverview(barbershopId, from, to);
+    }
+
+    @Transactional(readOnly = true)
+    public FinancialSeriesDTO getBarbershopSeriesByFirebaseUid(
+            String firebaseUid,
+            UUID barbershopId,
+            LocalDate from,
+            LocalDate to,
+            String groupBy) {
+        if (!canAccessBarbershopFinancials(firebaseUid, barbershopId, true)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "A serie financeira e restrita ao owner da barbearia.");
+        }
+        return getBarbershopSeries(barbershopId, from, to, groupBy);
     }
 
     @Transactional(readOnly = true)

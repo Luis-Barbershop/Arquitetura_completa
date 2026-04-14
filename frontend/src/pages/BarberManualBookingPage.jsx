@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
 import { isCustomer, isOwnerUser } from '../services/userContext';
+import { getMyAssignedActivities } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import styles from './CSS/BarberHomePage.module.css';
@@ -53,14 +54,14 @@ function BarberManualBookingPage() {
             .then(barberData => {
                 const shopId = barberData?.barbershopId;
                 if (!shopId) return;
-                return api.get(`/barbershops/${shopId}/activities`).then(res => {
-                    let allActivities = res?.data || [];
-                    // Filtra apenas serviços atribuídos ao barbeiro (se campo existir)
-                    const assigned = barberData?.assignedActivityIds;
-                    if (assigned && Array.isArray(assigned) && assigned.length > 0) {
-                        allActivities = allActivities.filter(a => assigned.includes(a.id));
-                    }
-                    setActivities(allActivities);
+                return Promise.all([
+                    api.get(`/barbershops/${shopId}/activities`),
+                    getMyAssignedActivities(),
+                ]).then(([shopActivitiesResponse, assignedActivities]) => {
+                    const allActivities = Array.isArray(shopActivitiesResponse?.data) ? shopActivitiesResponse.data : [];
+                    const assignedIds = new Set((assignedActivities || []).map((activity) => activity?.id).filter(Boolean));
+                    const filteredActivities = allActivities.filter((activity) => assignedIds.has(activity.id));
+                    setActivities(filteredActivities);
                 });
             })
             .catch(() => {
@@ -117,6 +118,11 @@ function BarberManualBookingPage() {
             return;
         }
 
+        if (clientPhone && clientPhone.length !== 11) {
+            toast.warn('Telefone deve conter exatamente 11 dígitos.');
+            return;
+        }
+
         const shopId = barber?.barbershopId;
         if (!shopId) {
             toast.error('Você não está vinculado a nenhuma barbearia.');
@@ -130,7 +136,7 @@ function BarberManualBookingPage() {
             activityIds: selectedActivityIds,
             startTime: startTimeISO,
             clientName: clientName.trim(),
-            clientPhone: clientPhone.trim() || null,
+            clientPhone: clientPhone || null,
         };
 
         setSubmitting(true);
@@ -226,10 +232,10 @@ function BarberManualBookingPage() {
                             <input
                                 style={inputStyle}
                                 type="tel"
-                                placeholder="Ex: (11) 99999-9999"
+                                placeholder="Ex: 11999999999"
                                 value={clientPhone}
-                                onChange={e => setClientPhone(e.target.value)}
-                                maxLength={20}
+                                onChange={e => setClientPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
+                                maxLength={11}
                             />
                         </div>
                     </div>

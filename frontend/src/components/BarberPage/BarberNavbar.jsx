@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import styles from './CSS/BarberNavbar.module.css';
 
 const NAV_PATHS = {
@@ -42,7 +41,7 @@ const ownerNavItems = [
  *   - undefined (não passado): assume que há barbearia (retro-compatibilidade)
  *   - null / false / 0 / "": sem barbearia → oculta Agenda e Serviços
  */
-function BarberNavbar({ activeTab, isOwner = false, barbershopId }) {
+function BarberNavbar({ activeTab, isOwner = false, barbershopId, onTabChange }) {
     // Se não foi passado explicitamente, assume que há barbearia (retro-compatibilidade)
     const hasShop = barbershopId === undefined ? true : Boolean(barbershopId);
     const baseItems = hasShop ? linkedNavItems : unlinkedNavItems;
@@ -50,19 +49,32 @@ function BarberNavbar({ activeTab, isOwner = false, barbershopId }) {
         ? [...baseItems, ...ownerNavItems]
         : baseItems;
 
+    const handleItemClick = (itemId) => {
+        if (typeof onTabChange === 'function') {
+            onTabChange(itemId);
+            return;
+        }
+
+        const target = NAV_PATHS[itemId];
+        if (target && window.location.pathname !== target) {
+            window.location.assign(target);
+        }
+    };
+
     return (
         <nav className={styles.navbarContainer}>
             <ul className={styles.navbarList}>
                 {navItems.map(item => (
                     <li key={item.id}>
-                        <Link
-                            to={NAV_PATHS[item.id] || '/barberHome'}
+                        <button
+                            type="button"
+                            onClick={() => handleItemClick(item.id)}
                             className={activeTab === item.id ? styles.navItemActive : styles.navItem}
                             aria-label={item.label}
                         >
                             <span className={styles.navIcon}>{item.short}</span>
                             <span className={styles.navLabel}>{item.label}</span>
-                        </Link>
+                        </button>
                     </li>
                 ))}
             </ul>

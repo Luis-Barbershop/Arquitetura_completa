@@ -155,7 +155,13 @@ function BarberHomePage() {
             </section>
 
             <section className={styles.dashboardSection}>
-            <Buttonsbarber />
+            <Buttonsbarber
+              onReportsClick={() => {
+                const owner = Boolean(barber?.isOwner) || isOwnerUser();
+                navigate(owner ? '/barberHome/dashboard' : '/meus-agendamentos');
+              }}
+              onMyBookingsClick={() => navigate('/meus-agendamentos')}
+            />
             </section>
 
             <section className={styles.dashboardSection}>

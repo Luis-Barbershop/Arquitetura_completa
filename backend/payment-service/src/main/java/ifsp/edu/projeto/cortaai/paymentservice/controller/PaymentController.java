@@ -17,13 +17,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-import org.springframework.http.HttpStatus;
 
 /**
  * Controller REST para pagamentos.
@@ -91,10 +89,7 @@ public class PaymentController {
             @Parameter(description = "UUID da barbearia") @RequestParam UUID barbershopId,
             @Parameter(description = "Data inicial (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @Parameter(description = "Data final (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        if (!paymentService.canAccessBarbershopFinancials(firebaseUid, barbershopId, false)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para acessar o financeiro desta barbearia.");
-        }
-        return ResponseEntity.ok(paymentService.getBarbershopOverview(barbershopId, from, to));
+        return ResponseEntity.ok(paymentService.getBarbershopOverviewByFirebaseUid(firebaseUid, barbershopId, from, to));
     }
 
     @Operation(summary = "Serie financeira da barbearia", description = "Retorna série de receita de serviços aprovados por período para uso em gráficos internos.")
@@ -105,9 +100,6 @@ public class PaymentController {
             @Parameter(description = "Data inicial (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @Parameter(description = "Data final (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @Parameter(description = "Agrupamento: DAY ou WEEK") @RequestParam(required = false, defaultValue = "DAY") String groupBy) {
-        if (!paymentService.canAccessBarbershopFinancials(firebaseUid, barbershopId, true)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "A serie financeira e restrita ao owner da barbearia.");
-        }
-        return ResponseEntity.ok(paymentService.getBarbershopSeries(barbershopId, from, to, groupBy));
+        return ResponseEntity.ok(paymentService.getBarbershopSeriesByFirebaseUid(firebaseUid, barbershopId, from, to, groupBy));
     }
 }

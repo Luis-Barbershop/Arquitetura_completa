@@ -12,7 +12,7 @@ function evaluatePasswordStrength(pwd) {
     if (pwd.length >= 8) score++;
     if (/[A-Z]/.test(pwd)) score++;
     if (/\d/.test(pwd)) score++;
-    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
     const map = [
         { label: 'Muito fraca', color: '#e74c3c' },
         { label: 'Fraca',       color: '#e67e22' },
@@ -32,12 +32,18 @@ function ChangePasswordPage() {
     const navigate = useNavigate();
 
     const idToken = localStorage.getItem("token");
+    const canChangePassword = (localStorage.getItem('authProvider') || 'EMAIL').toUpperCase() === 'EMAIL';
 
     const passwordStrength = useMemo(() => evaluatePasswordStrength(newPassword), [newPassword]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError(null);
+
+        if (!canChangePassword) {
+            setError("Contas Google/Redes sociais não podem alterar senha por aqui. Use o provedor de login original.");
+            return;
+        }
 
         if (passwordStrength.score < 4) {
             setError("A senha não é forte o suficiente. Use no mínimo 8 caracteres, 1 maiúscula, 1 número e 1 caractere especial.");
@@ -107,6 +113,13 @@ function ChangePasswordPage() {
                             <h2>Alterar senha</h2>
                             <p>Escolha uma nova senha para sua conta.</p>
 
+                            {!canChangePassword && (
+                                <div className={FPStyles.successBox}>
+                                    <h2>Opcao indisponivel</h2>
+                                    <p>Esta conta foi criada com login social. A alteracao de senha deve ser feita no provedor de autenticacao.</p>
+                                </div>
+                            )}
+
                             <form onSubmit={handleSubmit} className={FPStyles.form}>
                                 <label className={FPStyles.fieldLabel}>
                                     <p className={FPStyles.labelText}>Nova senha</p>
@@ -161,7 +174,7 @@ function ChangePasswordPage() {
 
                                 <button
                                     type="submit"
-                                    disabled={loading}
+                                    disabled={loading || !canChangePassword}
                                     className={FPStyles.submitBtn}
                                 >
                                     {loading ? "Alterando..." : "Alterar senha"}

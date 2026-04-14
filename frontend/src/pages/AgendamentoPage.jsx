@@ -156,7 +156,7 @@ const AgendamentoPage = () => {
               isAvailable: slots.length > 0,
               status: "loaded",
             };
-          } catch (error) {
+          } catch {
             hydratedOptions[index] = {
               ...current,
               slots: [],
@@ -367,10 +367,9 @@ const AgendamentoPage = () => {
 
       // Se há um barbeiro selecionado, verifica se ele consegue fazer todos os serviços resultantes
       if (selectedBarber) {
-        const barberData = barbersList.find(b => String(b.id) === String(selectedBarber));
-        const barberActivityIds = new Set((barberData?.assignedActivityIds || []).map(String));
-        const canStillDoAll = next.every(s => barberActivityIds.has(String(s.id)));
-        if (!canStillDoAll) {
+        const hasActivityData = selectedBarberActivityIds.size > 0;
+        const canStillDoAll = !hasActivityData || next.every(s => selectedBarberActivityIds.has(String(s.id)));
+        if (hasActivityData && !canStillDoAll) {
           // Desmarca o barbeiro para que o usuário escolha outro
           setSelectedBarber(null);
           toast.info("O profissional selecionado não realiza todos os serviços. Por favor, escolha outro profissional.");
@@ -588,15 +587,16 @@ const AgendamentoPage = () => {
               <div className={Styles.barberGrid}>
                 {barbersList.map((barber) => {
                   // Se há serviços selecionados, verifica se o barbeiro executa todos
-                  const barberActivityIds = new Set(
-                    (barber.assignedActivityIds || []).map(String)
-                  );
+                  const rawActivities = barber.assignedActivityIds || barberActivitiesById[barber.id] || null;
+                  const barberActivityIds = new Set((rawActivities || []).map((item) => String(typeof item === 'object' ? item.id : item)));
+                  const hasActivityData = barberActivityIds.size > 0;
                   const canDoAllServices =
                     selectedServices.length === 0 ||
+                    !hasActivityData ||
                     selectedServices.every(s => barberActivityIds.has(String(s.id)));
 
                   // Barbeiros que não atendem os serviços ficam desabilitados (não somem)
-                  const isDisabled = selectedServices.length > 0 && !canDoAllServices;
+                  const isDisabled = selectedServices.length > 0 && hasActivityData && !canDoAllServices;
                   const isSelected = String(selectedBarber) === String(barber.id);
 
                   return (

@@ -34,6 +34,7 @@ const ownerNavItems = [
  */
 function BarberHeader({ barber, onLogout, activeTab, onTabChange, isOwner = false, barbershopId }) {
     const navigate = useNavigate();
+    const canChangePassword = (localStorage.getItem('authProvider') || 'EMAIL').toUpperCase() === 'EMAIL';
 
     // Monta a lista de tabs respeitando a mesma lógica do BarberNavbar:
     // Agenda e Serviços só aparecem quando o barbeiro já tem barbearia vinculada
@@ -82,13 +83,15 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange, isOwner = fals
                             💳 Vincular MP
                         </button>
                     )}
-                    <button
-                        onClick={() => navigate('/change-password')}
-                        className={styles.changePasswordButton}
-                        title="Alterar senha"
-                    >
-                        🔒 Alterar senha
-                    </button>
+                    {canChangePassword && (
+                        <button
+                            onClick={() => navigate('/change-password')}
+                            className={styles.changePasswordButton}
+                            title="Alterar senha"
+                        >
+                            🔒 Alterar senha
+                        </button>
+                    )}
                     <button onClick={onLogout} className={styles.logoutButton}>
                         Sair
                     </button>

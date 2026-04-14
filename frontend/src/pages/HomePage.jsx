@@ -43,6 +43,7 @@ function HomePage() {
 
   const userName = localStorage.getItem("userName") || "Cliente";
   const firstName = userName.split(" ")[0];
+  const canChangePassword = (localStorage.getItem('authProvider') || 'EMAIL').toUpperCase() === 'EMAIL';
   const heroRef = useRef(null);
   const searchRef = useRef(null);
   const favoritesRef = useRef(null);
@@ -120,13 +121,15 @@ function HomePage() {
             <FiCalendar className={Styles.desktop_action_icon} />
             Meus agendamentos
           </button>
-          <button
-            className={Styles.desktop_secondary_button}
-            onClick={() => navigate("/change-password")}
-          >
-            <FiLock className={Styles.desktop_action_icon} />
-            Alterar senha
-          </button>
+          {canChangePassword && (
+            <button
+              className={Styles.desktop_secondary_button}
+              onClick={() => navigate('/change-password')}
+            >
+              <FiLock className={Styles.desktop_action_icon} />
+              Alterar senha
+            </button>
+          )}
           <button className={Styles.desktop_logout_button} onClick={handleLogout}>
             <FiLogOut className={Styles.desktop_action_icon} />
             Sair

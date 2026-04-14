@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Endpoints internos para comunicação inter-serviço.
@@ -119,6 +120,16 @@ public class InternalUserController {
                 .map(this::toUserInfoDTO)
                 .toList();
         return ResponseEntity.ok(barbers);
+    }
+
+    /** Lista os IDs das atividades atribuídas a um barbeiro (uso interno). */
+    @Operation(summary = "Lista atividades atribuídas do barbeiro (interno)")
+    @GetMapping("/barbers/{id}/activities")
+    public ResponseEntity<Set<UUID>> getBarberAssignedActivities(
+            @Parameter(description = "UUID do barbeiro") @PathVariable UUID id) {
+        return barberRepository.findById(id)
+                .map(barber -> ResponseEntity.ok(barber.getAssignedActivityIds()))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
