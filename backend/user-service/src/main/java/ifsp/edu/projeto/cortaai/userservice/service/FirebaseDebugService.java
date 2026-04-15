@@ -29,6 +29,12 @@ public interface FirebaseDebugService {
     void forgotPassword(ForgotPasswordRequestDTO request);
 
     /**
+     * Reenvia e-mail de recuperação de senha para o mesmo endereço.
+     * Deve aplicar limitação mínima para evitar abuso e spam.
+     */
+    void resendForgotPassword(ForgotPasswordRequestDTO request);
+
+    /**
      * Altera a senha do usuário autenticado via Firebase.
      * Requer o idToken válido da sessão atual.
      * Chama accounts:update com o novo password.

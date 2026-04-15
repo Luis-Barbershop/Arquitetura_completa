@@ -7,6 +7,7 @@ const AUTH_ENDPOINTS = {
     register: '/auth/email/register',
     verify: '/auth/verify',
     forgotPassword: '/auth/email/forgot-password',
+    resendForgotPassword: '/auth/email/resend-forgot-password',
     changePassword: '/auth/email/change-password',
     emailExists: '/auth/email/exists',
     resendVerification: '/auth/email/resend-verification',
@@ -206,6 +207,10 @@ export const logoutUser = () => {
 // Firebase envia e-mail com link de redefinição. Resposta 204 = sucesso.
 export const forgotPassword = async (email) => {
     await api.post(AUTH_ENDPOINTS.forgotPassword, { email });
+};
+
+export const resendForgotPassword = async (email) => {
+    await api.post(AUTH_ENDPOINTS.resendForgotPassword, { email });
 };
 
 // ─── ALTERAR SENHA ────────────────────────────────────────────────────────────

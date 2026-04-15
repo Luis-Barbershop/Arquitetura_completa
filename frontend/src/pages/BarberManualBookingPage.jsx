@@ -59,8 +59,8 @@ function BarberManualBookingPage() {
                     getMyAssignedActivities(),
                 ]).then(([shopActivitiesResponse, assignedActivities]) => {
                     const allActivities = Array.isArray(shopActivitiesResponse?.data) ? shopActivitiesResponse.data : [];
-                    const assignedIds = new Set((assignedActivities || []).map((activity) => activity?.id).filter(Boolean));
-                    const filteredActivities = allActivities.filter((activity) => assignedIds.has(activity.id));
+                    const assignedIds = new Set((assignedActivities || []).map((id) => String(id)));
+                    const filteredActivities = allActivities.filter((activity) => assignedIds.has(String(activity.id)));
                     setActivities(filteredActivities);
                 });
             })
@@ -277,7 +277,7 @@ function BarberManualBookingPage() {
 
                         {activities.length === 0 ? (
                             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
-                                Nenhum serviço cadastrado na sua barbearia.
+                                Nenhum serviço disponível para atendimento walk-in. Verifique se você já vinculou suas habilidades na aba de serviços.
                             </p>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

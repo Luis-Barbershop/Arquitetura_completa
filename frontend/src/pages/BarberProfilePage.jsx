@@ -188,17 +188,36 @@ function BarberProfilePage() {
             .finally(() => setLoadingInvites(false));
     }, [barber]);
 
+    const refreshBarberProfileAfterInvite = async () => {
+        const maxAttempts = 5;
+        for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+            const res = await api.get('/auth/me', { params: { t: Date.now() } });
+            const data = res.data;
+            setBarber(data);
+
+            if (data?.barbershopId) {
+                localStorage.setItem('barbershopId', String(data.barbershopId));
+                return true;
+            }
+
+            if (attempt < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, 350));
+            }
+        }
+
+        return false;
+    };
+
     const handleAcceptInvite = async (requestId) => {
         setInviteActionLoading(requestId);
         try {
             await acceptInvite(requestId);
             toast.success('Convite aceito! Você foi vinculado à barbearia.');
             setPendingInvites(prev => prev.filter(inv => inv.requestId !== requestId));
-            // Recarrega dados do barbeiro para atualizar barbershopId
-            const res = await api.get('/auth/me');
-            setBarber(res.data);
-            if (res.data?.barbershopId) {
-                localStorage.setItem('barbershopId', String(res.data.barbershopId));
+            const linked = await refreshBarberProfileAfterInvite();
+
+            if (!linked) {
+                toast.warn('Convite aceito, mas o vínculo ainda está sincronizando. Atualize a página em alguns segundos.');
             }
         } catch (err) {
             toast.error(err?.response?.data?.message || 'Erro ao aceitar convite.');

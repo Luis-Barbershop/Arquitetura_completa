@@ -295,6 +295,10 @@ const AgendamentoPage = () => {
 
         setServicesList(servicesData);
         setBarbersList(barbersData);
+
+        if (Array.isArray(barbersData) && barbersData.length === 0) {
+          toast.info("No momento não há profissionais disponíveis para esta barbearia.");
+        }
       } catch (error) {
         console.error("Erro ao carregar dados:", error);
         toast.error("Erro ao carregar informações da barbearia.");

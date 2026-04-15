@@ -99,3 +99,7 @@ logging:
     com.netflix.discovery: WARN
     com.netflix.eureka: WARN
     org.springframework.cloud.loadbalancer: WARN
+
+app:
+  web-base-url: ${APP_WEB_BASE_URL:https://web.cortaai.shop}
+  forgot-password-continue-url: ${APP_FORGOT_PASSWORD_CONTINUE_URL:https://web.cortaai.shop/login}

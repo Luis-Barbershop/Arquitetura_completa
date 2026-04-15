@@ -60,6 +60,7 @@ export const getShopBarbers = async (shopId) => {
         if (Array.isArray(payload)) return payload;
         if (Array.isArray(payload?.content)) return payload.content;
         if (Array.isArray(payload?.data)) return payload.data;
+        if (Array.isArray(payload?.barbers)) return payload.barbers;
         return [];
     };
 
@@ -145,7 +146,16 @@ export const deleteService = async (serviceId) => {
 
 export const getMyAssignedActivities = async () => {
     const response = await api.get('/barbers/me/my-activities');
-    return response.data; // Lista de ActivityDTO
+    const payload = response.data;
+    if (!Array.isArray(payload)) return [];
+
+    return payload
+        .map((item) => {
+            if (typeof item === 'string') return item;
+            if (item && typeof item === 'object' && item.id) return String(item.id);
+            return null;
+        })
+        .filter(Boolean);
 };
 
 // Vincula atividades ao perfil do Barbeiro

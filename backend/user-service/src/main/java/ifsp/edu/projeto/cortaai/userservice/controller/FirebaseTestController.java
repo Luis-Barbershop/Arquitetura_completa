@@ -120,6 +120,23 @@ public class FirebaseTestController {
 	}
 
 	@Operation(
+			summary = "Reenviar recuperação de senha",
+			description = "Reenvia um novo link de recuperação de senha para o e-mail informado. Aplica limitação mínima entre reenvios para reduzir abuso."
+	)
+	@ApiResponses({
+			@ApiResponse(responseCode = "204", description = "Link reenviado com sucesso"),
+			@ApiResponse(responseCode = "400", description = "E-mail inválido ou cooldown ativo"),
+			@ApiResponse(responseCode = "404", description = "E-mail não encontrado no Firebase")
+	})
+	@SecurityRequirements
+	@PostMapping("/resend-forgot-password")
+	public ResponseEntity<Void> resendForgotPassword(
+			@RequestBody @Valid ForgotPasswordRequestDTO request) {
+		firebaseDebugService.resendForgotPassword(request);
+		return ResponseEntity.noContent().build();
+	}
+
+	@Operation(
 			summary = "Alterar senha (usuário autenticado)",
 			description = """
 					Altera a senha do usuário autenticado.

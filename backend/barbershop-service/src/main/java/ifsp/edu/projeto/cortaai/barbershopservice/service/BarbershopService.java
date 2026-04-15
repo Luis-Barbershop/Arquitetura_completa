@@ -481,17 +481,19 @@ public class BarbershopService {
             throw new DomainConflictException("Este barbeiro já faz parte de uma barbearia.");
         }
 
-        // Verifica se já existe um convite/pedido pendente
-        joinRequestRepository.findByBarberIdAndBarbershopId(barber.getId(), shop.getId())
-                .ifPresent(req -> {
-                    if (req.getStatus() == JoinRequestStatus.PENDING) {
-                        throw new DomainConflictException("Já existe um convite pendente para este barbeiro.");
-                    }
+        BarbershopJoinRequest request = joinRequestRepository
+                .findByBarberIdAndBarbershopId(barber.getId(), shop.getId())
+                .orElseGet(() -> {
+                    BarbershopJoinRequest fresh = new BarbershopJoinRequest();
+                    fresh.setBarberId(barber.getId());
+                    fresh.setBarbershop(shop);
+                    return fresh;
                 });
 
-        BarbershopJoinRequest request = new BarbershopJoinRequest();
-        request.setBarberId(barber.getId());
-        request.setBarbershop(shop);
+        if (request.getStatus() == JoinRequestStatus.PENDING && request.getRequestType() == JoinRequestType.INVITE) {
+            throw new DomainConflictException("Já existe um convite pendente para este barbeiro.");
+        }
+
         request.setStatus(JoinRequestStatus.PENDING);
         request.setRequestType(JoinRequestType.INVITE);
         joinRequestRepository.save(request);

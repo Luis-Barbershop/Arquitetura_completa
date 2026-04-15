@@ -29,9 +29,14 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +46,9 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseDebugServiceImpl.class);
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+    private static final Duration FORGOT_PASSWORD_RESEND_COOLDOWN = Duration.ofMinutes(2);
+    private static final Duration FORGOT_PASSWORD_LINK_TTL = Duration.ofHours(1);
+    private static final ZoneId BRAZIL_ZONE = ZoneId.of("America/Sao_Paulo");
 
     private final FirebaseAuth firebaseAuth;
     private final FirebaseAuthService firebaseAuthService;
@@ -53,6 +61,11 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
 
     @Value("${app.web-base-url:https://web.cortaai.shop}")
     private String appWebBaseUrl;
+
+    @Value("${app.forgot-password-continue-url:https://web.cortaai.shop/login}")
+    private String forgotPasswordContinueUrl;
+
+    private final Map<String, Instant> forgotPasswordLastRequestByEmail = new ConcurrentHashMap<>();
 
     @Override
     public FirebaseEmailSignInResponseDTO signInWithEmailPassword(FirebaseEmailSignInRequestDTO request) {
@@ -164,7 +177,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                 Map<String, Object> verifyPayload = new java.util.HashMap<>();
                 verifyPayload.put("requestType", "VERIFY_EMAIL");
                 verifyPayload.put("idToken", idToken);
-                verifyPayload.put("continueUrl", "https://web.cortaai.shop/verify-email");
+                verifyPayload.put("continueUrl", appWebBaseUrl + "/verify-email");
                 String verifyBody = objectMapper.writeValueAsString(verifyPayload);
                 HttpRequest verifyRequest = HttpRequest.newBuilder()
                         .uri(URI.create("https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=" + firebaseWebApiKey))
@@ -230,11 +243,42 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
         if (firebaseWebApiKey == null || firebaseWebApiKey.isBlank()) {
             throw new IllegalArgumentException("A propriedade firebase.web-api-key não está configurada.");
         }
+
+        sendForgotPasswordEmail(request.email(), false);
+    }
+
+    @Override
+    public void resendForgotPassword(ForgotPasswordRequestDTO request) {
+        if (firebaseWebApiKey == null || firebaseWebApiKey.isBlank()) {
+            throw new IllegalArgumentException("A propriedade firebase.web-api-key não está configurada.");
+        }
+
+        sendForgotPasswordEmail(request.email(), true);
+    }
+
+    private void sendForgotPasswordEmail(String rawEmail, boolean isResend) {
+        String normalizedEmail = rawEmail == null ? "" : rawEmail.trim().toLowerCase(Locale.ROOT);
+        Instant now = Instant.now();
+
+        if (isResend) {
+            Instant lastRequest = forgotPasswordLastRequestByEmail.get(normalizedEmail);
+            if (lastRequest != null) {
+                Duration elapsed = Duration.between(lastRequest, now);
+                if (elapsed.compareTo(FORGOT_PASSWORD_RESEND_COOLDOWN) < 0) {
+                    long waitSeconds = FORGOT_PASSWORD_RESEND_COOLDOWN.minus(elapsed).getSeconds();
+                    throw new IllegalArgumentException("Aguarde " + waitSeconds + " segundos antes de reenviar o link.");
+                }
+            }
+        }
+
+        ZonedDateTime requestTime = ZonedDateTime.ofInstant(now, BRAZIL_ZONE);
+        ZonedDateTime expirationTime = requestTime.plus(FORGOT_PASSWORD_LINK_TTL);
+
         try {
             Map<String, Object> payload = Map.of(
                     "requestType", "PASSWORD_RESET",
-                    "email", request.email(),
-                    "continueUrl", appWebBaseUrl + "/login"
+                    "email", normalizedEmail,
+                    "continueUrl", forgotPasswordContinueUrl
             );
             String body = objectMapper.writeValueAsString(payload);
             HttpRequest httpRequest = HttpRequest.newBuilder()
@@ -251,12 +295,21 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                 String msg = switch (code) {
                     case "EMAIL_NOT_FOUND" -> "E-mail não encontrado.";
                     case "INVALID_EMAIL" -> "E-mail inválido.";
+                    case "TOO_MANY_ATTEMPTS_TRY_LATER", "TOO_MANY_REQUESTS" -> "Muitas tentativas. Aguarde alguns minutos para tentar novamente.";
                     default -> "Erro Firebase: " + code;
                 };
                 throw new SecurityException(msg);
             }
 
-            log.info("event=forgot-password-email-sent email={}", request.email());
+            forgotPasswordLastRequestByEmail.put(normalizedEmail, now);
+            log.info(
+                    "event=forgot-password-email-sent email={} resend={} generatedAt={} estimatedExpiresAt={} continueUrl={}",
+                    normalizedEmail,
+                    isResend,
+                    requestTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                    expirationTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+                    forgotPasswordContinueUrl
+            );
 
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();

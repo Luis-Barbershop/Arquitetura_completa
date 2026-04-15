@@ -15,6 +15,7 @@ public record AuthResponseDTO(
         String name,
         String email,
         String phone,
+        String documentCPF,
         String photoUrl,
         String userType,       // CUSTOMER | BARBER
         String authProvider,   // EMAIL | GOOGLE | FACEBOOK | APPLE | GITHUB | TWITTER

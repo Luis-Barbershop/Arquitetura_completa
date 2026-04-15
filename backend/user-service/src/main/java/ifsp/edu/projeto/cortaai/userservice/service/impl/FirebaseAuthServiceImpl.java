@@ -67,6 +67,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                     name != null ? name : "Usuário",
                     email,
                     null,
+                    null,
                     photoUrl,
                     resolvedType,
                     provider,
@@ -130,6 +131,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 name != null ? name : "Usuário",
                 email,
                 null,                        // sem telefone
+            null,                        // sem CPF
                 photoUrl,
                 resolvedType,
                 provider,
@@ -371,6 +373,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 customer.getName(),
                 customer.getEmail(),
                 customer.getTell(),
+            customer.getDocumentCPF(),
                 customer.getImageUrl(),
                 "CUSTOMER",
                 customer.getAuthProvider(),
@@ -392,6 +395,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 barber.getName(),
                 barber.getEmail(),
                 barber.getTell(),
+            barber.getDocumentCPF(),
                 barber.getImageUrl(),
                 "BARBER",
                 barber.getAuthProvider(),

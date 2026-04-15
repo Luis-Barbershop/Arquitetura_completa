@@ -40,6 +40,6 @@ public interface BarberRepository extends JpaRepository<Barber, UUID> {
     @Query("SELECT b FROM Barber b WHERE b.barbershopId = :barbershopId")
     List<Barber> findByBarbershopId(@Param("barbershopId") UUID barbershopId);
 
-    @Query("SELECT b FROM Barber b WHERE REPLACE(b.documentCPF, '.', '') = REPLACE(:cpf, '.', '')")
+    @Query("SELECT b FROM Barber b WHERE REPLACE(REPLACE(REPLACE(b.documentCPF, '.', ''), '-', ''), '/', '') = REPLACE(REPLACE(REPLACE(:cpf, '.', ''), '-', ''), '/', '')")
     Optional<Barber> findByDocumentCPF(@Param("cpf") String cpf);
 }
