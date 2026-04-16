@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../services/firebase";
 import { changePassword, logoutUser } from "../services/authService";
-import api from "../services/api";
 import Styles from "./CSS/LoginPage.module.css";
 import FPStyles from "./CSS/ForgotPasswordPage.module.css";
 import CPStyles from "./CSS/ChangePasswordPage.module.css";
@@ -30,46 +31,27 @@ function ChangePasswordPage() {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState(null);
-    const [authProvider, setAuthProvider] = useState((localStorage.getItem('authProvider') || '').toUpperCase());
-    const [resolvingProvider, setResolvingProvider] = useState(authProvider.length === 0);
+    // null = resolvendo, true = pode trocar, false = login social
+    const [canChangePassword, setCanChangePassword] = useState(null);
     const navigate = useNavigate();
 
     const idToken = localStorage.getItem("token");
-    const canChangePassword = authProvider === 'EMAIL';
 
+    // Fonte da verdade: providerData do Firebase SDK, não o localStorage
     useEffect(() => {
-        if (!idToken || authProvider) {
-            setResolvingProvider(false);
-            return;
-        }
-
-        let isMounted = true;
-
-        const loadProvider = async () => {
-            try {
-                const response = await api.get('/auth/me');
-                const provider = (response?.data?.authProvider || '').toUpperCase();
-                if (!isMounted) return;
-                setAuthProvider(provider);
-                if (provider) {
-                    localStorage.setItem('authProvider', provider);
-                }
-            } catch {
-                if (!isMounted) return;
-                setAuthProvider('');
-            } finally {
-                if (isMounted) {
-                    setResolvingProvider(false);
-                }
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            if (!firebaseUser) {
+                // Não logado — redireciona
+                navigate('/');
+                return;
             }
-        };
-
-        loadProvider();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [idToken, authProvider]);
+            const providers = firebaseUser.providerData.map((p) => p.providerId);
+            // Tem senha cadastrada no Firebase → pode trocar
+            const hasPasswordProvider = providers.includes('password');
+            setCanChangePassword(hasPasswordProvider);
+        });
+        return () => unsubscribe();
+    }, [navigate]);
 
     const passwordStrength = useMemo(() => evaluatePasswordStrength(newPassword), [newPassword]);
 
@@ -77,13 +59,8 @@ function ChangePasswordPage() {
         e.preventDefault();
         setError(null);
 
-        if (resolvingProvider) {
-            setError("Estamos validando seu método de login. Tente novamente em alguns instantes.");
-            return;
-        }
-
         if (!canChangePassword) {
-            setError("Contas Google/Redes sociais não podem alterar senha por aqui. Use o provedor de login original.");
+            setError("Contas com login social não podem alterar senha por esta rota. Use o provedor de login original.");
             return;
         }
 
@@ -155,17 +132,23 @@ function ChangePasswordPage() {
                             <h2>Alterar senha</h2>
                             <p>Escolha uma nova senha para sua conta.</p>
 
-                            {resolvingProvider && (
+                            {/* Resolvendo: aguardando Firebase confirmar o provedor */}
+                            {canChangePassword === null && (
                                 <div className={FPStyles.successBox}>
-                                    <h2>Validando login</h2>
-                                    <p>Estamos identificando seu provedor de autenticação para liberar as opções corretas de segurança.</p>
+                                    <h2>Validando login...</h2>
+                                    <p>Identificando seu provedor de autenticação.</p>
                                 </div>
                             )}
 
-                            {!resolvingProvider && !canChangePassword && (
+                            {/* Login social: bloqueia completamente o formulário */}
+                            {canChangePassword === false && (
                                 <div className={FPStyles.successBox}>
-                                    <h2>Opção indisponível</h2>
-                                    <p>Esta conta usa login social. A troca de senha deve ser feita no provedor original.</p>
+                                    <h2>🔒 Conta vinculada ao Google</h2>
+                                    <p>
+                                        Você acessa o CortaAi pelo Google, portanto não existe uma senha
+                                        específica do CortaAi para alterar. Para gerenciar sua senha,
+                                        acesse as configurações de segurança da sua conta Google.
+                                    </p>
                                     <a
                                         href="https://myaccount.google.com/security"
                                         target="_blank"
@@ -177,7 +160,8 @@ function ChangePasswordPage() {
                                 </div>
                             )}
 
-                            {canChangePassword && !resolvingProvider && (
+                            {/* Usuário email/senha: exibe o formulário */}
+                            {canChangePassword === true && (
                             <form onSubmit={handleSubmit} className={FPStyles.form}>
                                 <label className={FPStyles.fieldLabel}>
                                     <p className={FPStyles.labelText}>Nova senha</p>
@@ -232,7 +216,7 @@ function ChangePasswordPage() {
 
                                 <button
                                     type="submit"
-                                    disabled={loading || !canChangePassword || resolvingProvider}
+                                    disabled={loading}
                                     className={FPStyles.submitBtn}
                                 >
                                     {loading ? "Alterando..." : "Alterar senha"}
