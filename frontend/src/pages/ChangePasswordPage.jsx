@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../services/firebase";
-import { changePassword, logoutUser } from "../services/authService";
+import { changePassword } from "../services/authService";
 import Styles from "./CSS/LoginPage.module.css";
 import FPStyles from "./CSS/ForgotPasswordPage.module.css";
 import CPStyles from "./CSS/ChangePasswordPage.module.css";
@@ -80,13 +80,12 @@ function ChangePasswordPage() {
 
         setLoading(true);
         try {
-            await changePassword(idToken, newPassword);
+            const { data } = await changePassword(idToken, newPassword);
+            // Firebase emite novo idToken após troca de senha — atualiza a sessão sem deslogar
+            if (data?.idToken) {
+                localStorage.setItem('token', data.idToken);
+            }
             setSuccess(true);
-            // Firebase invalida o token após alterar — deslogar após 3 segundos
-            setTimeout(() => {
-                logoutUser();
-                navigate("/");
-            }, 3000);
         } catch (err) {
             const msg = err.response?.data?.message || "Nao foi possivel alterar a senha. Tente novamente.";
             setError(msg);
@@ -116,7 +115,7 @@ function ChangePasswordPage() {
                     <ul className={Styles.featuresList}>
                         <li>Use letras, números e símbolos</li>
                         <li>Evite senhas já utilizadas</li>
-                        <li>Você será redirecionado ao login</li>
+                        <li>Você permanecerá conectado</li>
                     </ul>
                 </aside>
 
@@ -125,7 +124,7 @@ function ChangePasswordPage() {
                         <div className={FPStyles.successBox}>
                             <span className={FPStyles.successIcon}>✓</span>
                             <h2>Senha alterada!</h2>
-                            <p>Sua senha foi atualizada com sucesso. Redirecionando para o login em instantes...</p>
+                            <p>Sua senha foi atualizada com sucesso. Você continua conectado.</p>
                         </div>
                     ) : (
                         <>

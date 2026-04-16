@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.controller;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.ChangePasswordRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.ChangePasswordResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.EmailExistsResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterResponseDTO;
@@ -149,16 +150,15 @@ public class FirebaseTestController {
 					"""
 	)
 	@ApiResponses({
-			@ApiResponse(responseCode = "204", description = "Senha alterada com sucesso"),
+			@ApiResponse(responseCode = "200", description = "Senha alterada — novos tokens retornados"),
 			@ApiResponse(responseCode = "400", description = "Dados inválidos ou senha muito curta"),
 			@ApiResponse(responseCode = "401", description = "Token expirado ou inválido — faça login novamente")
 	})
 	@SecurityRequirements
 	@PostMapping("/change-password")
-	public ResponseEntity<Void> changePassword(
+	public ResponseEntity<ChangePasswordResponseDTO> changePassword(
 			@RequestBody @Valid ChangePasswordRequestDTO request) {
-		firebaseDebugService.changePassword(request);
-		return ResponseEntity.noContent().build();
+		return ResponseEntity.ok(firebaseDebugService.changePassword(request));
 	}
 
 	@Operation(

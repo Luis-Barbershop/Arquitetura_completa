@@ -77,11 +77,14 @@ public class InternalUserController {
     @GetMapping("/by-email/{email}")
     public ResponseEntity<UserInfoDTO> getUserByEmail(
             @Parameter(description = "E-mail do usuário") @PathVariable String email) {
-        Optional<Customer> customer = customerRepository.findByEmail(email);
-        if (customer.isPresent()) return ResponseEntity.ok(toUserInfoDTO(customer.get()));
-
+        // Barber tem precedência: usuário pode ter registro em ambas as tabelas
+        // (ex: cadastrou-se como cliente e depois virou barbeiro). Nesse caso,
+        // para fins de agenda/agendamentos, o papel de barbeiro deve prevalecer.
         Optional<Barber> barber = barberRepository.findByEmail(email);
         if (barber.isPresent()) return ResponseEntity.ok(toUserInfoDTO(barber.get()));
+
+        Optional<Customer> customer = customerRepository.findByEmail(email);
+        if (customer.isPresent()) return ResponseEntity.ok(toUserInfoDTO(customer.get()));
 
         return ResponseEntity.notFound().build();
     }
@@ -97,11 +100,12 @@ public class InternalUserController {
     @GetMapping("/by-firebase-uid/{uid}")
     public ResponseEntity<UserInfoDTO> getUserByFirebaseUid(
             @Parameter(description = "UID do Firebase") @PathVariable String uid) {
-        Optional<Customer> customer = customerRepository.findByFirebaseUid(uid);
-        if (customer.isPresent()) return ResponseEntity.ok(toUserInfoDTO(customer.get()));
-
+        // Barber tem precedência (mesmo motivo do by-email acima).
         Optional<Barber> barber = barberRepository.findByFirebaseUid(uid);
         if (barber.isPresent()) return ResponseEntity.ok(toUserInfoDTO(barber.get()));
+
+        Optional<Customer> customer = customerRepository.findByFirebaseUid(uid);
+        if (customer.isPresent()) return ResponseEntity.ok(toUserInfoDTO(customer.get()));
 
         return ResponseEntity.notFound().build();
     }

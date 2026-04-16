@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.service;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.ChangePasswordRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.ChangePasswordResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.EmailExistsResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailRegisterResponseDTO;
@@ -37,9 +38,10 @@ public interface FirebaseDebugService {
     /**
      * Altera a senha do usuário autenticado via Firebase.
      * Requer o idToken válido da sessão atual.
-     * Chama accounts:update com o novo password.
+     * Retorna o novo par idToken/refreshToken emitido pelo Firebase,
+     * permitindo que o cliente continue autenticado sem precisar fazer login novamente.
      */
-    void changePassword(ChangePasswordRequestDTO request);
+    ChangePasswordResponseDTO changePassword(ChangePasswordRequestDTO request);
 
     /**
      * Verifica se um e-mail já está cadastrado em qualquer perfil (CUSTOMER ou BARBER).

@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import ifsp.edu.projeto.cortaai.userservice.dto.ChangePasswordRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.ChangePasswordResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.AuthResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileCustomerDTO;
@@ -320,7 +321,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
     }
 
     @Override
-    public void changePassword(ChangePasswordRequestDTO request) {
+    public ChangePasswordResponseDTO changePassword(ChangePasswordRequestDTO request) {
         if (firebaseWebApiKey == null || firebaseWebApiKey.isBlank()) {
             throw new IllegalArgumentException("A propriedade firebase.web-api-key não está configurada.");
         }
@@ -358,7 +359,10 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                 throw new SecurityException(msg);
             }
 
+            String newIdToken = text(root, "idToken");
+            String newRefreshToken = text(root, "refreshToken");
             log.info("event=change-password-ok uid={}", text(root, "localId"));
+            return new ChangePasswordResponseDTO(newIdToken, newRefreshToken);
 
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();

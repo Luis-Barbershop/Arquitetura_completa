@@ -30,7 +30,6 @@ const unlinkedNavItems = [
 
 /** Tabs exclusivas para OWNER */
 const ownerNavItems = [
-    { id: 'agenda-barbearia', label: 'Barbearia', short: '📋' },
     { id: 'dashboards', label: 'Dash',    short: 'DB' },
     { id: 'estoque',    label: 'Estoque', short: 'ES' },
     { id: 'time',       label: 'Time',    short: 'TM' },

@@ -215,9 +215,9 @@ export const resendForgotPassword = async (email) => {
 
 // ─── ALTERAR SENHA ────────────────────────────────────────────────────────────
 // Usa: POST /api/auth/email/change-password (público, idToken no body)
-// Após alterar, Firebase invalida todas as sessões. Usuário precisa fazer login novamente.
+// Retorna { idToken, refreshToken } — o cliente substitui o token sem deslogar.
 export const changePassword = async (idToken, newPassword) => {
-    await api.post(AUTH_ENDPOINTS.changePassword, { idToken, newPassword });
+    return api.post(AUTH_ENDPOINTS.changePassword, { idToken, newPassword });
 };
 
 // ─── VERIFICAR SE E-MAIL EXISTE ───────────────────────────────────────────────
