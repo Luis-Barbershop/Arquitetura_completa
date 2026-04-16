@@ -195,6 +195,18 @@ public class NotificationService {
                 ownerId, barberName, barbershopName);
     }
 
+    @Transactional
+    public void notifyInviteReceived(UUID barberId, String barbershopName) {
+
+        // IN_APP — barbeiro convidado
+        createNotification(barberId, NotificationType.INVITE_RECEIVED,
+                "Você recebeu um convite!",
+                String.format("A barbearia %s convidou você para fazer parte da equipe. Acesse 'Meu Perfil' para aceitar ou recusar.",
+                        barbershopName));
+
+        log.info("event=invite-notification-created barberId={} shop={}", barberId, barbershopName);
+    }
+
     private NotificationDTO toDTO(Notification n) {
         return new NotificationDTO(
                 n.getId(), n.getUserId(), n.getType(), n.getTitle(),

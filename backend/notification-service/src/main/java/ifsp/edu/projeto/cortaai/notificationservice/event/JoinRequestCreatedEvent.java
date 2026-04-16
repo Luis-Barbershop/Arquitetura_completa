@@ -3,7 +3,8 @@ package ifsp.edu.projeto.cortaai.notificationservice.event;
 import java.util.UUID;
 
 /**
- * Evento recebido quando um barbeiro solicita entrada em uma barbearia.
+ * Evento recebido quando um barbeiro solicita entrada em uma barbearia (JOIN)
+ * ou quando um owner convida um barbeiro (INVITE).
  * Publicado pelo barbershop-service; consumido pelo notification-service.
  */
 public class JoinRequestCreatedEvent {
@@ -15,6 +16,8 @@ public class JoinRequestCreatedEvent {
     private UUID barbershopId;
     private String barbershopName;
     private UUID ownerId;
+    /** "JOIN" = barbeiro pediu entrada; "INVITE" = owner convidou barbeiro. */
+    private String requestType;
 
     public JoinRequestCreatedEvent() {
     }
@@ -39,4 +42,7 @@ public class JoinRequestCreatedEvent {
 
     public UUID getOwnerId() { return ownerId; }
     public void setOwnerId(UUID ownerId) { this.ownerId = ownerId; }
+
+    public String getRequestType() { return requestType; }
+    public void setRequestType(String requestType) { this.requestType = requestType; }
 }

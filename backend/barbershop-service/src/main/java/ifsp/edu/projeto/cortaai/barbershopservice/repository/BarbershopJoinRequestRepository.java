@@ -19,6 +19,13 @@ public interface BarbershopJoinRequestRepository extends JpaRepository<Barbersho
             @Param("status") JoinRequestStatus status
     );
 
+    @Query("SELECT r FROM BarbershopJoinRequest r WHERE r.barbershop.id = :barbershopId AND r.status = :status AND r.requestType = :type")
+    List<BarbershopJoinRequest> findByBarbershopIdAndStatusAndRequestType(
+            @Param("barbershopId") UUID barbershopId,
+            @Param("status") JoinRequestStatus status,
+            @Param("type") JoinRequestType type
+    );
+
     // CORRIGIDO: de r.barber.id para r.barberId
     @Query("SELECT r FROM BarbershopJoinRequest r WHERE r.barberId = :barberId AND r.barbershop.id = :barbershopId")
     Optional<BarbershopJoinRequest> findByBarberIdAndBarbershopId(

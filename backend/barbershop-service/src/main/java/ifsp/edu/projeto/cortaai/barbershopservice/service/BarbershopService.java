@@ -374,7 +374,8 @@ public class BarbershopService {
                     barber.getEmail(),
                     shop.getId(),
                     shop.getName(),
-                    owner.getId()
+                    owner.getId(),
+                    "JOIN"
             );
             rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.RK_JOIN_REQUEST_CREATED, event);
             log.info("event=join-request-created-published requestId={} barberId={} shopId={} ownerId={}",
@@ -391,7 +392,7 @@ public class BarbershopService {
         Barbershop shop = findOwnerShop(owner.getId());
 
         List<BarbershopJoinRequest> requests = joinRequestRepository
-                .findByBarbershopIdAndStatus(shop.getId(), JoinRequestStatus.PENDING);
+                .findByBarbershopIdAndStatusAndRequestType(shop.getId(), JoinRequestStatus.PENDING, JoinRequestType.JOIN);
 
         return requests.stream().map(req -> {
             JoinRequestDTO dto = new JoinRequestDTO();
@@ -497,6 +498,26 @@ public class BarbershopService {
         request.setStatus(JoinRequestStatus.PENDING);
         request.setRequestType(JoinRequestType.INVITE);
         joinRequestRepository.save(request);
+
+        // Publica evento para o notification-service notificar o barbeiro convidado
+        try {
+            JoinRequestCreatedEvent event = new JoinRequestCreatedEvent(
+                    request.getId(),
+                    barber.getId(),
+                    barber.getName(),
+                    barber.getEmail(),
+                    shop.getId(),
+                    shop.getName(),
+                    owner.getId(),
+                    "INVITE"
+            );
+            rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.RK_JOIN_REQUEST_CREATED, event);
+            log.info("event=invite-created-published requestId={} barberId={} shopId={}",
+                    request.getId(), barber.getId(), shop.getId());
+        } catch (Exception ex) {
+            log.warn("event=invite-rabbit-publish-failed barberId={} shopId={} error={}",
+                    barber.getId(), shop.getId(), ex.getMessage());
+        }
 
         log.info("event=barber-invited ownerId={} barberId={} shopId={} cpf=***",
                 owner.getId(), barber.getId(), shop.getId());

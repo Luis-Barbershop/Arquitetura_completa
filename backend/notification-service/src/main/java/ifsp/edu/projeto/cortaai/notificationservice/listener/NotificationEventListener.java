@@ -69,11 +69,17 @@ public class NotificationEventListener {
 
     @RabbitListener(queues = RabbitConfig.QUEUE_JOIN_REQUEST_CREATED)
     public void onJoinRequestCreated(JoinRequestCreatedEvent event) {
-        log.info("Evento recebido: barbershop.join-request.created requestId={} barberId={} ownerId={}",
-                event.getRequestId(), event.getBarberId(), event.getOwnerId());
+        log.info("Evento recebido: barbershop.join-request.created requestId={} barberId={} ownerId={} type={}",
+                event.getRequestId(), event.getBarberId(), event.getOwnerId(), event.getRequestType());
         if (deduplicationService.isDuplicate("JOIN_REQUEST_CREATED", event.getRequestId().toString())) return;
 
-        notificationService.notifyJoinRequestReceived(
-                event.getOwnerId(), event.getBarbershopName(), event.getBarberName());
+        if ("INVITE".equalsIgnoreCase(event.getRequestType())) {
+            // Owner convidou barbeiro → notificar o barbeiro
+            notificationService.notifyInviteReceived(event.getBarberId(), event.getBarbershopName());
+        } else {
+            // Barbeiro pediu entrada → notificar o dono
+            notificationService.notifyJoinRequestReceived(
+                    event.getOwnerId(), event.getBarbershopName(), event.getBarberName());
+        }
     }
 }
