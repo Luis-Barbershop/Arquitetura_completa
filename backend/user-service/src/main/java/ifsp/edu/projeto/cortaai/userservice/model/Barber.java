@@ -83,6 +83,7 @@ public class Barber implements UserDetails {
 
     // DESACOPLAMENTO: Apenas o ID da barbearia (que vive noutro banco)
     @Column(name = "barbershop_id", length = 36)
+    @JdbcTypeCode(Types.VARCHAR)
     private UUID barbershopId;
 
     @Column(name = "work_start_time")

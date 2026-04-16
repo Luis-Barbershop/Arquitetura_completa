@@ -108,14 +108,14 @@ public class InternalUserController {
 
     /** Lista barbeiros vinculados a uma barbearia específica. */
     @Operation(summary = "Lista barbeiros por barbearia (interno)",
-               description = "Retorna todos os barbeiros com barbershopId igual ao informado.")
+               description = "Retorna barbeiros ativos da barbearia: funcionários (isOwner=false) sempre incluídos; owners apenas se actAsBarber=true.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista de barbeiros retornada com sucesso")
     })
     @GetMapping("/barbers/by-barbershop/{barbershopId}")
     public ResponseEntity<List<UserInfoDTO>> getBarbersByBarbershop(
             @Parameter(description = "UUID da barbearia") @PathVariable UUID barbershopId) {
-        List<UserInfoDTO> barbers = barberRepository.findByBarbershopId(barbershopId)
+        List<UserInfoDTO> barbers = barberRepository.findActiveByBarbershopId(barbershopId)
                 .stream()
                 .map(this::toUserInfoDTO)
                 .toList();
@@ -192,11 +192,14 @@ public class InternalUserController {
 
         // 2. Persiste isOwner=true e role=ROLE_OWNER no banco de dados do barbeiro
         //    Sem isso, /auth/me sempre retornaria isOwner=false (lê do banco, não do Firebase)
+        //    Também reforça actAsBarber=true: owner recém-promovido aparece na lista de
+        //    profissionais da sua barbearia até que explicitamente desmarque isso.
         barberRepository.findByFirebaseUid(uid).ifPresent(barber -> {
             barber.setOwner(true);
             barber.setRole("ROLE_OWNER");
+            barber.setActAsBarber(true);
             barberRepository.save(barber);
-            log.info("Barber {} promovido a ROLE_OWNER no banco de dados.", uid);
+            log.info("Barber {} promovido a ROLE_OWNER (actAsBarber=true) no banco de dados.", uid);
         });
 
         return ResponseEntity.ok().build();

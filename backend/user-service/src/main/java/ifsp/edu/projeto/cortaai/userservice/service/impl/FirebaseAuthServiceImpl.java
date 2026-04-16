@@ -214,6 +214,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                             .firebaseUid(firebaseUid)
                             .role("ROLE_BARBER")
                             .isOwner(false)
+                            .actAsBarber(true)
                             .build();
                 });
 
