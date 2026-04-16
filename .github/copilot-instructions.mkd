@@ -10,8 +10,7 @@
 
 - **Nome:** CortaAi — Sistema de Gestão e Marketplace para Barbearias.
 - **Modelo de negócio:** Multi-tenant. Um cliente agenda em qualquer barbearia; um barbeiro pode ser dono (owner) ou funcionário; estoque, serviços e pagamentos são isolados por barbearia.
-- **Arquitetura:** **100% microsserviços.** Não existe mais monolito — a migração foi concluída. Qualquer referência a "monolito legado" em documentos ou comentários é histórica e deve ser ignorada.
-- **Branch atual:** `feature/migracao-microservicos` (branch de trabalho ativa).
+- **Branch atual:** `feature/migracao-microservicos` — **migração ativa de Monolito → Microsserviços**. Código legado pode coexistir temporariamente, mas **toda nova feature DEVE ser escrita no padrão microsserviço**.
 - **Idioma:** Código, commits e documentação em português brasileiro. Nomes de classes/métodos em inglês (padrão Java/Spring).
 
 ---
@@ -159,7 +158,7 @@ backend/<servico>/src/main/java/ifsp/edu/projeto/cortaai/<servico>/
 - Não quebre contratos de API existentes sem sinalizar breaking change.
 
 ### Quando houver ambiguidade
-- Prefira a solução que **respeita o isolamento entre microsserviços** (banco próprio, contrato via DTO, comunicação via Feign/RabbitMQ).
+- Prefira a solução que **não quebra o monolito legado** ainda em produção.
 - Prefira evento RabbitMQ a chamada Feign quando ambos resolvem.
 - Prefira adicionar novo endpoint/DTO a sobrecarregar um existente.
 
