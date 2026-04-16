@@ -180,7 +180,7 @@ function BarberProfilePage() {
 
     // ── Carrega convites pendentes quando barbeiro não está vinculado ───────
     useEffect(() => {
-        if (!barber || barber.barbershopId) return;
+        if (!barber) return;
 
         let isMounted = true;
 
@@ -390,8 +390,8 @@ function BarberProfilePage() {
                                 </div>
                             </div>
 
-                            {/* ── Convites pendentes (barbeiro sem barbearia) ─ */}
-                            {!barber.barbershopId && (
+                            {/* ── Convites pendentes ─ */}
+                            {pendingInvites.length > 0 || loadingInvites ? (
                                 <div style={{ ...cardStyle, background: 'rgba(108,99,255,0.06)', borderColor: '#3a3570' }}>
                                     <p style={{ ...sectionTitleStyle, color: '#6c63ff' }}>📩 Convites de Barbearias</p>
                                     <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginTop: -6, marginBottom: 8 }}>
@@ -399,8 +399,6 @@ function BarberProfilePage() {
                                     </p>
                                     {loadingInvites ? (
                                         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>Carregando convites...</p>
-                                    ) : pendingInvites.length === 0 ? (
-                                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>Nenhum convite pendente no momento.</p>
                                     ) : (
                                         pendingInvites.map(inv => (
                                             <div key={inv.requestId} style={{
@@ -444,7 +442,7 @@ function BarberProfilePage() {
                                         ))
                                     )}
                                 </div>
-                            )}
+                            ) : null}
 
                             {/* ── Horário de trabalho (multi-bloco) ──────── */}
                             <div style={cardStyle}>

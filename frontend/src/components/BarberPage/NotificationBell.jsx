@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import styles from './NotificationBell.module.css';
 
@@ -9,6 +10,7 @@ import styles from './NotificationBell.module.css';
  * Usado no BarberHeader.jsx para donos e barbeiros.
  */
 function NotificationBell() {
+    const navigate = useNavigate();
     const [unreadCount, setUnreadCount] = useState(0);
     const [notifications, setNotifications] = useState([]);
     const [open, setOpen] = useState(false);
@@ -73,6 +75,18 @@ function NotificationBell() {
         }
     };
 
+    const handleNotificationClick = async (n) => {
+        if (!n.read) await handleMarkAsRead(n.id);
+        setOpen(false);
+        // Convites redirecionam para a aba de perfil onde ficam os convites pendentes
+        const isInvite = n.title?.toLowerCase().includes('convite') ||
+                         n.message?.toLowerCase().includes('convite') ||
+                         n.message?.toLowerCase().includes('convidou');
+        if (isInvite) {
+            navigate('/barberHome/perfil');
+        }
+    };
+
     const formatDate = (dateStr) => {
         if (!dateStr) return '';
         return new Date(dateStr).toLocaleString('pt-BR', {
@@ -115,8 +129,9 @@ function NotificationBell() {
                                 <li
                                     key={n.id}
                                     className={`${styles.item} ${n.read ? styles.read : styles.unread}`}
-                                    onClick={() => !n.read && handleMarkAsRead(n.id)}
-                                    title={n.read ? '' : 'Clique para marcar como lida'}
+                                    onClick={() => handleNotificationClick(n)}
+                                    title={n.read ? 'Clique para ver detalhes' : 'Clique para marcar como lida'}
+                                    style={{ cursor: 'pointer' }}
                                 >
                                     <p className={styles.itemTitle}>{n.title}</p>
                                     <p className={styles.itemMessage}>{n.message}</p>
