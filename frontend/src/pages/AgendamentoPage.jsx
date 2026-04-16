@@ -418,7 +418,7 @@ const AgendamentoPage = () => {
   const handleAgendar = async () => {
     try {
       setIsSubmittingAppointment(true);
-      const customerId = localStorage.getItem('userId');
+      const customerId = localStorage.getItem('internalUserId');
       if (!customerId) {
         toast.warn("Sessao invalida. Faca login novamente para agendar.");
         navigate('/identificacao', { state: { mode: 'login', role: 'customer' } });
@@ -468,7 +468,7 @@ const AgendamentoPage = () => {
   const handleAgendarOnline = async () => {
     try {
       setIsSubmittingAppointment(true);
-      const customerId = localStorage.getItem('userId');
+      const customerId = localStorage.getItem('internalUserId');
       if (!customerId) {
         toast.warn("Sessao invalida. Faca login novamente para agendar.");
         navigate('/identificacao', { state: { mode: 'login', role: 'customer' } });

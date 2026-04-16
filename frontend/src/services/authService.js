@@ -63,6 +63,8 @@ export const refreshSession = async () => {
         const isOwner = verifyResponse.data?.isOwner || false;
         localStorage.setItem('userRole', role);
         localStorage.setItem('isOwner', String(isOwner));
+        if (verifyResponse.data?.id)
+            localStorage.setItem('internalUserId', String(verifyResponse.data.id));
         if (verifyResponse.data?.barbershopId)
             localStorage.setItem('barbershopId', String(verifyResponse.data.barbershopId));
         if (verifyResponse.data?.name)
@@ -124,6 +126,8 @@ export const loginUser = async (email, password) => {
     const isOwner = verifyResponse.data?.isOwner || false;
     localStorage.setItem('userRole', role);
     localStorage.setItem('isOwner', String(isOwner));
+    if (verifyResponse.data?.id)
+        localStorage.setItem('internalUserId', String(verifyResponse.data.id));
     if (verifyResponse.data?.barbershopId)
         localStorage.setItem('barbershopId', String(verifyResponse.data.barbershopId));
     if (verifyResponse.data?.name)
@@ -301,6 +305,8 @@ export const loginWithGoogle = async () => {
         const isOwner = verifyResponse.data?.isOwner || false;
         localStorage.setItem('userRole', role);
         localStorage.setItem('isOwner', String(isOwner));
+        if (verifyResponse.data?.id)
+            localStorage.setItem('internalUserId', String(verifyResponse.data.id));
         if (verifyResponse.data?.barbershopId)
             localStorage.setItem('barbershopId', String(verifyResponse.data.barbershopId));
         if (verifyResponse.data?.name)
