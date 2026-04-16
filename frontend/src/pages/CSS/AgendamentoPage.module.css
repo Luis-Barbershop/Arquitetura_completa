@@ -249,6 +249,18 @@
     white-space: nowrap;
 }
 
+.barberNoActivitiesTag {
+    font-size: 0.65rem;
+    font-family: 'Roboto', sans-serif;
+    color: #b8860b;
+    border: 1px solid #5a4400;
+    background: rgba(212, 175, 55, 0.08);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
 .barberAvatar {
     width: 36px;
     height: 36px;

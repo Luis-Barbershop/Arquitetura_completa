@@ -85,9 +85,8 @@ public class BarberServiceImpl implements BarberService {
 
     @Override
     public List<BarberDTO> findByBarbershopId(UUID barbershopId) {
-        return barberRepository.findByBarbershopId(barbershopId).stream()
-                // Owners que optaram por não atuar como barbeiro são excluídos da lista de seleção
-                .filter(b -> !b.isOwner() || b.isActAsBarber())
+        // A query já filtra: funcionários sempre, owners só se actAsBarber = true (ou NULL → tratado como true).
+        return barberRepository.findActiveByBarbershopId(barbershopId).stream()
                 .map(barberMapper::toDTO)
                 .collect(Collectors.toList());
     }

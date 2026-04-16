@@ -232,7 +232,13 @@ const AgendamentoPage = () => {
     const fetchSelectedBarberActivities = async () => {
       if (!selectedBarber) return;
       // Se o barbeiro já veio com assignedActivityIds na listagem, não precisa chamar extra
-      if (selectedBarberData?.assignedActivityIds) return;
+      if (selectedBarberData?.assignedActivityIds) {
+        console.log(
+          `[AgendamentoPage] Habilidades do barbeiro "${selectedBarberData?.name}" (via DTO):`,
+          selectedBarberData.assignedActivityIds
+        );
+        return;
+      }
       // Evita re-buscar se já foi carregado via endpoint extra
       if (barberActivitiesById[selectedBarber]) return;
 
@@ -241,6 +247,11 @@ const AgendamentoPage = () => {
         // Endpoint retorna Set<UUID> (array de strings)
         const response = await api.get(`/barbers/${selectedBarber}/activities`);
         const activities = Array.isArray(response.data) ? response.data : [];
+
+        console.log(
+          `[AgendamentoPage] Habilidades do barbeiro ID "${selectedBarber}" (via API):`,
+          activities
+        );
 
         setBarberActivitiesById((prev) => ({
           ...prev,
@@ -262,9 +273,12 @@ const AgendamentoPage = () => {
 
   useEffect(() => {
     if (!selectedBarber) return;
-    // Só filtra quando já temos os activityIds (do DTO ou do cache de chamada extra)
-    const hasActivityData = selectedBarberData?.assignedActivityIds || barberActivitiesById[selectedBarber];
-    if (!hasActivityData) return;
+    // Só filtra serviços quando temos dados de habilidade com conteúdo.
+    // Array vazio ([]) é truthy em JS — checar .length > 0 explicitamente para não limpar tudo.
+    const loadedActivities = barberActivitiesById[selectedBarber];
+    const hasAssigned = (selectedBarberData?.assignedActivityIds?.length ?? 0) > 0;
+    const hasCached = (loadedActivities?.length ?? 0) > 0;
+    if (!hasAssigned && !hasCached) return;
 
     setSelectedServices((prev) => {
       const filtered = prev.filter((service) => selectedBarberActivityIds.has(String(service.id)));
@@ -568,7 +582,13 @@ const AgendamentoPage = () => {
                   key={service.id}
                   data={service}
                   isSelected={selectedServices.some((selected) => selected.id === service.id)}
-                  disabled={selectedBarber ? !selectedBarberActivityIds.has(String(service.id)) : false}
+                  disabled={
+                    // Só desabilita se TEMOS dados de habilidade E o barbeiro não executa este serviço.
+                    // Se não temos dados (Set vazio), não bloqueamos — evita travar a UI enquanto carrega.
+                    selectedBarber !== null &&
+                    selectedBarberActivityIds.size > 0 &&
+                    !selectedBarberActivityIds.has(String(service.id))
+                  }
                   onToggle={() => handleServiceToggle(service)}
                 />
               ))
@@ -594,6 +614,10 @@ const AgendamentoPage = () => {
                   const rawActivities = barber.assignedActivityIds || barberActivitiesById[barber.id] || null;
                   const barberActivityIds = new Set((rawActivities || []).map((item) => String(typeof item === 'object' ? item.id : item)));
                   const hasActivityData = barberActivityIds.size > 0;
+
+                  // rawActivities === [] (array vazio explícito) = habilidades carregadas e não configuradas
+                  const activitiesLoadedButEmpty = Array.isArray(rawActivities) && rawActivities.length === 0;
+
                   const canDoAllServices =
                     selectedServices.length === 0 ||
                     !hasActivityData ||
@@ -619,6 +643,11 @@ const AgendamentoPage = () => {
                       <span className={Styles.barberName}>{barber.name}</span>
                       {isDisabled && (
                         <span className={Styles.barberUnavailableTag}>Não realiza</span>
+                      )}
+                      {!isDisabled && activitiesLoadedButEmpty && (
+                        <span className={Styles.barberNoActivitiesTag} title="Este profissional ainda não tem serviços configurados">
+                          ⚠️ Sem serviços
+                        </span>
                       )}
                     </button>
                   );

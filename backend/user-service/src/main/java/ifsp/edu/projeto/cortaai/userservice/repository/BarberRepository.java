@@ -40,6 +40,16 @@ public interface BarberRepository extends JpaRepository<Barber, UUID> {
     @Query("SELECT b FROM Barber b WHERE b.barbershopId = :barbershopId")
     List<Barber> findByBarbershopId(@Param("barbershopId") UUID barbershopId);
 
+    /**
+     * Retorna barbeiros ativos de uma barbearia:
+     * - Funcionários comuns (isOwner = false) sempre incluídos.
+     * - Owners só incluídos se actAsBarber = true ou NULL (NULL = padrão true, dados antigos).
+     * Filtragem feita no banco via COALESCE para evitar NPE em primitivos Java com colunas nulas.
+     */
+    @Query("SELECT b FROM Barber b WHERE b.barbershopId = :barbershopId " +
+           "AND (b.isOwner = false OR COALESCE(b.actAsBarber, true) = true)")
+    List<Barber> findActiveByBarbershopId(@Param("barbershopId") UUID barbershopId);
+
     @Query("SELECT b FROM Barber b WHERE REPLACE(REPLACE(REPLACE(b.documentCPF, '.', ''), '-', ''), '/', '') = REPLACE(REPLACE(REPLACE(:cpf, '.', ''), '-', ''), '/', '')")
     Optional<Barber> findByDocumentCPF(@Param("cpf") String cpf);
 }
