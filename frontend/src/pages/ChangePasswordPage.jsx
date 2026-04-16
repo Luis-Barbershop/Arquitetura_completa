@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../services/firebase";
 import { changePassword } from "../services/authService";
 import Styles from "./CSS/LoginPage.module.css";
@@ -33,20 +33,24 @@ function ChangePasswordPage() {
     const [error, setError] = useState(null);
     // null = resolvendo, true = pode trocar, false = login social
     const [canChangePassword, setCanChangePassword] = useState(null);
+    // Bloqueia o redirect enquanto o Firebase SDK não resolveu o estado inicial
+    const [initializing, setInitializing] = useState(true);
     const navigate = useNavigate();
+    // Ref para evitar redirect do onAuthStateChanged enquanto mudança está em andamento
+    const changingPassword = useRef(false);
 
     const idToken = localStorage.getItem("token");
 
     // Fonte da verdade: providerData do Firebase SDK, não o localStorage
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            setInitializing(false);
             if (!firebaseUser) {
-                // Não logado — redireciona
+                if (changingPassword.current) return;
                 navigate('/');
                 return;
             }
             const providers = firebaseUser.providerData.map((p) => p.providerId);
-            // Tem senha cadastrada no Firebase → pode trocar
             const hasPasswordProvider = providers.includes('password');
             setCanChangePassword(hasPasswordProvider);
         });
@@ -80,19 +84,35 @@ function ChangePasswordPage() {
 
         setLoading(true);
         try {
+            changingPassword.current = true;
             const { data } = await changePassword(idToken, newPassword);
-            // Firebase emite novo idToken após troca de senha — atualiza a sessão sem deslogar
-            if (data?.idToken) {
+
+            // Ressincroniza a sessão do Firebase SDK com a nova senha para evitar logout automático
+            const email = localStorage.getItem('userEmail');
+            if (email) {
+                try {
+                    const cred = await signInWithEmailAndPassword(auth, email, newPassword);
+                    const freshToken = await cred.user.getIdToken();
+                    localStorage.setItem('token', freshToken);
+                } catch {
+                    // Fallback: usa o idToken retornado pelo backend
+                    if (data?.idToken) localStorage.setItem('token', data.idToken);
+                }
+            } else if (data?.idToken) {
                 localStorage.setItem('token', data.idToken);
             }
+
             setSuccess(true);
         } catch (err) {
+            changingPassword.current = false;
             const msg = err.response?.data?.message || "Nao foi possivel alterar a senha. Tente novamente.";
             setError(msg);
         } finally {
             setLoading(false);
         }
     };
+
+    if (initializing) return null;
 
     return (
         <div className={Styles.loginStage}>
