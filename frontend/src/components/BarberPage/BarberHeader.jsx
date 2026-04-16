@@ -14,12 +14,13 @@ const baseNavItems = [
 /** Tabs que exigem barbearia vinculada (barbershopId presente) */
 const linkedNavItems = [
     { id: 'agenda',            label: 'Minha Agenda',    short: 'AG' },
-    { id: 'novo-agendamento',  label: 'Novo Walk-in',    short: '✂️' },
+    { id: 'novo-agendamento',  label: 'Novo Encaixe',    short: '✂️' },
     { id: 'servicos',          label: 'Servicos',        short: 'SV' },
 ];
 
 /** Tabs exclusivas para OWNER */
 const ownerNavItems = [
+    { id: 'agenda-barbearia', label: 'Agenda da Barbearia', short: '📋' },
     { id: 'dashboards', label: 'Dashboards', short: 'DB' },
     { id: 'estoque',    label: 'Estoque',    short: 'ES' },
     { id: 'time',       label: 'Meu Time',   short: 'TM' },

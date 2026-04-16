@@ -4,6 +4,7 @@ import styles from './CSS/BarberNavbar.module.css';
 const NAV_PATHS = {
     home: '/barberHome',
     agenda: '/meus-agendamentos',
+    'agenda-barbearia': '/barberHome/agenda-barbearia',
     servicos: '/barberHome/servicos',
     perfil: '/barberHome/perfil',
     estoque: '/barberHome/estoque',
@@ -29,6 +30,7 @@ const unlinkedNavItems = [
 
 /** Tabs exclusivas para OWNER */
 const ownerNavItems = [
+    { id: 'agenda-barbearia', label: 'Barbearia', short: '📋' },
     { id: 'dashboards', label: 'Dash',    short: 'DB' },
     { id: 'estoque',    label: 'Estoque', short: 'ES' },
     { id: 'time',       label: 'Time',    short: 'TM' },

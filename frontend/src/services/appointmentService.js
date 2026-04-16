@@ -85,6 +85,18 @@ export const cancelAppointment = async (id) => {
     return response.data;
 };
 
+export const getBarbershopSchedule = async (shopId, date) => {
+    try {
+        const response = await api.get(`/appointments/barbershop/${shopId}`, {
+            params: { date }
+        });
+        return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+        console.error('Erro ao buscar agenda da barbearia:', error);
+        return [];
+    }
+};
+
 export const getBarberAvailability = async (barberId, date) => {
     // Endpoint atual: /api/appointments/availability?barberId=...&date=YYYY-MM-DD
     try {

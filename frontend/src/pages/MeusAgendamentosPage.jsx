@@ -140,7 +140,7 @@ const MeusAgendamentosPage = () => {
     const translateStatus = (status) => {
         const map = {
             'SCHEDULED': 'Agendado',
-            'WALK_IN': 'Walk-in',
+            'WALK_IN': 'Encaixe',
             'CANCELLED': 'Cancelado',
             'COMPLETED': 'Concluído'
         };
@@ -183,7 +183,7 @@ const MeusAgendamentosPage = () => {
     const filterItems = [
         { key: 'ALL', label: 'Todos' },
         { key: 'SCHEDULED', label: 'Agendados' },
-        { key: 'WALK_IN', label: 'Walk-in' },
+        { key: 'WALK_IN', label: 'Encaixe' },
         { key: 'COMPLETED', label: 'Concluidos' },
         { key: 'CANCELLED', label: 'Cancelados' },
     ];
@@ -218,6 +218,11 @@ const MeusAgendamentosPage = () => {
 
         if (tab === 'dashboards') {
             navigate('/barberHome/dashboard');
+            return;
+        }
+
+        if (tab === 'agenda-barbearia') {
+            navigate('/barberHome/agenda-barbearia');
             return;
         }
 

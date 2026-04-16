@@ -104,7 +104,7 @@ function BarberDashboardPage() {
                     </p>
                 </div>
 
-                {/* Ação rápida: agendamento walk-in */}
+                {/* Ação rápida: encaixe */}
                 <div style={{ marginTop: 28, textAlign: 'center' }}>
                     <button
                         onClick={() => navigate('/barberHome/novo-agendamento')}
@@ -114,7 +114,7 @@ function BarberDashboardPage() {
                             padding: '13px 32px', cursor: 'pointer',
                         }}
                     >
-                        ✂️ Novo Agendamento (Walk-in)
+                        ✂️ Novo Encaixe
                     </button>
                     <p style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
                         Registre um atendimento presencial sem app.

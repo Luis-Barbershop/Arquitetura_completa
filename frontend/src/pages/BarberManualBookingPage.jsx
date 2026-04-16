@@ -10,7 +10,7 @@ import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import styles from './CSS/BarberHomePage.module.css';
 
 /**
- * Página de agendamento manual (walk-in) pelo barbeiro.
+ * Página de encaixe (atendimento imediato) pelo barbeiro.
  * Permite cadastrar um atendimento presencial sem exigir
  * que o cliente tenha conta no sistema.
  * Acessível a TODOS os barbeiros vinculados a uma barbearia.
@@ -203,7 +203,7 @@ function BarberManualBookingPage() {
 
             <section className={styles.heroSection}>
                 <p className={styles.heroKicker}>NOVO AGENDAMENTO</p>
-                <h1>Walk-in</h1>
+                <h1>Encaixe</h1>
                 <p>Registre um atendimento presencial sem precisar que o cliente tenha conta no app.</p>
             </section>
 
@@ -277,7 +277,7 @@ function BarberManualBookingPage() {
 
                         {activities.length === 0 ? (
                             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
-                                Nenhum serviço disponível para atendimento walk-in. Verifique se você já vinculou suas habilidades na aba de serviços.
+                                Nenhum serviço disponível para encaixe. Verifique se você já vinculou suas habilidades na aba de serviços.
                             </p>
                         ) : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
