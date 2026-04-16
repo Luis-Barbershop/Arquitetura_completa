@@ -529,18 +529,27 @@ public class BarbershopService {
     @Transactional(readOnly = true)
     public List<JoinRequestDTO> getMyPendingInvites(String barberUid) {
         UserInfoDTO barber = resolveUserByUid(barberUid);
+        log.info("event=my-invites-request barberId={} uid={}", barber.getId(), barberUid);
 
-        List<BarbershopJoinRequest> invites = joinRequestRepository
-                .findByBarberIdAndStatusAndRequestType(barber.getId(), JoinRequestStatus.PENDING, JoinRequestType.INVITE);
+        List<BarbershopJoinRequest> invites;
+        try {
+            invites = joinRequestRepository
+                    .findByBarberIdAndStatusAndRequestType(barber.getId(), JoinRequestStatus.PENDING, JoinRequestType.INVITE);
+        } catch (Exception ex) {
+            log.error("event=my-invites-query-failed barberId={} error={}", barber.getId(), ex.getMessage(), ex);
+            return java.util.Collections.emptyList();
+        }
 
         return invites.stream().map(req -> {
             JoinRequestDTO dto = new JoinRequestDTO();
             dto.setRequestId(req.getId());
             dto.setBarberId(req.getBarberId());
-            dto.setStatus(req.getStatus().name());
-            dto.setRequestType(req.getRequestType().name());
-            dto.setBarbershopId(req.getBarbershop().getId());
-            dto.setBarbershopName(req.getBarbershop().getName());
+            dto.setStatus(req.getStatus() != null ? req.getStatus().name() : null);
+            dto.setRequestType(req.getRequestType() != null ? req.getRequestType().name() : null);
+            if (req.getBarbershop() != null) {
+                dto.setBarbershopId(req.getBarbershop().getId());
+                dto.setBarbershopName(req.getBarbershop().getName());
+            }
             return dto;
         }).collect(Collectors.toList());
     }

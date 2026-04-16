@@ -181,11 +181,30 @@ function BarberProfilePage() {
     // ── Carrega convites pendentes quando barbeiro não está vinculado ───────
     useEffect(() => {
         if (!barber || barber.barbershopId) return;
+
+        let isMounted = true;
+
+        const fetchInvites = async () => {
+            try {
+                const data = await getMyInvites();
+                if (isMounted) setPendingInvites(data);
+            } catch {
+                if (isMounted) setPendingInvites([]);
+            }
+        };
+
         setLoadingInvites(true);
-        getMyInvites()
-            .then(data => setPendingInvites(data))
-            .catch(() => setPendingInvites([]))
-            .finally(() => setLoadingInvites(false));
+        fetchInvites().finally(() => {
+            if (isMounted) setLoadingInvites(false);
+        });
+
+        // Polling a cada 30s para captar novos convites sem reload manual
+        const interval = setInterval(fetchInvites, 30_000);
+
+        return () => {
+            isMounted = false;
+            clearInterval(interval);
+        };
     }, [barber]);
 
     const refreshBarberProfileAfterInvite = async () => {

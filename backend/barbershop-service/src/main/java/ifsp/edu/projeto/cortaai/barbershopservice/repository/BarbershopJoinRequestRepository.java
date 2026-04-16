@@ -40,7 +40,7 @@ public interface BarbershopJoinRequestRepository extends JpaRepository<Barbersho
     );
 
     /** Busca convites (INVITE) pendentes para um barbeiro específico. */
-    @Query("SELECT r FROM BarbershopJoinRequest r WHERE r.barberId = :barberId AND r.status = :status AND r.requestType = :type")
+    @Query("SELECT r FROM BarbershopJoinRequest r JOIN FETCH r.barbershop WHERE r.barberId = :barberId AND r.status = :status AND r.requestType = :type")
     List<BarbershopJoinRequest> findByBarberIdAndStatusAndRequestType(
             @Param("barberId") UUID barberId,
             @Param("status") JoinRequestStatus status,
