@@ -41,6 +41,16 @@ public class SecurityConfig {
                                 "/v3/api-docs/**", "/v3/api-docs.yaml",
                                 "/actuator/**"
                         ).permitAll()
+                        // Rotas autenticadas explícitas — DEVEM vir ANTES do permitAll
+                        // do wildcard `/api/barbershops/*`, caso contrário o pattern
+                        // casa com `/my-invites`, `/my-shop`, etc. e libera sem auth.
+                        .requestMatchers(
+                                "/api/barbershops/my-invites",
+                                "/api/barbershops/my-shop/**",
+                                "/api/barbershops/accept-invite/**",
+                                "/api/barbershops/reject-invite/**",
+                                "/api/barbershops/join/**"
+                        ).authenticated()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/barbershops",
                                 "/api/barbershops/ping",
