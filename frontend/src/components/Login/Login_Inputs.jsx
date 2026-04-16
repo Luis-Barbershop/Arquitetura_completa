@@ -42,11 +42,6 @@ function Login_Inputs() {
 
         } catch (err) {
             const authError = getAuthErrorDetails(err);
-            console.log("[LOGIN_AUTH_ERROR]", {
-                intent: role,
-                email,
-                ...authError,
-            });
 
             // ── Perfil incompleto — redireciona para finalizar cadastro ──────────
             if (err.code === 'PROFILE_INCOMPLETE') {
