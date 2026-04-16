@@ -18,7 +18,7 @@ api.interceptors.request.use(async (config) => {
 
 // --- Interceptor de respostas: traducao global de erros HTTP -> PT-BR --------
 // Rotas de auth tratam os proprios erros localmente; silencia toast para elas.
-const SILENT_URLS = ['/auth/email/login', '/auth/email/register', '/auth/verify', '/auth/email/exists'];
+const SILENT_URLS = ['/auth/email/login', '/auth/email/register', '/auth/verify', '/auth/email/exists', '/barbershops/my-invites'];
 const isSilentUrl = (url = '') => SILENT_URLS.some(u => url.includes(u));
 
 api.interceptors.response.use(
