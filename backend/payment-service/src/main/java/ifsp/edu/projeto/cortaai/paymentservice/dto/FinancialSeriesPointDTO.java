@@ -6,6 +6,9 @@ import java.time.LocalDate;
 public record FinancialSeriesPointDTO(
         LocalDate date,
         BigDecimal serviceRevenue,
-        int approvedTransactions
+        BigDecimal walkInRevenue,
+        BigDecimal totalServiceRevenue,
+        int approvedTransactions,
+        int walkInAppointmentsCount
 ) {}
 

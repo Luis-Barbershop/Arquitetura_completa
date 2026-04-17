@@ -86,9 +86,19 @@ function Invoicing({ barber }) {
   }, [barbershopId, isOwner]);
 
   const operationalResult = useMemo(() => Number(data?.operationalResult || 0), [data]);
+  const operationalResultWithWalkIn = useMemo(
+    () => Number(data?.operationalResultWithWalkIn ?? data?.operationalResult ?? 0),
+    [data]
+  );
+  const serviceRevenue = useMemo(() => Number(data?.serviceRevenue || 0), [data]);
+  const walkInRevenue = useMemo(() => Number(data?.walkInRevenue || 0), [data]);
+  const totalServiceRevenue = useMemo(
+    () => Number(data?.totalServiceRevenue ?? (serviceRevenue + walkInRevenue)),
+    [data, serviceRevenue, walkInRevenue]
+  );
   const maxSeriesRevenue = useMemo(() => {
     if (!series.length) return 1;
-    const maxValue = Math.max(...series.map((point) => Number(point?.serviceRevenue || 0)));
+    const maxValue = Math.max(...series.map((point) => Number(point?.totalServiceRevenue ?? (point?.serviceRevenue || 0))));
     return maxValue > 0 ? maxValue : 1;
   }, [series]);
 
@@ -97,14 +107,21 @@ function Invoicing({ barber }) {
     <div className={Styles.containerFaturamento}>
         <div className={Styles.containerFaturamentoLeft}>
         <h2>Faturamento Hoje:</h2>
-        <h1>{loading ? 'Carregando...' : asCurrency(data?.serviceRevenue)}</h1>
+        <h1>{loading ? 'Carregando...' : asCurrency(totalServiceRevenue)}</h1>
+        <p>Receita com transacao: {loading ? '...' : asCurrency(serviceRevenue)}</p>
+        <p>Receita de walk-in: {loading ? '...' : asCurrency(walkInRevenue)}</p>
         <p>Gastos de produtos: {loading ? '...' : asCurrency(data?.productExpenses)}</p>
         <p>Bens em estoque: {loading ? '...' : asCurrency(data?.inventoryAssetValue)}</p>
-        <p>Resultado operacional: {loading ? '...' : `${operationalResult >= 0 ? '+' : '-'} ${asCurrency(Math.abs(operationalResult))}`}</p>
+        <p>Resultado operacional (transacao): {loading ? '...' : `${operationalResult >= 0 ? '+' : '-'} ${asCurrency(Math.abs(operationalResult))}`}</p>
+        <p>Resultado operacional total: {loading ? '...' : `${operationalResultWithWalkIn >= 0 ? '+' : '-'} ${asCurrency(Math.abs(operationalResultWithWalkIn))}`}</p>
 
         {isOwner && !loading && (
           <div className={Styles.seriesWrapper}>
-            <p className={Styles.seriesTitle}>Receita dos ultimos 7 dias</p>
+            <p className={Styles.seriesTitle}>Receita dos ultimos 7 dias (transacao + walk-in)</p>
+            <div className={Styles.seriesLegend}>
+              <span className={Styles.legendItem}><span className={`${Styles.legendDot} ${Styles.legendDotService}`} />Transacao</span>
+              <span className={Styles.legendItem}><span className={`${Styles.legendDot} ${Styles.legendDotWalkIn}`} />Walk-in</span>
+            </div>
 
             {seriesError ? (
               <p className={Styles.seriesHint}>Nao foi possivel carregar a serie.</p>
@@ -112,16 +129,23 @@ function Invoicing({ barber }) {
               <div className={Styles.seriesBars}>
                 {series.map((point) => {
                   const revenue = Number(point?.serviceRevenue || 0);
-                  const width = Math.max(8, Math.round((revenue / maxSeriesRevenue) * 100));
+                  const walkIn = Number(point?.walkInRevenue || 0);
+                  const totalRevenue = Number(point?.totalServiceRevenue ?? (revenue + walkIn));
+                  const width = Math.max(8, Math.round((totalRevenue / maxSeriesRevenue) * 100));
                   const dayLabel = String(point?.date || '').slice(5);
+                  const serviceShare = totalRevenue > 0 ? (revenue / totalRevenue) * 100 : 0;
+                  const walkInShare = totalRevenue > 0 ? (walkIn / totalRevenue) * 100 : 0;
 
                   return (
-                    <div key={`${point.date}-${revenue}`} className={Styles.seriesRow}>
+                    <div key={`${point.date}-${totalRevenue}`} className={Styles.seriesRow}>
                       <span className={Styles.seriesLabel}>{dayLabel}</span>
                       <div className={Styles.seriesTrack}>
-                        <div className={Styles.seriesBar} style={{ width: `${width}%` }} />
+                        <div className={Styles.seriesBarStack} style={{ width: `${width}%` }}>
+                          <div className={Styles.seriesBarService} style={{ width: `${serviceShare}%` }} />
+                          <div className={Styles.seriesBarWalkIn} style={{ width: `${walkInShare}%` }} />
+                        </div>
                       </div>
-                      <span className={Styles.seriesValue}>{asCurrency(revenue)}</span>
+                      <span className={Styles.seriesValue}>{asCurrency(totalRevenue)}</span>
                     </div>
                   );
                 })}

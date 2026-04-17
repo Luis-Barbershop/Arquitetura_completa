@@ -64,7 +64,8 @@ const MeusAgendamentosPage = () => {
             setAppointments(sorted);
         } catch (error) {
             console.error("Erro ao buscar agendamentos:", error);
-            // alert("Não foi possível carregar sua agenda.");
+            toast.error('Nao foi possivel carregar seus agendamentos.');
+            setAppointments([]);
         } finally {
             setLoading(false);
         }
@@ -173,11 +174,31 @@ const MeusAgendamentosPage = () => {
     const translateStatus = (status) => {
         const map = {
             'SCHEDULED': 'Agendado',
+            'CONFIRMED': 'Confirmado',
             'WALK_IN': 'Encaixe',
             'CANCELLED': 'Cancelado',
-            'COMPLETED': 'Concluído'
+            'COMPLETED': 'Concluido',
+            'NO_SHOW': 'Nao compareceu'
         };
         return map[status] || status;
+    };
+
+    const toServiceSummary = (appointment) => {
+        if (Array.isArray(appointment?.activityNames) && appointment.activityNames.length > 0) {
+            return appointment.activityNames.join(', ');
+        }
+
+        if (Array.isArray(appointment?.activities) && appointment.activities.length > 0) {
+            const names = appointment.activities
+                .map((item) => item?.activityName)
+                .filter(Boolean);
+
+            if (names.length > 0) {
+                return names.join(', ');
+            }
+        }
+
+        return 'Servico';
     };
 
     const sortedAppointments = [...appointments].sort((a, b) => {
@@ -415,10 +436,11 @@ const MeusAgendamentosPage = () => {
                                                         Cliente: {app.customerName || 'Cliente'}
                                                     </span>
                                                     <span className={Styles.details}>
-                                                        {app.activityNames ? app.activityNames.join(', ') : 'Serviço'}
+                                                        {toServiceSummary(app)}
                                                     </span>
                                                     <span className={`${Styles.statusChip} ${getStatusClass(app.status)}`}>
                                                         {app.status === 'SCHEDULED' && <FiCalendar />}
+                                                        {app.status === 'CONFIRMED' && <FiCalendar />}
                                                         {app.status === 'COMPLETED' && <FiCheckCircle />}
                                                         {app.status === 'CANCELLED' && <FiXCircle />}
                                                         {app.status === 'WALK_IN' && <FiScissors />}
@@ -489,13 +511,15 @@ const MeusAgendamentosPage = () => {
 
                                         {/* Lista de serviços (caso seu DTO retorne activityNames como lista) */}
                                         <span className={Styles.details}>
-                                            {app.activityNames ? app.activityNames.join(", ") : "Servico"}
+                                            {toServiceSummary(app)}
                                         </span>
 
                                         <span className={`${Styles.statusChip} ${getStatusClass(app.status)}`}>
                                             {app.status === 'SCHEDULED' && <FiCalendar />}
+                                            {app.status === 'CONFIRMED' && <FiCalendar />}
                                             {app.status === 'COMPLETED' && <FiCheckCircle />}
                                             {app.status === 'CANCELLED' && <FiXCircle />}
+                                            {app.status === 'WALK_IN' && <FiScissors />}
                                             {translateStatus(app.status)}
                                         </span>
                                     </div>

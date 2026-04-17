@@ -1,5 +1,21 @@
 import api from './api';
 
+const WALK_IN_CUSTOMER_ID = '00000000-0000-0000-0000-000000000000';
+
+const extractActivityNames = (appointment) => {
+    if (Array.isArray(appointment?.activityNames) && appointment.activityNames.length > 0) {
+        return appointment.activityNames.filter(Boolean);
+    }
+
+    if (Array.isArray(appointment?.activities) && appointment.activities.length > 0) {
+        return appointment.activities
+            .map((item) => item?.activityName)
+            .filter(Boolean);
+    }
+
+    return [];
+};
+
 const fetchBarberName = async (barberId) => {
     if (!barberId) return '';
 
@@ -59,7 +75,11 @@ export const getMyAppointments = async () => {
     }
 
     const uniqueBarberIds = [...new Set(appointments.map((item) => item.barberId).filter(Boolean))];
-    const uniqueCustomerIds = [...new Set(appointments.map((item) => item.customerId).filter(Boolean))];
+    const uniqueCustomerIds = [...new Set(
+        appointments
+            .map((item) => item.customerId)
+            .filter((id) => id && id !== WALK_IN_CUSTOMER_ID)
+    )];
 
     const [barbershopNameMap, barberNameEntries, customerNameEntries] = await Promise.all([
         fetchBarbershopNameMap(),
@@ -75,6 +95,7 @@ export const getMyAppointments = async () => {
         barberName: barberNameMap[appointment.barberId] || appointment.barberName || 'Barbeiro',
         customerName: customerNameMap[appointment.customerId] || appointment.customerName || 'Cliente',
         barbershopName: barbershopNameMap[appointment.barbershopId] || appointment.barbershopName || 'Barbearia',
+        activityNames: extractActivityNames(appointment),
     }));
 };
 
@@ -90,7 +111,11 @@ export const getBarbershopSchedule = async (shopId, date) => {
         const response = await api.get(`/appointments/barbershop/${shopId}`, {
             params: { date }
         });
-        return Array.isArray(response.data) ? response.data : [];
+        const appointments = Array.isArray(response.data) ? response.data : [];
+        return appointments.map((appointment) => ({
+            ...appointment,
+            activityNames: extractActivityNames(appointment),
+        }));
     } catch (error) {
         console.error('Erro ao buscar agenda da barbearia:', error);
         return [];

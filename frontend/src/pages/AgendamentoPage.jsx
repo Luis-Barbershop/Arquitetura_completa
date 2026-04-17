@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiCalendar, FiCheckCircle, FiRefreshCw, FiScissors } from "react-icons/fi";
+import { FiArrowLeft, FiCalendar, FiCheckCircle, FiChevronDown, FiChevronUp, FiRefreshCw, FiScissors } from "react-icons/fi";
 import { toast } from "react-toastify";
 import Styles from "./CSS/AgendamentoPage.module.css";
 
@@ -25,6 +25,7 @@ const AgendamentoPage = () => {
   const [dateOptions, setDateOptions] = useState([]);
   const [isLoadingDateOptions, setIsLoadingDateOptions] = useState(false);
   const [selectedTime, setSelectedTime] = useState("");
+  const [expandedPeriods, setExpandedPeriods] = useState({ morning: true, afternoon: true });
 
   const fetchDateSlots = async (barberId, dateObj, durationMinutes) => {
     // Endpoint correto: /appointments/availability?barberId=&date=&duration=
@@ -208,6 +209,28 @@ const AgendamentoPage = () => {
 
   const selectedDateLabel = selectedDate ? formatDateForSummary(selectedDate) : "Selecione um dia";
   const nextAvailableDate = dateOptions.find((option) => option.isAvailable);
+
+  const groupedSlots = useMemo(() => {
+    const morning = [];
+    const afternoon = [];
+
+    availableSlots.forEach((slot) => {
+      const hour = Number(String(slot).split(':')[0]);
+      if (Number.isNaN(hour)) return;
+
+      if (hour < 12) {
+        morning.push(slot);
+      } else {
+        afternoon.push(slot);
+      }
+    });
+
+    return { morning, afternoon };
+  }, [availableSlots]);
+
+  const togglePeriod = (period) => {
+    setExpandedPeriods((prev) => ({ ...prev, [period]: !prev[period] }));
+  };
 
   const getInitials = (name) => {
     if (!name) return "--";
@@ -718,16 +741,68 @@ const AgendamentoPage = () => {
           <h3 className={Styles.section_title}>4. Horário</h3>
           {selectedBarber && selectedDate && selectedServices.length > 0 ? (
             availableSlots.length > 0 ? (
-              <div className={Styles.slots_grid}>
-                {availableSlots.map((time) => (
-                  <button
-                    key={time}
-                    className={`${Styles.slot_button} ${selectedTime === time ? Styles.slot_selected : ''}`}
-                    onClick={() => setSelectedTime(time)}
-                  >
-                    {time.substring(0, 5)}
-                  </button>
-                ))}
+              <div className={Styles.slots_periods}>
+                {groupedSlots.morning.length > 0 && (
+                  <div className={Styles.periodCard}>
+                    <button
+                      type="button"
+                      className={Styles.periodToggle}
+                      onClick={() => togglePeriod('morning')}
+                      aria-expanded={expandedPeriods.morning}
+                    >
+                      <span>Manha (ate 11:59)</span>
+                      <span className={Styles.periodMeta}>
+                        {groupedSlots.morning.length} horarios
+                        {expandedPeriods.morning ? <FiChevronUp /> : <FiChevronDown />}
+                      </span>
+                    </button>
+
+                    {expandedPeriods.morning && (
+                      <div className={Styles.slots_grid}>
+                        {groupedSlots.morning.map((time) => (
+                          <button
+                            key={time}
+                            className={`${Styles.slot_button} ${selectedTime === time ? Styles.slot_selected : ''}`}
+                            onClick={() => setSelectedTime(time)}
+                          >
+                            {time.substring(0, 5)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {groupedSlots.afternoon.length > 0 && (
+                  <div className={Styles.periodCard}>
+                    <button
+                      type="button"
+                      className={Styles.periodToggle}
+                      onClick={() => togglePeriod('afternoon')}
+                      aria-expanded={expandedPeriods.afternoon}
+                    >
+                      <span>Tarde (a partir de 12:00)</span>
+                      <span className={Styles.periodMeta}>
+                        {groupedSlots.afternoon.length} horarios
+                        {expandedPeriods.afternoon ? <FiChevronUp /> : <FiChevronDown />}
+                      </span>
+                    </button>
+
+                    {expandedPeriods.afternoon && (
+                      <div className={Styles.slots_grid}>
+                        {groupedSlots.afternoon.map((time) => (
+                          <button
+                            key={time}
+                            className={`${Styles.slot_button} ${selectedTime === time ? Styles.slot_selected : ''}`}
+                            onClick={() => setSelectedTime(time)}
+                          >
+                            {time.substring(0, 5)}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <p className={Styles.warning}>Nenhum horário disponível para esta combinação.</p>

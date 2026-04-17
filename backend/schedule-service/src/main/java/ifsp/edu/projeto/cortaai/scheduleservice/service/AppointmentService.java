@@ -18,7 +18,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -45,6 +47,7 @@ public class AppointmentService {
 
     // ========== CRIAÇÃO ==========
 
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public AppointmentDTO createAppointment(String callerEmail, CreateAppointmentDTO dto) {
 
         // 1. Validar customer via Feign
@@ -85,11 +88,7 @@ public class AppointmentService {
         LocalDateTime endTime = dto.getStartTime().plusMinutes(totalDuration);
 
         // 6. Verificar conflito de horário
-        boolean hasConflict = appointmentRepository.hasConflict(
-                dto.getBarberId(), dto.getStartTime(), endTime);
-        if (hasConflict) {
-            throw new ConflictException("O barbeiro já possui um agendamento neste horário.");
-        }
+        ensureNoConflictForSlot(dto.getBarberId(), dto.getStartTime(), endTime);
 
         // 7. Verificar BarberBlock
         boolean isBlocked = barberBlockRepository
@@ -126,7 +125,7 @@ public class AppointmentService {
 
         appointment.setActivities(appointmentActivities);
 
-        Appointment saved = appointmentRepository.save(appointment);
+        Appointment saved = appointmentRepository.saveAndFlush(appointment);
 
         // 10. Publicar evento no RabbitMQ
         AppointmentCreatedEvent event = new AppointmentCreatedEvent(
@@ -152,6 +151,7 @@ public class AppointmentService {
      * @param dto               dados do agendamento manual
      * @return AppointmentDTO   agendamento criado
      */
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public AppointmentDTO createManualBooking(String barberFirebaseUid, BarberManualBookingDTO dto) {
 
         // 1. Resolver barbeiro pelo Firebase UID
@@ -202,11 +202,7 @@ public class AppointmentService {
         LocalDateTime endTime = dto.getStartTime().plusMinutes(totalDuration);
 
         // 5. Verificar conflito de horário
-        boolean hasConflict = appointmentRepository.hasConflict(
-                barber.getId(), dto.getStartTime(), endTime);
-        if (hasConflict) {
-            throw new ConflictException("O barbeiro já possui um agendamento neste horário.");
-        }
+        ensureNoConflictForSlot(barber.getId(), dto.getStartTime(), endTime);
 
         // 6. Verificar BarberBlock
         boolean isBlocked = barberBlockRepository
@@ -244,7 +240,7 @@ public class AppointmentService {
 
         appointment.setActivities(appointmentActivities);
 
-        Appointment saved = appointmentRepository.save(appointment);
+        Appointment saved = appointmentRepository.saveAndFlush(appointment);
         log.info("Agendamento manual (WALK_IN) criado: id={}, barbeiro={}, cliente='{}', telefone='{}'",
                 saved.getId(), barber.getId(), dto.getClientName(), dto.getClientPhone());
 
@@ -530,6 +526,36 @@ public class AppointmentService {
                 .stream()
                 .map(appointmentMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentDTO> getBarbershopAppointmentsByPeriod(UUID shopId, LocalDateTime from, LocalDateTime to) {
+        if (from == null || to == null || from.isAfter(to)) {
+            throw new IllegalArgumentException("Período inválido para consulta da agenda da barbearia.");
+        }
+
+        return appointmentRepository.findByBarbershopIdAndStartTimeBetween(shopId, from, to)
+                .stream()
+                .filter(this::includeInOperationalReports)
+                .sorted(Comparator.comparing(Appointment::getStartTime))
+                .map(appointmentMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    private void ensureNoConflictForSlot(UUID barberId, LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            List<Appointment> conflicts = appointmentRepository.findConflictsForUpdate(barberId, startTime, endTime);
+            if (!conflicts.isEmpty()) {
+                throw new ConflictException("O barbeiro já possui um agendamento neste horário.");
+            }
+        } catch (PessimisticLockingFailureException ex) {
+            throw new ConflictException("Não foi possível reservar o horário neste momento. Tente novamente.");
+        }
+    }
+
+    private boolean includeInOperationalReports(Appointment appointment) {
+        return appointment.getStatus() != AppointmentStatus.CANCELLED
+                && appointment.getStatus() != AppointmentStatus.NO_SHOW;
     }
 
     // ========== ATUALIZAÇÃO INTERNA (para payment-service) ==========

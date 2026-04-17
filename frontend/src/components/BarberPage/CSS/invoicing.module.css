@@ -64,6 +64,36 @@
     gap: 0.3rem;
 }
 
+.seriesLegend {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.5rem;
+}
+
+.legendItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    color: #2f260f;
+}
+
+.legendDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    display: inline-block;
+}
+
+.legendDotService {
+    background: #1f6e3a;
+}
+
+.legendDotWalkIn {
+    background: #0f4f80;
+}
+
 .seriesRow {
     display: grid;
     grid-template-columns: 42px minmax(120px, 1fr) auto;
@@ -84,10 +114,23 @@
     overflow: hidden;
 }
 
-.seriesBar {
+.seriesBarStack {
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+    border-radius: 999px;
+}
+
+.seriesBarService {
     height: 100%;
     border-radius: 999px;
     background: linear-gradient(90deg, #1f6e3a 0%, #38a057 100%);
+}
+
+.seriesBarWalkIn {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #1f6ba3 0%, #3b9de2 100%);
 }
 
 .seriesValue {

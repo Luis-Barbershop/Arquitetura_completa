@@ -4,7 +4,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
@@ -91,6 +93,14 @@ public class GlobalExceptionHandler {
         String msg = ex.getMostSpecificCause().getMessage();
         log.warn("Violação de integridade: {}", msg);
         return buildResponse(HttpStatus.CONFLICT, "Violação de integridade de dados: " + msg, ex, request);
+    }
+
+    @ExceptionHandler({CannotAcquireLockException.class, PessimisticLockingFailureException.class})
+    public ResponseEntity<ApiErrorResponse> handleConcurrency(Exception ex, HttpServletRequest request) {
+        log.warn("Conflito de concorrência ao reservar slot: {}", ex.getMessage());
+        return buildResponse(HttpStatus.CONFLICT,
+                "Não foi possível reservar o horário porque outro agendamento concorrente ocorreu. Tente novamente.",
+                ex, request);
     }
 
     // ─── 415 ──────────────────────────────────────────────────────────────────

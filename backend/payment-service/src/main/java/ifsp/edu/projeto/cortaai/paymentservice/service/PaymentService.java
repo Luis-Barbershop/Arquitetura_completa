@@ -33,11 +33,12 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,6 +60,7 @@ public class PaymentService {
      * Taxa da plataforma CortaAI cobrada sobre cada transação (5%).
      */
     private static final BigDecimal PLATFORM_FEE_RATE = new BigDecimal("0.05");
+    private static final UUID WALK_IN_CUSTOMER_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
 
     /**
      * Cria um pagamento (Checkout Pro do Mercado Pago) com suporte a Split.
@@ -327,6 +329,13 @@ public class PaymentService {
         BigDecimal serviceRevenue = transactionRepository.sumAmountByBarbershopAndStatusAndCreatedAtBetween(
                 barbershopId, PaymentStatus.APPROVED, start, end);
 
+        List<AppointmentInfoDTO> walkInAppointments = getWalkInAppointments(barbershopId, start, end);
+        BigDecimal walkInRevenue = walkInAppointments.stream()
+            .map(AppointmentInfoDTO::totalPrice)
+            .filter(java.util.Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalServiceRevenue = serviceRevenue.add(walkInRevenue);
+
         InventoryFinancialSummaryDTO inventorySummary;
         try {
             inventorySummary = productServiceClient.getFinancialSummary(barbershopId, startDate, endDate);
@@ -338,15 +347,20 @@ public class PaymentService {
         BigDecimal productExpenses = inventorySummary.productExpenses() != null ? inventorySummary.productExpenses() : BigDecimal.ZERO;
         BigDecimal inventoryAssetValue = inventorySummary.inventoryAssetValue() != null ? inventorySummary.inventoryAssetValue() : BigDecimal.ZERO;
         BigDecimal operationalResult = serviceRevenue.subtract(productExpenses);
+        BigDecimal operationalResultWithWalkIn = totalServiceRevenue.subtract(productExpenses);
 
         return new FinancialOverviewDTO(
                 barbershopId,
                 "BRL",
                 serviceRevenue,
+            walkInRevenue,
+            totalServiceRevenue,
                 productExpenses,
                 inventoryAssetValue,
                 operationalResult,
+            operationalResultWithWalkIn,
                 periodTransactions.size(),
+            walkInAppointments.size(),
                 approvedCount,
                 pendingCount,
                 cancelledCount
@@ -360,36 +374,84 @@ public class PaymentService {
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.plusDays(1).atStartOfDay().minusNanos(1);
 
-        String safeGroupBy = groupBy == null ? "DAY" : groupBy.toUpperCase(Locale.ROOT);
+        String requestedGroupBy = groupBy == null ? "DAY" : groupBy.toUpperCase(Locale.ROOT);
+        final String safeGroupBy = "WEEK".equals(requestedGroupBy) ? "WEEK" : "DAY";
+
         List<Transaction> periodTransactions = transactionRepository.findByBarbershopIdAndCreatedAtBetween(barbershopId, start, end)
                 .stream()
                 .filter(t -> t.getStatus() == PaymentStatus.APPROVED)
                 .toList();
 
-        Stream<Map.Entry<LocalDate, List<Transaction>>> groupedStream;
-        if ("WEEK".equals(safeGroupBy)) {
-            groupedStream = periodTransactions.stream()
-                    .collect(Collectors.groupingBy(t -> t.getCreatedAt().toLocalDate().with(java.time.DayOfWeek.MONDAY)))
-                    .entrySet()
-                    .stream();
-        } else {
-            groupedStream = periodTransactions.stream()
-                    .collect(Collectors.groupingBy(t -> t.getCreatedAt().toLocalDate()))
-                    .entrySet()
-                    .stream();
-            safeGroupBy = "DAY";
-        }
+        Map<LocalDate, List<Transaction>> transactionsByPeriod = periodTransactions.stream()
+            .collect(Collectors.groupingBy(t -> resolveGroupDate(t.getCreatedAt(), safeGroupBy)));
 
-        List<FinancialSeriesPointDTO> points = groupedStream
-                .map(entry -> new FinancialSeriesPointDTO(
-                        entry.getKey(),
-                        entry.getValue().stream().map(Transaction::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add),
-                        entry.getValue().size()
-                ))
-                .sorted(Comparator.comparing(FinancialSeriesPointDTO::date))
-                .toList();
+        List<AppointmentInfoDTO> walkInAppointments = getWalkInAppointments(barbershopId, start, end);
+        Map<LocalDate, List<AppointmentInfoDTO>> walkInsByPeriod = walkInAppointments.stream()
+            .collect(Collectors.groupingBy(a -> resolveGroupDate(a.startTime(), safeGroupBy)));
+
+        Set<LocalDate> allPeriods = new HashSet<>();
+        allPeriods.addAll(transactionsByPeriod.keySet());
+        allPeriods.addAll(walkInsByPeriod.keySet());
+
+        List<FinancialSeriesPointDTO> points = allPeriods.stream()
+            .map(period -> {
+                List<Transaction> txPoints = transactionsByPeriod.getOrDefault(period, List.of());
+                BigDecimal serviceRevenue = txPoints.stream()
+                    .map(Transaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                int approvedTransactions = txPoints.size();
+
+                List<AppointmentInfoDTO> walkInPoints = walkInsByPeriod.getOrDefault(period, List.of());
+                BigDecimal walkInRevenue = walkInPoints.stream()
+                    .map(AppointmentInfoDTO::totalPrice)
+                    .filter(java.util.Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                int walkInAppointmentsCount = walkInPoints.size();
+
+                return new FinancialSeriesPointDTO(
+                    period,
+                    serviceRevenue,
+                    walkInRevenue,
+                    serviceRevenue.add(walkInRevenue),
+                    approvedTransactions,
+                    walkInAppointmentsCount
+                );
+            })
+            .sorted(Comparator.comparing(FinancialSeriesPointDTO::date))
+            .toList();
 
         return new FinancialSeriesDTO(barbershopId, safeGroupBy, points);
+        }
+
+        private List<AppointmentInfoDTO> getWalkInAppointments(UUID barbershopId, LocalDateTime from, LocalDateTime to) {
+        try {
+            return scheduleServiceClient.getBarbershopAppointmentsByPeriod(barbershopId, from, to)
+                .stream()
+                .filter(this::isWalkInForFinancialReport)
+                .toList();
+        } catch (Exception ex) {
+            log.warn("Falha ao consultar agendamentos walk-in da barbearia {}: {}", barbershopId, ex.getMessage());
+            return List.of();
+        }
+        }
+
+        private boolean isWalkInForFinancialReport(AppointmentInfoDTO appointment) {
+        if (appointment == null || appointment.customerId() == null || appointment.startTime() == null) {
+            return false;
+        }
+
+        String status = appointment.status() == null ? "" : appointment.status().toUpperCase(Locale.ROOT);
+        return WALK_IN_CUSTOMER_ID.equals(appointment.customerId())
+            && !"CANCELLED".equals(status)
+            && !"NO_SHOW".equals(status);
+        }
+
+        private LocalDate resolveGroupDate(LocalDateTime dateTime, String safeGroupBy) {
+        LocalDate date = dateTime.toLocalDate();
+        if ("WEEK".equals(safeGroupBy)) {
+            return date.with(java.time.DayOfWeek.MONDAY);
+        }
+        return date;
     }
 
     @Transactional(readOnly = true)

@@ -11,10 +11,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -40,6 +43,22 @@ public class InternalAppointmentController {
     public ResponseEntity<AppointmentDTO> getAppointmentById(
             @Parameter(description = "UUID do agendamento") @PathVariable UUID id) {
         return ResponseEntity.ok(appointmentService.getAppointmentById(id));
+    }
+
+    @Operation(summary = "Busca agendamentos da barbearia por período (interno)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Agendamentos encontrados"),
+            @ApiResponse(responseCode = "400", description = "Parâmetros inválidos",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    @GetMapping("/barbershop/{barbershopId}/period")
+    public ResponseEntity<List<AppointmentDTO>> getBarbershopAppointmentsByPeriod(
+            @Parameter(description = "UUID da barbearia") @PathVariable UUID barbershopId,
+            @Parameter(description = "Início do período (ISO-8601)")
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @Parameter(description = "Fim do período (ISO-8601)")
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+        return ResponseEntity.ok(appointmentService.getBarbershopAppointmentsByPeriod(barbershopId, from, to));
     }
 
     @Operation(summary = "Atualiza status de pagamento de um agendamento (interno)")

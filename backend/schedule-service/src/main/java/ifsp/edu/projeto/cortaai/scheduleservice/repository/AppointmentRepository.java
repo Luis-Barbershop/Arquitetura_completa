@@ -1,6 +1,8 @@
 package ifsp.edu.projeto.cortaai.scheduleservice.repository;
 
 import ifsp.edu.projeto.cortaai.scheduleservice.model.Appointment;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +19,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     boolean hasConflict(@Param("barberId") UUID barberId,
                         @Param("startTime") LocalDateTime startTime,
                         @Param("endTime") LocalDateTime endTime);
+
+                @Lock(LockModeType.PESSIMISTIC_WRITE)
+                @Query("SELECT a FROM Appointment a WHERE a.barberId = :barberId " +
+                    "AND a.status NOT IN ('CANCELLED', 'NO_SHOW') " +
+                    "AND a.startTime < :endTime AND a.endTime > :startTime")
+                List<Appointment> findConflictsForUpdate(@Param("barberId") UUID barberId,
+                                       @Param("startTime") LocalDateTime startTime,
+                                       @Param("endTime") LocalDateTime endTime);
 
     List<Appointment> findByCustomerIdOrderByStartTimeDesc(UUID customerId);
 
