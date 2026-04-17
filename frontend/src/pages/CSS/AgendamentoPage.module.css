@@ -9,6 +9,12 @@
         linear-gradient(180deg, #101010 0%, #0f0f0f 100%);
 }
 
+@media (max-width: 760px) {
+    .page_container {
+        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
 .content_container {
     width: min(1160px, 96%);
     margin: 0 auto;

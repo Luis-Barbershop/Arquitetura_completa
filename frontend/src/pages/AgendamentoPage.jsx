@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiCalendar, FiCheckCircle, FiChevronDown, FiChevronUp, FiRefreshCw, FiScissors } from "react-icons/fi";
+import { FiRefreshCw } from "react-icons/fi";
 import { toast } from "react-toastify";
 import Styles from "./CSS/AgendamentoPage.module.css";
 
 import ServicesAgendamento from "../components/AgendamentoPage/ServicesAgendamento";
+import CustomerHeader from "../components/HomePage/CustomerHeader";
+import CustomerNavbar from "../components/HomePage/CustomerNavbar";
+import { logoutUser } from "../services/authService";
 
-import api from "../services/api"; 
+import api from "../services/api";
 import { getShopBarbers, getShopServices } from "../services/barbershopService";
 
 const AgendamentoPage = () => {
@@ -249,6 +252,11 @@ const AgendamentoPage = () => {
     setDateOptions([]);
     setSelectedTime("");
     setAvailableSlots([]);
+  };
+
+  const handleLogout = () => {
+    logoutUser();
+    navigate('/');
   };
 
   useEffect(() => {
@@ -535,41 +543,8 @@ const AgendamentoPage = () => {
   return (
     <div className={Styles.page_container}>
       <div className={Styles.content_container}>
-        <header className={Styles.topMenu}>
-          <div className={Styles.brandBlock}>
-            <div className={Styles.brandBadge}>CA</div>
-            <div>
-              <h3>CortaAI</h3>
-              <p>Novo agendamento</p>
-            </div>
-          </div>
-
-          <nav className={Styles.menuCenter} aria-label="Navegação de agendamento">
-            <button onClick={() => navigate('/homepage')}>
-              <FiScissors />
-              <span>Home</span>
-            </button>
-            <button onClick={() => navigate('/meus-agendamentos')}>
-              <FiCalendar />
-              <span>Meus agendamentos</span>
-            </button>
-            <button className={Styles.menuItemActive}>
-              <FiCheckCircle />
-              <span>Novo agendamento</span>
-            </button>
-          </nav>
-
-          <div className={Styles.menuActions}>
-            <button className={Styles.secondaryAction} onClick={clearSelections}>
-              <FiRefreshCw />
-              <span>Limpar</span>
-            </button>
-            <button className={Styles.ghostAction} onClick={() => navigate(-1)}>
-              <FiArrowLeft />
-              <span>Voltar</span>
-            </button>
-          </div>
-        </header>
+        <CustomerHeader activeTab="agendamentos" onLogout={handleLogout} />
+        <CustomerNavbar activeTab="agendamentos" onLogout={handleLogout} />
 
         <section className={Styles.heroBlock}>
           <p className={Styles.kicker}>AGENDAMENTO ONLINE</p>
