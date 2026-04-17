@@ -95,6 +95,12 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.CONFLICT, "Violação de integridade de dados: " + msg, ex, request);
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ApiErrorResponse> handleForbidden(ForbiddenException ex, HttpServletRequest request) {
+        log.warn("Acesso negado: {}", ex.getMessage());
+        return buildResponse(HttpStatus.FORBIDDEN, ex.getMessage(), ex, request);
+    }
+
     @ExceptionHandler({CannotAcquireLockException.class, PessimisticLockingFailureException.class})
     public ResponseEntity<ApiErrorResponse> handleConcurrency(Exception ex, HttpServletRequest request) {
         log.warn("Conflito de concorrência ao reservar slot: {}", ex.getMessage());

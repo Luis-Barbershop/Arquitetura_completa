@@ -54,6 +54,7 @@ function BarberDashboardPage() {
         else if (tab === 'estoque') navigate('/barberHome/estoque');
         else if (tab === 'perfil') navigate('/barberHome/perfil');
         else if (tab === 'time') navigate('/barberHome/time');
+        else if (tab === 'agenda-equipe') navigate('/barberHome/agenda-equipe');
         else if (tab === 'novo-agendamento') navigate('/barberHome/novo-agendamento');
     };
 

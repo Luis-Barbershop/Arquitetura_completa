@@ -93,6 +93,7 @@ function BarberTeamPage() {
         else if (tab === 'estoque') navigate('/barberHome/estoque');
         else if (tab === 'perfil') navigate('/barberHome/perfil');
         else if (tab === 'dashboards') navigate('/barberHome/dashboard');
+        else if (tab === 'agenda-equipe') navigate('/barberHome/agenda-equipe');
         else if (tab === 'novo-agendamento') navigate('/barberHome/novo-agendamento');
     };
 

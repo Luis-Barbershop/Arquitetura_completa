@@ -5,6 +5,7 @@ const NAV_PATHS = {
     home: '/barberHome',
     agenda: '/meus-agendamentos',
     'agenda-barbearia': '/barberHome/agenda-barbearia',
+    'agenda-equipe': '/barberHome/agenda-equipe',
     servicos: '/barberHome/servicos',
     perfil: '/barberHome/perfil',
     estoque: '/barberHome/estoque',
@@ -32,6 +33,7 @@ const unlinkedNavItems = [
 const ownerNavItems = [
     { id: 'dashboards', label: 'Dash',    short: 'DB' },
     { id: 'estoque',    label: 'Estoque', short: 'ES' },
+    { id: 'agenda-equipe', label: 'Equipe', short: 'AE' },
     { id: 'time',       label: 'Time',    short: 'TM' },
 ];
 

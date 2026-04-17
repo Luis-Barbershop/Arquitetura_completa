@@ -92,6 +92,7 @@ function BarberManualBookingPage() {
         else if (tab === 'perfil') navigate('/barberHome/perfil');
         else if (tab === 'time') navigate('/barberHome/time');
         else if (tab === 'dashboards') navigate('/barberHome/dashboard');
+        else if (tab === 'agenda-equipe') navigate('/barberHome/agenda-equipe');
     };
 
     // ── Toggle de atividade na seleção ────────────────────────────────────

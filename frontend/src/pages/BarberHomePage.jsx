@@ -98,6 +98,11 @@ function BarberHomePage() {
       return;
     }
 
+    if (tab === 'agenda-equipe') {
+      navigate('/barberHome/agenda-equipe');
+      return;
+    }
+
     if (tab === 'novo-agendamento') {
       navigate('/barberHome/novo-agendamento');
       return;

@@ -22,6 +22,7 @@ const linkedNavItems = [
 const ownerNavItems = [
     { id: 'dashboards', label: 'Dashboards', short: 'DB' },
     { id: 'estoque',    label: 'Estoque',    short: 'ES' },
+    { id: 'agenda-equipe', label: 'Agenda da Equipe', short: 'AE' },
     { id: 'time',       label: 'Meu Time',   short: 'TM' },
 ];
 

@@ -96,7 +96,7 @@ const AgendaBarbeariaPage = () => {
     );
 
     const handleBarberTabChange = (tab) => {
-        if (tab === 'agenda-barbearia') return;
+        if (tab === 'agenda-equipe' || tab === 'agenda-barbearia') return;
         if (tab === 'home') { navigate('/barberHome'); return; }
         if (tab === 'agenda') { navigate('/meus-agendamentos'); return; }
         if (tab === 'servicos') { navigate('/barberHome/servicos'); return; }
@@ -119,7 +119,7 @@ const AgendaBarbeariaPage = () => {
                 <BarberHeader
                     barber={{ name: userName }}
                     onLogout={handleBarberLogout}
-                    activeTab="agenda-barbearia"
+                    activeTab="agenda-equipe"
                     onTabChange={handleBarberTabChange}
                     isOwner={isOwner}
                     barbershopId={barbershopId}
@@ -127,8 +127,8 @@ const AgendaBarbeariaPage = () => {
 
                 <section className={Styles.heroBlock}>
                     <p className={Styles.kicker}>PAINEL DO OWNER</p>
-                    <h1 className={Styles.title}>Agenda da Barbearia</h1>
-                    <p className={Styles.subtitle}>Visualize todos os atendimentos da sua equipe no dia selecionado.</p>
+                    <h1 className={Styles.title}>Agenda da Equipe</h1>
+                    <p className={Styles.subtitle}>Visualize todos os atendimentos da sua equipe no dia selecionado. O encaixe continua sendo individual de cada barbeiro.</p>
                 </section>
 
                 {/* Navegação por data */}
@@ -239,7 +239,7 @@ const AgendaBarbeariaPage = () => {
             </div>
 
             <BarberNavbar
-                activeTab="agenda-barbearia"
+                activeTab="agenda-equipe"
                 onTabChange={handleBarberTabChange}
                 isOwner={isOwner}
                 barbershopId={barbershopId}

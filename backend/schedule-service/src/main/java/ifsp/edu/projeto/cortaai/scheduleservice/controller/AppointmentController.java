@@ -80,9 +80,11 @@ public class AppointmentController {
     @Operation(summary = "Consultar agenda da barbearia", description = "Retorna todos os agendamentos de uma barbearia. Exige obrigatoriamente um filtro por data.")
     @GetMapping("/barbershop/{shopId}")
     public ResponseEntity<List<AppointmentDTO>> getBarbershopSchedule(
+                        @Parameter(hidden = true) @RequestHeader("X-User-Email") String userEmail,
+                        @Parameter(hidden = true) @RequestHeader(value = "X-Correlation-Id", required = false) String correlationId,
             @Parameter(description = "UUID da barbearia") @PathVariable UUID shopId,
             @Parameter(description = "Data do filtro (formato ISO: YYYY-MM-DD)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(appointmentService.getBarbershopSchedule(shopId, date));
+                return ResponseEntity.ok(appointmentService.getBarbershopSchedule(shopId, date, userEmail, correlationId));
     }
 
     @Operation(summary = "Cancelar agendamento", description = "Cancela um agendamento existente de forma explícita e segura (substitui o antigo update genérico do monolito).")

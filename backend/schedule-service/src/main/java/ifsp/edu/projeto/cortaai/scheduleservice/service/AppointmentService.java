@@ -4,6 +4,7 @@ import ifsp.edu.projeto.cortaai.scheduleservice.config.RabbitConfig;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.*;
 import ifsp.edu.projeto.cortaai.scheduleservice.event.*;
 import ifsp.edu.projeto.cortaai.scheduleservice.exception.ConflictException;
+import ifsp.edu.projeto.cortaai.scheduleservice.exception.ForbiddenException;
 import ifsp.edu.projeto.cortaai.scheduleservice.exception.NotFoundException;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.BarbershopServiceClient;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.UserServiceClient;
@@ -519,7 +520,32 @@ public class AppointmentService {
     }
 
     @Transactional(readOnly = true)
-    public List<AppointmentDTO> getBarbershopSchedule(UUID shopId, LocalDate date) {
+    public List<AppointmentDTO> getBarbershopSchedule(UUID shopId, LocalDate date, String callerEmail, String correlationId) {
+        UserInfoDTO caller = userServiceClient.getUserByEmail(callerEmail);
+        if (caller == null || caller.getId() == null) {
+            throw new NotFoundException("Usuário autenticado não encontrado.");
+        }
+
+        BarbershopInfoDTO shop = barbershopServiceClient.getBarbershopById(shopId);
+        if (shop == null) {
+            throw new NotFoundException("Barbearia não encontrada.");
+        }
+
+        String safeCorrelationId = (correlationId == null || correlationId.isBlank()) ? "N/A" : correlationId;
+        boolean isOwner = caller.getId().equals(shop.getOwnerId());
+        if (!isOwner) {
+            log.warn(
+                    "SECURITY_EVENT=MASTER_SCHEDULE_ACCESS_DENIED userId={} userType={} targetShopId={} date={} correlationId={}",
+                    caller.getId(), caller.getUserType(), shopId, date, safeCorrelationId
+            );
+            throw new ForbiddenException("Apenas o owner da barbearia pode visualizar a agenda da equipe.");
+        }
+
+        log.info(
+                "SECURITY_EVENT=MASTER_SCHEDULE_ACCESS_GRANTED userId={} userType={} targetShopId={} date={} correlationId={}",
+                caller.getId(), caller.getUserType(), shopId, date, safeCorrelationId
+        );
+
         LocalDateTime dayStart = date.atStartOfDay();
         LocalDateTime dayEnd = date.atTime(23, 59, 59);
         return appointmentRepository.findByBarbershopIdAndStartTimeBetween(shopId, dayStart, dayEnd)

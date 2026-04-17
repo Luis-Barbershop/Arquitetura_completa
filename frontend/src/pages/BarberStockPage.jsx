@@ -110,6 +110,11 @@ function BarberStockPage() {
 
     if (tab === 'dashboards') {
       navigate('/barberHome/dashboard');
+      return;
+    }
+
+    if (tab === 'agenda-equipe') {
+      navigate('/barberHome/agenda-equipe');
     }
   };
 

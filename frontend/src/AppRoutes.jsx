@@ -45,6 +45,7 @@ function AppRoutes() {
       <Route path='/barberHome/dashboard' element={<BarberDashboardPage />} />
       <Route path='/barberHome/novo-agendamento' element={<BarberManualBookingPage />} />
       <Route path='/barberHome/agenda-barbearia' element={<AgendaBarbeariaPage />} />
+      <Route path='/barberHome/agenda-equipe' element={<AgendaBarbeariaPage />} />
     </Routes>
   )
 }

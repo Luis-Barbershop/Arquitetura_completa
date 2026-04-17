@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiCalendar, FiCheckCircle, FiChevronLeft, FiChevronRight, FiClock, FiRefreshCw, FiScissors, FiXCircle } from 'react-icons/fi';
+import { FiArrowLeft, FiCalendar, FiCheckCircle, FiClock, FiRefreshCw, FiScissors, FiXCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import Styles from './CSS/MeusAgendamentos.module.css';
-import { getMyAppointments, cancelAppointment, getBarbershopSchedule } from '../services/appointmentService';
+import { getMyAppointments, cancelAppointment } from '../services/appointmentService';
 import { createBarbershopReview } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
@@ -24,15 +24,6 @@ const MeusAgendamentosPage = () => {
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
     const [reviewRating, setReviewRating] = useState(5);
     const [reviewComment, setReviewComment] = useState('');
-
-    // Sub-tabs (apenas para barbeiros/owners)
-    const todayStr = () => new Date().toISOString().slice(0, 10);
-    const [activeSubTab, setActiveSubTab] = useState('minha-agenda');
-    const [selectedDate, setSelectedDate] = useState(todayStr());
-    const [shopAppointments, setShopAppointments] = useState([]);
-    const [shopLoading, setShopLoading] = useState(false);
-    const [shopFilter, setShopFilter] = useState('ALL');
-    const [shopPage, setShopPage] = useState(1);
 
     // Determina o papel com base na chave correta do localStorage ('userRole')
     const isCustomer = checkIsCustomer();
@@ -69,30 +60,6 @@ const MeusAgendamentosPage = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const carregarAgendaBarbearia = useCallback(async () => {
-        if (!barbershopId || !selectedDate) return;
-        setShopLoading(true);
-        try {
-            const data = await getBarbershopSchedule(barbershopId, selectedDate);
-            setShopAppointments(data);
-            setShopPage(1);
-        } catch {
-            toast.error('Não foi possível carregar a agenda da barbearia.');
-        } finally {
-            setShopLoading(false);
-        }
-    }, [barbershopId, selectedDate]);
-
-    useEffect(() => {
-        if (activeSubTab === 'agenda-barbearia') carregarAgendaBarbearia();
-    }, [activeSubTab, carregarAgendaBarbearia]);
-
-    const shiftDate = (days) => {
-        const d = new Date(selectedDate + 'T00:00:00');
-        d.setDate(d.getDate() + days);
-        setSelectedDate(d.toISOString().slice(0, 10));
     };
 
     const handleOpenCancelModal = (id) => {
@@ -275,8 +242,8 @@ const MeusAgendamentosPage = () => {
             return;
         }
 
-        if (tab === 'agenda-barbearia') {
-            navigate('/barberHome/agenda-barbearia');
+        if (tab === 'agenda-equipe') {
+            navigate('/barberHome/agenda-equipe');
             return;
         }
 
@@ -346,130 +313,19 @@ const MeusAgendamentosPage = () => {
                     <p className={Styles.subtitle}>Visualize status, horario e servicos de cada agendamento em um fluxo mais claro.</p>
                 </section>
 
-                {/* Sub-tabs: apenas para barbeiros/owners */}
                 {!isCustomer && (
                     <div className={Styles.filtersRow}>
-                        <button
-                            className={activeSubTab === 'minha-agenda' ? Styles.filterButtonActive : Styles.filterButton}
-                            onClick={() => setActiveSubTab('minha-agenda')}
-                        >
-                            Minha Agenda
-                        </button>
                         {isOwner && (
                             <button
-                                className={activeSubTab === 'agenda-barbearia' ? Styles.filterButtonActive : Styles.filterButton}
-                                onClick={() => setActiveSubTab('agenda-barbearia')}
+                                className={Styles.filterButton}
+                                onClick={() => navigate('/barberHome/agenda-equipe')}
                             >
-                                Agenda da Barbearia
+                                Agenda da Equipe
                             </button>
                         )}
                     </div>
                 )}
 
-                {/* ── SUB-TAB: Agenda da Barbearia ── */}
-                {!isCustomer && activeSubTab === 'agenda-barbearia' && (
-                    <>
-                        {/* Navegação por data */}
-                        <div className={Styles.filtersRow} style={{ alignItems: 'center', gap: '0.5rem' }}>
-                            <button className={Styles.filterButton} onClick={() => shiftDate(-1)} aria-label="Dia anterior">
-                                <FiChevronLeft />
-                            </button>
-                            <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                                className={Styles.filterButton}
-                                style={{ cursor: 'pointer' }}
-                            />
-                            <button className={Styles.filterButton} onClick={() => shiftDate(1)} aria-label="Próximo dia">
-                                <FiChevronRight />
-                            </button>
-                            <button className={Styles.filterButton} onClick={carregarAgendaBarbearia} aria-label="Atualizar">
-                                <FiRefreshCw />
-                            </button>
-                            <button className={Styles.filterButton} onClick={() => setSelectedDate(todayStr())}>
-                                Hoje
-                            </button>
-                        </div>
-
-                        <div className={Styles.filtersRow}>
-                            {filterItems.map((f) => (
-                                <button
-                                    key={f.key}
-                                    className={shopFilter === f.key ? Styles.filterButtonActive : Styles.filterButton}
-                                    onClick={() => { setShopFilter(f.key); setShopPage(1); }}
-                                >
-                                    {f.label}
-                                </button>
-                            ))}
-                        </div>
-
-                        {shopLoading ? (
-                            <div className={Styles.loadingState}>Carregando agenda...</div>
-                        ) : (() => {
-                            const shopFiltered = shopAppointments
-                                .filter((a) => shopFilter === 'ALL' || a.status === shopFilter)
-                                .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
-                            const shopTotalPages = Math.max(1, Math.ceil(shopFiltered.length / 10));
-                            const shopPageSafe = Math.min(shopPage, shopTotalPages);
-                            const shopPaginated = shopFiltered.slice((shopPageSafe - 1) * 10, shopPageSafe * 10);
-                            return shopFiltered.length === 0 ? (
-                                <div className={Styles.empty}>
-                                    <h3>Nenhum atendimento encontrado para este dia.</h3>
-                                    <p>Tente outro dia ou verifique os filtros.</p>
-                                </div>
-                            ) : (
-                                <div>
-                                    <div className={Styles.list}>
-                                        {shopPaginated.map((app) => (
-                                            <div key={app.id} className={Styles.card}>
-                                                <div className={Styles.info}>
-                                                    <span className={Styles.datePill}>
-                                                        <FiClock />
-                                                        {new Date(app.startTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                                                        {app.endTime && ` — ${new Date(app.endTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
-                                                    </span>
-                                                    <span className={Styles.mainInfo}>
-                                                        Barbeiro: <strong>{app.barberName || 'Barbeiro'}</strong>
-                                                    </span>
-                                                    <span className={Styles.mainInfo}>
-                                                        Cliente: {app.customerName || 'Cliente'}
-                                                    </span>
-                                                    <span className={Styles.details}>
-                                                        {toServiceSummary(app)}
-                                                    </span>
-                                                    <span className={`${Styles.statusChip} ${getStatusClass(app.status)}`}>
-                                                        {app.status === 'SCHEDULED' && <FiCalendar />}
-                                                        {app.status === 'CONFIRMED' && <FiCalendar />}
-                                                        {app.status === 'COMPLETED' && <FiCheckCircle />}
-                                                        {app.status === 'CANCELLED' && <FiXCircle />}
-                                                        {app.status === 'WALK_IN' && <FiScissors />}
-                                                        {translateStatus(app.status)}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    {shopTotalPages > 1 && (
-                                        <div className={Styles.paginationRow}>
-                                            <button className={Styles.paginationButton} onClick={() => setShopPage((p) => Math.max(p - 1, 1))} disabled={shopPageSafe === 1}>Anterior</button>
-                                            <div className={Styles.paginationNumbers}>
-                                                {Array.from({ length: shopTotalPages }, (_, i) => i + 1).map((p) => (
-                                                    <button key={p} className={p === shopPageSafe ? Styles.pageNumberActive : Styles.pageNumber} onClick={() => setShopPage(p)}>{p}</button>
-                                                ))}
-                                            </div>
-                                            <button className={Styles.paginationButton} onClick={() => setShopPage((p) => Math.min(p + 1, shopTotalPages))} disabled={shopPageSafe === shopTotalPages}>Próxima</button>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })()}
-                    </>
-                )}
-
-                {/* ── SUB-TAB: Minha Agenda (padrão) ── */}
-                {(isCustomer || activeSubTab === 'minha-agenda') && (
-                    <>
                 <div className={Styles.filtersRow}>
                     {filterItems.map((filter) => (
                         <button
@@ -581,8 +437,6 @@ const MeusAgendamentosPage = () => {
                             </div>
                         )}
                     </div>
-                )}
-                    </>
                 )}
 
                 {isCancelModalOpen && (
