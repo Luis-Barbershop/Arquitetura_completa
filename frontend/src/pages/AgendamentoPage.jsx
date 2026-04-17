@@ -441,12 +441,6 @@ const AgendamentoPage = () => {
   const handleAgendar = async () => {
     try {
       setIsSubmittingAppointment(true);
-      const customerId = localStorage.getItem('internalUserId');
-      if (!customerId) {
-        toast.warn("Sessao invalida. Faca login novamente para agendar.");
-        navigate('/identificacao', { state: { mode: 'login', role: 'customer' } });
-        return;
-      }
 
       let timeString = selectedTime;
       if (timeString.length === 5) {
@@ -465,7 +459,6 @@ const AgendamentoPage = () => {
       const isoDateString = localDateObj.toISOString();
 
       const appointmentData = {
-        customerId,
         barbershopId,
         barberId: selectedBarber,
         activityIds: selectedServices.map((service) => service.id),
@@ -491,12 +484,6 @@ const AgendamentoPage = () => {
   const handleAgendarOnline = async () => {
     try {
       setIsSubmittingAppointment(true);
-      const customerId = localStorage.getItem('internalUserId');
-      if (!customerId) {
-        toast.warn("Sessao invalida. Faca login novamente para agendar.");
-        navigate('/identificacao', { state: { mode: 'login', role: 'customer' } });
-        return;
-      }
 
       let timeString = selectedTime;
       if (timeString.length === 5) timeString = `${timeString}:00`;
@@ -509,7 +496,6 @@ const AgendamentoPage = () => {
       }
 
       const appointmentData = {
-        customerId,
         barbershopId,
         barberId: selectedBarber,
         activityIds: selectedServices.map((s) => s.id),

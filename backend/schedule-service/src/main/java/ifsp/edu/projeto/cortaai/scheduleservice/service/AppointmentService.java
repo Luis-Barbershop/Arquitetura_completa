@@ -51,8 +51,9 @@ public class AppointmentService {
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public AppointmentDTO createAppointment(String callerEmail, CreateAppointmentDTO dto) {
 
-        // 1. Validar customer via Feign
-        UserInfoDTO customer = userServiceClient.getUserById(dto.getCustomerId());
+        // 1. Resolver customer pelo e-mail do caller (header confiável do gateway).
+        //    Ignoramos dto.customerId para evitar que o frontend passe Firebase UID ou UUID errado.
+        UserInfoDTO customer = userServiceClient.getUserByEmail(callerEmail);
         if (customer == null || !"CUSTOMER".equalsIgnoreCase(customer.getUserType())) {
             throw new NotFoundException("Cliente não encontrado ou tipo inválido.");
         }
@@ -101,7 +102,7 @@ public class AppointmentService {
 
         // 8. Criar Appointment com snapshots desnormalizados
         Appointment appointment = Appointment.builder()
-                .customerId(dto.getCustomerId())
+                .customerId(customer.getId())   // UUID interno, resolvido pelo callerEmail
                 .barberId(dto.getBarberId())
                 .barbershopId(dto.getBarbershopId())
                 .customerName(customer.getName())
