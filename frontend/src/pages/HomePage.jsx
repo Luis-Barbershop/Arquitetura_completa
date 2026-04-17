@@ -5,6 +5,7 @@ import Barbershops from "../components/HomePage/Barbershops/Barbershops"
 import Favorite_barbershops from "../components/HomePage/Favorite_barbershops/Favorite_barbershops"
 import SearchBar from "../components/HomePage/SearchBar"
 import CustomerHeader from "../components/HomePage/CustomerHeader";
+import CustomerNavbar from "../components/HomePage/CustomerNavbar";
 import { logoutUser } from "../services/authService";
 import { isBarber } from "../services/userContext";
 import {
@@ -55,6 +56,7 @@ function HomePage() {
   return (
     <div className={Styles.homepage_container}>
       <CustomerHeader activeTab="home" onLogout={handleLogout} />
+      <CustomerNavbar activeTab="home" onLogout={handleLogout} />
 
       <section className={Styles.hero_section}>
         <p className={Styles.hero_kicker}>HOME DO CLIENTE</p>

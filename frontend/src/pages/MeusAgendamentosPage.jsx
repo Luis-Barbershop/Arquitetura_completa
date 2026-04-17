@@ -8,6 +8,7 @@ import { createBarbershopReview } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import CustomerHeader from '../components/HomePage/CustomerHeader';
+import CustomerNavbar from '../components/HomePage/CustomerNavbar';
 import { logoutUser } from '../services/authService';
 import { isCustomer as checkIsCustomer, isOwnerUser, isLoggedIn, getBarbershopId } from '../services/userContext';
 
@@ -283,6 +284,9 @@ const MeusAgendamentosPage = () => {
 
                 {isCustomer && (
                     <CustomerHeader activeTab="agendamentos" onLogout={handleCustomerLogout} />
+                )}
+                {isCustomer && (
+                    <CustomerNavbar activeTab="agendamentos" onLogout={handleCustomerLogout} />
                 )}
 
                 <section className={Styles.heroBlock}>
