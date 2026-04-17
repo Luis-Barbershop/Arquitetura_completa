@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                        %
-%  ARQUIVO LATEX PARA O TCC "CortaAi"                    %
+%  ARQUIVO LATEX GERADO PARA O TCC "CortaAi"             %
 %  Baseado no padrão abntex2                             %
 %                                                        %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -45,7 +45,7 @@
 }
 \data{São Paulo - SP, 2025}
 \tipotrabalho{Trabalho de Conclusão de Curso (TCC)}
-\orientador{Marcelo Tavares de Santana}
+% \orientador{Nome do(a) Orientador(a)} % <-- DESCOMENTE E PREENCHA
 
 % --- INÍCIO DO DOCUMENTO ---
 \begin{document}
@@ -136,23 +136,28 @@ O AgendaServiço adota uma Proposta de Valor de simplicidade e comunicação dir
 \subsection{eAgenda}
 O eAgenda estrutura sua Proposta de Valor em torno da experiência multiplataforma. A existência de um aplicativo (App) dedicado para clientes e profissionais estabelece um diferencial de conveniência e engajamento. O foco está na facilidade de agendamento 24 horas e na gestão visual da agenda. De forma semelhante ao AgendaServiço, o eAgenda se destaca na dimensão Organização, mas é menos explícito ou robusto no módulo de Administração, falhando em oferecer as ferramentas necessárias para uma análise estratégica aprofundada do desempenho e rentabilidade da barbearia (ex: margem de lucro por serviço ou taxa de reincidência por barbeiro). Estes concorrentes, embora resolvam o desafio da organização de agenda, tendem a negligenciar a Gestão Financeira e Operacional interna da barbearia. Esta insuficiência gerencial obriga os gestores a recorrerem a ferramentas externas, como planilhas, fragmentando a administração e resultando em perda de eficiência.
 
+\subsection{Trinks}
+O Trinks é uma das plataformas mais consolidadas e abrangentes no mercado brasileiro de agendamento e gestão para o setor de beleza e bem-estar. Sua Proposta de Valor baseia-se na entrega de um ecossistema completo (ERP), oferecendo desde o agendamento online multiplataforma (web e aplicativo próprio) até módulos robustos de PDV (Frente de Caixa), controle rigoroso de estoque, cálculos complexos de comissionamento e ferramentas integradas de marketing, como programas de fidelidade.
+Um dos seus principais diferenciais competitivos é o seu aplicativo voltado para o cliente final, que funciona como uma grande vitrine (marketplace). Isso facilita a descoberta de novos estabelecimentos e atrai um alto volume de usuários.
+Contudo, essa abrangência também é a origem de suas fraquezas em relação ao nicho específico do projeto CortaAi. Por ser uma solução genérica e desenhada para atender a toda a gama do setor de beleza (grandes salões femininos, spas, clínicas de estética e barbearias), sua interface e árvore de funcionalidades podem se tornar complexas e excessivamente poluídas para a realidade ágil e direta de uma barbearia de pequeno a médio porte. Além disso, o foco em um modelo "tudo-em-um" para grandes estabelecimentos frequentemente se traduz em planos de assinatura com custos mais elevados, o que representa uma barreira de entrada significativa para barbeiros autônomos ou donos de barbearias em fase de crescimento que buscam uma solução focada, intuitiva e sem recursos ociosos.
+
 \subsection{Comparativo}
-\begin{table}[htb]
-    \centering
-    \caption{Comparativo de Concorrentes}
-    \label{tab:concorrentes}
-    \begin{tabular}{lcccc}
-        \toprule
-        \textbf{Característica} & \textbf{Salão99} & \textbf{AgendaServiço} & \textbf{eAgenda} & \textbf{CortaAi} \\
-        \midrule
-        Foco Exclusivo (Barbearias) & Não & Não & Não & Sim \\
-        Agendamento Online & Sim & Sim & Sim & Sim \\
-        Gestão Financeira Completa & Sim & Não & Não & Sim \\
-        Comissionamento & Básico & Nulo & Nulo & Específico \\
-        Simplicidade da Interface & Média & Alta & Alta & Alta \\
-        App Móvel Dedicado & Sim & Não & Sim & Não (Web) \\
-        \bottomrule
-    \end{tabular}
+\begin{table}[h!]
+\centering
+\caption{Comparativo de Concorrentes}
+\label{tab:comparativo_concorrentes}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+\textbf{Característica} & \textbf{Salão99} & \textbf{AgendaServiço} & \textbf{eAgenda} & \textbf{Trinks} & \textbf{CortaAi} \\ \hline
+Foco Exclusivo (Barbearias) & Não & Não & Não & Não & \textbf{Sim} \\ \hline
+Agendamento Online & Sim & Sim & Sim & Sim & \textbf{Sim} \\ \hline
+Gestão Financeira Completa & Sim & Não & Não & Sim & \textbf{Sim} \\ \hline
+Comissionamento & Básico & Nulo & Nulo & Avançado & \textbf{Específico} \\ \hline
+Simplicidade da Interface & Média & Alta & Alta & Baixa & \textbf{Alta} \\ \hline
+App Móvel Dedicado & Sim & Não & Sim & Sim & \textbf{Não (Web)} \\ \hline
+\end{tabular}%
+}
 \end{table}
 
 \chapter{Fundamentação Teórica}
@@ -249,7 +254,7 @@ O projeto "Cortaai" consiste no desenvolvimento de um sistema de marketplace de 
 \subsection*{Premissas}
 O sucesso do projeto baseia-se nas seguintes premissas:
 \begin{itemize}
-    \item \textbf{Infraestrutura Disponível:} Assume-se que a infraestrutura de nuvem (AWS EC2, Amazon RDS) e os serviços de terceiros estarão disponíveis.
+    \item \textbf{Infraestrutura Disponível:} Assume-se que a infraestrutura de nuvem (AWS Lambda, Amazon RDS) e os serviços de terceiros estarão disponíveis.
     \item \textbf{Credenciais Válidas:} Assume-se que as credenciais de acesso ao banco de dados e serviços externos são válidas.
     \item \textbf{Consumo da API:} Assume-se que uma aplicação frontend (como a prevista em React) será desenvolvida separadamente.
     \item \textbf{Conectividade:} Assume-se que os usuários finais terão acesso à internet.
@@ -260,7 +265,7 @@ O projeto está sujeito às seguintes restrições:
 \begin{itemize}
     \item \textbf{Tecnologia Backend:} O desenvolvimento está restrito ao ecossistema Java 17 e Spring Boot 3.3.4.
     \item \textbf{Persistência de Dados:} O sistema deve utilizar o banco de dados MySQL hospedado no Amazon RDS.
-    \item \textbf{Plataforma de Implantação:} A arquitetura de implantação deve será utilizando AWS EC2.
+    \item \textbf{Plataforma de Implantação:} A arquitetura de implantação deve ser serverless, utilizando AWS Lambda.
     \item \textbf{Armazenamento de Mídia:} O armazenamento de mídia está restrito ao uso do serviço Cloudinary.
     \item \textbf{Segurança:} O modelo de segurança deve obrigatoriamente implementar autenticação via token JWT.
 \end{itemize}
@@ -359,16 +364,21 @@ Listar os requisitos que descrevem as funcionalidades que o sistema deve oferece
     RF38 & O sistema deve prover documentação da API via Swagger UI. & RN1 \\
 \end{longtable}
 
-\subsection{Requisitos não funcionais}
-Listar os requisitos que descrevem as características de qualidade do sistema.
+\subsection{Requisitos Não Funcionais}
+\label{sec:requisitos_nao_funcionais}
+
+Os Requisitos Não Funcionais (RNF) definem as premissas de qualidade, segurança, desempenho e infraestrutura que o ecossistema CortaAi deve obrigatoriamente respeitar. Com a evolução tática para uma arquitetura distribuída, estes requisitos foram reavaliados para garantir alta disponibilidade e tolerância a falhas num ambiente de nuvem moderno.
+
 \begin{itemize}
-    \item \textbf{Escalabilidade:} O sistema deve ser capaz de escalonar automaticamente utilizando AWS Lambda e RDS.
-    \item \textbf{Segurança:} A aplicação deve garantir a autenticação via JWT e autorização baseada em roles. Senhas devem ser armazenadas com hash (BCrypt). Dados sensíveis em trânsito devem usar HTTPS.
-    \item \textbf{Usabilidade e Acessibilidade:} A interface do frontend (React - previsto) deve ser intuitiva e responsiva.
-    \item \textbf{Desempenho:} A consulta de disponibilidade de horários (getAvailableSlots) deve ter tempo de resposta otimizado.
-    \item \textbf{Disponibilidade:} A arquitetura serverless na AWS (Lambda, RDS) visa alta disponibilidade (24/7).
-    \item \textbf{Manutenibilidade:} O código Java deve seguir convenções de estilo, ser modularizado (Controller/Service/Repository) e utilizar JPA e DTOs (MapStruct).
-    \item \textbf{Registro de Logs:} A aplicação deve utilizar SLF4J/Logback para registrar eventos.
+    \item \textbf{[RNF01] Segurança e Gestão de Identidade Federada:} A plataforma deve assegurar a máxima proteção dos dados dos utilizadores. Para mitigar riscos de violação de dados, o sistema não armazenará palavras-passe localmente, delegando a autenticação ao \textbf{Firebase Authentication}. Todo o tráfego de entrada será estritamente intercetado, validado criptograficamente (via JWT) e roteado de forma segura através de um \textit{API Gateway} central.
+    
+    \item \textbf{[RNF02] Escalabilidade Independente e Contentorização:} O sistema deve ser capaz de suportar flutuações e picos de utilização sem degradação do serviço. A infraestrutura deve basear-se em microsserviços empacotados isoladamente em contentores \textbf{Docker}. Isto garantirá que domínios sob maior \textit{stress} (como o módulo de agendamentos) possam ser escalados horizontalmente de forma totalmente independente dos restantes serviços.
+    
+    \item \textbf{[RNF03] Desempenho e Otimização de Leitura:} O tempo de resposta da interface deve ser fluído e imediato, proporcionando uma excelente experiência de utilização (UX). Para evitar sobrecargas no banco de dados relacional durante consultas frequentes (como a pesquisa de horários livres dos barbeiros), o sistema deverá implementar estratégias de \textit{cache} distribuído em memória através do \textbf{Redis}.
+    
+    \item \textbf{[RNF04] Resiliência e Processamento Assíncrono:} A plataforma não deve bloquear o cliente enquanto processa tarefas pesadas. Operações secundárias, como o disparo de e-mails, alertas de \textit{stock} baixo ou registos de pagamentos, devem ser executadas em segundo plano. O sistema adotará uma Arquitetura Orientada a Eventos, utilizando o \textbf{RabbitMQ} como \textit{Message Broker}, para assegurar a consistência eventual dos dados e a alta tolerância a falhas de comunicação.
+    
+    \item \textbf{[RNF05] Isolamento de Dados (\textit{Database-per-Service}):} Para garantir o baixo acoplamento, uma falha crítica no banco de dados de um serviço não deve comprometer a totalidade da plataforma. O sistema deve adotar o padrão de persistência isolada (bases de dados MySQL dedicadas por microsserviço), comunicando-se inter-serviços unicamente através de contratos REST (OpenFeign) ou mensageria.
 \end{itemize}
 
 \section{Histórias de usuário}
@@ -412,16 +422,41 @@ As Histórias de Usuário foram definidas com base nos casos de uso para os trê
 \end{description}
 
 \section{Arquitetura da aplicação}
-A arquitetura do sistema adota um modelo Cliente-Servidor distribuído. O frontend (cliente), previsto em React, é responsável pela interface do usuário e consome a API REST exposta pelo backend (servidor), que será desenvolvido em Java com Spring Boot.
 
-O backend é estruturado utilizando uma arquitetura em camadas (layered architecture), um padrão consolidado no ecossistema Spring, que divide as responsabilidades da seguinte forma:
+Com a evolução do projeto e a necessidade de maior escalabilidade, resiliência e independência entre os domínios de negócio, a arquitetura do sistema transitou de um modelo monolítico para uma \textbf{Arquitetura de Microsserviços Orientada a Eventos} (\textit{Event-Driven Microservices Architecture}). 
+
+O frontend (desenvolvido em React) atua como o cliente (Single Page Application - SPA), comunicando-se com o ecossistema de microsserviços através de um \textit{API Gateway} centralizador. O backend, desenvolvido em Java com Spring Boot, foi fragmentado em domínios de negócio específicos (Bounded Contexts), garantindo baixo acoplamento.
+
+A nova topologia arquitetural é composta pelos seguintes componentes principais:
+
 \begin{itemize}
-    \item \textbf{Controllers:} Camada de entrada da API REST. É responsável por receber as requisições HTTP, validar os dados de entrada (DTOs) e delegar a lógica de negócios para a camada de serviço.
-    \item \textbf{Services:} Camada que contém a lógica de negócios principal da aplicação. Executa as regras de agendamento, validações complexas e orquestra as operações.
-    \item \textbf{Repositories:} Camada de acesso aos dados. Utiliza o Spring Data JPA para abstrair as operações de persistência (CRUD) com o banco de dados relacional (MySQL).
-    \item \textbf{Models (Entities):} Representam as tabelas do banco de dados como objetos Java (POJOs), utilizando anotações da JPA.
-    \item \textbf{Mappers:} Componentes responsáveis por converter eficientemente os objetos de Entidade em DTOs, utilizando a biblioteca MapStruct.
+    \item \textbf{Identity Provider (Autenticação):} A gestão de identidades e a geração de tokens de segurança foram delegadas ao \textbf{Firebase Authentication}. O sistema não armazena credenciais confidenciais, utilizando os tokens JWT do Firebase para validar a identidade dos utilizadores (Clientes, Barbeiros e Administradores).
+    
+    \item \textbf{API Gateway (Spring Cloud Gateway):} Atua como a única porta de entrada pública do sistema. É responsável pelo roteamento dinâmico das requisições HTTP para os microsserviços correspondentes, resolução de CORS e interceção de segurança (validação do token do Firebase antes de permitir o acesso aos serviços internos).
+    
+    \item \textbf{Service Registry (Netflix Eureka):} Serviço de descoberta (\textit{Discovery Service}) onde todos os microsserviços se registam ao iniciar. Isto permite que os serviços se comuniquem internamente através de nomes lógicos, eliminando a necessidade de \textit{hardcoding} de endereços IP.
 \end{itemize}
+
+\subsection{Microsserviços de Domínio}
+O domínio da aplicação foi subdividido em serviços independentes. Internamente, cada microsserviço mantém uma estrutura em camadas (\textit{Controllers, Services, Repositories, Entities e Mappers}), mas macroscopicamente operam de forma isolada:
+
+\begin{itemize}
+    \item \textbf{User Service:} Responsável pela gestão de perfis de utilizadores (Clientes e Barbeiros) e sincronização de dados de perfil com o Firebase.
+    \item \textbf{Barbershop Service:} Gere as entidades físicas das barbearias, convites para barbeiros (\textit{Join Requests}) e avaliações.
+    \item \textbf{Schedule Service:} O núcleo de negócio, responsável pela complexa gestão de disponibilidades, bloqueios de agenda e criação de agendamentos.
+    \item \textbf{Product Service:} Módulo responsável pelo inventário, gestão de produtos físicos e controlo de fluxo de stock.
+    \item \textbf{Payment Service:} Gere transações financeiras e integrações com \textit{gateways} de pagamento externos (Mercado Pago), processando \textit{webhooks}.
+    \item \textbf{Notification Service:} Serviço isolado responsável pelo envio de comunicações e alertas (ex: e-mails transacionais) para os utilizadores.
+\end{itemize}
+
+\subsection{Comunicação e Persistência}
+A comunicação entre os serviços ocorre de duas formas distintas, otimizando a performance:
+\begin{enumerate}
+    \item \textbf{Síncrona (REST/OpenFeign):} Utilizada para consultas imediatas onde um serviço necessita de dados de outro para completar uma operação (ex: \textit{Schedule Service} consultando os dados de um barbeiro no \textit{User Service}).
+    \item \textbf{Assíncrona (Mensageria com RabbitMQ):} Adotada para operações que não exigem resposta imediata ao cliente. A aplicação utiliza o padrão \textit{Publish-Subscribe} (Eventos). Por exemplo, ao criar um agendamento, o \textit{Schedule Service} publica um evento \texttt{AppointmentCreatedEvent} no \textbf{RabbitMQ}, que é consumido pelo \textit{Notification Service} para enviar um e-mail em segundo plano, não bloqueando a resposta ao utilizador.
+\end{enumerate}
+
+Para a persistência de dados, a arquitetura prevê a independência de banco de dados por serviço (\textit{Database-per-Service} pattern) utilizando \textbf{MySQL}, garantindo que uma falha num domínio não comprometa os dados de outro. Além disso, introduziu-se o uso de \textbf{Redis} como \textit{cache} distribuído em serviços críticos para otimizar a leitura de dados frequentemente acedidos.
 
 \begin{figure}[htb]
     \centering
@@ -431,49 +466,47 @@ O backend é estruturado utilizando uma arquitetura em camadas (layered architec
 \end{figure}
 
 \section{Tecnologias}
-Esta seção descreve a pilha de tecnologia (tech stack) principal para o projeto juntamente de sua arquitetura.
 
-\subsection{Front-end}
+Esta seção detalha a \textit{tech stack} (pilha tecnológica) selecionada para o desenvolvimento, implantação e gestão do projeto CortaAi. A evolução para uma arquitetura de microsserviços exigiu a adoção de tecnologias robustas, voltadas para sistemas distribuídos, resiliência e alta disponibilidade.
+
+\subsection{Backend e Ecossistema Spring}
+O núcleo da aplicação servidor é construído sobre o ecossistema Java, aproveitando as ferramentas da \textit{Spring Application Foundation}:
 \begin{itemize}
-    \item \textbf{React:} Biblioteca JavaScript prevista para o desenvolvimento do frontend.
-    \item \textbf{Axios:} Biblioteca JavaScript prevista para realizar requisições HTTP.
+    \item \textbf{Java 17:} Linguagem de programação principal, escolhida pela sua performance, tipagem estática e suporte de longo prazo (LTS).
+    \item \textbf{Spring Boot 3:} \textit{Framework} base para a criação célere de microsserviços autossuficientes e com configurações nativas para a \textit{cloud}.
+    \item \textbf{Spring Cloud:} Conjunto de ferramentas essenciais para sistemas distribuídos, incluindo o \textbf{Spring Cloud Gateway} para o roteamento centralizado da API e o \textbf{Netflix Eureka} para o \textit{Service Discovery} (registo e descoberta de serviços).
+    \item \textbf{Spring Data JPA e Hibernate:} Utilizados para a abstração do mapeamento objeto-relacional (ORM) e simplificação da persistência de dados.
+    \item \textbf{OpenFeign:} Cliente REST declarativo utilizado para a comunicação síncrona entre os microsserviços internos.
 \end{itemize}
 
-\subsection{Back-end}
+\subsection{Mensageria e Cache}
+Para garantir a escalabilidade e o desacoplamento de processos pesados, o sistema integra:
 \begin{itemize}
-    \item \textbf{Java 17:} Linguagem principal do back-end.
-    \item \textbf{Spring Boot 3.3.4:} Framework principal, simplificando a configuração.
-    \item \textbf{Spring Data JPA / Hibernate:} Camada de persistência de dados (ORM).
-    \item \textbf{Spring Security:} Framework para gerenciamento de autenticação e autorização.
-    \item \textbf{JWT (Java Web Token):} Utilizado para a autenticação baseada em tokens stateless.
-    \item \textbf{MapStruct:} Ferramenta para geração de código de mapeamento (Entidades e DTOs).
-    \item \textbf{Jakarta Bean Validation:} Especificação para validação de dados em DTOs.
-    \item \textbf{SLF4J / Logback:} Facade e implementação de logging.
+    \item \textbf{RabbitMQ:} \textit{Message Broker} (agente de mensagens) adotado para a comunicação assíncrona orientada a eventos, garantindo a entrega fiável de mensagens entre serviços (como disparos de e-mail e atualizações de estado).
+    \item \textbf{Redis:} Armazenamento de estrutura de dados em memória, utilizado como \textit{cache} distribuído para acelerar a leitura de horários disponíveis e dados de acesso frequente, reduzindo a carga no banco de dados.
 \end{itemize}
 
-\subsection{Banco de dados}
+\subsection{Frontend e Autenticação}
 \begin{itemize}
-    \item \textbf{MySQL:} Sistema de gerenciamento de banco de dados relacional.
+    \item \textbf{React com Vite:} A interface do utilizador (SPA) é desenvolvida em React, utilizando a ferramenta de \textit{build} Vite, que proporciona um ambiente de desenvolvimento extremamente rápido e otimizado.
+    \item \textbf{Firebase Authentication:} Serviço \textit{Backend-as-a-Service} (BaaS) da Google utilizado como \textit{Identity Provider}. Gere com segurança o registo, o \textit{login} e a geração de tokens (JWT), aliviando o backend da gestão de credenciais sensíveis.
 \end{itemize}
 
-\subsection{Infraestrutura}
-A infraestrutura do projeto é baseada em uma arquitetura de nuvem serverless:
+\subsection{Persistência e Infraestrutura}
 \begin{itemize}
-    \item \textbf{Amazon Web Services (AWS):} Provedor de nuvem principal.
-    \item \textbf{AWS Lambda (Computação Serverless):} O backend Java Spring Boot é empacotado para rodar como uma função Lambda.
-    \item \textbf{Amazon RDS (Relational Database Service):} O banco de dados MySQL é hospedado como um serviço gerenciado.
-    \item \textbf{Amazon API Gateway (Implícito):} Atua como o ponto de entrada da aplicação, recebendo as requisições HTTP.
-    \item \textbf{Cloudinary (Plataforma de Mídia SaaS):} Serviço de terceiros especializado em gerenciamento de mídia (upload, armazenamento e entrega de imagens).
+    \item \textbf{MySQL:} Sistema de Gestão de Banco de Dados Relacional (SGBDR) principal, estruturado de forma a respeitar o padrão \textit{database-per-service}.
+    \item \textbf{Docker:} Plataforma de contentorização utilizada para empacotar cada microsserviço com as suas dependências num ambiente isolado e padronizado, garantindo paridade entre desenvolvimento e produção.
+    \item \textbf{Cloudinary:} Serviço de gestão de \textit{media} em nuvem integrado para o \textit{upload}, armazenamento e otimização de imagens (logótipos e portefólios).
 \end{itemize}
 
 \subsection{Ferramentas de Apoio}
+Para a gestão do projeto e garantia de qualidade, utilizam-se as seguintes plataformas:
 \begin{itemize}
-    \item \textbf{Trello (Gestão de Projetos e Tarefas):} Ferramenta central para o gerenciamento de tarefas e acompanhamento do progresso (Kanban).
-    \item \textbf{GitHub (Controle de Versão e Repositório de Código):} Sistema de controle de versão (VCS) e repositório central de todo o código-fonte.
-    \item \textbf{Overleaf (Documentação Colaborativa):} Plataforma adotada para a elaboração e manutenção da documentação oficial do projeto (LaTeX).
-    \item \textbf{Discord (Comunicação da Equipe):} Plataforma para a comunicação síncrona (instantânea) da equipe.
+    \item \textbf{Git e GitHub:} Controlo de versões e alojamento do código-fonte, facilitando o trabalho colaborativo através de \textit{branches} organizadas por \textit{features}.
+    \item \textbf{Postman / Insomnia:} Plataformas de testes de API utilizadas para modelar contratos, simular fluxos de utilizadores e validar \textit{endpoints}.
+    \item \textbf{Trello e Discord:} Ferramentas para a gestão de tarefas (metodologia Kanban/Scrum) e comunicação da equipa de desenvolvimento.
+    \item \textbf{Overleaf:} Editor LaTeX colaborativo para a elaboração profissional da documentação técnica e do próprio Trabalho de Conclusão de Curso.
 \end{itemize}
-
 \section{Testes e manutenibilidade}
 O Plano de Testes serve como um mapa ou guia para todo o esforço de teste do projeto. Em essência, ele responde às seguintes perguntas:
 \begin{itemize}
@@ -510,22 +543,70 @@ Foi adotado uma estratégia que segue a pirâmide de testes. O escopo de teste �
 \end{itemize}
 
 \subsection{Ambientes e Ferramentas de Teste}
-\begin{table}[htb]
-    \centering
-    \caption{Ambientes e Ferramentas de Teste}
-    \label{tab:ambientes}
-    \resizebox{\textwidth}{!}{%
-    \begin{tabular}{p{3cm} p{5.5cm} p{5cm} p{5cm}}
-        \toprule
-        \textbf{Ambiente} & \textbf{Propósito e Tipos de Teste} & \textbf{Infraestrutura e Banco de Dados} & \textbf{Ferramentas Aplicáveis} \\
-        \midrule
-        \textbf{Local} & Desenvolvimento, depuração e execução de testes automatizados rápidos. \newline \textbf{Testes:} Unitários e Integração. & Máquina do Desenvolvedor \newline \textbf{BD:} H2 (Em memória) & JUnit 5, Mockito, Spring Boot Test, MockMvc \\
-        \textbf{Staging (Homologação)} & Simulação do ambiente de produção para validação final. \newline \textbf{Testes:} Componente/API e Não Funcionais (Carga/Estresse). & AWS Lambda + API Gateway + Cloudinary (Conta de Teste) \newline \textbf{BD:} AWS RDS (Instância de Teste) & Insomnia/Postman, JMeter/Gatling, AWS CloudWatch \\
-        \textbf{Produção} & Ambiente final do usuário. \newline \textbf{Testes:} Monitoramento e "Smoke Tests". & AWS Lambda + API Gateway + Cloudinary (Produção) \newline \textbf{BD:} AWS RDS (Produção) & AWS CloudWatch \\
-        \bottomrule
-    \end{tabular}
-    }
+
+A complexidade de uma arquitetura distribuída exige que os ambientes de teste simulem fielmente a orquestração dos serviços. A tabela a seguir detalha a nova infraestrutura de testes, agora baseada em contentores.
+
+\begin{table}[h!]
+\centering
+\caption{Ambientes e Ferramentas de Teste (Arquitetura Distribuída)}
+\label{tab:ambientes_testes_atualizado}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|p{4cm}|p{4cm}|p{4cm}|}
+\hline
+\textbf{Ambiente} & \textbf{Propósito e Tipos de Teste} & \textbf{Infraestrutura e Orquestração} & \textbf{Ferramentas Aplicáveis} \\ \hline
+\textbf{Local} & Desenvolvimento e validação de lógica interna. \textbf{Testes:} Unitários e Integração. & \textbf{Docker Compose}: Orquestração local de MySQL, RabbitMQ e Redis. & JUnit 5, Mockito, Spring Boot Test, Testcontainers. \\ \hline
+\textbf{Staging} & Homologação e validação de contratos entre serviços. \textbf{Testes:} E2E, Integração Assíncrona e Carga. & Instância Cloud (EC2/ECS) rodando imagens Docker. \textbf{BD:} RDS Distribuído. & Postman/Insomnia, JMeter, RabbitMQ Management Plugin. \\ \hline
+\textbf{Produção} & Ambiente real de uso. \textbf{Testes:} Monitoramento de integridade (\textit{Health Checks}). & Infraestrutura Cloud Distribuída (Docker Containers). & Firebase Console, AWS CloudWatch, Spring Boot Actuator. \\ \hline
+\end{tabular}%
+}
 \end{table}
+
+\subsection{Testes de Transição de Arquitura}
+
+A transição de uma arquitetura monolítica para um ecossistema de microsserviços introduz desafios significativos de qualidade, tais como a latência de rede, falhas parciais de comunicação e a validação da consistência eventual. Para mitigar estes riscos, a estratégia de testes do CortaAi foi reestruturada com base numa abordagem de camadas, garantindo a validação de cada domínio de forma isolada e integrada.
+
+\subsubsection{Testes Unitários (Nível de Domínio)}
+O primeiro nível foca-se na validação isolada da lógica de negócio contida nos \textit{Services} e \textit{Controllers} de cada microsserviço.
+\begin{itemize}
+    \item \textbf{Abordagem:} As dependências externas (bancos de dados, clientes REST e \textit{message brokers}) são simuladas através da criação de \textit{Mocks}.
+    \item \textbf{Ferramentas:} \textbf{JUnit 5} como \textit{framework} de execução e \textbf{Mockito} para a simulação de injeção de dependências.
+    \item \textbf{Cenário Prático:} Validar se o \texttt{Schedule Service} lança corretamente uma \texttt{ConflictException} ao tentar agendar um horário que já se encontra ocupado na memória, sem necessidade de consultar o banco de dados real.
+\end{itemize}
+
+\subsubsection{Testes de Integração e Contratos}
+Dada a natureza distribuída do sistema, é crucial garantir que os microsserviços compreendem os contratos uns dos outros e que interagem corretamente com as infraestruturas de persistência.
+\begin{itemize}
+    \item \textbf{Integração de Base de Dados:} Utilização do \textbf{Testcontainers} para instanciar contentores Docker efémeros (ex: MySQL e Redis) durante a execução dos testes. Isto garante que as consultas (\textit{queries}) JPA são validadas contra uma base de dados real idêntica à de produção.
+    \item \textbf{Comunicação Síncrona:} Validação dos contratos de comunicação via \textit{OpenFeign}, garantindo que o \textit{payload} JSON esperado pelo \textit{User Service} é corretamente enviado e interpretado pelo \textit{Schedule Service}.
+\end{itemize}
+
+\subsubsection{Testes de Mensageria e Eventos (Assíncronos)}
+Com a adoção da Arquitetura Orientada a Eventos, a estratégia de testes expandiu-se para validar a resiliência das filas de comunicação.
+\begin{itemize}
+    \item \textbf{Abordagem:} Os testes de integração validam o ciclo de vida completo de uma mensagem. Verifica-se se o \textit{publisher} formata corretamente o evento e se o \textit{listener} o consome sem erros de desserialização.
+    \item \textbf{Cenário Prático:} Quando um agendamento é criado, o teste valida se o evento \texttt{AppointmentCreatedEvent} é publicado na \textit{Exchange} do \textbf{RabbitMQ} e se o \textit{Notification Service} consegue recolher essa mensagem para gerar a intenção de envio de e-mail (validando assim a consistência eventual).
+\end{itemize}
+
+\subsection{Ambientes e Ferramentas de Validação}
+Para garantir a fidelidade do ambiente de testes com a infraestrutura \textit{Cloud}, foi estabelecida uma esteira de ambientes com orquestração local e remota, conforme detalhado na Tabela \ref{tab:ambientes_testes_micro}.
+
+\begin{table}[h!]
+\centering
+\caption{Infraestrutura e Ambientes de Teste do Ecossistema}
+\label{tab:ambientes_testes_micro}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|p{4.5cm}|p{4.5cm}|p{4cm}|}
+\hline
+\textbf{Ambiente} & \textbf{Propósito e Tipos de Teste} & \textbf{Infraestrutura e Orquestração} & \textbf{Ferramentas Aplicáveis} \\ \hline
+\textbf{Local} & Desenvolvimento e validação de lógica interna. \textbf{Testes:} Unitários e Integração de Repositórios. & \textbf{Docker Compose}: Orquestração local de MySQL, RabbitMQ e Redis. & JUnit 5, Mockito, Spring Boot Test, Testcontainers. \\ \hline
+\textbf{Staging} & Homologação e validação de contratos entre serviços. \textbf{Testes:} E2E, Integração Assíncrona e Carga. & Instância isolada a executar imagens Docker. \textbf{BD:} Distribuída. & Postman / Insomnia, JMeter, RabbitMQ Admin. \\ \hline
+\textbf{Produção} & Ambiente real de uso. \textbf{Testes:} Monitorização de integridade (\textit{Health Checks}). & Infraestrutura Cloud Distribuída. & Firebase Console, Actuator, Logs Centralizados. \\ \hline
+\end{tabular}%
+}
+\end{table}
+
+\textbf{Estratégia de Integração Assíncrona:}
+Dada a introdução do \textbf{RabbitMQ}, a estratégia de testes foi estendida para validar a consistência eventual. No ambiente de \textit{Staging}, são realizados testes de "disparo e escuta", garantindo que um evento gerado pelo \textit{Schedule Service} seja processado corretamente pelo \textit{Notification Service} sem perda de mensagens em caso de falha temporária de conexão.
 
 \subsection{Testes funcionais}
 A estratégia de testes funcionais visa validar o software em diferentes níveis de granularidade.
@@ -642,14 +723,42 @@ A convenção a ser adotada será o \textbf{Airbnb JavaScript Style Guide}, incl
     \item \textbf{Formatação:} A consistência do estilo será garantida automaticamente por ferramentas como \textbf{Prettier} e \textbf{ESLint}.
 \end{itemize}
 
-\section{Segurança, privacidade e legislação}
-Para garantir a segurança dos dados e a privacidade dos usuários, os seguintes critérios foram implementados:
+\section{Segurança e Controle de Acesso}
+\label{sec:seguranca}
+
+Numa arquitetura de microsserviços, a segurança não pode ser gerida de forma isolada por cada serviço, sob pena de criar vulnerabilidades e redundância de código. Por isso, o CortaAi adotou um modelo de \textbf{Identidade Federada e Roteamento Seguro}, removendo a responsabilidade de gestão de credenciais (senhas) do banco de dados interno.
+
+A estratégia de segurança divide-se em três pilares principais: Provedor de Identidade, Interceção no \textit{Gateway} e Autorização Baseada em Funções (RBAC).
+
+\subsection{Provedor de Identidade (Firebase Authentication)}
+O sistema utiliza o \textbf{Firebase Authentication} (Google) como provedor de identidade (\textit{Identity Provider} - IdP). O \textit{backend} do CortaAi \textbf{não armazena senhas} em nenhum dos seus bancos de dados (MySQL). 
+
+O fluxo de autenticação ocorre da seguinte forma:
+\begin{enumerate}
+    \item O cliente (Frontend em React) envia as credenciais (\textit{e-mail} e senha) diretamente para os servidores seguros do Firebase.
+    \item Após a validação, o Firebase retorna um \textit{JSON Web Token} (JWT) assinado assimetricamente ao cliente, contendo o \textit{User ID} (UID) único daquele utilizador.
+    \item Este token passa a ser enviado pelo Frontend no cabeçalho (\textit{Header}) \texttt{Authorization: Bearer <token>} em todas as requisições subsequentes para a API.
+\end{enumerate}
+
+Esta abordagem garante conformidade com as melhores práticas de segurança de mercado, transferindo a responsabilidade de encriptação, recuperação de senhas e proteção contra ataques de força bruta para uma infraestrutura globalmente testada.
+
+\subsection{Interceção e Proteção (API Gateway)}
+O \textbf{Spring Cloud Gateway} atua como o único ponto de entrada público do ecossistema e o principal guardião de segurança. 
+
+Foi implementado um filtro de interceção customizado (\texttt{FirebaseTokenGatewayFilter}) que analisa todas as requisições de entrada. O seu papel é:
 \begin{itemize}
-    \item \textbf{Autenticação Robusta:} Utiliza Spring Security. Senhas são armazenadas com \texttt{BCryptPasswordEncoder}. O acesso às funcionalidades privadas é feito via JSON Web Tokens (JWT).
-    \item \textbf{Autorização Baseada em Papéis:} A arquitetura define \textit{roles} específicas (Cliente, Barbeiro, Barbeiro\_Owner) gerenciadas pelo Spring Security, implementando o princípio do menor privilégio.
-    \item \textbf{Validação de Entrada de Dados:} Jakarta Bean Validation é aplicado nos DTOs para validar os dados recebidos, incluindo validações customizadas para unicidade (e-mail, CPF) e formato (CPF, CNPJ).
-    \item \textbf{Segurança na Infraestrutura:} O deployment na AWS Lambda e o acesso a serviços externos (Cloudinary, RDS) é protegido por credenciais seguras gerenciadas como variáveis de ambiente.
-    \item \textbf{Direitos do Usuário:} O sistema garante aos usuários direitos de acesso, correção e exclusão de seus dados pessoais.
+    \item \textbf{Validação da Assinatura:} O \textit{Gateway} verifica a validade criptográfica do JWT contra as chaves públicas da Google. Se o token for inválido, expirado ou ausente, a requisição é bloqueada imediatamente com o erro \texttt{401 Unauthorized}, protegendo os microsserviços internos de tráfego malicioso.
+    \item \textbf{Propagação de Contexto:} Após validar o token, o \textit{Gateway} extrai o UID do utilizador e injeta-o como um novo cabeçalho HTTP interno (ex: \texttt{X-User-Id}). Desta forma, microsserviços como o \textit{Schedule Service} ou \textit{User Service} podem identificar quem está a fazer a requisição sem precisarem de revalidar o token criptográfico ou de importar as bibliotecas do Firebase.
+\end{itemize}
+
+\subsection{Autorização Baseada em Funções (RBAC)}
+Enquanto o Firebase resolve o problema da \textit{Autenticação} (quem é o utilizador), o sistema interno resolve o problema da \textit{Autorização} (o que ele pode fazer).
+
+O \textit{User Service} mantém o mapeamento entre o \texttt{UID} do Firebase e a função (\textit{Role}) do utilizador dentro da plataforma. Foram definidas três funções principais protegidas pelo \textit{Spring Security} interno de cada serviço:
+\begin{itemize}
+    \item \textbf{\texttt{ROLE\_CUSTOMER}:} Acesso aos próprios agendamentos e visualização de barbearias públicas.
+    \item \textbf{\texttt{ROLE\_BARBER}:} Acesso à gestão da própria agenda, bloqueios de horário e visualização de comissionamentos.
+    \item \textbf{\texttt{ROLE\_OWNER}:} Privilégios administrativos, como a gestão de inventário (\textit{Product Service}), aprovação de barbeiros na barbearia e métricas financeiras globais (\textit{Payment Service}).
 \end{itemize}
 
 \subsection{Observância à Legislação}
@@ -662,10 +771,20 @@ O projeto foi desenvolvido com atenção à conformidade com a Lei Geral de Prot
 \end{itemize}
 
 \section{Modelo de banco de dados}
-Esta seção apresenta a estrutura de dados projetada para suportar a aplicação. O modelo de banco de dados é o alicerce do backend, sendo fundamental para garantir a integridade, consistência e performance.
+\label{sec:modelo_banco_dados}
+
+Para a persistência de dados, o projeto adota o padrão \textit{Database-per-Service}, garantindo que cada microsserviço possua a sua própria base de dados isolada (MySQL). Esta abordagem assegura o baixo acoplamento e permite que falhas ou manutenções num banco de dados específico não interrompam o funcionamento global do ecossistema.
 
 \subsection{Modelo entidade relacionamento - MER}
-O Modelo Entidade-Relacionamento (MER) é o modelo conceitual que identifica as principais entidades de negócio do sistema.
+O Modelo Entidade Relacionamento (MER) descreve as entidades conceptuais e as suas interações lógicas. Embora a implementação física seja distribuída, o MER global identifica os seguintes domínios:
+
+\begin{itemize}
+    \item \textbf{Utilizador (User Service):} Entidade base que armazena o perfil e as funções (\textit{Roles}) de clientes e barbeiros, vinculada ao UID do Firebase.
+    \item \textbf{Barbearia (Barbershop Service):} Contém as informações do estabelecimento, portefólio e avaliações.
+    \item \textbf{Agendamento (Schedule Service):} Entidade central que gere a relação entre cliente, barbeiro, data e hora.
+    \item \textbf{Serviço/Atividade:} Define os itens oferecidos (ex: corte, barba) e a sua duração.
+    \item \textbf{Produto (Product Service):} Gere o inventário e o fluxo de \textit{stock}.
+\end{itemize}
 
 \begin{figure}[htb]
     \centering
@@ -675,7 +794,9 @@ O Modelo Entidade-Relacionamento (MER) é o modelo conceitual que identifica as 
 \end{figure}
 
 \subsection{Diagrama entidade relacionamento - DER}
-O Diagrama Entidade-Relacionamento (DER) é a representação gráfica e visual do modelo conceitual (MER). Ele traduz as entidades e relacionamentos em um esquema que se aproxima do modelo lógico do banco de dados.
+O Diagrama Entidade Relacionamento (DER) detalha a estrutura das tabelas, chaves primárias (PK) e chaves estrangeiras (FK). É importante notar que, na arquitetura de microsserviços, as relações entre entidades de serviços diferentes (ex: \texttt{Appointment} no \textit{Schedule Service} e \texttt{User} no \textit{User Service}) são mantidas através de \textbf{IDs de referência} e consistência eventual, em vez de \textit{Foreign Keys} físicas transversais.
+
+Isto garante que o \textit{Schedule Service} possa ser migrado ou escalado sem necessidade de aceder diretamente às tabelas do \textit{User Service}, comunicando-se apenas via API ou mensageria para validar dados do utilizador.
 
 \begin{figure}[htb]
     \centering
@@ -724,30 +845,61 @@ A execução do projeto seguirá o framework ágil Scrum. O cronograma não é b
         \end{itemize}
 \end{itemize}
 
-\subsection{Cronograma de Sprints}
-A linha do tempo do projeto é dividida em 8 ciclos curtos de 2 semanas cada. Cada Sprint tem uma Meta clara, focada em entregar uma parte funcional do produto.
+\subsection{Cronograma de Sprints - Fase Inicial (2025)}
+
+A Tabela \ref{tab:cronograma_2025} apresenta o planejamento executado durante a fase inicial de desenvolvimento do projeto, focada na construção e fundação do sistema.
+
+\begin{table}[h!]
+\centering
+\caption{Cronograma de Sprints - Desenvolvimento Inicial (2025)}
+\label{tab:cronograma_2025}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|l|p{8cm}|p{4cm}|}
+\hline
+\textbf{Sprint} & \textbf{Período} & \textbf{Meta da Sprint (Sprint Goal)} & \textbf{Marcos Equivalentes} \\ \hline
+\textbf{Sprint 1} & 15/08 a 29/08 & \textbf{Setup e Fundação:} Configurar ambientes (Git, CI/CD, Trello), definir o Product Backlog (MVP) e criar o \textit{Walking Skeleton}. & M1: Requisitos e Escopo Aprovados \\ \hline
+\textbf{Sprint 2} & 01/09 a 12/09 & \textbf{Autenticação:} Implementar o fluxo de autenticação (JWT) e o CRUD básico de Usuários. Definir a arquitetura de base. & M2: Arquitetura e Design Concluídos \\ \hline
+\textbf{Sprint 3} & 15/09 a 26/09 & \textbf{MVP do Agendamento (Back-end):} API para lógica de horários disponíveis e criação de agendamento. & - \\ \hline
+\textbf{Sprint 4} & 29/09 a 10/10 & \textbf{MVP de Serviços (Back-end):} APIs para CRUD de Serviços e Inventário. & M3: Desenvolvimento Back-end Concluído \\ \hline
+\textbf{Sprint 5} & 13/10 a 24/10 & \textbf{MVP do Cliente (Front-end):} Telas de Login e fluxo principal do cliente (ver horários e realizar agendamento). & - \\ \hline
+\textbf{Sprint 6} & 27/10 a 07/11 & \textbf{Painel do Barbeiro (Front-end):} Telas para o barbeiro visualizar e gerenciar sua agenda e serviços. & M4: Desenvolvimento Front-end Concluído \\ \hline
+\textbf{Sprint 7} & 10/11 a 21/11 & \textbf{Testes de Aceite (UAT):} Foco em testes de integração (E2E), correção de bugs e validação do fluxo com usuários-piloto. & M5: Ciclo de Testes (UAT) Finalizado \\ \hline
+\textbf{Sprint 8} & 24/11 a 05/12 & \textbf{Hardening e Implantação:} Preparação do ambiente de produção (AWS), testes, deploy e documentação final. & M6: Implantação (Go-Live) \\ \hline
+\end{tabular}%
+}
+\end{table}
+
+\subsection{Cronograma do projeto (Fase de Evolução e Estabilização)}
+
+A gestão do projeto foi adaptada para um ciclo focado na refatoração arquitetural para microsserviços e no polimento do Produto Mínimo Viável (MVP). O cronograma a seguir compreende o período crítico iniciado em fevereiro de 2026, estendendo-se até a homologação final em maio do mesmo ano.
 
 \begin{table}[htb]
     \centering
-    \caption{Cronograma de Sprints}
-    \label{tab:sprints}
-    \resizebox{\textwidth}{!}{%
-    \begin{tabular}{p{1.5cm} p{3.5cm} p{8.5cm} p{5.5cm}}
-        \toprule
-        \textbf{Sprint} & \textbf{Período (Início/Fim)} & \textbf{Meta da Sprint (Sprint Goal)} & \textbf{Marcos Equivalentes (Plano Antigo)} \\
-        \midrule
-        Sprint 1 & 15/08/2025 - 29/08/2025 & "Setup e Fundação: Configurar ambientes (Git, CI/CD, Trello), definir o Product Backlog (MVP) e criar o ""Walking Skeleton""." & M1: Requisitos e Escopo Aprovados \\
-        Sprint 2 & 01/09/2025 - 12/09/2025 & Autenticação: Implementar o fluxo de autenticação (JWT) e o CRUD básico de Usuários. Definir a arquitetura de base. & M2: Arquitetura e Design Concluídos \\
-        Sprint 3 & 15/09/2025 - 26/09/2025 & MVP do Agendamento (Back-end): API para lógica de horários disponíveis e criação de agendamento. & - \\
-        Sprint 4 & 29/09/2025 - 10/10/2025 & MVP de Serviços (Back-end): APIs para CRUD de Serviços e Inventário. & M3: Desenvolvimento Back-end Concluído \\
-        Sprint 5 & 13/10/2025 - 24/10/2025 & MVP do Cliente (Front-end): Telas de Login e fluxo principal do cliente (ver horários e realizar agendamento). & - \\
-        Sprint 6 & 27/10/2025 - 07/11/2025 & Painel do Barbeiro (Front-end): Telas para o barbeiro visualizar e gerenciar sua agenda e serviços. & M4: Desenvolvimento Front-end Concluído \\
-        Sprint 7 & 10/11/2025 - 21/11/2025 & "Testes de Aceite (UAT): Foco em testes de integração (E2E), correção de bugs e validação do fluxo com usuários-piloto." & M5: Ciclo de Testes (UAT) Finalizado \\
-        Sprint 8 & 24/11/2025 - 05/12/2025 & "Hardening e Implantação: Preparação do ambiente de produção (AWS), testes, deploy e documentação final." & M6: Implantação (Go-Live) \\
-        \bottomrule
+    \caption{Cronograma de Sprints - Evolução para Microsserviços e Estabilização (2026)}
+    \label{tab:sprints_evolucao}
+    \begin{tabular}{|>{\centering\arraybackslash}p{1.5cm}|>{\centering\arraybackslash}p{3.2cm}|p{6.5cm}|p{4.0cm}|}
+        \hline
+        \textbf{Sprint} & \textbf{Período (Início/Fim)} & \textbf{Meta da Sprint (Sprint Goal)} & \textbf{Marcos Equivalentes (Novo Plano)} \\
+        \hline
+        Sprint 1 & 27/02/2026 13/03/2026 & \textbf{Desacoplamento:} Fragmentação do monólito em serviços independentes e configuração do API Gateway. & M7: Arquitetura Distribuída Inicial \\ \hline
+        Sprint 2 & 16/03/2026 27/03/2026 & \textbf{Infraestrutura:} Implementação do Netflix Eureka para descoberta de serviços e configuração do ambiente Docker. & M8: Orquestração de Containers \\ \hline
+        Sprint 3 & 30/03/2026 10/04/2026 & \textbf{Segurança e Identidade:} Migração total para Firebase Authentication e validação de permissões por Roles. & M9: Provedor de Identidade Migrado \\ \hline
+        Sprint 4 & 13/04/2026 24/04/2026 & \textbf{Estabilização de Dados:} Sincronização entre serviços via OpenFeign e ajustes de persistência no cache Redis. & - \\ \hline
+        Sprint 5 & 27/04/2026 08/05/2026 & \textbf{Mensageria:} Implementação do sistema de notificações consumindo eventos do RabbitMQ. & M10: Sistema de Eventos Concluído \\ \hline
+        Sprint 6 & 11/05/2026 22/05/2026 & \textbf{QA e Bug Fixing:} Ciclo intensivo de correção de bugs, testes de carga nos microsserviços e refinamento da interface. & M11: Homologação Técnica \\ \hline
+        Sprint 7 & 25/05/2026 27/05/2026 & \textbf{Homologação Final:} Preparação do ambiente de produção (Cloud), documentação final e encerramento do projeto. & M12: Entrega Formal do TCC \\ \hline
     \end{tabular}
-    }
 \end{table}
+
+\subsection{Análise do Caminho Crítico e Riscos}
+
+Nesta fase final, o caminho crítico desloca-se do desenvolvimento de novas funcionalidades para a resiliência da infraestrutura distribuída. Os principais pontos de atenção são:
+
+\begin{itemize}
+    \item \textbf{Dependência de Integração:} O principal risco reside na integração do sistema de notificações via \textit{RabbitMQ}. Falhas na publicação ou consumo de eventos podem gerar inconsistências na comunicação com o usuário final.
+    \item \textbf{Estabilização de Ambiente:} O período de \textit{Bug Fixing} (Sprint 6) é vital para garantir que a orquestração dos contêineres Docker mantenha a performance sob carga real de uso.
+    \item \textbf{Restrição Temporal:} A data de 27 de maio de 2026 é uma restrição rígida, exigindo que o polimento do sistema não comprometa o funcionamento dos requisitos básicos de agendamento e pagamento.
+\end{itemize}
 
 \chapter{Considerações Finais}
 O desenvolvimento da aplicação web "Cortaai", um marketplace para gerenciamento e agendamento em barbearias, representa uma iniciativa significativa para modernizar e otimizar a operação destes estabelecimentos, trazendo organização, eficiência e maior visibilidade no ambiente digital.
@@ -760,6 +912,7 @@ A aplicação "Cortaai" não só permite aos Clientes realizar agendamentos de f
 Além disso, a arquitetura implementada e as tecnologias utilizadas fornecem uma base sólida e escalável para iniciativas futuras, como a integração de sistemas de pagamento online, o desenvolvimento de funcionalidades avançadas de gestão de relacionamento com o cliente (CRM) e a implementação de painéis com análises e insights de negócio.
 
 Em suma, o desenvolvimento desta aplicação representa um passo importante em direção à transformação digital e ao aumento da competitividade no setor de barbearias, demonstrando o potencial das tecnologias web modernas e da computação em nuvem para resolver desafios operacionais cotidianos.
+
 
 % --- ELEMENTOS PÓS-TEXTUAIS ---
 \postextual
