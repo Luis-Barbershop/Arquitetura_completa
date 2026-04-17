@@ -7,6 +7,7 @@ import { getMyAppointments, cancelAppointment } from '../services/appointmentSer
 import { createBarbershopReview } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
+import CustomerHeader from '../components/HomePage/CustomerHeader';
 import { logoutUser } from '../services/authService';
 import { isCustomer as checkIsCustomer, isOwnerUser, isLoggedIn, getBarbershopId } from '../services/userContext';
 
@@ -260,6 +261,11 @@ const MeusAgendamentosPage = () => {
         navigate('/');
     };
 
+    const handleCustomerLogout = () => {
+        logoutUser();
+        navigate('/');
+    };
+
     return (
         <div className={Styles.container}>
             <div className={Styles.content}>
@@ -275,37 +281,9 @@ const MeusAgendamentosPage = () => {
                     />
                 )}
 
-                {isCustomer && <header className={Styles.topMenu}>
-                    <div className={Styles.brandBlock}>
-                        <div className={Styles.brandBadge}>CA</div>
-                        <div>
-                            <h3>CortaAI</h3>
-                            <p>{isCustomer ? `Agenda de ${firstName}` : `Painel de ${firstName}`}</p>
-                        </div>
-                    </div>
-
-                    <nav className={Styles.menuCenter} aria-label="Navegacao de agendamentos">
-                        <button onClick={() => navigate(isCustomer ? '/homepage' : '/barberHome')}>
-                            <FiScissors />
-                            <span>Home</span>
-                        </button>
-                        <button className={Styles.menuItemActive}>
-                            <FiCalendar />
-                            <span>Meus agendamentos</span>
-                        </button>
-                    </nav>
-
-                    <div className={Styles.menuActions}>
-                        <button className={Styles.secondaryAction} onClick={carregarAgendamentos}>
-                            <FiRefreshCw />
-                            <span>Atualizar</span>
-                        </button>
-                        <button className={Styles.ghostAction} onClick={() => navigate(-1)}>
-                            <FiArrowLeft />
-                            <span>Voltar</span>
-                        </button>
-                    </div>
-                </header>}
+                {isCustomer && (
+                    <CustomerHeader activeTab="agendamentos" onLogout={handleCustomerLogout} />
+                )}
 
                 <section className={Styles.heroBlock}>
                     <p className={Styles.kicker}>{isCustomer ? 'PAINEL DE AGENDAMENTOS' : 'MINHA AGENDA'}</p>

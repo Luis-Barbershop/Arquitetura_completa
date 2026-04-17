@@ -79,8 +79,8 @@ function AgendamentoPage() {
         try {
             // Formata data ISO combinando a data escolhida com o horário do slot
             // O slot vem como "09:00:00", precisamos apenas de "09:00"
-            const timePart = selectedTime.substring(0, 5); 
-            const dateTime = new Date(`${date}T${timePart}:00`).toISOString();
+            const timePart = selectedTime.substring(0, 5);
+            const dateTime = `${date}T${timePart}:00`;
 
             await createAppointment({
                 barbershopId,

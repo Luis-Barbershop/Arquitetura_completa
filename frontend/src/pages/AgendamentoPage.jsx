@@ -448,21 +448,18 @@ const AgendamentoPage = () => {
       }
 
       const apiDate = formatDateToApi(selectedDate);
-      const dateTimeString = `${apiDate}T${timeString}`;
-      const localDateObj = new Date(dateTimeString);
+      const startTime = `${apiDate}T${timeString}`;
 
-      if (isNaN(localDateObj.getTime())) {
+      if (!apiDate || !timeString) {
         toast.error("Erro interno ao processar a data. Tente selecionar o horário novamente.");
         return;
       }
-
-      const isoDateString = localDateObj.toISOString();
 
       const appointmentData = {
         barbershopId,
         barberId: selectedBarber,
         activityIds: selectedServices.map((service) => service.id),
-        startTime: isoDateString,
+        startTime,
       };
 
       await api.post("/appointments", appointmentData);
@@ -489,8 +486,9 @@ const AgendamentoPage = () => {
       if (timeString.length === 5) timeString = `${timeString}:00`;
 
       const apiDate = formatDateToApi(selectedDate);
-      const localDateObj = new Date(`${apiDate}T${timeString}`);
-      if (isNaN(localDateObj.getTime())) {
+      const startTime = `${apiDate}T${timeString}`;
+
+      if (!apiDate || !timeString) {
         toast.error("Erro interno ao processar a data. Tente selecionar o horário novamente.");
         return;
       }
@@ -499,7 +497,7 @@ const AgendamentoPage = () => {
         barbershopId,
         barberId: selectedBarber,
         activityIds: selectedServices.map((s) => s.id),
-        startTime: localDateObj.toISOString(),
+        startTime,
       };
 
       const appointmentResponse = await api.post("/appointments", appointmentData);

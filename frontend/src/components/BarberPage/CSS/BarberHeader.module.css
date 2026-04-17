@@ -1,0 +1,278 @@
+/* BarberHeader.module.css — desktop only (oculto em ≤760px) */
+
+/* ── Container ─────────────────────────────────────────────────── */
+.header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 1.2rem;
+    background: #141414;
+    border-bottom: 1px solid #2a2a2a;
+    border-radius: 18px;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 100;
+}
+
+@media (max-width: 760px) {
+    .header {
+        display: none;
+    }
+}
+
+/* ── Brand ──────────────────────────────────────────────────────── */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+.brandBadge {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #d2a73e, #8d6308);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.brandText {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.brandName {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #d4af37;
+    letter-spacing: 0.3px;
+}
+
+.brandSub {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.68rem;
+    color: #888;
+}
+
+/* ── Nav central ────────────────────────────────────────────────── */
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    margin: 0 0.5rem;
+}
+
+.navItem,
+.navItemActive {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 36px;
+    padding: 0 0.8rem;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+}
+
+.navItem {
+    background: transparent;
+    color: #aaa;
+}
+
+.navItem:hover {
+    background: #222;
+    color: #ddd;
+}
+
+.navItemActive {
+    background: linear-gradient(135deg, #c19006, #7a5500);
+    color: #fff;
+}
+
+.caret {
+    color: #888;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.caretOpen {
+    color: #d4af37;
+    transform: rotate(180deg);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+/* Wrapper dos itens com dropdown de nav */
+.navDropdownWrapper {
+    position: relative;
+}
+
+.navDropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 180px;
+    background: #1c1c1c;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 4px;
+    z-index: 200;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.navDropdownItem,
+.navDropdownItemActive {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.82rem;
+    text-align: left;
+    transition: background 0.12s;
+}
+
+.navDropdownItem {
+    background: transparent;
+    color: #bbb;
+}
+
+.navDropdownItem:hover {
+    background: #2a2a2a;
+    color: #fff;
+}
+
+.navDropdownItemActive {
+    background: rgba(193, 144, 6, 0.18);
+    color: #d4af37;
+}
+
+/* ── Direita: bell + avatar ─────────────────────────────────────── */
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* ── Avatar ──────────────────────────────────────────────────────── */
+.avatarWrapper {
+    position: relative;
+}
+
+.avatarBtn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #222;
+    border: 1px solid #3a3a3a;
+    border-radius: 10px;
+    padding: 4px 8px 4px 4px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+
+.avatarBtn:hover {
+    border-color: #c19006;
+}
+
+.avatarCircle {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #c19006, #7a5500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+/* Dropdown do avatar */
+.avatarDropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background: #1c1c1c;
+    border: 1px solid #333;
+    border-radius: 14px;
+    padding: 6px;
+    z-index: 300;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6);
+}
+
+.avatarDropdownUser {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 10px 6px;
+}
+
+.avatarDropdownName {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #eee;
+}
+
+.avatarDropdownRole {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    color: #d4af37;
+}
+
+.dropdownDivider {
+    height: 1px;
+    background: #2e2e2e;
+    margin: 4px 0;
+}
+
+.dropdownItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    color: #bbb;
+    cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.82rem;
+    text-align: left;
+    transition: background 0.12s, color 0.12s;
+}
+
+.dropdownItem:hover {
+    background: #252525;
+    color: #fff;
+}
+
+.dropdownItemDanger {
+    color: #e05252;
+}
+
+.dropdownItemDanger:hover {
+    background: rgba(224, 82, 82, 0.12);
+    color: #ff6b6b;
+}

@@ -1,93 +1,17 @@
+/* ── Bottom bar (mobile only) ───────────────────────────────────── */
 .navbarContainer {
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
     background:
-        radial-gradient(circle at 50% -180%, rgb(193 144 6 / 24%), transparent 70%),
+        radial-gradient(circle at 50% -180%, rgb(193 144 6 / 20%), transparent 70%),
         #171717;
-    border-top: 1px solid #353535;
-    padding: 10px 14px;
+    border-top: 1px solid #2e2e2e;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
     z-index: 100;
-    font-family: "Space Grotesk", sans-serif;
+    font-family: 'Space Grotesk', sans-serif;
     display: none;
-}
-
-.navbarList {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    gap: 6px;
-}
-
-.navbarList li {
-    flex: 1;
-}
-
-.navItem {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    width: 100%;
-    padding: 8px 4px;
-    border-radius: 11px;
-    transition: all 0.2s;
-    background: transparent;
-    border: none;
-    color: #9f9787;
-    font-size: 0.9rem;
-    font-family: inherit;
-}
-
-.navItem:hover {
-    color: #d4af37;
-    background: #221b0f;
-}
-
-.navItemActive {
-    composes: navItem;
-    color: #e1c887;
-    background: linear-gradient(180deg, #2c220f 0%, #221a0d 100%);
-    border: 1px solid #5f4714;
-}
-
-.navIcon {
-    width: 24px;
-    height: 24px;
-    font-size: 0.62rem;
-    letter-spacing: 0.05em;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 7px;
-    border: 1px solid #3b3b3b;
-    background: #222;
-    color: #9d927b;
-    transition: all 0.2s;
-}
-
-.navItemActive .navIcon {
-    border-color: #6d5012;
-    color: #f0dcae;
-    background: #3b2b0f;
-}
-
-.navItem:hover .navIcon {
-    color: #e4cf9b;
-}
-
-.navLabel {
-    font-weight: 700;
-    white-space: nowrap;
-    font-size: 0.62rem;
-    letter-spacing: 0.02em;
 }
 
 @media (max-width: 760px) {
@@ -95,3 +19,169 @@
         display: block;
     }
 }
+
+.navbarList {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    gap: 4px;
+}
+
+.navbarList li {
+    flex: 1;
+}
+
+/* ── Nav items ──────────────────────────────────────────────────── */
+.navItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    width: 100%;
+    padding: 6px 4px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    font-family: inherit;
+    transition: color 0.15s, background 0.15s;
+}
+
+.navItem:hover {
+    color: #ccc;
+    background: #1e1e1e;
+}
+
+.navItemActive {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    width: 100%;
+    padding: 6px 4px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    color: #d4af37;
+    background: rgba(193, 144, 6, 0.12);
+    transition: color 0.15s, background 0.15s;
+}
+
+.navIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navLabel {
+    font-size: 0.62rem;
+    font-weight: 600;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+}
+
+/* ── Drawer overlay ─────────────────────────────────────────────── */
+.drawerOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+}
+
+.drawer {
+    width: 100%;
+    background: #1a1a1a;
+    border-top: 1px solid #2e2e2e;
+    border-radius: 18px 18px 0 0;
+    padding: 0 0 calc(16px + env(safe-area-inset-bottom, 0px));
+    animation: slideUp 0.22s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+}
+
+.drawerHandle {
+    width: 36px;
+    height: 4px;
+    background: #444;
+    border-radius: 2px;
+    margin: 12px auto 0;
+}
+
+.drawerHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 8px;
+}
+
+.drawerTitle {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #ccc;
+}
+
+.drawerClose {
+    background: #2a2a2a;
+    border: none;
+    color: #888;
+    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.drawerList {
+    list-style: none;
+    padding: 4px 10px 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.drawerItem,
+.drawerItemActive {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.12s, color 0.12s;
+}
+
+.drawerItem {
+    color: #bbb;
+}
+
+.drawerItem:hover {
+    background: #232323;
+    color: #fff;
+}
+
+.drawerItemActive {
+    color: #d4af37;
+    background: rgba(193, 144, 6, 0.12);
+}
+

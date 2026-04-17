@@ -59,7 +59,7 @@ const fetchBarbershopNameMap = async () => {
 // Criar Agendamento
 // Envia o JSON para o AppointmentsController.createAppointments
 export const createAppointment = async (appointmentData) => {
-    // appointmentData já deve vir com a data em .toISOString()
+    // appointmentData deve ter startTime no formato "yyyy-MM-ddTHH:mm:ss" (sem timezone)
     const response = await api.post('/appointments', appointmentData);
     return response.data;
 };

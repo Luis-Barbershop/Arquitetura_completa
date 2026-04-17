@@ -1,51 +1,79 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import {
+    House,
+    CalendarBlank,
+    CalendarCheck,
+    PlusCircle,
+    Scissors,
+    Users,
+    ChartBar,
+    Package,
+    CaretDown,
+    UserCircle,
+    Lock,
+    CreditCard,
+    SignOut,
+} from '@phosphor-icons/react';
 import api from '../../services/api';
 import NotificationBell from './NotificationBell';
-import styles from '../../pages/CSS/BarberHomePage.module.css';
-
-/** Tabs visíveis para TODOS os barbeiros, com ou sem barbearia vinculada */
-const baseNavItems = [
-    { id: 'home',    label: 'Home',       short: 'HM' },
-    { id: 'perfil',  label: 'Meu Perfil', short: 'PF' },
-];
-
-/** Tabs que exigem barbearia vinculada (barbershopId presente) */
-const linkedNavItems = [
-    { id: 'agenda',            label: 'Minha Agenda',    short: 'AG' },
-    { id: 'novo-agendamento',  label: 'Novo Encaixe',    short: '✂️' },
-    { id: 'servicos',          label: 'Servicos',        short: 'SV' },
-];
-
-/** Tabs exclusivas para OWNER */
-const ownerNavItems = [
-    { id: 'dashboards', label: 'Dashboards', short: 'DB' },
-    { id: 'estoque',    label: 'Estoque',    short: 'ES' },
-    { id: 'agenda-equipe', label: 'Agenda da Equipe', short: 'AE' },
-    { id: 'time',       label: 'Meu Time',   short: 'TM' },
-];
+import { isOwnerUser, getBarbershopId } from '../../services/userContext';
+import styles from './CSS/BarberHeader.module.css';
 
 /**
- * @param {object}   barber      - dados do barbeiro logado
- * @param {Function} onLogout    - callback de logout
- * @param {string}   activeTab   - tab ativa
- * @param {Function} onTabChange - callback ao trocar tab
- * @param {string|number} barbershopId - ID da barbearia vinculada (undefined = sem barbearia)
+ * BarberHeader — barra superior desktop (oculto em mobile, ver BarberNavbar)
+ *
+ * isOwner e barbershopId são lidos do localStorage via userContext — fonte única de verdade.
+ * Props homônimas são ignoradas para evitar inconsistência entre páginas.
+ *
+ * Visibilidade por perfil:
+ *   sem barbearia  → Home
+ *   com barbearia  → + Agenda ▾ (Minha Agenda, Novo Encaixe) + Serviços
+ *   owner          → + Agenda da Equipe + Meu Time + Gestão ▾ (Dashboard, Estoque)
+ *
+ * Avatar dropdown (todos):
+ *   Meu Perfil | Alterar Senha (e-mail) | Vincular MP (owner) | Sair
  */
-function BarberHeader({ barber, onLogout, activeTab, onTabChange, isOwner = false, barbershopId }) {
+function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
     const navigate = useNavigate();
+
+    // Fonte única de verdade — localStorage via userContext
+    const isOwner   = isOwnerUser();
+    const barbershopId = getBarbershopId();
+    const hasShop   = Boolean(barbershopId);
     const canChangePassword = (localStorage.getItem('authProvider') || 'EMAIL').toUpperCase() === 'EMAIL';
 
-    // Monta a lista de tabs respeitando a mesma lógica do BarberNavbar:
-    // Agenda e Serviços só aparecem quando o barbeiro já tem barbearia vinculada
-    const commonNavItems = barbershopId
-        ? [...baseNavItems, ...linkedNavItems]
-        : baseNavItems;
+    const [agendaOpen, setAgendaOpen] = useState(false);
+    const [gestaoOpen, setGestaoOpen] = useState(false);
+    const [avatarOpen, setAvatarOpen] = useState(false);
 
-    const navItems = isOwner
-        ? [...commonNavItems, ...ownerNavItems]
-        : commonNavItems;
+    const agendaRef = useRef(null);
+    const gestaoRef = useRef(null);
+    const avatarRef = useRef(null);
+
+    useEffect(() => {
+        const handler = (e) => {
+            if (agendaRef.current && !agendaRef.current.contains(e.target)) setAgendaOpen(false);
+            if (gestaoRef.current && !gestaoRef.current.contains(e.target)) setGestaoOpen(false);
+            if (avatarRef.current && !avatarRef.current.contains(e.target)) setAvatarOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const agendaSubItems = [
+        { id: 'agenda',           label: 'Minha Agenda',     icon: <CalendarBlank size={15} weight="duotone" /> },
+        ...(isOwner && hasShop ? [{ id: 'agenda-equipe', label: 'Agenda da Equipe', icon: <CalendarCheck size={15} weight="duotone" /> }] : []),
+        ...(hasShop             ? [{ id: 'novo-agendamento', label: 'Novo Encaixe', icon: <PlusCircle size={15} weight="duotone" /> }] : []),
+    ];
+
+    const agendaActive  = ['agenda', 'agenda-equipe', 'novo-agendamento'].includes(activeTab);
+    const gestaoActive  = ['dashboards', 'estoque'].includes(activeTab);
+
+    const initials = barber?.name
+        ? barber.name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
+        : 'BC';
 
     const handleMpConnect = async () => {
         const barberId = barber?.id;
@@ -53,66 +81,150 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange, isOwner = fals
         try {
             const response = await api.get(`/payments/mp-connect?state=${barberId}`);
             const authUrl = response.data?.authorizationUrl;
-            if (authUrl) {
-                window.location.href = authUrl;
-            }
-        } catch (err) {
-            console.error('Erro ao conectar Mercado Pago:', err);
+            if (authUrl) window.location.href = authUrl;
+        } catch {
             toast.error('Não foi possível iniciar a vinculação com o Mercado Pago. Tente novamente.');
         }
     };
 
     return (
         <header className={styles.header}>
-            <div className={styles.headerTopRow}>
-                <div className={styles.headerleft}>
-                    <div className={styles.headerBrandBadge}>CA</div>
-                    <div className={styles.headerBrandText}>
-                        <h2 className={styles.headerTitle}>Corta AI</h2>
-                        <p className={styles.headerWelcome}>Painel profissional de {barber?.name}</p>
-                    </div>
+            {/* ── Brand ─── */}
+            <div className={styles.brand}>
+                <div className={styles.brandBadge}>
+                    <Scissors size={20} weight="duotone" />
                 </div>
-
-                <div className={styles.headerRight}>
-                    <NotificationBell />
-                    {isOwner && (
-                        <button
-                            onClick={handleMpConnect}
-                            className={styles.mpButton}
-                            title="Vincular conta Mercado Pago para receber pagamentos online"
-                        >
-                            💳 Vincular MP
-                        </button>
-                    )}
-                    {canChangePassword && (
-                        <button
-                            onClick={() => navigate('/change-password')}
-                            className={styles.changePasswordButton}
-                            title="Alterar senha"
-                        >
-                            🔒 Alterar senha
-                        </button>
-                    )}
-                    <button onClick={onLogout} className={styles.logoutButton}>
-                        Sair
-                    </button>
+                <div className={styles.brandText}>
+                    <span className={styles.brandName}>CortaAI</span>
+                    <span className={styles.brandSub}>Painel profissional</span>
                 </div>
             </div>
 
-            <nav className={styles.headerNav} aria-label="Navegacao principal do barbeiro">
-                {navItems.map((item) => (
+            {/* ── Nav central ─── */}
+            <nav className={styles.nav}>
+                <button
+                    className={activeTab === 'home' ? styles.navItemActive : styles.navItem}
+                    onClick={() => onTabChange('home')}
+                >
+                    <House size={16} weight="duotone" /> Home
+                </button>
+
+                {hasShop && (
+                    <div className={styles.navDropdownWrapper} ref={agendaRef}>
+                        <button
+                            className={agendaActive ? styles.navItemActive : styles.navItem}
+                            onClick={() => { setAgendaOpen(o => !o); setGestaoOpen(false); }}
+                        >
+                            <CalendarBlank size={16} weight="duotone" />
+                            Agenda
+                            <CaretDown size={11} weight="bold" className={agendaOpen ? styles.caretOpen : styles.caret} />
+                        </button>
+                        {agendaOpen && (
+                            <div className={styles.navDropdown}>
+                                {agendaSubItems.map(item => (
+                                    <button
+                                        key={item.id}
+                                        className={activeTab === item.id ? styles.navDropdownItemActive : styles.navDropdownItem}
+                                        onClick={() => { onTabChange(item.id); setAgendaOpen(false); }}
+                                    >
+                                        {item.icon} {item.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {hasShop && (
                     <button
-                        key={item.id}
-                        type="button"
-                        className={activeTab === item.id ? styles.headerNavItemActive : styles.headerNavItem}
-                        onClick={() => onTabChange(item.id)}
-                        aria-label={item.label}
+                        className={activeTab === 'servicos' ? styles.navItemActive : styles.navItem}
+                        onClick={() => onTabChange('servicos')}
                     >
-                        <span className={styles.headerNavChip}>{item.short}</span>
-                        {item.label}
+                        <Scissors size={16} weight="duotone" /> Serviços
                     </button>
-                ))}
+                )}
+
+                {isOwner && hasShop && (
+                    <button
+                        className={activeTab === 'time' ? styles.navItemActive : styles.navItem}
+                        onClick={() => onTabChange('time')}
+                    >
+                        <Users size={16} weight="duotone" /> Meu Time
+                    </button>
+                )}
+
+                {isOwner && hasShop && (
+                    <div className={styles.navDropdownWrapper} ref={gestaoRef}>
+                        <button
+                            className={gestaoActive ? styles.navItemActive : styles.navItem}
+                            onClick={() => { setGestaoOpen(o => !o); setAgendaOpen(false); }}
+                        >
+                            <ChartBar size={16} weight="duotone" />
+                            Gestão
+                            <CaretDown size={11} weight="bold" className={gestaoOpen ? styles.caretOpen : styles.caret} />
+                        </button>
+                        {gestaoOpen && (
+                            <div className={styles.navDropdown}>
+                                <button
+                                    className={activeTab === 'dashboards' ? styles.navDropdownItemActive : styles.navDropdownItem}
+                                    onClick={() => { onTabChange('dashboards'); setGestaoOpen(false); }}
+                                >
+                                    <ChartBar size={15} weight="duotone" /> Dashboard
+                                </button>
+                                <button
+                                    className={activeTab === 'estoque' ? styles.navDropdownItemActive : styles.navDropdownItem}
+                                    onClick={() => { onTabChange('estoque'); setGestaoOpen(false); }}
+                                >
+                                    <Package size={15} weight="duotone" /> Estoque
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
             </nav>
+
+            {/* ── Direita: bell + avatar ─── */}
+            <div className={styles.headerRight}>
+                <NotificationBell />
+
+                <div className={styles.avatarWrapper} ref={avatarRef}>
+                    <button
+                        className={styles.avatarBtn}
+                        onClick={() => setAvatarOpen(o => !o)}
+                        aria-label="Menu do usuário"
+                    >
+                        <span className={styles.avatarCircle}>{initials}</span>
+                        <CaretDown size={12} weight="bold" className={avatarOpen ? styles.caretOpen : styles.caret} />
+                    </button>
+
+                    {avatarOpen && (
+                        <div className={styles.avatarDropdown}>
+                            <div className={styles.avatarDropdownUser}>
+                                <span className={styles.avatarDropdownName}>{barber?.name || 'Barbeiro'}</span>
+                                <span className={styles.avatarDropdownRole}>{isOwner ? 'Owner' : 'Barbeiro'}</span>
+                            </div>
+                            <div className={styles.dropdownDivider} />
+                            <button className={styles.dropdownItem} onClick={() => { onTabChange('perfil'); setAvatarOpen(false); }}>
+                                <UserCircle size={15} weight="duotone" /> Meu Perfil
+                            </button>
+                            {canChangePassword && (
+                                <button className={styles.dropdownItem} onClick={() => { navigate('/change-password'); setAvatarOpen(false); }}>
+                                    <Lock size={15} weight="duotone" /> Alterar Senha
+                                </button>
+                            )}
+                            {isOwner && (
+                                <button className={styles.dropdownItem} onClick={() => { handleMpConnect(); setAvatarOpen(false); }}>
+                                    <CreditCard size={15} weight="duotone" /> Vincular Mercado Pago
+                                </button>
+                            )}
+                            <div className={styles.dropdownDivider} />
+                            <button className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`} onClick={onLogout}>
+                                <SignOut size={15} weight="duotone" /> Sair
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
         </header>
     );
 }
