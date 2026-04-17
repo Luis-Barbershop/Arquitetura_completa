@@ -11,6 +11,12 @@ spring:
   application:
     name: user-service
   cloud:
+    openfeign:
+      client:
+        config:
+          barbershop-service:
+            connectTimeout: 2000
+            readTimeout: 3000
     loadbalancer:
       cache:
         type: caffeine

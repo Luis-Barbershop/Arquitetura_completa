@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../services/api';
-import { getMyInvites, acceptInvite, rejectInvite, getMyWorkSchedule, saveMyWorkSchedule } from '../services/barbershopService';
+import { getMyInvites, acceptInvite, rejectInvite, leaveShop, getMyWorkSchedule, saveMyWorkSchedule } from '../services/barbershopService';
 import { logoutUser } from '../services/authService';
 import { isCustomer } from '../services/userContext';
 import BarberHeader from '../components/BarberPage/BarberHeader';
@@ -65,7 +65,9 @@ function BarberProfilePage() {
     // ── Convites pendentes (barbeiro sem barbearia) ────────────────────────────
     const [pendingInvites, setPendingInvites] = useState([]);
     const [loadingInvites, setLoadingInvites] = useState(false);
+    const [invitesError, setInvitesError] = useState(false);
     const [inviteActionLoading, setInviteActionLoading] = useState(null);
+    const [leavingShop, setLeavingShop] = useState(false);
 
     useEffect(() => {
         if (isCustomer()) { navigate('/homepage', { replace: true }); return; }
@@ -182,14 +184,27 @@ function BarberProfilePage() {
     useEffect(() => {
         if (!barber) return;
 
+        if (barber?.barbershopId) {
+            setPendingInvites([]);
+            setInvitesError(false);
+            setLoadingInvites(false);
+            return;
+        }
+
         let isMounted = true;
 
         const fetchInvites = async () => {
             try {
                 const data = await getMyInvites();
-                if (isMounted) setPendingInvites(data);
+                if (isMounted) {
+                    setPendingInvites(data);
+                    setInvitesError(false);
+                }
             } catch {
-                if (isMounted) setPendingInvites([]);
+                if (isMounted) {
+                    setPendingInvites([]);
+                    setInvitesError(true);
+                }
             }
         };
 
@@ -255,6 +270,35 @@ function BarberProfilePage() {
             toast.error(err?.response?.data?.message || 'Erro ao recusar convite.');
         } finally {
             setInviteActionLoading(null);
+        }
+    };
+
+    const handleLeaveShop = async () => {
+        if (!barber?.barbershopId || barber?.isOwner) return;
+
+        const confirmed = window.confirm('Deseja sair da barbearia atual? Você perderá o vínculo com o estabelecimento.');
+        if (!confirmed) return;
+
+        setLeavingShop(true);
+        try {
+            await leaveShop();
+            toast.success('Você saiu da barbearia com sucesso.');
+
+            const meResponse = await api.get('/auth/me', { params: { t: Date.now() } });
+            const updatedBarber = meResponse.data;
+            setBarber(updatedBarber);
+
+            if (!updatedBarber?.barbershopId) {
+                localStorage.removeItem('barbershopId');
+            }
+
+            const invites = await getMyInvites();
+            setPendingInvites(invites);
+            setInvitesError(false);
+        } catch (err) {
+            toast.error(err?.response?.data?.message || 'Erro ao sair da barbearia.');
+        } finally {
+            setLeavingShop(false);
         }
     };
 
@@ -383,15 +427,38 @@ function BarberProfilePage() {
                                 <div><strong>E-mail:</strong> {barber.email}</div>
                                 <div><strong>Telefone:</strong> {phoneValue}</div>
                                 <div><strong>CPF:</strong> {cpfValue}</div>
-                                <div><strong>Barbearia:</strong> {barber.barbershopId ? 'Vinculado' : 'Sem barbearia'}</div>
+                                <div><strong>Barbearia:</strong> {barber.barbershopId ? (barber.barbershopName || 'Vinculado') : 'Sem barbearia'}</div>
                                 <div>
                                     <strong>Função:</strong>{' '}
                                     {barber.isOwner ? 'Dono do estabelecimento' : 'Colaborador'}
                                 </div>
+
+                                {barber.barbershopId && !barber.isOwner && (
+                                    <div style={{ marginTop: 12 }}>
+                                        <button
+                                            type="button"
+                                            onClick={handleLeaveShop}
+                                            disabled={leavingShop}
+                                            style={{
+                                                background: '#742a2a',
+                                                color: '#fff',
+                                                border: 'none',
+                                                padding: '8px 14px',
+                                                borderRadius: 8,
+                                                cursor: leavingShop ? 'not-allowed' : 'pointer',
+                                                fontSize: 13,
+                                                fontWeight: 600,
+                                                opacity: leavingShop ? 0.7 : 1
+                                            }}
+                                        >
+                                            {leavingShop ? 'Saindo...' : 'Sair da barbearia'}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             {/* ── Convites pendentes ─ */}
-                            {pendingInvites.length > 0 || loadingInvites ? (
+                            {!hasLinkedBarbershop ? (
                                 <div style={{ ...cardStyle, background: 'rgba(108,99,255,0.06)', borderColor: '#3a3570' }}>
                                     <p style={{ ...sectionTitleStyle, color: '#6c63ff' }}>📩 Convites de Barbearias</p>
                                     <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginTop: -6, marginBottom: 8 }}>
@@ -399,6 +466,12 @@ function BarberProfilePage() {
                                     </p>
                                     {loadingInvites ? (
                                         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>Carregando convites...</p>
+                                    ) : invitesError ? (
+                                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
+                                            Não foi possível carregar os convites agora. Tente novamente em instantes.
+                                        </p>
+                                    ) : pendingInvites.length === 0 ? (
+                                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Nenhum convite pendente no momento.</p>
                                     ) : (
                                         pendingInvites.map(inv => (
                                             <div key={inv.requestId} style={{

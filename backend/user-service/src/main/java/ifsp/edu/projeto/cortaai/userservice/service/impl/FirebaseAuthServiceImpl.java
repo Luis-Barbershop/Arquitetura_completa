@@ -5,16 +5,20 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.UserRecord;
 import ifsp.edu.projeto.cortaai.userservice.dto.AuthResponseDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.BarbershopInfoDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileCustomerDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseAuthRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.exception.ExternalServiceUnavailableException;
 import ifsp.edu.projeto.cortaai.userservice.exception.NotFoundException;
 import ifsp.edu.projeto.cortaai.userservice.exception.RoleConflictException;
+import ifsp.edu.projeto.cortaai.userservice.feign.BarbershopServiceClient;
 import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository;
 import ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +38,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
     private final FirebaseAuth firebaseAuth;
     private final CustomerRepository customerRepository;
     private final BarberRepository barberRepository;
+    private final BarbershopServiceClient barbershopServiceClient;
 
     // ──────────────────────────────────────────────────────────────────────────
     // Implementações públicas
@@ -76,6 +81,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                     false,
                     true,
                     null,  // barbershopId
+                        null,  // barbershopName
                     null,  // isOwner
                     null   // actAsBarber
             );
@@ -140,6 +146,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 emailVerified,
                 false,
                 null,  // barbershopId
+                null,  // barbershopName
                 null,  // isOwner
                 null   // actAsBarber
         );
@@ -284,7 +291,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             log.info("Custom claims atualizadas para UID {}: role={}, isOwner={}", uid, role, isOwner);
         } catch (FirebaseAuthException e) {
             log.error("Erro ao setar custom claims para o usuário {}: {}", uid, e.getMessage());
-            throw new RuntimeException("Falha ao atualizar permissões do usuário", e);
+            throw new IllegalStateException("Falha ao atualizar permissões do usuário", e);
         }
     }
 
@@ -383,6 +390,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 emailVerified,
                 verificationRequired,
                 null,   // barbershopId — customers não têm
+                null,   // barbershopName — customers não têm
                 null,   // isOwner — customers não têm
                 null    // actAsBarber — customers não têm
         );
@@ -391,6 +399,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
     private AuthResponseDTO toAuthResponse(Barber barber, boolean emailVerified, boolean verificationRequired) {
         boolean complete = barber.getTell() != null && barber.getDocumentCPF() != null
                 && barber.getBirthDate() != null;
+            String barbershopName = resolveBarbershopName(barber.getBarbershopId());
         return new AuthResponseDTO(
                 barber.getId(),
                 barber.getName(),
@@ -405,8 +414,29 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 emailVerified,
                 verificationRequired,
                 barber.getBarbershopId(),   // ← campo chave para o frontend saber se tem barbearia
+                barbershopName,
                 barber.isOwner(),           // ← campo chave para mostrar painel de dono
                 barber.isActAsBarber()      // ← se o owner aparece na lista de barbeiros
         );
+    }
+
+    private String resolveBarbershopName(java.util.UUID barbershopId) {
+        if (barbershopId == null) {
+            return null;
+        }
+
+        try {
+            BarbershopInfoDTO shop = barbershopServiceClient.getBarbershopById(barbershopId);
+            return shop != null ? shop.name() : null;
+        } catch (FeignException.NotFound ex) {
+            log.warn("Barbearia não encontrada para id={} durante montagem de /auth/me", barbershopId);
+            return null;
+        } catch (ExternalServiceUnavailableException ex) {
+            log.warn("Não foi possível resolver nome da barbearia id={} no momento: {}", barbershopId, ex.getMessage());
+            return null;
+        } catch (Exception ex) {
+            log.warn("Falha inesperada ao resolver nome da barbearia id={}: {}", barbershopId, ex.getMessage());
+            return null;
+        }
     }
 }

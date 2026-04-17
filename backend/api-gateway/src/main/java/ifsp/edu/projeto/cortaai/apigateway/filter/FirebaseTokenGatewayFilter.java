@@ -78,6 +78,16 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             "/api/barbershops/*/barbers"  // lista de barbeiros da barbearia (rota pública)
     );
 
+        /** Endpoints privados de barbearia que nunca devem ser tratados como públicos. */
+        private static final List<String> PRIVATE_BARBERSHOP_PATHS = List.of(
+            "/api/barbershops/my-invites",
+            "/api/barbershops/my-shop/**",
+            "/api/barbershops/accept-invite/**",
+            "/api/barbershops/reject-invite/**",
+            "/api/barbershops/join-request",
+            "/api/barbershops/leave-shop"
+        );
+
     private final FirebaseAuth firebaseAuth;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
@@ -141,15 +151,17 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
         if (!"GET".equalsIgnoreCase(method)) {
             return false;
         }
+
+        if (isPrivateBarbershopPath(path)) {
+            return false;
+        }
+
         return PUBLIC_BARBERS_GET_PATHS.stream().anyMatch(p -> pathMatcher.match(p, path))
                 || PUBLIC_BARBERSHOP_GET_PATHS.stream().anyMatch(p -> pathMatcher.match(p, path));
     }
 
-    private boolean isPublicBarbershopGet(String path, String method) {
-        if (!"GET".equalsIgnoreCase(method)) {
-            return false;
-        }
-        return PUBLIC_BARBERSHOP_GET_PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
+    private boolean isPrivateBarbershopPath(String path) {
+        return PRIVATE_BARBERSHOP_PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
     private boolean requiresVerifiedEmail(FirebaseToken token) {
@@ -168,7 +180,6 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
         return true;
     }
 
-    @SuppressWarnings("unchecked")
     private String extractSignInProvider(FirebaseToken token) {
         Object firebaseClaim = token.getClaims().get("firebase");
         if (!(firebaseClaim instanceof Map<?, ?> firebaseMap)) {
@@ -185,7 +196,7 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
     private ServerHttpRequest buildMutatedRequest(ServerWebExchange exchange, FirebaseToken decodedToken, String correlationId) {
         Map<String, Object> claims = decodedToken.getClaims();
 
-        String role = (String) claims.getOrDefault("role", "UNKNOWN");
+        String role = (String) claims.getOrDefault("role", "CUSTOMER");
         boolean isOwner = false;
         if (claims.containsKey("isOwner")) {
             Object isOwnerClaim = claims.get("isOwner");

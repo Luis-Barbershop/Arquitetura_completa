@@ -223,6 +223,15 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
             }
 
             log.info("event=complete-profile-ok uid={}", localId);
+
+            try {
+                boolean isOwner = "BARBER".equals(userType) && Boolean.TRUE.equals(request.isOwner());
+                firebaseAuthService.setCustomUserClaims(localId, userType, isOwner);
+                log.info("event=custom-claims-updated uid={} role={} isOwner={}", localId, userType, isOwner);
+            } catch (IllegalStateException ex) {
+                log.warn("event=custom-claims-update-failed uid={} role={} reason={}", localId, userType, ex.getMessage());
+            }
+
             return new FirebaseEmailRegisterResponseDTO(idToken, refreshToken, expiresIn, localId, profile);
 
         } catch (InterruptedException ex) {

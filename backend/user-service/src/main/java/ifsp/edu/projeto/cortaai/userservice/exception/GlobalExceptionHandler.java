@@ -112,6 +112,12 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), ex, request);
     }
 
+    @ExceptionHandler(ExternalServiceUnavailableException.class)
+    public ResponseEntity<ApiErrorResponse> handleExternalUnavailable(ExternalServiceUnavailableException ex, HttpServletRequest request) {
+        log.error("Serviço externo indisponível: {}", ex.getMessage());
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), ex, request);
+    }
+
     // ─── 409 — Conflito ───────────────────────────────────────────────────────
 
     @ExceptionHandler(DataIntegrityViolationException.class)

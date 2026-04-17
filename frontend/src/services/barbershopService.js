@@ -175,11 +175,18 @@ export const inviteBarberByCpf = async (cpf) => {
 
 /** Barbeiro lista convites pendentes recebidos */
 export const getMyInvites = async () => {
+    const normalizeInvitesPayload = (payload) => {
+        if (Array.isArray(payload)) return payload;
+        if (Array.isArray(payload?.content)) return payload.content;
+        if (Array.isArray(payload?.data)) return payload.data;
+        return [];
+    };
+
     try {
         const response = await api.get('/barbershops/my-invites');
-        return Array.isArray(response.data) ? response.data : [];
+        return normalizeInvitesPayload(response.data);
     } catch (error) {
-        console.error('Erro ao buscar convites:', error);
+        console.warn('Falha ao buscar convites pendentes:', error?.response?.status || error?.message);
         return [];
     }
 };
@@ -193,6 +200,12 @@ export const acceptInvite = async (requestId) => {
 /** Barbeiro recusa convite */
 export const rejectInvite = async (requestId) => {
     const response = await api.post(`/barbershops/reject-invite/${requestId}`);
+    return response.data;
+};
+
+/** Barbeiro colaborador sai da barbearia atual */
+export const leaveShop = async () => {
+    const response = await api.post('/barbershops/leave-shop');
     return response.data;
 };
 
