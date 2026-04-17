@@ -74,7 +74,7 @@ public class InternalUserController {
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
-    @GetMapping("/by-email/{email}")
+    @GetMapping("/by-email/{email:.+}")
     public ResponseEntity<UserInfoDTO> getUserByEmail(
             @Parameter(description = "E-mail do usuário") @PathVariable String email) {
         // Barber tem precedência: usuário pode ter registro em ambas as tabelas
