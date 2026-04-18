@@ -338,7 +338,10 @@ public class PaymentService {
 
         InventoryFinancialSummaryDTO inventorySummary;
         try {
-            inventorySummary = productServiceClient.getFinancialSummary(barbershopId, startDate, endDate);
+            inventorySummary = productServiceClient.getFinancialSummary(
+                    barbershopId,
+                    startDate.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE),
+                    endDate.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE));
         } catch (Exception ex) {
             log.warn("Falha ao buscar resumo financeiro de estoque para a barbearia {}: {}", barbershopId, ex.getMessage());
             inventorySummary = new InventoryFinancialSummaryDTO(barbershopId, BigDecimal.ZERO, BigDecimal.ZERO);
@@ -425,7 +428,10 @@ public class PaymentService {
 
         private List<AppointmentInfoDTO> getWalkInAppointments(UUID barbershopId, LocalDateTime from, LocalDateTime to) {
         try {
-            return scheduleServiceClient.getBarbershopAppointmentsByPeriod(barbershopId, from, to)
+            return scheduleServiceClient.getBarbershopAppointmentsByPeriod(
+                        barbershopId,
+                        from.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                        to.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME))
                 .stream()
                 .filter(this::isWalkInForFinancialReport)
                 .toList();

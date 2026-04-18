@@ -527,19 +527,19 @@ public class AppointmentService {
             throw new NotFoundException("Usuário autenticado não encontrado.");
         }
 
-        BarbershopInfoDTO shop = barbershopServiceClient.getBarbershopById(shopId);
-        if (shop == null) {
-            throw new NotFoundException("Barbearia não encontrada.");
-        }
-
         String safeCorrelationId = (correlationId == null || correlationId.isBlank()) ? "N/A" : correlationId;
-        boolean isOwner = caller.getId().equals(shop.getOwnerId());
+
+        // Verificação de ownership via barbershopId do próprio perfil do barbeiro
+        // (evita dependência síncrona com barbershop-service, que pode estar lento no startup)
+        boolean isOwner = shopId.equals(caller.getBarbershopId())
+                && "BARBER".equalsIgnoreCase(caller.getUserType());
+
         if (!isOwner) {
             log.warn(
                     "SECURITY_EVENT=MASTER_SCHEDULE_ACCESS_DENIED userId={} userType={} targetShopId={} date={} correlationId={}",
                     caller.getId(), caller.getUserType(), shopId, date, safeCorrelationId
             );
-            throw new ForbiddenException("Apenas o owner da barbearia pode visualizar a agenda da equipe.");
+            throw new ForbiddenException("Apenas barbeiros vinculados a esta barbearia podem visualizar a agenda da equipe.");
         }
 
         log.info(

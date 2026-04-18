@@ -10,6 +10,11 @@ server:
 spring:
   application:
     name: user-service
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
   cloud:
     openfeign:
       client:
