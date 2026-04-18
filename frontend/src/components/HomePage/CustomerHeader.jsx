@@ -5,10 +5,10 @@ import {
     CalendarBlank,
     Scissors,
     CaretDown,
-    Bell,
     Lock,
     SignOut,
 } from '@phosphor-icons/react';
+import NotificationBell from '../NotificationBell/NotificationBell';
 import styles from './CSS/CustomerHeader.module.css';
 
 /**
@@ -28,14 +28,11 @@ function CustomerHeader({ activeTab = 'home', onLogout }) {
     const userName = localStorage.getItem('userName') || 'Cliente';
 
     const [avatarOpen, setAvatarOpen] = useState(false);
-    const [bellOpen, setBellOpen] = useState(false);
     const avatarRef = useRef(null);
-    const bellRef = useRef(null);
 
     useEffect(() => {
         const handler = (e) => {
             if (avatarRef.current && !avatarRef.current.contains(e.target)) setAvatarOpen(false);
-            if (bellRef.current && !bellRef.current.contains(e.target)) setBellOpen(false);
         };
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
@@ -81,27 +78,7 @@ function CustomerHeader({ activeTab = 'home', onLogout }) {
             <div className={styles.headerRight}>
 
                 {/* Sino */}
-                <div className={styles.bellWrapper} ref={bellRef}>
-                    <button
-                        className={styles.bellBtn}
-                        onClick={() => setBellOpen(o => !o)}
-                        aria-label="Notificações"
-                    >
-                        <Bell size={20} weight={bellOpen ? 'duotone' : 'regular'} />
-                    </button>
-
-                    {bellOpen && (
-                        <div className={styles.bellDropdown}>
-                            <div className={styles.bellDropdownHeader}>
-                                <span className={styles.bellDropdownTitle}>Notificações</span>
-                            </div>
-                            <div className={styles.bellEmpty}>
-                                <Bell size={28} weight="duotone" className={styles.bellEmptyIcon} />
-                                <span>Nenhuma notificação</span>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                <NotificationBell userType="customer" />
 
                 {/* Avatar */}
                 <div className={styles.avatarWrapper} ref={avatarRef}>

@@ -17,7 +17,7 @@ import {
     SignOut,
 } from '@phosphor-icons/react';
 import api from '../../services/api';
-import NotificationBell from './NotificationBell';
+import NotificationBell from '../NotificationBell/NotificationBell';
 import { isOwnerUser, getBarbershopId } from '../../services/userContext';
 import styles from './CSS/BarberHeader.module.css';
 
@@ -185,7 +185,7 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
 
             {/* ── Direita: bell + avatar ─── */}
             <div className={styles.headerRight}>
-                <NotificationBell />
+                <NotificationBell userType="barber" />
 
                 <div className={styles.avatarWrapper} ref={avatarRef}>
                     <button
