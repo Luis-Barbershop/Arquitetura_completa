@@ -2,7 +2,9 @@ package ifsp.edu.projeto.cortaai.scheduleservice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -20,11 +22,13 @@ import java.util.UUID;
 public class BarberBlock {
 
     @Id
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, updatable = false, columnDefinition = "varchar(36)")
     @GeneratedValue
     @UuidGenerator
     private UUID id;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "barber_id", nullable = false, columnDefinition = "varchar(36)")
     private UUID barberId;
 

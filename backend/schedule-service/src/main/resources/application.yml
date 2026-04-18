@@ -36,7 +36,7 @@ spring:
     # Hibernate 6+ detecta o dialeto automaticamente pelo driver — não especificar
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
     open-in-view: false
     properties:
       hibernate:

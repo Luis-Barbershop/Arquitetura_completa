@@ -3,7 +3,9 @@ package ifsp.edu.projeto.cortaai.scheduleservice.model;
 import ifsp.edu.projeto.cortaai.scheduleservice.model.enums.AppointmentStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -25,6 +27,7 @@ import java.util.UUID;
 public class Appointment {
 
     @Id
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, updatable = false, columnDefinition = "varchar(36)")
     @GeneratedValue
     @UuidGenerator
@@ -32,12 +35,15 @@ public class Appointment {
 
     // --- IDs desacoplados (vivem em outros serviços) ---
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "customer_id", nullable = false, columnDefinition = "varchar(36)")
     private UUID customerId;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "barber_id", nullable = false, columnDefinition = "varchar(36)")
     private UUID barberId;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "barbershop_id", nullable = false, columnDefinition = "varchar(36)")
     private UUID barbershopId;
 

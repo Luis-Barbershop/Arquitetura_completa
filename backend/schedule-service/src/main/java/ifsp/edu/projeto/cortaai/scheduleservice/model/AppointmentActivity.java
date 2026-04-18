@@ -2,7 +2,9 @@ package ifsp.edu.projeto.cortaai.scheduleservice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -17,11 +19,13 @@ import java.util.UUID;
 public class AppointmentActivity {
 
     @Id
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, updatable = false, columnDefinition = "varchar(36)")
     @GeneratedValue
     @UuidGenerator
     private UUID id;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "activity_id", nullable = false, columnDefinition = "varchar(36)")
     private UUID activityId;
 
