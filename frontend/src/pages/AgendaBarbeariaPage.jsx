@@ -9,7 +9,7 @@ import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import Styles from './CSS/MeusAgendamentos.module.css';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => new Date().toLocaleDateString('en-CA');
 
 const AgendaBarbeariaPage = () => {
     const navigate = useNavigate();
@@ -50,7 +50,7 @@ const AgendaBarbeariaPage = () => {
     const shiftDate = (days) => {
         const d = new Date(selectedDate + 'T00:00:00');
         d.setDate(d.getDate() + days);
-        setSelectedDate(d.toISOString().slice(0, 10));
+        setSelectedDate(d.toLocaleDateString('en-CA'));
     };
 
     const translateStatus = (status) => {

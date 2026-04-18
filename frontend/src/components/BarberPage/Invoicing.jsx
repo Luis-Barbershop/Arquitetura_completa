@@ -37,10 +37,10 @@ function Invoicing({ barber }) {
       try {
         setLoading(true);
         const now = new Date();
-        const today = now.toISOString().slice(0, 10);
+        const today = now.toLocaleDateString('en-CA');
         const fromDate = new Date(now);
         fromDate.setDate(fromDate.getDate() - 6);
-        const from = fromDate.toISOString().slice(0, 10);
+        const from = fromDate.toLocaleDateString('en-CA');
 
         const response = await api.get('/payments/my-shop/overview', {
           params: {
