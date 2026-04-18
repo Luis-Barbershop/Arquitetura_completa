@@ -132,7 +132,7 @@ const AgendamentoPage = () => {
 
       try {
         const windowDates = buildDateWindow(14);
-        const initialOptions = windowDates.map((dateObj, index) => ({
+        const baseOptions = windowDates.map((dateObj, index) => ({
           key: getDateKey(dateObj),
           date: dateObj,
           label: getRelativeDateLabel(dateObj, index),
@@ -142,42 +142,25 @@ const AgendamentoPage = () => {
           status: "idle",
         }));
 
-        setDateOptions(initialOptions);
+        // Carrega todos os 14 dias em paralelo — sem "Toque para consultar"
+        const results = await Promise.allSettled(
+          baseOptions.map((option) => fetchDateSlots(selectedBarber, option.date, totalDuration))
+        );
 
-        // Carrega apenas os primeiros dias para evitar tempestade de requests.
-        let hydratedOptions = [...initialOptions];
-        const preloadCount = 4;
-
-        for (let index = 0; index < preloadCount; index += 1) {
-          const current = hydratedOptions[index];
-          if (!current) break;
-
-          try {
-            const slots = await fetchDateSlots(selectedBarber, current.date, totalDuration);
-            hydratedOptions[index] = {
-              ...current,
-              slots,
-              isAvailable: slots.length > 0,
-              status: "loaded",
-            };
-          } catch {
-            hydratedOptions[index] = {
-              ...current,
-              slots: [],
-              isAvailable: false,
-              status: "loaded",
-            };
-          }
-        }
+        const hydratedOptions = baseOptions.map((option, index) => {
+          const result = results[index];
+          const slots = result.status === "fulfilled" ? result.value : [];
+          return { ...option, slots, isAvailable: slots.length > 0, status: "loaded" };
+        });
 
         setDateOptions(hydratedOptions);
 
         const selectedKey = selectedDate ? getDateKey(selectedDate) : null;
-        const stillValidSelectedDate = hydratedOptions.find((option) => option.key === selectedKey && option.isAvailable);
-        const firstAvailable = hydratedOptions.find((option) => option.isAvailable);
+        const stillValid = hydratedOptions.find((o) => o.key === selectedKey && o.isAvailable);
+        const firstAvailable = hydratedOptions.find((o) => o.isAvailable);
 
-        if (stillValidSelectedDate) {
-          setSelectedDate(stillValidSelectedDate.date);
+        if (stillValid) {
+          setSelectedDate(stillValid.date);
         } else if (firstAvailable) {
           setSelectedDate(firstAvailable.date);
           setSelectedTime(firstAvailable.slots[0] || "");
