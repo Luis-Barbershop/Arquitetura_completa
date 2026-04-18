@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiRefreshCw } from "react-icons/fi";
+import { FiRefreshCw, FiChevronUp, FiChevronDown } from "react-icons/fi";
 import { toast } from "react-toastify";
 import Styles from "./CSS/AgendamentoPage.module.css";
 
