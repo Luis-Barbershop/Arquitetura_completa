@@ -17,12 +17,12 @@ import java.util.UUID;
 public class AppointmentActivity {
 
     @Id
-    @Column(nullable = false, updatable = false, length = 36)
+    @Column(nullable = false, updatable = false, columnDefinition = "varchar(36)")
     @GeneratedValue
     @UuidGenerator
     private UUID id;
 
-    @Column(name = "activity_id", nullable = false, length = 36)
+    @Column(name = "activity_id", nullable = false, columnDefinition = "varchar(36)")
     private UUID activityId;
 
     @Column(name = "activity_name", nullable = false, length = 255)

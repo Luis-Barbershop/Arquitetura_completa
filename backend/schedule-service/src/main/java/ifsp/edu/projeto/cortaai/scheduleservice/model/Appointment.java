@@ -25,20 +25,20 @@ import java.util.UUID;
 public class Appointment {
 
     @Id
-    @Column(nullable = false, updatable = false, length = 36)
+    @Column(nullable = false, updatable = false, columnDefinition = "varchar(36)")
     @GeneratedValue
     @UuidGenerator
     private UUID id;
 
     // --- IDs desacoplados (vivem em outros serviços) ---
 
-    @Column(name = "customer_id", nullable = false, length = 36)
+    @Column(name = "customer_id", nullable = false, columnDefinition = "varchar(36)")
     private UUID customerId;
 
-    @Column(name = "barber_id", nullable = false, length = 36)
+    @Column(name = "barber_id", nullable = false, columnDefinition = "varchar(36)")
     private UUID barberId;
 
-    @Column(name = "barbershop_id", nullable = false, length = 36)
+    @Column(name = "barbershop_id", nullable = false, columnDefinition = "varchar(36)")
     private UUID barbershopId;
 
     // --- Dados desnormalizados (snapshots copiados na criação) ---

@@ -20,12 +20,12 @@ import java.util.UUID;
 public class BarberBlock {
 
     @Id
-    @Column(nullable = false, updatable = false, length = 36)
+    @Column(nullable = false, updatable = false, columnDefinition = "varchar(36)")
     @GeneratedValue
     @UuidGenerator
     private UUID id;
 
-    @Column(name = "barber_id", nullable = false, length = 36)
+    @Column(name = "barber_id", nullable = false, columnDefinition = "varchar(36)")
     private UUID barberId;
 
     @Column(name = "start_time", nullable = false)
