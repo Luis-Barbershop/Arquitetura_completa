@@ -45,6 +45,8 @@ spring:
           batch_size: 10
         order_inserts: true
         order_updates: true
+        type:
+          preferred_uuid_jdbc_type: VARCHAR
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: 5672
