@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { createBarbershop } from '../services/barbershopService';
 import { refreshSession } from '../services/authService';
-import Styles from './CSS/HomePage.module.css'; 
 
 function CreateBarbershopPage() {
     const navigate = useNavigate();

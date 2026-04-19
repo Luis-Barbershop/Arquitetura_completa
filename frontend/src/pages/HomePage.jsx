@@ -58,29 +58,31 @@ function HomePage() {
       <CustomerHeader activeTab="home" onLogout={handleLogout} />
       <CustomerNavbar activeTab="home" onLogout={handleLogout} />
 
-      <section className={Styles.hero_section}>
+      <section className={`${Styles.hero_section} ${Styles.animate_item} ${Styles.delay_1}`}>
         <p className={Styles.hero_kicker}>HOME DO CLIENTE</p>
         <h1>Ola, pronto para o proximo corte?</h1>
         <p>Explore barbearias, compare servicos e agende no horario ideal para voce.</p>
       </section>
 
-      <section className={Styles.search_section}>
+      <section className={`${Styles.search_section} ${Styles.animate_item} ${Styles.delay_2}`}>
         <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
       </section>
 
-      <section className={Styles.favorites_section}>
+      <section className={`${Styles.favorites_section} ${Styles.animate_item} ${Styles.delay_3}`}>
         <Favorite_barbershops favoriteIds={favoriteIds} />
       </section>
 
-      <div className={Styles.section_header}>
+      <div className={`${Styles.section_header} ${Styles.animate_item} ${Styles.delay_4}`}>
         <h3>Barbearias disponiveis</h3>
       </div>
 
-      <Barbershops
-        searchTerm={searchTerm}
-        favoriteIds={favoriteIds}
-        onToggleFavorite={handleToggleFavorite}
-      />
+      <section className={`${Styles.list_section} ${Styles.animate_item} ${Styles.delay_5}`}>
+        <Barbershops
+          searchTerm={searchTerm}
+          favoriteIds={favoriteIds}
+          onToggleFavorite={handleToggleFavorite}
+        />
+      </section>
     </div>
   )
 }

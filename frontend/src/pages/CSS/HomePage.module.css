@@ -9,6 +9,7 @@
     color: #ffffff;
     font-family: 'Roboto', sans-serif;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-bottom: 42px;
     background:
         radial-gradient(circle at 14% 4%, rgb(193 144 6 / 18%), transparent 28%),
@@ -21,154 +22,17 @@
     }
 }
 
-.desktop_nav_shell {
-    width: min(1180px, 94%);
-    margin-top: 1rem;
-    border: 1px solid #2e2e2e;
-    border-radius: 20px;
-    background:
-        radial-gradient(circle at 86% -20%, rgb(193 144 6 / 15%), transparent 45%),
-        linear-gradient(180deg, #171717 0%, #121212 100%);
-    box-shadow: 0 18px 34px rgb(0 0 0 / 34%);
-    min-height: 86px;
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 1rem;
-    padding: 0.85rem 1rem;
-}
-
-.desktop_brand_block {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-}
-
-.desktop_brand_badge {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    background: linear-gradient(145deg, #d2a73e, #8d6308);
-    color: #131313;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 6px 18px rgb(193 144 6 / 35%);
-}
-
-.desktop_brand_text h3 {
-    margin: 0;
-    color: #ffffff;
-    font-size: 1.1rem;
-    letter-spacing: 0.03em;
-    font-family: 'Space Grotesk', sans-serif;
-}
-
-.desktop_brand_text p {
-    margin: 0.24rem 0 0 0;
-    color: #a9a093;
-    font-size: 0.8rem;
-}
-
-.desktop_center_nav {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.38rem;
-    flex-wrap: wrap;
-    background: rgb(0 0 0 / 23%);
-    border: 1px solid #2e2e2e;
-    border-radius: 999px;
-    padding: 0.35rem;
-}
-
-.desktop_menu_item,
-.desktop_menu_item_active {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.44rem;
-    cursor: pointer;
-    border-radius: 999px;
-    padding: 0.54rem 0.84rem;
-    font-size: 0.82rem;
-    font-family: 'Space Grotesk', sans-serif;
-    border: 1px solid transparent;
-    background-color: transparent;
-    color: #b8b8b8;
-    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
-}
-
-.desktop_menu_icon {
-    font-size: 0.95rem;
-}
-
-.desktop_menu_item:hover {
-    border-color: #3a3428;
-    color: #f3dfb0;
-    background-color: #201b11;
-    transform: translateY(-1px);
-}
-
-.desktop_menu_item_active {
-    border-color: #6b5118;
-    color: #f3dfb0;
-    background: linear-gradient(180deg, #2a2213 0%, #211a0f 100%);
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 4%);
-}
-
-.desktop_actions_block {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-}
-
-.desktop_secondary_button,
-.desktop_logout_button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.42rem;
-    cursor: pointer;
-    border-radius: 10px;
-    padding: 0.56rem 0.9rem;
-    font-size: 0.83rem;
-    font-family: 'Space Grotesk', sans-serif;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.desktop_action_icon {
-    font-size: 0.92rem;
-}
-
-.desktop_secondary_button {
-    border: 1px solid #71561b;
-    background-color: #c19006;
-    color: #191919;
-    font-weight: 700;
-}
-
-.desktop_secondary_button:hover {
-    background-color: #ddb441;
-}
-
-.desktop_logout_button {
-    border: 1px solid #b3473e;
-    background-color: transparent;
-    color: #f07d74;
-}
-
-.desktop_logout_button:hover {
-    background-color: #b3473e;
-    color: #ffffff;
-}
 
 .hero_section {
     width: min(1180px, 94%);
-    margin-top: 0.7rem;
-    padding: 1.5rem 1.2rem 0.5rem 1.2rem;
+    margin-top: 0.2rem;
+    padding: 1.65rem 1.3rem 0.85rem 1.3rem;
+    border: 1px solid #242424;
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at 85% -20%, rgb(193 144 6 / 12%), transparent 40%),
+        linear-gradient(180deg, #171717 0%, #141414 100%);
+    box-shadow: 0 14px 34px rgb(0 0 0 / 24%);
 }
 
 .hero_kicker {
@@ -197,6 +61,14 @@
     width: min(1180px, 94%);
 }
 
+.search_section {
+    margin-top: 0.45rem;
+}
+
+.favorites_section {
+    margin-top: 0.25rem;
+}
+
 .section_header {
     width: min(1180px, 94%);
     margin-top: 1.35rem;
@@ -208,52 +80,89 @@
     color: #f2f2f2;
 }
 
+.list_section {
+    width: 100%;
+}
+
+.animate_item {
+    opacity: 0;
+    transform: translateY(14px);
+    animation: fadeUp 0.45s ease forwards;
+}
+
+.delay_1 {
+    animation-delay: 0.02s;
+}
+
+.delay_2 {
+    animation-delay: 0.1s;
+}
+
+.delay_3 {
+    animation-delay: 0.18s;
+}
+
+.delay_4 {
+    animation-delay: 0.24s;
+}
+
+.delay_5 {
+    animation-delay: 0.3s;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animate_item {
+        opacity: 1;
+        transform: none;
+        animation: none;
+    }
+}
+
 @media screen and (max-width: 767px) {
     .homepage_container {
-        padding-bottom: 30px;
-    }
-
-    .desktop_nav_shell {
-        margin-top: 0.6rem;
-        padding: 0.8rem;
-        grid-template-columns: 1fr;
-        gap: 0.7rem;
-        border-radius: 14px;
-    }
-
-    .desktop_brand_text h3 {
-        font-size: 1.04rem;
-    }
-
-    .desktop_center_nav {
-        justify-content: flex-start;
-        border-radius: 14px;
-    }
-
-    .desktop_actions_block {
-        width: 100%;
-    }
-
-    .desktop_secondary_button,
-    .desktop_logout_button {
-        flex: 1;
-        text-align: center;
+        padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px));
     }
 
     .hero_section {
-        margin-top: 0.4rem;
-        padding: 1rem 0.4rem 0.3rem 0.4rem;
+        margin-top: 0.25rem;
+        width: min(1180px, 96%);
+        padding: 1rem 0.85rem 0.7rem 0.85rem;
+        border-radius: 14px;
     }
 
     .hero_section h1 {
         font-size: 1.55rem;
+        line-height: 1.16;
     }
 
     .hero_section p {
         font-size: 0.93rem;
+        line-height: 1.4;
+    }
+
+    .search_section,
+    .favorites_section,
+    .section_header {
+        width: min(1180px, 96%);
     }
 
     .section_header {
         margin-top: 1rem;
+    }
+
+    .section_header h3 {
+        font-size: 1.08rem;
     }
 }
