@@ -268,7 +268,7 @@ function BarberServicesPage() {
           barbershopId={barber?.barbershopId}
         />
 
-        <section className={styles.heroSection}>
+  <section className={`${styles.heroSection} ${styles.animateItem} ${styles.delay1}`}>
           <p className={styles.heroKicker}>GESTÃO DE SERVIÇOS</p>
           <h1>Cadastre e organize os serviços da sua barbearia</h1>
           <p>
@@ -276,7 +276,7 @@ function BarberServicesPage() {
           </p>
         </section>
 
-        <section className={styles.metricsGrid}>
+  <section className={`${styles.metricsGrid} ${styles.animateItem} ${styles.delay2}`}>
           <article className={styles.metricCard}>
             <span className={styles.metricLabel}>Total de serviços</span>
             <strong className={styles.metricValue}>{totalServices}</strong>
@@ -293,7 +293,7 @@ function BarberServicesPage() {
           </article>
         </section>
 
-        <section className={styles.managementGrid}>
+  <section className={`${styles.managementGrid} ${styles.animateItem} ${styles.delay3}`}>
           <article className={`${styles.panelCard} ${styles.servicesPanel}`}>
             <div className={styles.panelHeader}>
               <h2>Serviços Cadastrados</h2>

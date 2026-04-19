@@ -312,7 +312,7 @@ function BarberStockPage() {
           barbershopId={barber?.barbershopId}
         />
 
-        <section className={styles.heroSection}>
+  <section className={`${styles.heroSection} ${styles.animateItem} ${styles.delay1}`}>
           <div>
             <p className={styles.heroKicker}>GESTAO DE ESTOQUE</p>
             <h1>Controle o estoque com mais clareza e rapidez</h1>
@@ -328,7 +328,7 @@ function BarberStockPage() {
           </div>
         </section>
 
-        <section className={styles.metricsGrid}>
+  <section className={`${styles.metricsGrid} ${styles.animateItem} ${styles.delay2}`}>
           <article className={styles.metricCard}>
             <span className={styles.metricLabel}>Produtos cadastrados</span>
             <strong className={styles.metricValue}>{totalProducts}</strong>
@@ -345,7 +345,7 @@ function BarberStockPage() {
           </article>
         </section>
 
-        <section className={styles.managementGrid}>
+  <section className={`${styles.managementGrid} ${styles.animateItem} ${styles.delay3}`}>
           <aside className={`${styles.panelCard} ${styles.createPanel}`}>
             <div className={styles.panelHeader}>
               <h2>Novo produto</h2>

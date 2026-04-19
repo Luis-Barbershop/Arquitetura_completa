@@ -110,7 +110,7 @@ function BarberTeamPage() {
                     <p>Convide barbeiros para sua barbearia informando o CPF e deixe o aceite com o colaborador no perfil dele.</p>
                 </section>
 
-                <section className={styles.dashboardSection} style={{ maxWidth: 720 }}>
+                <section className={`${styles.dashboardSection} ${styles.teamSectionNarrow} ${styles.animateItem} ${styles.delay2}`}>
 
                 <button
                     onClick={handleOpenInviteModal}

@@ -25,14 +25,14 @@ const EMPTY_BLOCK = { startTime: '', endTime: '' };
 function TimePicker({ value, onChange, disabled }) {
     const safeValue = value && value.length >= 5 ? value.substring(0, 5) : '';
     return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '6px 8px', border: '1px solid #2a2a2a' }}>
+        <div className={styles.timePickerWrapper}>
             <input
                 type="time"
                 step={60}
                 value={safeValue}
                 onChange={(e) => onChange(e.target.value)}
                 disabled={disabled}
-                style={timeInputStyle(disabled)}
+                className={`${styles.timePickerInput} ${disabled ? styles.timePickerInputDisabled : ''}`}
             />
         </div>
     );
@@ -411,17 +411,17 @@ function BarberProfilePage() {
                     <h1>Suas informações</h1>
                 </section>
 
-                <section className={styles.dashboardSection}>
+                <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay2}`}>
                     {barber && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 600 }}>
+                        <div className={styles.profileStack}>
 
                             {/* ── Dados pessoais ───────────────────────────────── */}
-                            <div style={cardStyle}>
+                            <div className={styles.profileCard}>
                                 {barber.imageUrl && (
                                     <img
                                         src={barber.imageUrl}
                                         alt="Foto de perfil"
-                                        style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', marginBottom: 4 }}
+                                        className={styles.profilePhoto}
                                     />
                                 )}
                                 <div><strong>Nome:</strong> {barber.name}</div>
@@ -435,22 +435,12 @@ function BarberProfilePage() {
                                 </div>
 
                                 {barber.barbershopId && !barber.isOwner && (
-                                    <div style={{ marginTop: 12 }}>
+                                    <div className={styles.profileLeaveWrap}>
                                         <button
                                             type="button"
                                             onClick={handleLeaveShop}
                                             disabled={leavingShop}
-                                            style={{
-                                                background: '#742a2a',
-                                                color: '#fff',
-                                                border: 'none',
-                                                padding: '8px 14px',
-                                                borderRadius: 8,
-                                                cursor: leavingShop ? 'not-allowed' : 'pointer',
-                                                fontSize: 13,
-                                                fontWeight: 600,
-                                                opacity: leavingShop ? 0.7 : 1
-                                            }}
+                                            className={styles.leaveShopButton}
                                         >
                                             {leavingShop ? 'Saindo...' : 'Sair da barbearia'}
                                         </button>
@@ -460,54 +450,42 @@ function BarberProfilePage() {
 
                             {/* ── Convites pendentes ─ */}
                             {!hasLinkedBarbershop ? (
-                                <div style={{ ...cardStyle, background: 'rgba(108,99,255,0.06)', borderColor: '#3a3570' }}>
-                                    <p style={{ ...sectionTitleStyle, color: '#6c63ff' }}>📩 Convites de Barbearias</p>
-                                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginTop: -6, marginBottom: 8 }}>
+                                <div className={`${styles.profileCard} ${styles.profileCardInvite}`}>
+                                    <p className={`${styles.profileSectionTitle} ${styles.profileSectionTitleInvite}`}>📩 Convites de Barbearias</p>
+                                    <p className={styles.profileMutedText}>
                                         Quando um dono de barbearia convida você, o convite aparece aqui.
                                     </p>
                                     {loadingInvites ? (
-                                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>Carregando convites...</p>
+                                        <p className={styles.profileMutedText}>Carregando convites...</p>
                                     ) : invitesError ? (
-                                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
+                                        <p className={styles.profileMutedText}>
                                             Não foi possível carregar os convites agora. Tente novamente em instantes.
                                         </p>
                                     ) : pendingInvites.length === 0 ? (
-                                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Nenhum convite pendente no momento.</p>
+                                        <p className={styles.profileMutedText}>Nenhum convite pendente no momento.</p>
                                     ) : (
                                         pendingInvites.map(inv => (
-                                            <div key={inv.requestId} style={{
-                                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                                background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: '12px 14px',
-                                                marginBottom: 8, gap: 10
-                                            }}>
+                                            <div key={inv.requestId} className={styles.inviteItem}>
                                                 <div>
-                                                    <p style={{ margin: 0, fontWeight: 600, fontSize: 14 }}>
+                                                    <p className={styles.inviteName}>
                                                         {inv.barbershopName || 'Barbearia'}
                                                     </p>
-                                                    <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
+                                                    <p className={styles.inviteMeta}>
                                                         Convite recebido
                                                     </p>
                                                 </div>
-                                                <div style={{ display: 'flex', gap: 8 }}>
+                                                <div className={styles.inviteActions}>
                                                     <button
                                                         onClick={() => handleAcceptInvite(inv.requestId)}
                                                         disabled={inviteActionLoading === inv.requestId}
-                                                        style={{
-                                                            background: '#276749', color: '#fff', border: 'none',
-                                                            padding: '7px 16px', borderRadius: 8, cursor: 'pointer',
-                                                            fontSize: 13, fontWeight: 600
-                                                        }}
+                                                        className={styles.inviteAcceptButton}
                                                     >
                                                         {inviteActionLoading === inv.requestId ? '...' : 'Aceitar'}
                                                     </button>
                                                     <button
                                                         onClick={() => handleRejectInvite(inv.requestId)}
                                                         disabled={inviteActionLoading === inv.requestId}
-                                                        style={{
-                                                            background: '#742a2a', color: '#fff', border: 'none',
-                                                            padding: '7px 16px', borderRadius: 8, cursor: 'pointer',
-                                                            fontSize: 13, fontWeight: 600
-                                                        }}
+                                                        className={styles.inviteRejectButton}
                                                     >
                                                         {inviteActionLoading === inv.requestId ? '...' : 'Recusar'}
                                                     </button>
@@ -519,21 +497,21 @@ function BarberProfilePage() {
                             ) : null}
 
                             {/* ── Horário de trabalho (multi-bloco) ──────── */}
-                            <div style={cardStyle}>
-                                <p style={sectionTitleStyle}>🕐 Horário de Trabalho</p>
-                                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', marginTop: -6, marginBottom: 2 }}>
+                            <div className={styles.profileCard}>
+                                <p className={styles.profileSectionTitle}>🕐 Horário de Trabalho</p>
+                                <p className={styles.profileMutedText}>
                                     Selecione os dias e adicione blocos de horário. Ex.: 9h–12h e 13h–18h.
                                 </p>
 
                                 {loadingSchedule ? (
-                                    <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>Carregando horários...</p>
+                                    <p className={styles.profileMutedText}>Carregando horários...</p>
                                 ) : (
-                                    <form onSubmit={handleSaveSchedule} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                                    <form onSubmit={handleSaveSchedule} className={styles.scheduleForm}>
 
                                         {/* Seletores de dia */}
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                            <span style={labelTextStyle}>Dias de trabalho</span>
-                                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                        <div className={styles.scheduleDaysGroup}>
+                                            <span className={styles.scheduleLabel}>Dias de trabalho</span>
+                                            <div className={styles.scheduleDaysList}>
                                                 {DAYS_OF_WEEK.map(({ key, label }) => {
                                                     const active = !!weekSchedule[key];
                                                     return (
@@ -541,14 +519,7 @@ function BarberProfilePage() {
                                                             key={key}
                                                             type="button"
                                                             onClick={() => toggleDay(key)}
-                                                            style={{
-                                                                width: 44, height: 44, borderRadius: 10,
-                                                                border: active ? '1px solid #d4af37' : '1px solid #2f2f2f',
-                                                                background: active ? 'rgba(212,175,55,0.18)' : 'rgba(255,255,255,0.03)',
-                                                                color: active ? '#d4af37' : 'rgba(255,255,255,0.45)',
-                                                                fontWeight: active ? 700 : 500,
-                                                                fontSize: 12, cursor: 'pointer', transition: 'all 0.2s',
-                                                            }}
+                                                            className={`${styles.scheduleDayButton} ${active ? styles.scheduleDayButtonActive : ''}`}
                                                         >
                                                             {label}
                                                         </button>
@@ -559,30 +530,30 @@ function BarberProfilePage() {
 
                                         {/* Blocos por dia selecionado */}
                                         {DAYS_OF_WEEK.filter(({ key }) => !!weekSchedule[key]).map(({ key, label }) => (
-                                            <div key={key} style={dayBlockContainerStyle}>
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                                                    <span style={{ fontSize: 13, fontWeight: 600, color: '#d4af37' }}>
+                                            <div key={key} className={styles.dayBlock}>
+                                                <div className={styles.dayBlockHeader}>
+                                                    <span className={styles.dayBlockTitle}>
                                                         {label}
                                                     </span>
-                                                    <div style={{ display: 'flex', gap: 6 }}>
+                                                    <div className={styles.dayBlockActions}>
                                                         <button type="button" onClick={() => handleOpenCopyModal(key)}
-                                                            style={{ ...addBlockBtnStyle, color: '#9b8ce6', borderColor: 'rgba(155,140,230,0.45)' }}
+                                                            className={`${styles.dayBlockActionButton} ${styles.dayBlockActionButtonCopy}`}
                                                             title="Copiar este horário para outros dias">
                                                             📋 Copiar
                                                         </button>
-                                                        <button type="button" onClick={() => addBlock(key)} style={addBlockBtnStyle} title="Adicionar bloco de horário">
+                                                        <button type="button" onClick={() => addBlock(key)} className={styles.dayBlockActionButton} title="Adicionar bloco de horário">
                                                             + Bloco
                                                         </button>
                                                     </div>
                                                 </div>
 
                                                 {(weekSchedule[key] || []).map((block, idx) => (
-                                                    <div key={idx} style={{ ...blockRowStyle, flexWrap: 'wrap' }}>
+                                                    <div key={idx} className={styles.blockRow}>
                                                         <TimePicker value={block.startTime} onChange={v => updateBlock(key, idx, 'startTime', v)} disabled={savingSchedule} />
-                                                        <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, userSelect: 'none' }}>até</span>
+                                                        <span className={styles.blockUntil}>até</span>
                                                         <TimePicker value={block.endTime} onChange={v => updateBlock(key, idx, 'endTime', v)} disabled={savingSchedule} />
                                                         {(weekSchedule[key] || []).length > 1 && (
-                                                            <button type="button" onClick={() => removeBlock(key, idx)} style={removeBlockBtnStyle} title="Remover bloco">✕</button>
+                                                            <button type="button" onClick={() => removeBlock(key, idx)} className={styles.removeBlockButton} title="Remover bloco">✕</button>
                                                         )}
                                                     </div>
                                                 ))}
@@ -591,13 +562,13 @@ function BarberProfilePage() {
 
                                         {/* Resumo visual */}
                                         {Object.keys(weekSchedule).length > 0 && (
-                                            <div style={scheduleSummaryStyle}>
-                                                <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>
+                                            <div className={styles.scheduleSummary}>
+                                                <span className={styles.scheduleSummaryTitle}>
                                                     Resumo
                                                 </span>
                                                 {DAYS_OF_WEEK.filter(({ key }) => !!weekSchedule[key]).map(({ key, label }) => (
-                                                    <div key={key} style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', display: 'flex', gap: 6 }}>
-                                                        <strong style={{ color: '#d4af37', minWidth: 28 }}>{label}:</strong>
+                                                    <div key={key} className={styles.scheduleSummaryRow}>
+                                                        <strong className={styles.scheduleSummaryDay}>{label}:</strong>
                                                         <span>
                                                             {(weekSchedule[key] || []).map((b, i) => (
                                                                 <span key={i}>
@@ -614,7 +585,7 @@ function BarberProfilePage() {
                                         <button
                                             type="submit"
                                             disabled={savingSchedule}
-                                            style={saveButtonStyle(savingSchedule)}
+                                            className={`${styles.saveScheduleButton} ${savingSchedule ? styles.saveScheduleButtonDisabled : ''}`}
                                         >
                                             {savingSchedule ? 'Salvando...' : 'Salvar horário'}
                                         </button>
@@ -624,21 +595,17 @@ function BarberProfilePage() {
 
                             {/* ── Configurações do Owner (actAsBarber) ─────────── */}
                             {barber.isOwner && (
-                                <div style={{ ...cardStyle, background: 'rgba(193,144,6,0.08)', borderColor: '#4a3a17' }}>
-                                    <p style={{ ...sectionTitleStyle, color: '#d4af37' }}>⚙️ Configurações da Barbearia</p>
-                                    <label style={{
-                                        display: 'flex', alignItems: 'flex-start', gap: 10,
-                                        cursor: savingActAsBarber ? 'not-allowed' : 'pointer',
-                                        opacity: savingActAsBarber ? 0.6 : 1
-                                    }}>
+                                <div className={`${styles.profileCard} ${styles.profileCardOwner}`}>
+                                    <p className={`${styles.profileSectionTitle} ${styles.profileSectionTitleOwner}`}>⚙️ Configurações da Barbearia</p>
+                                    <label className={`${styles.ownerSettingsLabel} ${savingActAsBarber ? styles.ownerSettingsLabelDisabled : ''}`}>
                                         <input
                                             type="checkbox"
                                             checked={actAsBarber}
                                             disabled={savingActAsBarber}
                                             onChange={e => handleActAsBarberToggle(e.target.checked)}
-                                            style={{ width: 18, height: 18, accentColor: '#d4af37', cursor: 'inherit', marginTop: 2, flexShrink: 0 }}
+                                            className={styles.ownerSettingsCheckbox}
                                         />
-                                        <span style={{ fontSize: 13, lineHeight: 1.5 }}>
+                                        <span className={styles.ownerSettingsText}>
                                             <strong>Atuar como barbeiro</strong> — aparecer na lista de profissionais disponíveis para agendamento
                                         </span>
                                     </label>
@@ -661,36 +628,30 @@ function BarberProfilePage() {
 
             {/* ── Modal copiar horário ──────────────────────────────────── */}
             {isCopyModalOpen && (
-                <div style={modalBackdropStyle} onClick={() => setIsCopyModalOpen(false)}>
-                    <div style={modalCardStyle} onClick={e => e.stopPropagation()}>
-                        <p style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>📋 Copiar horário</p>
-                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>
+                <div className={styles.modalBackdrop} onClick={() => setIsCopyModalOpen(false)}>
+                    <div className={`${styles.modalCard} ${styles.copyModalCard}`} onClick={e => e.stopPropagation()}>
+                        <p className={styles.copyModalTitle}>📋 Copiar horário</p>
+                        <p className={styles.copyModalSubtitle}>
                             Copiar de <strong style={{ color: '#d4af37' }}>{DAYS_OF_WEEK.find(d => d.key === copySource)?.label}</strong> para:
                         </p>
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+                        <div className={styles.copyTargetsGrid}>
                             {DAYS_OF_WEEK.filter(d => d.key !== copySource).map(({ key, label }) => {
                                 const selected = copyTargets.includes(key);
                                 return (
                                     <button key={key} type="button" onClick={() => toggleCopyTarget(key)}
-                                        style={{
-                                            width: 48, height: 40, borderRadius: 10, fontSize: 12, fontWeight: 600,
-                                            border: selected ? '1px solid #9b8ce6' : '1px solid #2f2f2f',
-                                            background: selected ? 'rgba(155,140,230,0.18)' : 'rgba(255,255,255,0.03)',
-                                            color: selected ? '#9b8ce6' : 'rgba(255,255,255,0.45)',
-                                            cursor: 'pointer', transition: 'all 0.2s',
-                                        }}>
+                                        className={`${styles.copyTargetButton} ${selected ? styles.copyTargetButtonActive : ''}`}>
                                         {label}
                                     </button>
                                 );
                             })}
                         </div>
-                        <div style={{ display: 'flex', gap: 10 }}>
+                        <div className={styles.copyActionsRow}>
                             <button onClick={() => setIsCopyModalOpen(false)}
-                                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: '1px solid #3a3a3a', background: 'transparent', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
+                                className={`${styles.copyActionButton} ${styles.copyCancelButton}`}>
                                 Cancelar
                             </button>
                             <button onClick={handleCopyConfirm} disabled={copyTargets.length === 0}
-                                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: 'none', background: copyTargets.length === 0 ? 'rgba(155,140,230,0.2)' : '#9b8ce6', color: copyTargets.length === 0 ? 'rgba(255,255,255,0.3)' : '#fff', cursor: copyTargets.length === 0 ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 700 }}>
+                                className={`${styles.copyActionButton} ${styles.copyConfirmButton} ${copyTargets.length === 0 ? styles.copyConfirmButtonDisabled : ''}`}>
                                 Copiar ({copyTargets.length})
                             </button>
                         </div>
@@ -700,117 +661,5 @@ function BarberProfilePage() {
         </div>
     );
 }
-
-// ── Estilos inline compartilhados ──────────────────────────────────────────────
-const timeInputStyle = (disabled) => ({
-    width: 124,
-    height: 34,
-    borderRadius: 8,
-    border: '1px solid #3a3a3a',
-    background: disabled ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.08)',
-    color: disabled ? 'rgba(255,255,255,0.3)' : '#fff',
-    fontSize: 13,
-    fontWeight: 700,
-    textAlign: 'center',
-    outline: 'none',
-    padding: '0 8px',
-});
-
-const cardStyle = {
-    background: 'rgba(255,255,255,0.04)',
-    border: '1px solid #2f2f2f',
-    borderRadius: 16,
-    padding: 24,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
-};
-
-const sectionTitleStyle = {
-    fontWeight: 700,
-    fontSize: 14,
-    marginBottom: 4,
-    color: 'rgba(255,255,255,0.85)',
-};
-
-const labelTextStyle = {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.6)',
-    fontWeight: 500,
-};
-
-const dayBlockContainerStyle = {
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px solid #2a2a2a',
-    borderRadius: 12,
-    padding: '12px 14px',
-};
-
-const blockRowStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
-};
-
-const addBlockBtnStyle = {
-    background: 'none',
-    border: '1px dashed rgba(212,175,55,0.45)',
-    borderRadius: 8,
-    color: '#d4af37',
-    fontSize: 11,
-    fontWeight: 600,
-    padding: '4px 10px',
-    cursor: 'pointer',
-    transition: 'border-color 0.2s',
-};
-
-const removeBlockBtnStyle = {
-    background: 'rgba(116,42,42,0.35)',
-    border: 'none',
-    borderRadius: 6,
-    color: '#ff8888',
-    fontSize: 13,
-    fontWeight: 700,
-    width: 28,
-    height: 28,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-};
-
-const scheduleSummaryStyle = {
-    background: 'rgba(212,175,55,0.06)',
-    border: '1px solid rgba(212,175,55,0.15)',
-    borderRadius: 10,
-    padding: '10px 14px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 3,
-};
-
-const saveButtonStyle = (disabled) => ({
-    alignSelf: 'flex-start',
-    padding: '10px 24px',
-    borderRadius: 10,
-    border: 'none',
-    background: disabled ? 'rgba(212,175,55,0.25)' : '#d4af37',
-    color: disabled ? 'rgba(255,255,255,0.35)' : '#1a1a1a',
-    fontWeight: 700,
-    fontSize: 14,
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    transition: 'background 0.2s',
-});
-
-const modalBackdropStyle = {
-    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-    background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-};
-const modalCardStyle = {
-    background: '#1a1a2e', borderRadius: 16, padding: 24, maxWidth: 380, width: '90%',
-    border: '1px solid #2f2f2f', color: '#fff',
-};
 
 export default BarberProfilePage;

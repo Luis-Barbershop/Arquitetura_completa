@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     House,
     CalendarBlank,
@@ -10,8 +11,10 @@ import {
     UserCircle,
     DotsThreeOutline,
     X,
+    SignOut,
 } from '@phosphor-icons/react';
 import { isOwnerUser, getBarbershopId } from '../../services/userContext';
+import { logoutUser } from '../../services/authService';
 import styles from './CSS/BarberNavbar.module.css';
 
 /**
@@ -20,10 +23,11 @@ import styles from './CSS/BarberNavbar.module.css';
  * isOwner e barbershopId são lidos do localStorage via userContext — fonte única de verdade.
  * Props homônimas são ignoradas para evitar inconsistência entre páginas.
  */
-function BarberNavbar({ activeTab, onTabChange }) {
+function BarberNavbar({ activeTab, onTabChange, onLogout }) {
     // Fonte única de verdade — localStorage via userContext
     const isOwner  = isOwnerUser();
     const hasShop  = Boolean(getBarbershopId());
+    const navigate = useNavigate();
     const [drawerOpen, setDrawerOpen] = useState(false);
 
     const handleTab = (id) => {
@@ -45,14 +49,25 @@ function BarberNavbar({ activeTab, onTabChange }) {
         ];
 
     // Itens do drawer "Mais"
-    const drawerItems = hasShop
-        ? [
-            { id: 'novo-agendamento', label: 'Novo Encaixe',   Icon: PlusCircle },
-            ...(isOwner ? [{ id: 'dashboards', label: 'Dashboard', Icon: ChartBar }] : []),
-            ...(isOwner ? [{ id: 'estoque', label: 'Estoque', Icon: Package }] : []),
-            { id: 'perfil', label: 'Meu Perfil', Icon: UserCircle },
-        ]
-        : [];
+    const drawerItems = [
+        ...(hasShop ? [{ id: 'novo-agendamento', label: 'Novo Encaixe', Icon: PlusCircle }] : []),
+        ...(hasShop && isOwner ? [{ id: 'dashboards', label: 'Dashboard', Icon: ChartBar }] : []),
+        ...(hasShop && isOwner ? [{ id: 'estoque', label: 'Estoque', Icon: Package }] : []),
+        ...(!mainItems.some((item) => item.id === 'perfil') ? [{ id: 'perfil', label: 'Meu Perfil', Icon: UserCircle }] : []),
+        { id: 'logout', label: 'Sair', Icon: SignOut, danger: true },
+    ];
+
+    const handleLogout = () => {
+        setDrawerOpen(false);
+
+        if (typeof onLogout === 'function') {
+            onLogout();
+            return;
+        }
+
+        logoutUser();
+        navigate('/');
+    };
 
     const hasDrawer = drawerItems.length > 0;
     const drawerActive = drawerItems.some(i => i.id === activeTab);
@@ -111,11 +126,17 @@ function BarberNavbar({ activeTab, onTabChange }) {
                             </button>
                         </div>
                         <ul className={styles.drawerList}>
-                            {drawerItems.map(({ id, label, Icon }) => (
+                            {drawerItems.map(({ id, label, Icon, danger }) => (
                                 <li key={id}>
                                     <button
-                                        className={activeTab === id ? styles.drawerItemActive : styles.drawerItem}
-                                        onClick={() => handleTab(id)}
+                                        className={
+                                            danger
+                                                ? styles.drawerItemDanger
+                                                : activeTab === id
+                                                    ? styles.drawerItemActive
+                                                    : styles.drawerItem
+                                        }
+                                        onClick={() => (id === 'logout' ? handleLogout() : handleTab(id))}
                                     >
                                         {React.createElement(Icon, {
                                             size: 20,

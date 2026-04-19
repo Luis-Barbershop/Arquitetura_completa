@@ -11,6 +11,7 @@
     padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
     z-index: 100;
     font-family: 'Space Grotesk', sans-serif;
+    backdrop-filter: blur(8px);
     display: none;
 }
 
@@ -98,7 +99,9 @@
 
 .drawer {
     width: 100%;
-    background: #1a1a1a;
+    background:
+        radial-gradient(circle at 84% -16%, rgb(193 144 6 / 12%), transparent 42%),
+        #1a1a1a;
     border-top: 1px solid #2e2e2e;
     border-radius: 18px 18px 0 0;
     padding: 0 0 calc(16px + env(safe-area-inset-bottom, 0px));
@@ -155,7 +158,8 @@
 }
 
 .drawerItem,
-.drawerItemActive {
+.drawerItemActive,
+.drawerItemDanger {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -183,5 +187,14 @@
 .drawerItemActive {
     color: #d4af37;
     background: rgba(193, 144, 6, 0.12);
+}
+
+.drawerItemDanger {
+    color: #e36d66;
+}
+
+.drawerItemDanger:hover {
+    background: rgba(227, 109, 102, 0.12);
+    color: #ff8f88;
 }
 

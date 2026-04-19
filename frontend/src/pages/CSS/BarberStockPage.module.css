@@ -66,6 +66,44 @@
     font-size: 0.96rem;
 }
 
+.animateItem {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fadeUp 0.42s ease forwards;
+}
+
+.delay1 {
+    animation-delay: 0.02s;
+}
+
+.delay2 {
+    animation-delay: 0.1s;
+}
+
+.delay3 {
+    animation-delay: 0.18s;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animateItem {
+        opacity: 1;
+        transform: none;
+        animation: none;
+    }
+}
+
 .heroInfoCard {
     border-radius: 18px;
     border: 1px solid #3d341f;

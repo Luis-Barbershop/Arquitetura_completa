@@ -2,7 +2,7 @@ import './App.css'
 import { useEffect, useState } from 'react';
 import 'react-toastify/dist/ReactToastify.css';
 import AppRoutes from './AppRoutes';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import UpdateAvailableBanner from './components/UpdateAvailableBanner';
 import InstallAppPopup from './components/InstallAppPopup';
@@ -21,7 +21,8 @@ const LOGIN_SUCCESS_EVENT = 'cortaai:login-success'
 const shouldShowInstallPromptNow = () =>
   sessionStorage.getItem(INSTALL_AFTER_LOGIN_FLAG) === 'true' && isInstallPromptAvailable()
 
-function App() {
+function AppShell() {
+  const location = useLocation()
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false)
   const [isInstallPromptVisible, setIsInstallPromptVisible] = useState(false)
 
@@ -87,8 +88,10 @@ function App() {
   }
 
   return (
-    <Router>
-      <AppRoutes/>
+    <main className="premiumRouteShell">
+      <div key={location.pathname} className="premiumRouteEnter">
+        <AppRoutes/>
+      </div>
       {isInstallPromptVisible && (
         <InstallAppPopup
           onInstall={handleInstallApp}
@@ -110,6 +113,14 @@ function App() {
         pauseOnHover
         theme="dark"
       />
+    </main>
+  )
+}
+
+function App() {
+  return (
+    <Router>
+      <AppShell />
     </Router>
   )
 }

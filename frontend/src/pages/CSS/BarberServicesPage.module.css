@@ -54,6 +54,44 @@
     font-size: 0.98rem;
 }
 
+.animateItem {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fadeUp 0.42s ease forwards;
+}
+
+.delay1 {
+    animation-delay: 0.02s;
+}
+
+.delay2 {
+    animation-delay: 0.1s;
+}
+
+.delay3 {
+    animation-delay: 0.18s;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animateItem {
+        opacity: 1;
+        transform: none;
+        animation: none;
+    }
+}
+
 .metricsGrid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

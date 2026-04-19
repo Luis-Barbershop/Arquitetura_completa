@@ -108,17 +108,17 @@ function BarberHomePage() {
           />
         ) : (
             <>
-            <section className={styles.heroSection}>
+            <section className={`${styles.heroSection} ${styles.animateItem} ${styles.delay1}`}>
               <p className={styles.heroKicker}>HOME DO PROFISSIONAL</p>
               <h1>Ola, {firstName}. Vamos fazer o dia render.</h1>
               <p>Confira os numeros da barbearia, priorize os agendamentos e mantenha os servicos mais procurados em destaque.</p>
             </section>
 
-            <section className={styles.dashboardSection}>
+            <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay2}`}>
             <Invoicing barber={barber} />
             </section>
 
-            <section className={styles.dashboardSection}>
+            <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay3}`}>
             <Buttonsbarber
               onReportsClick={() => {
                 const owner = Boolean(barber?.isOwner) || isOwnerUser();
@@ -128,7 +128,7 @@ function BarberHomePage() {
             />
             </section>
 
-            <section className={styles.dashboardSection}>
+            <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay4}`}>
             <ActionsBarber
               onNavigateToStock={() => navigate('/barberHome/estoque')}
               barbershopId={barber?.barbershopId}
@@ -136,11 +136,11 @@ function BarberHomePage() {
             />
             </section>
 
-            <section className={styles.dashboardSection}>
+            <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay5}`}>
             <NextScheduling onViewAll={() => navigate('/meus-agendamentos')} />
             </section>
 
-            <section className={styles.dashboardSection}>
+            <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay6}`}>
             <ServicesHomeBarber onNavigateToServices={() => navigate('/barberHome/servicos')} />
             </section>
 

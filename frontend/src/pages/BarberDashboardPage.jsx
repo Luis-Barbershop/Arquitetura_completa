@@ -48,11 +48,6 @@ function BarberDashboardPage() {
         });
     };
 
-    const cardStyle = {
-        background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: 20,
-        textAlign: 'center', flex: '1 1 140px'
-    };
-
     if (loading) return <div className={styles.loadingContainer}>Carregando...</div>;
 
     return (
@@ -65,49 +60,42 @@ function BarberDashboardPage() {
                 <h1>Resumo da sua atividade</h1>
             </section>
 
-            <section className={styles.dashboardSection}>
-                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 32 }}>
-                    <div style={cardStyle}>
-                        <p style={{ fontSize: 28, fontWeight: 700, margin: '0 0 6px' }}>—</p>
-                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Agendamentos hoje</p>
-                    </div>
-                    <div style={cardStyle}>
-                        <p style={{ fontSize: 28, fontWeight: 700, margin: '0 0 6px' }}>—</p>
-                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Agendamentos este mês</p>
-                    </div>
-                    <div style={cardStyle}>
-                        <p style={{ fontSize: 28, fontWeight: 700, margin: '0 0 6px' }}>—</p>
-                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Receita este mês</p>
-                    </div>
-                    <div style={cardStyle}>
-                        <p style={{ fontSize: 28, fontWeight: 700, margin: '0 0 6px' }}>—</p>
-                        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', margin: 0 }}>Avaliação média</p>
-                    </div>
+            <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay2}`}>
+                <div className={styles.dashboardStatsGrid}>
+                    <article className={styles.dashboardStatCard}>
+                        <p className={styles.dashboardStatValue}>—</p>
+                        <p className={styles.dashboardStatLabel}>Agendamentos hoje</p>
+                    </article>
+                    <article className={styles.dashboardStatCard}>
+                        <p className={styles.dashboardStatValue}>—</p>
+                        <p className={styles.dashboardStatLabel}>Agendamentos este mês</p>
+                    </article>
+                    <article className={styles.dashboardStatCard}>
+                        <p className={styles.dashboardStatValue}>—</p>
+                        <p className={styles.dashboardStatLabel}>Receita este mês</p>
+                    </article>
+                    <article className={styles.dashboardStatCard}>
+                        <p className={styles.dashboardStatValue}>—</p>
+                        <p className={styles.dashboardStatLabel}>Avaliação média</p>
+                    </article>
                 </div>
 
-                <div style={{
-                    background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.15)',
-                    borderRadius: 12, padding: 32, textAlign: 'center'
-                }}>
-                    <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+                <div className={styles.dashboardPlaceholderCard}>
+                    <p className={styles.dashboardPlaceholderText}>
                         📊 Relatórios detalhados em breve.<br />
                         Acesse a aba <strong>Minha Agenda</strong> para ver seus agendamentos completos.
                     </p>
                 </div>
 
                 {/* Ação rápida: encaixe */}
-                <div style={{ marginTop: 28, textAlign: 'center' }}>
+                <div className={styles.dashboardCtaSection}>
                     <button
                         onClick={() => navigate('/barberHome/novo-agendamento')}
-                        style={{
-                            background: '#d4af37', color: '#1a1a1a', fontWeight: 700,
-                            fontSize: 15, border: 'none', borderRadius: 10,
-                            padding: '13px 32px', cursor: 'pointer',
-                        }}
+                        className={styles.dashboardCtaButton}
                     >
                         ✂️ Novo Encaixe
                     </button>
-                    <p style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.35)' }}>
+                    <p className={styles.dashboardCtaHint}>
                         Registre um atendimento presencial sem app.
                     </p>
                 </div>

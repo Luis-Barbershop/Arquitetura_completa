@@ -19,7 +19,7 @@
 }
 
 .withNavbar {
-    padding-bottom: 26px;
+    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
 }
 
 .withoutNavbar {
@@ -36,7 +36,13 @@
     width: 100%;
     margin-top: 0.9rem;
     margin-bottom: 0.85rem;
-    padding: 0.9rem 0.4rem 0.2rem;
+    padding: 1.3rem 1.1rem 1rem;
+    border: 1px solid #2a2a2a;
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at 88% -18%, rgb(193 144 6 / 12%), transparent 42%),
+        linear-gradient(180deg, #171717 0%, #131313 100%);
+    box-shadow: 0 16px 34px rgb(0 0 0 / 26%);
 }
 
 .heroKicker {
@@ -64,6 +70,140 @@
 
 .dashboardSection {
     margin-top: var(--ca-space-4);
+}
+
+.teamSectionNarrow {
+    max-width: 720px;
+}
+
+.dashboardStatsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 1.3rem;
+}
+
+.dashboardStatCard {
+    border: 1px solid #2f2f2f;
+    border-radius: 16px;
+    padding: 1rem;
+    text-align: center;
+    background:
+        radial-gradient(circle at 100% 0%, rgb(193 144 6 / 10%), transparent 36%),
+        linear-gradient(180deg, #171717 0%, #111111 100%);
+    box-shadow: 0 12px 28px rgb(0 0 0 / 24%);
+}
+
+.dashboardStatValue {
+    margin: 0;
+    color: #f5e3be;
+    font-size: 1.65rem;
+    font-weight: 700;
+    font-family: "Space Grotesk", sans-serif;
+}
+
+.dashboardStatLabel {
+    margin: 0.35rem 0 0;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-family: "Space Grotesk", sans-serif;
+}
+
+.dashboardPlaceholderCard {
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1.4rem;
+    text-align: center;
+}
+
+.dashboardPlaceholderText {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.52);
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+.dashboardCtaSection {
+    margin-top: 1.25rem;
+    text-align: center;
+}
+
+.dashboardCtaButton {
+    height: 46px;
+    border-radius: 12px;
+    border: none;
+    padding: 0 1.5rem;
+    background: linear-gradient(145deg, #d4af37, #ab7d12);
+    color: #191919;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.dashboardCtaButton:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+}
+
+.dashboardCtaHint {
+    margin-top: 0.5rem;
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 0.77rem;
+}
+
+.animateItem {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: fadeSectionUp 0.42s ease forwards;
+}
+
+.delay1 {
+    animation-delay: 0.02s;
+}
+
+.delay2 {
+    animation-delay: 0.08s;
+}
+
+.delay3 {
+    animation-delay: 0.14s;
+}
+
+.delay4 {
+    animation-delay: 0.2s;
+}
+
+.delay5 {
+    animation-delay: 0.26s;
+}
+
+.delay6 {
+    animation-delay: 0.32s;
+}
+
+@keyframes fadeSectionUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .animateItem {
+        opacity: 1;
+        transform: none;
+        animation: none;
+    }
 }
 
 .loadingContainer {
@@ -453,6 +593,418 @@
     color: #a6a6a6;
     line-height: 1.45;
     font-size: 0.9rem;
+}
+
+.profileStack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    max-width: 640px;
+}
+
+.profileCard {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid #2f2f2f;
+    border-radius: 16px;
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.profileCardInvite {
+    background: rgba(108, 99, 255, 0.06);
+    border-color: #3a3570;
+}
+
+.profileCardOwner {
+    background: rgba(193, 144, 6, 0.08);
+    border-color: #4a3a17;
+}
+
+.profilePhoto {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 4px;
+}
+
+.profileLeaveWrap {
+    margin-top: 0.65rem;
+}
+
+.leaveShopButton {
+    background: #742a2a;
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.leaveShopButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.profileSectionTitle {
+    font-weight: 700;
+    font-size: 0.92rem;
+    margin-bottom: 0.2rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.profileSectionTitleInvite {
+    color: #6c63ff;
+}
+
+.profileSectionTitleOwner {
+    color: #d4af37;
+}
+
+.profileMutedText {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.inviteItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    gap: 10px;
+}
+
+.inviteName {
+    margin: 0;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.inviteMeta {
+    margin: 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.inviteActions {
+    display: flex;
+    gap: 8px;
+}
+
+.inviteAcceptButton,
+.inviteRejectButton {
+    border: none;
+    padding: 7px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.inviteAcceptButton {
+    background: #276749;
+}
+
+.inviteRejectButton {
+    background: #742a2a;
+}
+
+.scheduleForm {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.scheduleDaysGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.scheduleLabel {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 500;
+}
+
+.scheduleDaysList {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.scheduleDayButton {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid #2f2f2f;
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 500;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.scheduleDayButtonActive {
+    border-color: #d4af37;
+    background: rgba(212, 175, 55, 0.18);
+    color: #d4af37;
+    font-weight: 700;
+}
+
+.dayBlock {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.dayBlockHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.dayBlockTitle {
+    font-size: 13px;
+    font-weight: 600;
+    color: #d4af37;
+}
+
+.dayBlockActions {
+    display: flex;
+    gap: 6px;
+}
+
+.dayBlockActionButton {
+    background: none;
+    border: 1px dashed rgba(212, 175, 55, 0.45);
+    border-radius: 8px;
+    color: #d4af37;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    cursor: pointer;
+}
+
+.dayBlockActionButtonCopy {
+    color: #9b8ce6;
+    border-color: rgba(155, 140, 230, 0.45);
+}
+
+.blockRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.timePickerWrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 6px 8px;
+    border: 1px solid #2a2a2a;
+}
+
+.timePickerInput {
+    width: 124px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid #3a3a3a;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+    padding: 0 8px;
+}
+
+.timePickerInputDisabled {
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.blockUntil {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 13px;
+    user-select: none;
+}
+
+.removeBlockButton {
+    background: rgba(116, 42, 42, 0.35);
+    border: none;
+    border-radius: 6px;
+    color: #ff8888;
+    font-size: 13px;
+    font-weight: 700;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.scheduleSummary {
+    background: rgba(212, 175, 55, 0.06);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.scheduleSummaryTitle {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+    margin-bottom: 4px;
+}
+
+.scheduleSummaryRow {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    gap: 6px;
+}
+
+.scheduleSummaryDay {
+    color: #d4af37;
+    min-width: 28px;
+}
+
+.saveScheduleButton {
+    align-self: flex-start;
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: none;
+    background: #d4af37;
+    color: #1a1a1a;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.saveScheduleButtonDisabled {
+    background: rgba(212, 175, 55, 0.25);
+    color: rgba(255, 255, 255, 0.35);
+    cursor: not-allowed;
+}
+
+.ownerSettingsLabel {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.ownerSettingsLabelDisabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.ownerSettingsCheckbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #d4af37;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.ownerSettingsText {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.copyModalCard {
+    width: min(380px, 90vw);
+    background: #1a1a2e;
+}
+
+.copyModalTitle {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.copyModalSubtitle {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 12px;
+}
+
+.copyTargetsGrid {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.copyTargetButton {
+    width: 48px;
+    height: 40px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #2f2f2f;
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+}
+
+.copyTargetButtonActive {
+    border-color: #9b8ce6;
+    background: rgba(155, 140, 230, 0.18);
+    color: #9b8ce6;
+}
+
+.copyActionsRow {
+    display: flex;
+    gap: 10px;
+}
+
+.copyActionButton {
+    flex: 1;
+    padding: 10px 0;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.copyCancelButton {
+    border: 1px solid #3a3a3a;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.copyConfirmButton {
+    border: none;
+    background: #9b8ce6;
+    color: #fff;
+    font-weight: 700;
+}
+
+.copyConfirmButtonDisabled {
+    background: rgba(155, 140, 230, 0.2);
+    color: rgba(255, 255, 255, 0.3);
+    cursor: not-allowed;
 }
 
 .modalBackdrop {
