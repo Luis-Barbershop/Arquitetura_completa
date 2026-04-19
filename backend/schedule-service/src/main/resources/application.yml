@@ -107,3 +107,6 @@ logging:
     com.netflix.eureka: WARN
     org.springframework.cloud.loadbalancer: WARN
 
+app:
+  timezone: ${APP_TIMEZONE:America/Sao_Paulo}
+

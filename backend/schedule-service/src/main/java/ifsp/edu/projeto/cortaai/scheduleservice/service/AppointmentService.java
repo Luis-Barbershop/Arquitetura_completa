@@ -18,16 +18,17 @@ import ifsp.edu.projeto.cortaai.scheduleservice.repository.BarberBlockRepository
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,9 @@ public class AppointmentService {
     private final UserServiceClient userServiceClient;
     private final BarbershopServiceClient barbershopServiceClient;
     private final RabbitTemplate rabbitTemplate;
+
+    @Value("${app.timezone:America/Sao_Paulo}")
+    private String appTimezone;
 
     // ========== CRIAÇÃO ==========
 
@@ -373,7 +377,7 @@ public class AppointmentService {
      *
      * <p>Lógica:
      * <ol>
-     *   <li>Busca workStart / workEnd do barbeiro via Feign (com cache Redis).</li>
+    *   <li>Busca agenda semanal do barbeiro via Feign.</li>
      *   <li>Gera slots de {@code SLOT_STEP_MINUTES} (15 min) dentro do expediente.</li>
      *   <li>Para cada slot de início, verifica se os próximos {@code durationMinutes} estão livres
      *       (sem agendamento nem bloqueio ativos).</li>
@@ -389,34 +393,25 @@ public class AppointmentService {
         final int SLOT_STEP_MINUTES = 15;
         final int effectiveDuration = Math.max(durationMinutes, SLOT_STEP_MINUTES);
 
-        // 1. Buscar blocos de horário do barbeiro para o dia da semana solicitado
+        // 1. Buscar agenda semanal e extrair blocos de trabalho do dia solicitado
         java.time.DayOfWeek dayOfWeek = date.getDayOfWeek();
         List<DayScheduleDTO> weekSchedule;
         try {
             weekSchedule = userServiceClient.getBarberWorkSchedule(barberId);
         } catch (Exception ex) {
-            log.warn("Falha ao buscar agenda semanal do barbeiro {}, usando horário legado", barberId, ex);
-            weekSchedule = null;
+            log.warn("Falha ao buscar agenda semanal do barbeiro {} sem fallback legado", barberId, ex);
+            return List.of();
         }
 
-        // Determina os blocos de trabalho para o dia solicitado
-        List<WorkBlockDTO> dayBlocks;
-        if (weekSchedule != null && !weekSchedule.isEmpty()) {
-            dayBlocks = weekSchedule.stream()
-                    .filter(d -> d.getDayOfWeek() == dayOfWeek)
-                    .flatMap(d -> d.getBlocks().stream())
-                    .sorted(Comparator.comparing(WorkBlockDTO::getStartTime))
-                    .collect(Collectors.toList());
-        } else {
-            // Fallback para horário legado (workStartTime/workEndTime)
-            UserInfoDTO barber = getBarberWorkHoursCached(barberId);
-            LocalTime workStart = barber.getWorkStartTime();
-            LocalTime workEnd   = barber.getWorkEndTime();
-            if (workStart == null || workEnd == null) {
-                return List.of();
-            }
-            dayBlocks = List.of(new WorkBlockDTO(workStart, workEnd));
+        if (weekSchedule == null || weekSchedule.isEmpty()) {
+            return List.of();
         }
+
+        List<WorkBlockDTO> dayBlocks = weekSchedule.stream()
+                .filter(d -> d.getDayOfWeek() == dayOfWeek)
+                .flatMap(d -> d.getBlocks().stream())
+                .sorted(Comparator.comparing(WorkBlockDTO::getStartTime))
+                .collect(Collectors.toList());
 
         if (dayBlocks.isEmpty()) {
             return List.of(); // Barbeiro não trabalha neste dia
@@ -438,8 +433,8 @@ public class AppointmentService {
                 .findByBarberIdAndStartTimeBetween(barberId, dayStart, dayEnd);
 
         // 4. Gerar slots dentro de cada bloco de trabalho
-        List<TimeSlotDTO> slots = new ArrayList<>();
-        LocalDateTime now = LocalDateTime.now();
+    List<TimeSlotDTO> slots = new ArrayList<>();
+    LocalDateTime now = getNowInAppTimezone();
 
         for (WorkBlockDTO workBlock : dayBlocks) {
             LocalDateTime slotStart = date.atTime(workBlock.getStartTime());
@@ -461,9 +456,13 @@ public class AppointmentService {
         return slots;
     }
 
-    @Cacheable(value = "barberWorkHours", key = "#barberId")
-    public UserInfoDTO getBarberWorkHoursCached(UUID barberId) {
-        return userServiceClient.getUserById(barberId);
+    private LocalDateTime getNowInAppTimezone() {
+        try {
+            return LocalDateTime.now(ZoneId.of(appTimezone));
+        } catch (DateTimeException ex) {
+            log.warn("Timezone inválido em app.timezone='{}'; usando timezone padrão da JVM.", appTimezone);
+            return LocalDateTime.now();
+        }
     }
 
     private boolean isRangeOccupied(LocalDateTime slotStart, LocalDateTime slotEnd,
