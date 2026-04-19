@@ -1,0 +1,71 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal {
+  width: min(440px, 100%);
+  border: 1px solid rgba(193, 144, 6, 0.5);
+  border-radius: 16px;
+  background-color: #1b1b1b;
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.title {
+  margin: 0;
+  color: #ddb441;
+  font-size: 1.15rem;
+  line-height: 1.35;
+}
+
+.message {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #f1f1f1;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.primaryButton,
+.secondaryButton {
+  border-radius: 8px;
+  height: 36px;
+  padding: 0 14px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.primaryButton {
+  border: none;
+  background-color: #c19006;
+  color: #121212;
+}
+
+.primaryButton:hover {
+  background-color: #ddb441;
+}
+
+.secondaryButton {
+  border: none;
+  background-color: #3a3a3a;
+  color: #ffffff;
+}
+
+.secondaryButton:hover {
+  background-color: #4b4b4b;
+}

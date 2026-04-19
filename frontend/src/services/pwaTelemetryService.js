@@ -9,6 +9,12 @@ export const PWA_METRICS = {
   SW_UPDATE_APPLY_REQUESTED: 'sw_update_apply_requested',
   SW_UPDATE_DISMISSED: 'sw_update_dismissed',
   SW_CONTROLLER_CHANGED: 'sw_controller_changed',
+  PWA_INSTALL_PROMPT_AVAILABLE: 'pwa_install_prompt_available',
+  PWA_INSTALL_PROMPT_REQUESTED: 'pwa_install_prompt_requested',
+  PWA_INSTALL_PROMPT_ACCEPTED: 'pwa_install_prompt_accepted',
+  PWA_INSTALL_PROMPT_DISMISSED: 'pwa_install_prompt_dismissed',
+  PWA_INSTALL_PROMPT_NOT_AVAILABLE: 'pwa_install_prompt_not_available',
+  PWA_INSTALL_INSTALLED: 'pwa_install_installed',
 }
 
 const emitBrowserEvent = (payload) => {

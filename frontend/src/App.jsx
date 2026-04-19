@@ -5,17 +5,34 @@ import AppRoutes from './AppRoutes';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import UpdateAvailableBanner from './components/UpdateAvailableBanner';
-import { applyServiceWorkerUpdate, subscribeToServiceWorkerUpdate } from './services/pwaService';
+import InstallAppPopup from './components/InstallAppPopup';
+import {
+  applyServiceWorkerUpdate,
+  requestPwaInstall,
+  subscribeToInstallPrompt,
+  subscribeToServiceWorkerUpdate,
+} from './services/pwaService';
 import { PWA_METRICS, trackPwaMetric } from './services/pwaTelemetryService';
 
 function App() {
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false)
+  const [isInstallPromptVisible, setIsInstallPromptVisible] = useState(false)
 
   useEffect(() => {
     const unsubscribe = subscribeToServiceWorkerUpdate((hasUpdate) => {
       if (hasUpdate) {
         setIsUpdateAvailable(true)
       }
+    })
+
+    return () => {
+      unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = subscribeToInstallPrompt((isAvailable) => {
+      setIsInstallPromptVisible(isAvailable)
     })
 
     return () => {
@@ -32,9 +49,28 @@ function App() {
     setIsUpdateAvailable(false)
   }
 
+  const handleInstallApp = async () => {
+    const installed = await requestPwaInstall()
+
+    if (!installed) {
+      setIsInstallPromptVisible(false)
+    }
+  }
+
+  const handleDismissInstall = () => {
+    trackPwaMetric(PWA_METRICS.PWA_INSTALL_PROMPT_DISMISSED)
+    setIsInstallPromptVisible(false)
+  }
+
   return (
     <Router>
       <AppRoutes/>
+      {isInstallPromptVisible && (
+        <InstallAppPopup
+          onInstall={handleInstallApp}
+          onDismiss={handleDismissInstall}
+        />
+      )}
       {isUpdateAvailable && (
         <UpdateAvailableBanner
           onUpdateNow={handleUpdateNow}
