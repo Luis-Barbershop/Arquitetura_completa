@@ -8,11 +8,18 @@ import UpdateAvailableBanner from './components/UpdateAvailableBanner';
 import InstallAppPopup from './components/InstallAppPopup';
 import {
   applyServiceWorkerUpdate,
+  isInstallPromptAvailable,
   requestPwaInstall,
   subscribeToInstallPrompt,
   subscribeToServiceWorkerUpdate,
 } from './services/pwaService';
 import { PWA_METRICS, trackPwaMetric } from './services/pwaTelemetryService';
+
+const INSTALL_AFTER_LOGIN_FLAG = 'pwa_install_after_login'
+const LOGIN_SUCCESS_EVENT = 'cortaai:login-success'
+
+const shouldShowInstallPromptNow = () =>
+  sessionStorage.getItem(INSTALL_AFTER_LOGIN_FLAG) === 'true' && isInstallPromptAvailable()
 
 function App() {
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false)
@@ -32,11 +39,26 @@ function App() {
 
   useEffect(() => {
     const unsubscribe = subscribeToInstallPrompt((isAvailable) => {
-      setIsInstallPromptVisible(isAvailable)
+      const shouldShow = isAvailable && sessionStorage.getItem(INSTALL_AFTER_LOGIN_FLAG) === 'true'
+      setIsInstallPromptVisible(shouldShow)
     })
 
     return () => {
       unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleLoginSuccess = () => {
+      if (shouldShowInstallPromptNow()) {
+        setIsInstallPromptVisible(true)
+      }
+    }
+
+    window.addEventListener(LOGIN_SUCCESS_EVENT, handleLoginSuccess)
+
+    return () => {
+      window.removeEventListener(LOGIN_SUCCESS_EVENT, handleLoginSuccess)
     }
   }, [])
 
@@ -51,6 +73,7 @@ function App() {
 
   const handleInstallApp = async () => {
     const installed = await requestPwaInstall()
+    sessionStorage.removeItem(INSTALL_AFTER_LOGIN_FLAG)
 
     if (!installed) {
       setIsInstallPromptVisible(false)
@@ -59,6 +82,7 @@ function App() {
 
   const handleDismissInstall = () => {
     trackPwaMetric(PWA_METRICS.PWA_INSTALL_PROMPT_DISMISSED)
+    sessionStorage.removeItem(INSTALL_AFTER_LOGIN_FLAG)
     setIsInstallPromptVisible(false)
   }
 

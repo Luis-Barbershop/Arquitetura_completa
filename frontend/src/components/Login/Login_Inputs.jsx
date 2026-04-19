@@ -3,6 +3,14 @@ import { useState } from "react"
 import { useNavigate, Link, useLocation } from "react-router-dom"
 import { loginUser, loginWithGoogle, checkEmailExists, translateFirebaseError } from "../../services/authService"
 
+const INSTALL_AFTER_LOGIN_FLAG = 'pwa_install_after_login'
+const LOGIN_SUCCESS_EVENT = 'cortaai:login-success'
+
+const triggerPostLoginInstallPrompt = () => {
+    sessionStorage.setItem(INSTALL_AFTER_LOGIN_FLAG, 'true')
+    window.dispatchEvent(new CustomEvent(LOGIN_SUCCESS_EVENT))
+}
+
 // Retorna a rota de destino com base no role salvo no localStorage
 function getRedirectPath() {
     const role = localStorage.getItem('userRole') || 'ROLE_CUSTOMER';
@@ -38,6 +46,7 @@ function Login_Inputs() {
 
         try {
             await loginUser(email, password);
+            triggerPostLoginInstallPrompt();
             navigate(getRedirectPath());
 
         } catch (err) {
@@ -116,6 +125,7 @@ function Login_Inputs() {
 
         try {
             await loginWithGoogle();
+            triggerPostLoginInstallPrompt();
             navigate(getRedirectPath());
         } catch (err) {
             setLoadingGoogle(false);

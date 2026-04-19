@@ -134,6 +134,8 @@ export const subscribeToInstallPrompt = (listener) => {
   }
 }
 
+export const isInstallPromptAvailable = () => Boolean(deferredInstallPromptEvent)
+
 export const requestPwaInstall = async () => {
   if (!deferredInstallPromptEvent) {
     trackPwaMetric(PWA_METRICS.PWA_INSTALL_PROMPT_NOT_AVAILABLE)
