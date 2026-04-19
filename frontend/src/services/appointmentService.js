@@ -122,19 +122,3 @@ export const getBarbershopSchedule = async (shopId, date) => {
     }
 };
 
-export const getBarberAvailability = async (barberId, date) => {
-    // Endpoint atual: /api/appointments/availability?barberId=...&date=YYYY-MM-DD
-    try {
-        const response = await api.get('/appointments/availability', {
-            params: {
-                barberId,
-                date
-            }
-        });
-        return response.data; // Retorna lista de horários ["09:00:00", "09:30:00", ...]
-    } catch (error) {
-        console.error("Erro ao buscar disponibilidade:", error);
-        return [];
-    }
-};
-

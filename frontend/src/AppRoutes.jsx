@@ -4,7 +4,6 @@ import StartPage from "./pages/StartPage"
 import LoginPage from "./pages/LoginPage";
 import SignInPage from "./pages/SignInPage";
 import HomePage from "./pages/HomePage";
-import Agendamento from "./pages/Agendamento";
 import BarberHomePage from './pages/BarberHomePage';
 import BarberServicesPage from './pages/BarberServicesPage';
 import BarberStockPage from './pages/BarberStockPage';
