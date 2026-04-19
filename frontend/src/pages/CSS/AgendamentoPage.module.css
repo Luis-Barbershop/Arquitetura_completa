@@ -1,8 +1,8 @@
 .page_container {
     min-height: 100vh;
-    color: #e0e0e0;
+    color: var(--ca-color-text-primary);
     font-family: 'Roboto', sans-serif;
-    padding: 20px;
+    padding: var(--ca-space-5);
     box-sizing: border-box;
     background:
         radial-gradient(circle at 8% 12%, rgb(193 144 6 / 12%), transparent 24%),
@@ -26,7 +26,7 @@
 
 .topMenu {
     margin-top: 0.7rem;
-    border: 1px solid #2e2e2e;
+    border: 1px solid var(--ca-color-border);
     border-radius: 20px;
     background:
         radial-gradient(circle at 86% -20%, rgb(193 144 6 / 15%), transparent 45%),
@@ -164,7 +164,7 @@
 }
 
 .kicker {
-    color: #c19006;
+    color: var(--ca-color-brand);
     letter-spacing: 0.16em;
     font-size: 0.78rem;
     font-family: 'Space Grotesk', sans-serif;
@@ -172,7 +172,7 @@
 
 .title {
     margin-top: 0.6rem;
-    color: #f5f5f5;
+    color: var(--ca-color-text-primary);
     font-family: 'Space Grotesk', sans-serif;
     font-size: clamp(1.8rem, 4vw, 2.6rem);
     line-height: 1.1;
@@ -180,21 +180,21 @@
 
 .subtitle {
     margin-top: 0.55rem;
-    color: #a8a8a8;
+    color: var(--ca-color-text-secondary);
     max-width: 760px;
     line-height: 1.45;
 }
 
 .section {
-    background: linear-gradient(180deg, #171717 0%, #121212 100%);
+    background: linear-gradient(180deg, var(--ca-color-bg-elevated) 0%, #121212 100%);
     padding: 1.2rem;
-    border-radius: 16px;
-    border: 1px solid #2c2c2c;
+    border-radius: var(--ca-radius-md);
+    border: 1px solid var(--ca-color-border);
     margin: 0 1.2rem;
 }
 
 .section_title {
-    color: #f1f1f1;
+    color: var(--ca-color-text-primary);
     font-size: 1.02rem;
     letter-spacing: 0.05em;
     margin-bottom: 0.8rem;
@@ -468,9 +468,9 @@
 .footer {
     margin: 0.1rem 1.2rem 0;
     padding: 1rem;
-    border-radius: 14px;
-    border: 1px solid #2c2c2c;
-    background: #151515;
+    border-radius: var(--ca-radius-md);
+    border: 1px solid var(--ca-color-border);
+    background: var(--ca-color-surface);
 }
 
 .totalInfo {
@@ -494,7 +494,7 @@
 .confirm_button {
     width: 100%;
     height: 52px;
-    background: linear-gradient(135deg, #c19006, #eecb5f);
+    background: linear-gradient(135deg, var(--ca-color-brand), #eecb5f);
     color: #1a1a1a;
     font-size: 1rem;
     font-weight: 800;

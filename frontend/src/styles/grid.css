@@ -1,0 +1,34 @@
+.ca-page {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.ca-container {
+  width: min(1180px, 96%);
+  margin: 0 auto;
+}
+
+.ca-grid {
+  display: grid;
+  gap: var(--ca-space-4);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ca-grid--8,
+.ca-grid--12 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (min-width: 761px) {
+  .ca-grid,
+  .ca-grid--8,
+  .ca-grid--12 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .ca-grid--12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+}

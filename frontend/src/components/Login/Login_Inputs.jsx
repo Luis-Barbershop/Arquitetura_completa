@@ -41,7 +41,7 @@ function Login_Inputs() {
             navigate(getRedirectPath());
 
         } catch (err) {
-            const authError = getAuthErrorDetails(err);
+            getAuthErrorDetails(err);
 
             // ── Perfil incompleto — redireciona para finalizar cadastro ──────────
             if (err.code === 'PROFILE_INCOMPLETE') {

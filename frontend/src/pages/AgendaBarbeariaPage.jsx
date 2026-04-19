@@ -26,7 +26,10 @@ const AgendaBarbeariaPage = () => {
     useEffect(() => {
         if (!isLoggedIn() || !isOwner) {
             navigate('/');
+            return;
         }
+
+        navigate('/meus-agendamentos?view=team', { replace: true });
     }, [navigate, isOwner]);
 
     const carregarAgenda = useCallback(async () => {

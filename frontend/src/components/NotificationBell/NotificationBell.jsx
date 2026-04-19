@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Bell } from '@phosphor-icons/react';
 import api from '../../services/api';
 import styles from './NotificationBell.module.css';
 
@@ -22,7 +23,6 @@ function NotificationBell({ userType = 'barber' }) {
     const [notifications, setNotifications] = useState([]);
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [imgError, setImgError] = useState(false);
     const dropdownRef = useRef(null);
 
     // Busca contagem de não lidas periodicamente (a cada 30s)
@@ -123,14 +123,7 @@ function NotificationBell({ userType = 'barber' }) {
                 aria-label="Notificações"
                 title="Notificações"
             >
-                <img
-                    src="/Icons/bellicon.png"
-                    alt="Sino de Notificação"
-                    className={styles.bellIcon}
-                    onError={() => setImgError(true)}
-                    style={imgError ? { display: 'none' } : {}}
-                />
-                {imgError && <span style={{ fontSize: 20 }}>🔔</span>}
+                <Bell size={22} weight="duotone" className={styles.bellVectorIcon} />
                 {unreadCount > 0 && (
                     <span className={styles.badge}>{unreadCount > 99 ? '99+' : unreadCount}</span>
                 )}

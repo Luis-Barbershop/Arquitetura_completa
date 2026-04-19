@@ -33,9 +33,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -43,6 +46,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 @Service
 @RequiredArgsConstructor
@@ -59,6 +64,12 @@ public class PaymentService {
 
     @Value("${mercadopago.notification-url}")
     private String notificationUrl;
+
+    @Value("${mercadopago.webhook.secret:}")
+    private String webhookSecret;
+
+    @Value("${mercadopago.webhook.replay-window-seconds:300}")
+    private long webhookReplayWindowSeconds;
 
     /**
      * Taxa da plataforma CortaAI cobrada sobre cada transação (5%).
@@ -217,7 +228,7 @@ public class PaymentService {
                 try {
                     scheduleServiceClient.updatePaymentStatus(appointmentId, "CONFIRMED");
                 } catch (Exception e) {
-                    log.error("Falha ao atualizar payment status no schedule-service: {}", e.getMessage());
+                    log.error("Falha ao atualizar payment status no schedule-service", e);
                 }
 
                 // Publicar evento para notification-service
@@ -226,7 +237,7 @@ public class PaymentService {
                     var customerInfo = userServiceClient.getUserById(transaction.getCustomerId());
                     if (customerInfo != null) customerEmail = customerInfo.getEmail();
                 } catch (Exception e) {
-                    log.warn("Não foi possível buscar email do customer {}: {}", transaction.getCustomerId(), e.getMessage());
+                    log.warn("Não foi possível buscar email do customer {}", transaction.getCustomerId());
                 }
 
                 PaymentApprovedEvent event = new PaymentApprovedEvent(
@@ -250,9 +261,104 @@ public class PaymentService {
             log.info("Webhook processado: resourceId={}, status={}", resourceId, newStatus);
 
         } catch (Exception e) {
-            log.error("Erro ao processar webhook: resourceId={}, error={}", resourceId, e.getMessage());
+            log.error("Erro ao processar webhook: resourceId={}", resourceId, e);
             throw new RuntimeException("Falha ao processar webhook: " + e.getMessage());
         }
+    }
+
+    /**
+     * Valida assinatura do webhook Mercado Pago quando segredo está configurado.
+     * Se segredo não estiver configurado, mantém compatibilidade aceitando o webhook.
+     */
+    public boolean isWebhookTrusted(String resourceId, String xSignature, String xRequestId) {
+        if (webhookSecret == null || webhookSecret.isBlank()) {
+            return true;
+        }
+
+        if (isBlank(resourceId) || isBlank(xSignature) || isBlank(xRequestId)) {
+            log.warn("Webhook sem cabecalhos obrigatorios para validacao de assinatura");
+            return false;
+        }
+
+        Map<String, String> signatureParts = parseSignatureHeader(xSignature);
+        String tsRaw = signatureParts.get("ts");
+        String v1 = signatureParts.get("v1");
+
+        if (isBlank(tsRaw) || isBlank(v1)) {
+            log.warn("Webhook com assinatura malformada");
+            return false;
+        }
+
+        long timestamp;
+        try {
+            timestamp = Long.parseLong(tsRaw);
+        } catch (NumberFormatException ex) {
+            log.warn("Webhook com timestamp de assinatura invalido");
+            return false;
+        }
+
+        long now = Instant.now().getEpochSecond();
+        long delta = Math.abs(now - timestamp);
+        if (delta > webhookReplayWindowSeconds) {
+            log.warn("Webhook rejeitado por replay window. delta={}s", delta);
+            return false;
+        }
+
+        String manifest = "id:" + resourceId + ";request-id:" + xRequestId + ";ts:" + tsRaw + ";";
+        String expected = hmacSha256Hex(manifest, webhookSecret);
+
+        return secureEquals(expected, v1.toLowerCase(Locale.ROOT));
+    }
+
+    private Map<String, String> parseSignatureHeader(String signatureHeader) {
+        Map<String, String> parts = new HashMap<>();
+        String[] tokens = signatureHeader.split(",");
+        for (String token : tokens) {
+            String[] kv = token.trim().split("=", 2);
+            if (kv.length == 2) {
+                parts.put(kv[0].trim().toLowerCase(Locale.ROOT), kv[1].trim().toLowerCase(Locale.ROOT));
+            }
+        }
+        return parts;
+    }
+
+    private String hmacSha256Hex(String payload, String secret) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] bytes = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+
+            StringBuilder hex = new StringBuilder(bytes.length * 2);
+            for (byte b : bytes) {
+                hex.append(String.format("%02x", b));
+            }
+            return hex.toString();
+        } catch (Exception ex) {
+            throw new RuntimeException("Falha ao calcular assinatura HMAC do webhook.", ex);
+        }
+    }
+
+    private boolean secureEquals(String expected, String actual) {
+        if (expected == null || actual == null) {
+            return false;
+        }
+
+        byte[] a = expected.getBytes(StandardCharsets.UTF_8);
+        byte[] b = actual.getBytes(StandardCharsets.UTF_8);
+
+        if (a.length != b.length) {
+            return false;
+        }
+
+        int result = 0;
+        for (int i = 0; i < a.length; i++) {
+            result |= a[i] ^ b[i];
+        }
+        return result == 0;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     @Transactional(readOnly = true)

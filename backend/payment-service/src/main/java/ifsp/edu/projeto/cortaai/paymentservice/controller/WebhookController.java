@@ -35,8 +35,10 @@ public class WebhookController {
     })
     @PostMapping("/webhook")
     public ResponseEntity<Void> handleWebhook(
+            @RequestHeader(value = "x-signature", required = false) String xSignature,
+            @RequestHeader(value = "x-request-id", required = false) String xRequestId,
             @RequestBody Map<String, Object> payload) {
-        log.info("Webhook recebido: {}", payload);
+        log.info("Webhook recebido (Mercado Pago)");
 
         try {
             String type = (String) payload.get("type");
@@ -49,13 +51,25 @@ public class WebhookController {
             }
 
             String resourceId = data.get("id").toString();
-            paymentService.processWebhook(resourceId, type, payload.toString());
+
+            if (!paymentService.isWebhookTrusted(resourceId, xSignature, xRequestId)) {
+                log.warn("Webhook rejeitado por validacao de assinatura/replay: resourceId={}, type={}", resourceId, type);
+                return ResponseEntity.ok().build();
+            }
+
+            paymentService.processWebhook(resourceId, type, buildWebhookAuditPayload(payload, resourceId));
 
         } catch (Exception e) {
-            log.error("Erro ao processar webhook: {}", e.getMessage());
+            log.error("Erro ao processar webhook do Mercado Pago", e);
             // Retornar 200 mesmo com erro para MP não reenviar indefinidamente
         }
 
         return ResponseEntity.ok().build();
+    }
+
+    private String buildWebhookAuditPayload(Map<String, Object> payload, String resourceId) {
+        String type = String.valueOf(payload.getOrDefault("type", ""));
+        String action = String.valueOf(payload.getOrDefault("action", ""));
+        return String.format("{type=%s, action=%s, data.id=%s}", type, action, resourceId);
     }
 }

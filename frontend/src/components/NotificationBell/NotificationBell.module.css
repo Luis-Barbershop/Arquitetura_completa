@@ -27,6 +27,10 @@
     filter: brightness(0) saturate(100%) invert(67%) sepia(56%) saturate(700%) hue-rotate(5deg) brightness(103%) contrast(95%);
 }
 
+.bellVectorIcon {
+    color: #e0ad23;
+}
+
 .badge {
     position: absolute;
     top: 2px;

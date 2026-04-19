@@ -62,6 +62,15 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             "/api/internal/**"
     );
 
+    /**
+     * Endpoints públicos que podem receber Authorization do cliente
+     * por necessidade explícita do fluxo de autenticação/validação.
+     */
+    private static final List<String> PUBLIC_AUTHORIZATION_ALLOWED_PATHS = List.of(
+        "/api/auth/verify", "/api/auth/verify/",
+        "/api/auth/firebase-test/verify-id-token", "/api/auth/firebase-test/verify-id-token/"
+    );
+
     /** Endpoints públicos de leitura de barbeiros (somente GET). */
     private static final List<String> PUBLIC_BARBERS_GET_PATHS = List.of(
             "/api/barbers",
@@ -112,7 +121,8 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
 
         String path = exchangeWithCorrelation.getRequest().getURI().getPath();
         if (isPublicPath(path) || isPublicGetPath(path, method)) {
-            return chain.filter(exchangeWithCorrelation);
+            ServerHttpRequest sanitizedPublicRequest = sanitizePublicRequest(exchangeWithCorrelation, path);
+            return chain.filter(exchangeWithCorrelation.mutate().request(sanitizedPublicRequest).build());
         }
 
         String authHeader = exchangeWithCorrelation.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
@@ -209,6 +219,7 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
 
         return exchange.getRequest().mutate()
                 .headers(headers -> {
+                    headers.remove(HttpHeaders.AUTHORIZATION);
                     headers.remove("X-User-UID");
                     headers.remove("X-User-Email");
                     headers.remove("X-User-Type");
@@ -222,6 +233,29 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
                 .header("X-User-Type", role)
                 .header("X-User-Owner", String.valueOf(isOwner))
                 .build();
+    }
+
+    /**
+     * Sanitiza headers de identidade em rotas públicas para evitar spoofing.
+     * Authorization só é encaminhado quando há necessidade explícita em allowlist.
+     */
+    private ServerHttpRequest sanitizePublicRequest(ServerWebExchange exchange, String path) {
+        return exchange.getRequest().mutate()
+                .headers(headers -> {
+                    headers.remove("X-User-UID");
+                    headers.remove("X-User-Email");
+                    headers.remove("X-User-Type");
+                    headers.remove("X-User-Owner");
+
+                    if (!isPublicAuthorizationAllowed(path)) {
+                        headers.remove(HttpHeaders.AUTHORIZATION);
+                    }
+                })
+                .build();
+    }
+
+    private boolean isPublicAuthorizationAllowed(String path) {
+        return PUBLIC_AUTHORIZATION_ALLOWED_PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
     private Mono<Void> unauthorized(ServerWebExchange exchange, String message, String correlationId) {

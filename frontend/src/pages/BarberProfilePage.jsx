@@ -388,7 +388,7 @@ function BarberProfilePage() {
         else if (tab === 'estoque')   navigate('/barberHome/estoque');
         else if (tab === 'time')      navigate('/barberHome/time');
         else if (tab === 'dashboards') navigate('/barberHome/dashboard');
-        else if (tab === 'agenda-equipe') navigate('/barberHome/agenda-equipe');
+    else if (tab === 'agenda-equipe') navigate('/meus-agendamentos?view=team');
         else if (tab === 'novo-agendamento') navigate('/barberHome/novo-agendamento');
     };
 

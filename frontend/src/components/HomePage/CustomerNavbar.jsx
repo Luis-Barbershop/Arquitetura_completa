@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
     House,
     CalendarBlank,
-    Bell,
-    UserCircle,
     DotsThreeOutline,
     X,
     Lock,
@@ -62,11 +60,11 @@ function CustomerNavbar({ activeTab = 'home', onLogout }) {
                                 className={activeTab === id ? styles.navItemActive : styles.navItem}
                                 aria-label={label}
                             >
-                                <Icon
-                                    size={22}
-                                    weight={activeTab === id ? 'duotone' : 'regular'}
-                                    className={styles.navIcon}
-                                />
+                                {React.createElement(Icon, {
+                                    size: 22,
+                                    weight: activeTab === id ? 'duotone' : 'regular',
+                                    className: styles.navIcon,
+                                })}
                                 <span className={styles.navLabel}>{label}</span>
                             </button>
                         </li>

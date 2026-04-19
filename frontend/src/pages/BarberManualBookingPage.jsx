@@ -4,8 +4,21 @@ import { toast } from 'react-toastify';
 import { FiChevronUp, FiChevronDown } from 'react-icons/fi';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
-import { isCustomer, isOwnerUser } from '../services/userContext';
+import { isOwnerUser } from '../services/userContext';
 import { getMyAssignedActivities } from '../services/barbershopService';
+import { useAuthGuard } from '../hooks/useAuthGuard';
+import { navigateToBarberTab } from '../services/navigationService';
+import {
+    formatDateToApi,
+    formatCompactDate,
+    getRelativeDateLabel,
+    createDateOptionsBase,
+    hydrateDateOptionsWithAvailability,
+} from '../services/appointmentAvailabilityService';
+import {
+    isOfflineTransactionalError,
+    getOfflineTransactionalMessage,
+} from '../services/offlineTransactionalService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import styles from './CSS/BarberHomePage.module.css';
@@ -18,6 +31,10 @@ import bookingStyles from './CSS/BarberManualBooking.module.css';
  */
 function BarberManualBookingPage() {
     const navigate = useNavigate();
+    const { isAuthorized } = useAuthGuard({
+        allowCustomer: false,
+        allowBarber: true,
+    });
     const [barber, setBarber] = useState(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -36,60 +53,16 @@ function BarberManualBookingPage() {
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTime, setSelectedTime] = useState('');
     const [expandedPeriods, setExpandedPeriods] = useState({ morning: true, afternoon: true });
+    const [offlineTransactionalNotice, setOfflineTransactionalNotice] = useState('');
 
     // Resumo de preço/duração calculado
     const [summary, setSummary] = useState({ totalPrice: 0, totalDuration: 0 });
 
-    // ── Helpers de data ───────────────────────────────────────────────────
-    const WEEK_SHORT = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
-
-    const formatDateToApi = (dateObj) => {
-        const y = dateObj.getFullYear();
-        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-        const d = String(dateObj.getDate()).padStart(2, '0');
-        return `${y}-${m}-${d}`;
-    };
-
-    const formatCompact = (dateObj) =>
-        `${String(dateObj.getDate()).padStart(2, '0')}/${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
-
-    const getRelativeLabel = (dateObj, idx) => {
-        if (idx === 0) return 'Hoje';
-        if (idx === 1) return 'Amanhã';
-        return WEEK_SHORT[dateObj.getDay()];
-    };
-
-    const buildWindow = (days = 14) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return Array.from({ length: days }, (_, i) => {
-            const d = new Date(today);
-            d.setDate(today.getDate() + i);
-            return d;
-        });
-    };
-
-    const fetchSlots = async (barberId, dateObj, durationMinutes) => {
-        const res = await api.get('/appointments/availability', {
-            params: { barberId, date: formatDateToApi(dateObj), duration: durationMinutes || 30 },
-        });
-        const data = Array.isArray(res.data) ? res.data : [];
-        return data
-            .filter(s => s.available)
-            .map(s => {
-                const raw = s.startTime;
-                if (!raw) return null;
-                const part = raw.includes('T') ? raw.split('T')[1] : raw;
-                return part.substring(0, 5);
-            })
-            .filter(Boolean);
-    };
-
     // ── Auth guard + carrega barbeiro ──────────────────────────────────────
     useEffect(() => {
-        if (isCustomer()) { navigate('/homepage', { replace: true }); return; }
-        const token = localStorage.getItem('token');
-        if (!token) { navigate('/', { replace: true }); return; }
+        if (!isAuthorized) {
+            return;
+        }
 
         api.get('/auth/me')
             .then(res => {
@@ -110,7 +83,7 @@ function BarberManualBookingPage() {
             })
             .catch(() => navigate('/'))
             .finally(() => setLoading(false));
-    }, [navigate]);
+    }, [isAuthorized, navigate]);
 
     // ── Recalcula resumo quando seleção muda ──────────────────────────────
     useEffect(() => {
@@ -131,24 +104,18 @@ function BarberManualBookingPage() {
 
         const load = async () => {
             setIsLoadingDates(true);
+            setOfflineTransactionalNotice('');
             try {
-                const window = buildWindow(14);
-                const base = window.map((d, i) => ({
-                    key: formatDateToApi(d),
-                    date: d,
-                    label: getRelativeLabel(d, i),
-                    compact: formatCompact(d),
-                    slots: [],
-                    isAvailable: false,
+                const base = createDateOptionsBase(14).map((option, i) => ({
+                    ...option,
+                    label: getRelativeDateLabel(option.date, i),
+                    compact: formatCompactDate(option.date),
                 }));
 
-                const results = await Promise.allSettled(
-                    base.map(o => fetchSlots(barber.id, o.date, summary.totalDuration))
-                );
-
-                const hydrated = base.map((o, i) => {
-                    const slots = results[i].status === 'fulfilled' ? results[i].value : [];
-                    return { ...o, slots, isAvailable: slots.length > 0 };
+                const hydrated = await hydrateDateOptionsWithAvailability({
+                    barberId: barber.id,
+                    durationMinutes: summary.totalDuration,
+                    dateOptions: base,
                 });
 
                 setDateOptions(hydrated);
@@ -161,7 +128,10 @@ function BarberManualBookingPage() {
                     setSelectedDate(hydrated[0]?.date || null);
                     setSelectedTime('');
                 }
-            } catch {
+            } catch (error) {
+                if (isOfflineTransactionalError(error)) {
+                    setOfflineTransactionalNotice(getOfflineTransactionalMessage(error));
+                }
                 setDateOptions([]);
             } finally {
                 setIsLoadingDates(false);
@@ -197,14 +167,10 @@ function BarberManualBookingPage() {
     const handleLogout = async () => { await logoutUser(); navigate('/'); };
 
     const handleTabChange = (tab) => {
-        if (tab === 'novo-agendamento') return;
-        const routes = {
-            home: '/barberHome', agenda: '/meus-agendamentos',
-            servicos: '/barberHome/servicos', estoque: '/barberHome/estoque',
-            perfil: '/barberHome/perfil', time: '/barberHome/time',
-            dashboards: '/barberHome/dashboard', 'agenda-equipe': '/barberHome/agenda-equipe',
-        };
-        if (routes[tab]) navigate(routes[tab]);
+        navigateToBarberTab(tab, navigate, {
+            isOwner: Boolean(barber?.isOwner) || isOwnerUser(),
+            currentPath: '/barberHome/novo-agendamento',
+        });
     };
 
     const toggleActivity = useCallback((id) => {
@@ -215,6 +181,11 @@ function BarberManualBookingPage() {
 
     const handleSelectDate = (option) => {
         if (!option.isAvailable) return;
+        if (selectedDate && formatDateToApi(selectedDate) === option.key) {
+            setSelectedDate(null);
+            setSelectedTime('');
+            return;
+        }
         setSelectedDate(option.date);
         setSelectedTime(option.slots[0] || '');
     };
@@ -239,6 +210,7 @@ function BarberManualBookingPage() {
         };
 
         setSubmitting(true);
+        setOfflineTransactionalNotice('');
         try {
             await api.post('/appointments/barber-booking', payload);
             toast.success('Agendamento registrado com sucesso!');
@@ -247,6 +219,9 @@ function BarberManualBookingPage() {
             setSelectedActivityIds([]);
             setSelectedTime('');
         } catch (err) {
+            if (isOfflineTransactionalError(err)) {
+                setOfflineTransactionalNotice(getOfflineTransactionalMessage(err));
+            }
             const msg = err.response?.data?.message || 'Erro ao criar agendamento. Tente novamente.';
             err.response?.status === 409 ? toast.warn(msg) : toast.error(msg);
         } finally {
@@ -273,7 +248,7 @@ function BarberManualBookingPage() {
         transition: 'all 0.15s ease',
     });
 
-    if (loading) return <div className={styles.loadingContainer}>Carregando...</div>;
+    if (loading) return <div className={`${styles.loadingContainer} ca-state ca-state--loading`}>Carregando...</div>;
 
     const hasLinkedBarbershop = Boolean(barber?.barbershopId);
 
@@ -294,6 +269,12 @@ function BarberManualBookingPage() {
                     <h1>Encaixe</h1>
                     <p>Registre um atendimento presencial sem precisar que o cliente tenha conta no app.</p>
                 </section>
+
+                {offlineTransactionalNotice && (
+                    <p className="ca-state ca-state--error" style={{ margin: '0 0 16px' }}>
+                        {offlineTransactionalNotice}
+                    </p>
+                )}
 
                 <section className={styles.dashboardSection}>
                     <form onSubmit={handleSubmit} style={{ maxWidth: 700 }}>
@@ -328,7 +309,7 @@ function BarberManualBookingPage() {
                                 ✂️ Serviços
                             </h3>
                             {activities.length === 0 ? (
-                                <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
+                                <p className="ca-state ca-state--empty" style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
                                     Nenhum serviço disponível. Verifique se você vinculou suas habilidades.
                                 </p>
                             ) : (
@@ -371,7 +352,7 @@ function BarberManualBookingPage() {
                                 </h3>
 
                                 {isLoadingDates ? (
-                                    <p className={bookingStyles.loadingSlots}>Buscando disponibilidade...</p>
+                                    <p className={`${bookingStyles.loadingSlots} ca-state ca-state--loading`}>Buscando disponibilidade...</p>
                                 ) : (
                                     <div className={bookingStyles.dateModule}>
 
@@ -442,7 +423,7 @@ function BarberManualBookingPage() {
                                                                                 key={slot}
                                                                                 type="button"
                                                                                 className={`${bookingStyles.slotBtn} ${selectedTime === slot ? bookingStyles.slotSelected : ''}`}
-                                                                                onClick={() => setSelectedTime(slot)}
+                                                                                onClick={() => setSelectedTime((prev) => (prev === slot ? '' : slot))}
                                                                             >
                                                                                 {slot}
                                                                             </button>
@@ -456,7 +437,7 @@ function BarberManualBookingPage() {
                                             )}
 
                                             {selectedDate && currentSlots.length === 0 && (
-                                                <p className={bookingStyles.noSlots} style={{ marginTop: 12 }}>
+                                                <p className={`${bookingStyles.noSlots} ca-state ca-state--empty`} style={{ marginTop: 12 }}>
                                                     Nenhum horário disponível para este dia.
                                                 </p>
                                             )}

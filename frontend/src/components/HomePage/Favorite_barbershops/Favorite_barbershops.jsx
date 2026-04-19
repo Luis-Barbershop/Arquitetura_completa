@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom";
 import Styles from "./CSS/Favorite_barbershops.module.css"
 import { getAllBarbershops } from "../../../services/barbershopService";
@@ -6,10 +6,12 @@ import { getAllBarbershops } from "../../../services/barbershopService";
 function Favorite_barbershops({ favoriteIds = [] }) {
     const [favoriteBarbershops, setFavoriteBarbershops] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [hasError, setHasError] = useState(false);
     const navigate = useNavigate();
 
-    const loadFavorites = async () => {
+    const loadFavorites = useCallback(async () => {
         setLoading(true);
+        setHasError(false);
 
         try {
             if (favoriteIds.length === 0) {
@@ -23,15 +25,16 @@ function Favorite_barbershops({ favoriteIds = [] }) {
             setFavoriteBarbershops(filteredFavorites);
         } catch (error) {
             console.error("Erro ao carregar favoritos:", error);
+            setHasError(true);
             setFavoriteBarbershops([]);
         } finally {
             setLoading(false);
         }
-    };
+    }, [favoriteIds]);
 
     useEffect(() => {
         loadFavorites();
-    }, [favoriteIds]);
+    }, [loadFavorites]);
 
     return (
         <div className={Styles.favorite_barbershops_container}>
@@ -41,7 +44,11 @@ function Favorite_barbershops({ favoriteIds = [] }) {
             </div>
 
             {loading ? (
-                <p className={Styles.info_text}>Carregando favoritas...</p>
+                <p className={`${Styles.info_text} ca-state ca-state--loading`}>Carregando favoritas...</p>
+            ) : hasError ? (
+                <p className={`${Styles.info_text} ca-state ca-state--error`}>
+                    Nao foi possivel carregar suas favoritas agora. Tente novamente em instantes.
+                </p>
             ) : favoriteBarbershops.length > 0 ? (
                 <div className={Styles.favorites_list}>
                     {favoriteBarbershops.map((shop) => (
@@ -65,7 +72,7 @@ function Favorite_barbershops({ favoriteIds = [] }) {
                     ))}
                 </div>
             ) : (
-                <p className={Styles.info_text}>Voce ainda nao favoritou nenhuma barbearia.</p>
+                <p className={`${Styles.info_text} ca-state ca-state--empty`}>Voce ainda nao favoritou nenhuma barbearia.</p>
             )}
 
         </div>

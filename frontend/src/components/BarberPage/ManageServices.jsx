@@ -76,7 +76,7 @@ const ManageServices = () => {
             try {
                 await deleteService(id);
                 loadServices();
-            } catch (error) {
+            } catch {
                 alert("Erro ao excluir.");
             }
         }

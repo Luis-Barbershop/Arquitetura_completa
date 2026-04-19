@@ -6,7 +6,6 @@ import {
     Users,
     ChartBar,
     Package,
-    CalendarCheck,
     PlusCircle,
     UserCircle,
     DotsThreeOutline,
@@ -49,7 +48,6 @@ function BarberNavbar({ activeTab, onTabChange }) {
     const drawerItems = hasShop
         ? [
             { id: 'novo-agendamento', label: 'Novo Encaixe',   Icon: PlusCircle },
-            ...(isOwner ? [{ id: 'agenda-equipe', label: 'Agenda da Equipe', Icon: CalendarCheck }] : []),
             ...(isOwner ? [{ id: 'dashboards', label: 'Dashboard', Icon: ChartBar }] : []),
             ...(isOwner ? [{ id: 'estoque', label: 'Estoque', Icon: Package }] : []),
             { id: 'perfil', label: 'Meu Perfil', Icon: UserCircle },
@@ -71,11 +69,11 @@ function BarberNavbar({ activeTab, onTabChange }) {
                                 className={activeTab === id ? styles.navItemActive : styles.navItem}
                                 aria-label={label}
                             >
-                                <Icon
-                                    size={22}
-                                    weight={activeTab === id ? 'duotone' : 'regular'}
-                                    className={styles.navIcon}
-                                />
+                                {React.createElement(Icon, {
+                                    size: 22,
+                                    weight: activeTab === id ? 'duotone' : 'regular',
+                                    className: styles.navIcon,
+                                })}
                                 <span className={styles.navLabel}>{label}</span>
                             </button>
                         </li>
@@ -119,7 +117,10 @@ function BarberNavbar({ activeTab, onTabChange }) {
                                         className={activeTab === id ? styles.drawerItemActive : styles.drawerItem}
                                         onClick={() => handleTab(id)}
                                     >
-                                        <Icon size={20} weight={activeTab === id ? 'duotone' : 'regular'} />
+                                        {React.createElement(Icon, {
+                                            size: 20,
+                                            weight: activeTab === id ? 'duotone' : 'regular',
+                                        })}
                                         {label}
                                     </button>
                                 </li>

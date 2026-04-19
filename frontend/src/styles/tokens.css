@@ -1,0 +1,40 @@
+:root {
+  --ca-color-bg: #0f0f0f;
+  --ca-color-bg-elevated: #171717;
+  --ca-color-surface: #141414;
+  --ca-color-border: #2e2e2e;
+  --ca-color-border-strong: #3a3a3a;
+  --ca-color-text-primary: #f5f5f5;
+  --ca-color-text-secondary: #aca79e;
+  --ca-color-text-muted: #8f8f8f;
+  --ca-color-brand: #c19006;
+  --ca-color-brand-strong: #ddb441;
+  --ca-color-success: #2f9e44;
+  --ca-color-warning: #c19006;
+  --ca-color-danger: #d94848;
+
+  --ca-space-1: 4px;
+  --ca-space-2: 8px;
+  --ca-space-3: 12px;
+  --ca-space-4: 16px;
+  --ca-space-5: 24px;
+  --ca-space-6: 32px;
+
+  --ca-radius-sm: 10px;
+  --ca-radius-md: 14px;
+  --ca-radius-lg: 20px;
+
+  --ca-shadow-sm: 0 6px 18px rgb(0 0 0 / 25%);
+  --ca-shadow-md: 0 18px 34px rgb(0 0 0 / 34%);
+  --ca-shadow-lg: 0 24px 44px rgb(0 0 0 / 38%);
+
+  --ca-motion-fast: 120ms;
+  --ca-motion-base: 180ms;
+  --ca-motion-slow: 240ms;
+  --ca-motion-ease-enter: ease-out;
+  --ca-motion-ease-state: ease-in-out;
+
+  --ca-focus-ring-width: 2px;
+  --ca-focus-ring-color: rgb(193 144 6 / 60%);
+  --ca-focus-ring-offset: 2px;
+}

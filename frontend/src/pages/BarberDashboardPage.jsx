@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
-import { isCustomer, isOwnerUser } from '../services/userContext';
+import { useAuthGuard } from '../hooks/useAuthGuard';
+import { navigateToBarberTab } from '../services/navigationService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import styles from './CSS/BarberHomePage.module.css';
@@ -15,32 +16,25 @@ function BarberDashboardPage() {
     const navigate = useNavigate();
     const [barber, setBarber] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState(null);
+    const { isAuthorized } = useAuthGuard({
+        allowCustomer: false,
+        allowBarber: true,
+        requireOwner: true,
+        redirectIfOwnerDenied: '/barberHome',
+    });
 
     useEffect(() => {
-        // Guard: cliente não pode acessar painel de barbeiro
-        if (isCustomer()) {
-            navigate('/homepage', { replace: true });
-            return;
-        }
-        // Guard: dashboard é exclusivo de owner
-        if (!isOwnerUser()) {
-            navigate('/barberHome', { replace: true });
+        if (!isAuthorized) {
             return;
         }
 
-        const token = localStorage.getItem('token');
-        if (!token) {
-            navigate('/', { replace: true });
-            return;
-        }
         api.get('/auth/me')
             .then(res => {
                 setBarber(res.data);
                 setLoading(false);
             })
             .catch(() => { setLoading(false); navigate('/'); });
-    }, [navigate]);
+    }, [isAuthorized, navigate]);
 
     const handleLogout = async () => {
         await logoutUser();
@@ -48,14 +42,10 @@ function BarberDashboardPage() {
     };
 
     const handleTabChange = (tab) => {
-        if (tab === 'home') navigate('/barberHome');
-        else if (tab === 'agenda') navigate('/meus-agendamentos');
-        else if (tab === 'servicos') navigate('/barberHome/servicos');
-        else if (tab === 'estoque') navigate('/barberHome/estoque');
-        else if (tab === 'perfil') navigate('/barberHome/perfil');
-        else if (tab === 'time') navigate('/barberHome/time');
-        else if (tab === 'agenda-equipe') navigate('/barberHome/agenda-equipe');
-        else if (tab === 'novo-agendamento') navigate('/barberHome/novo-agendamento');
+        navigateToBarberTab(tab, navigate, {
+            isOwner: true,
+            currentPath: '/barberHome/dashboard',
+        });
     };
 
     const cardStyle = {

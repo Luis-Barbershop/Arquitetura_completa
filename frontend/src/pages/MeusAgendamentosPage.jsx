@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiCalendar, FiCheckCircle, FiClock, FiRefreshCw, FiScissors, FiXCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import Styles from './CSS/MeusAgendamentos.module.css';
-import { getMyAppointments, cancelAppointment } from '../services/appointmentService';
+import { getMyAppointments, cancelAppointment, getBarbershopSchedule } from '../services/appointmentService';
 import { createBarbershopReview } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
@@ -11,12 +11,19 @@ import CustomerHeader from '../components/HomePage/CustomerHeader';
 import CustomerNavbar from '../components/HomePage/CustomerNavbar';
 import { logoutUser } from '../services/authService';
 import { isCustomer as checkIsCustomer, isOwnerUser, isLoggedIn, getBarbershopId } from '../services/userContext';
+import {
+    isOfflineTransactionalError,
+    getOfflineTransactionalMessage,
+} from '../services/offlineTransactionalService';
 
 const MeusAgendamentosPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState('ALL');
+    const [agendaView, setAgendaView] = useState('mine');
+    const [teamDate, setTeamDate] = useState(new Date().toLocaleDateString('en-CA'));
     const [currentPage, setCurrentPage] = useState(1);
     const [cancelingAppointmentId, setCancelingAppointmentId] = useState(null);
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -26,13 +33,13 @@ const MeusAgendamentosPage = () => {
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
     const [reviewRating, setReviewRating] = useState(5);
     const [reviewComment, setReviewComment] = useState('');
+    const [offlineTransactionalNotice, setOfflineTransactionalNotice] = useState('');
 
     // Determina o papel com base na chave correta do localStorage ('userRole')
     const isCustomer = checkIsCustomer();
     const isOwner = isOwnerUser();
     const barbershopId = getBarbershopId();
     const userName = localStorage.getItem('userName') || (isCustomer ? 'Cliente' : 'Profissional');
-    const firstName = userName.split(' ')[0];
 
     // Guard: redireciona para login se não estiver logado
     useEffect(() => {
@@ -42,27 +49,48 @@ const MeusAgendamentosPage = () => {
     }, [navigate]);
 
     useEffect(() => {
-        carregarAgendamentos();
-    }, []);
+        if (isCustomer || !isOwner) {
+            setAgendaView('mine');
+            return;
+        }
 
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [activeFilter]);
+        const params = new URLSearchParams(location.search);
+        setAgendaView(params.get('view') === 'team' ? 'team' : 'mine');
+    }, [location.search, isCustomer, isOwner]);
 
-    const carregarAgendamentos = async () => {
+    const carregarAgendamentos = useCallback(async () => {
+        setOfflineTransactionalNotice('');
         try {
-            const data = await getMyAppointments();
-            // Ordenar: Mais recentes primeiro
+            let data = [];
+
+            if (!isCustomer && isOwner && agendaView === 'team') {
+                data = await getBarbershopSchedule(barbershopId, teamDate);
+            } else {
+                data = await getMyAppointments();
+            }
+
             const sorted = data.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
             setAppointments(sorted);
         } catch (error) {
             console.error("Erro ao buscar agendamentos:", error);
-            toast.error('Nao foi possivel carregar seus agendamentos.');
+            if (isOfflineTransactionalError(error)) {
+                setOfflineTransactionalNotice(getOfflineTransactionalMessage(error));
+            } else {
+                toast.error('Nao foi possivel carregar seus agendamentos.');
+            }
             setAppointments([]);
         } finally {
             setLoading(false);
         }
-    };
+    }, [agendaView, barbershopId, isCustomer, isOwner, teamDate]);
+
+    useEffect(() => {
+        carregarAgendamentos();
+    }, [carregarAgendamentos]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeFilter]);
 
     const handleOpenCancelModal = (id) => {
         setCancelingAppointmentId(id);
@@ -212,7 +240,19 @@ const MeusAgendamentosPage = () => {
     ];
 
     const handleBarberTabChange = (tab) => {
-        if (tab === 'agenda') return;
+        if (tab === 'agenda') {
+            setAgendaView('mine');
+            navigate('/meus-agendamentos');
+            return;
+        }
+
+        if (tab === 'agenda-equipe') {
+            if (isOwner) {
+                setAgendaView('team');
+                navigate('/meus-agendamentos?view=team');
+            }
+            return;
+        }
 
         if (tab === 'home') {
             navigate('/barberHome');
@@ -241,11 +281,6 @@ const MeusAgendamentosPage = () => {
 
         if (tab === 'dashboards') {
             navigate('/barberHome/dashboard');
-            return;
-        }
-
-        if (tab === 'agenda-equipe') {
-            navigate('/barberHome/agenda-equipe');
             return;
         }
 
@@ -290,20 +325,63 @@ const MeusAgendamentosPage = () => {
                 )}
 
                 <section className={Styles.heroBlock}>
-                    <p className={Styles.kicker}>{isCustomer ? 'PAINEL DE AGENDAMENTOS' : 'MINHA AGENDA'}</p>
-                    <h1 className={Styles.title}>{isCustomer ? 'Acompanhe seus proximos cortes' : 'Organize seus atendimentos'}</h1>
-                    <p className={Styles.subtitle}>Visualize status, horario e servicos de cada agendamento em um fluxo mais claro.</p>
+                    <p className={Styles.kicker}>{isCustomer ? 'PAINEL DE AGENDAMENTOS' : (agendaView === 'team' ? 'AGENDA DA EQUIPE' : 'MINHA AGENDA')}</p>
+                    <h1 className={Styles.title}>
+                        {isCustomer
+                            ? 'Acompanhe seus proximos cortes'
+                            : (agendaView === 'team' ? 'Visualize os atendimentos da equipe' : 'Organize seus atendimentos')}
+                    </h1>
+                    <p className={Styles.subtitle}>
+                        {agendaView === 'team'
+                            ? 'Visão consolidada dos atendimentos da barbearia no dia selecionado.'
+                            : 'Visualize status, horario e servicos de cada agendamento em um fluxo mais claro.'}
+                    </p>
                 </section>
+
+                {offlineTransactionalNotice && (
+                    <p className={`${Styles.empty} ca-state ca-state--error`}>
+                        {offlineTransactionalNotice}
+                    </p>
+                )}
 
                 {!isCustomer && (
                     <div className={Styles.filtersRow}>
                         {isOwner && (
-                            <button
-                                className={Styles.filterButton}
-                                onClick={() => navigate('/barberHome/agenda-equipe')}
-                            >
-                                Agenda da Equipe
-                            </button>
+                            <>
+                                <button
+                                    className={agendaView === 'mine' ? Styles.filterButtonActive : Styles.filterButton}
+                                    onClick={() => {
+                                        setAgendaView('mine');
+                                        navigate('/meus-agendamentos');
+                                    }}
+                                >
+                                    Minha Agenda
+                                </button>
+                                <button
+                                    className={agendaView === 'team' ? Styles.filterButtonActive : Styles.filterButton}
+                                    onClick={() => {
+                                        setAgendaView('team');
+                                        navigate('/meus-agendamentos?view=team');
+                                    }}
+                                >
+                                    Agenda da Equipe
+                                </button>
+
+                                {agendaView === 'team' && (
+                                    <>
+                                        <input
+                                            type="date"
+                                            value={teamDate}
+                                            onChange={(e) => setTeamDate(e.target.value)}
+                                            className={Styles.filterButton}
+                                            style={{ cursor: 'pointer' }}
+                                        />
+                                        <button className={Styles.filterButton} onClick={() => setTeamDate(new Date().toLocaleDateString('en-CA'))}>
+                                            Hoje
+                                        </button>
+                                    </>
+                                )}
+                            </>
                         )}
                     </div>
                 )}
@@ -321,9 +399,9 @@ const MeusAgendamentosPage = () => {
                 </div>
 
                 {loading ? (
-                    <div className={Styles.loadingState}>Carregando agendamentos...</div>
+                    <div className={`${Styles.loadingState} ca-state ca-state--loading`}>Carregando agendamentos...</div>
                 ) : filteredAppointments.length === 0 ? (
-                    <div className={Styles.empty}>
+                    <div className={`${Styles.empty} ca-state ca-state--empty`}>
                         <h3>Nenhum agendamento neste filtro.</h3>
                         {isCustomer && <p>Que tal marcar um horário agora?</p>}
                     </div>
@@ -343,7 +421,9 @@ const MeusAgendamentosPage = () => {
                                         <span className={Styles.mainInfo}>
                                             {isCustomer 
                                                 ? `Com: ${app.barberName} (${app.barbershopName})`
-                                                : `Cliente: ${app.customerName}`
+                                                : (agendaView === 'team'
+                                                    ? `Barbeiro: ${app.barberName || 'Barbeiro'} • Cliente: ${app.customerName || 'Cliente'}`
+                                                    : `Cliente: ${app.customerName}`)
                                             }
                                         </span>
 
@@ -362,8 +442,8 @@ const MeusAgendamentosPage = () => {
                                         </span>
                                     </div>
 
-                                    {/* Botão Cancelar apenas se estiver Agendado */}
-                                    {app.status === 'SCHEDULED' && (
+                                    {/* Permite cancelar agendado/confirmado/encaixe */}
+                                    {['SCHEDULED', 'CONFIRMED', 'WALK_IN'].includes(app.status) && (
                                         <button 
                                             className={Styles.cancelButton}
                                             onClick={() => handleOpenCancelModal(app.id)}

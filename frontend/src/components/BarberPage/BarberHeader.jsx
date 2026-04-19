@@ -4,7 +4,6 @@ import { toast } from 'react-toastify';
 import {
     House,
     CalendarBlank,
-    CalendarCheck,
     PlusCircle,
     Scissors,
     Users,
@@ -30,7 +29,7 @@ import styles from './CSS/BarberHeader.module.css';
  * Visibilidade por perfil:
  *   sem barbearia  → Home
  *   com barbearia  → + Agenda ▾ (Minha Agenda, Novo Encaixe) + Serviços
- *   owner          → + Agenda da Equipe + Meu Time + Gestão ▾ (Dashboard, Estoque)
+ *   owner          → + Meu Time + Gestão ▾ (Dashboard, Estoque)
  *
  * Avatar dropdown (todos):
  *   Meu Perfil | Alterar Senha (e-mail) | Vincular MP (owner) | Sair
@@ -91,11 +90,10 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
 
     const agendaSubItems = [
         { id: 'agenda',           label: 'Minha Agenda',     icon: <CalendarBlank size={15} weight="duotone" /> },
-        ...(isOwner && hasShop ? [{ id: 'agenda-equipe', label: 'Agenda da Equipe', icon: <CalendarCheck size={15} weight="duotone" /> }] : []),
         ...(hasShop             ? [{ id: 'novo-agendamento', label: 'Novo Encaixe', icon: <PlusCircle size={15} weight="duotone" /> }] : []),
     ];
 
-    const agendaActive  = ['agenda', 'agenda-equipe', 'novo-agendamento'].includes(activeTab);
+    const agendaActive  = ['agenda', 'novo-agendamento'].includes(activeTab);
     const gestaoActive  = ['dashboards', 'estoque'].includes(activeTab);
 
     const initials = barber?.name

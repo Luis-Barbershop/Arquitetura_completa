@@ -66,6 +66,11 @@ mercadopago:
   redirect-uri: ${MP_REDIRECT_URI:http://localhost:8080/api/payments/mp-callback}
   notification-url: ${MP_NOTIFICATION_URL:http://localhost:8080/api/payments/webhook}
   marketplace-fee-percent: 5.0
+  webhook:
+    # Segredo de assinatura do webhook (Mercado Pago) — quando vazio, validação é desativada (compatibilidade local).
+    secret: ${MP_WEBHOOK_SECRET:}
+    # Janela máxima (segundos) para aceitar assinatura do webhook e mitigar replay.
+    replay-window-seconds: ${MP_WEBHOOK_REPLAY_WINDOW_SECONDS:300}
 
 # ==================================================
 # SPRINGDOC / SWAGGER UI

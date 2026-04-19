@@ -114,7 +114,7 @@ function BarberStockPage() {
     }
 
     if (tab === 'agenda-equipe') {
-      navigate('/barberHome/agenda-equipe');
+      navigate('/meus-agendamentos?view=team');
     }
   };
 

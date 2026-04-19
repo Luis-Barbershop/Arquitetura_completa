@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiRefreshCw, FiChevronUp, FiChevronDown } from "react-icons/fi";
 import { toast } from "react-toastify";
@@ -8,9 +8,15 @@ import ServicesAgendamento from "../components/AgendamentoPage/ServicesAgendamen
 import CustomerHeader from "../components/HomePage/CustomerHeader";
 import CustomerNavbar from "../components/HomePage/CustomerNavbar";
 import { logoutUser } from "../services/authService";
+import {
+  isOfflineTransactionalError,
+  getOfflineTransactionalMessage,
+} from "../services/offlineTransactionalService";
 
 import api from "../services/api";
 import { getShopBarbers, getShopServices } from "../services/barbershopService";
+
+const WEEK_DAY_SHORT = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
 
 const AgendamentoPage = () => {
   const { barbershopId } = useParams();
@@ -29,8 +35,42 @@ const AgendamentoPage = () => {
   const [isLoadingDateOptions, setIsLoadingDateOptions] = useState(false);
   const [selectedTime, setSelectedTime] = useState("");
   const [expandedPeriods, setExpandedPeriods] = useState({ morning: true, afternoon: true });
+  const [offlineTransactionalNotice, setOfflineTransactionalNotice] = useState("");
 
-  const fetchDateSlots = async (barberId, dateObj, durationMinutes) => {
+  const formatDateToApi = useCallback((dateObj) => {
+    if (!dateObj) return "";
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  const getDateKey = useCallback((dateObj) => formatDateToApi(dateObj), [formatDateToApi]);
+
+  const buildDateWindow = useCallback((daysToShow = 14) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return Array.from({ length: daysToShow }, (_, index) => {
+      const nextDate = new Date(today);
+      nextDate.setDate(today.getDate() + index);
+      return nextDate;
+    });
+  }, []);
+
+  const formatCompactDate = useCallback((dateObj) => {
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    return `${day}/${month}`;
+  }, []);
+
+  const getRelativeDateLabel = useCallback((dateObj, index) => {
+    if (index === 0) return "Hoje";
+    if (index === 1) return "Amanhã";
+    return WEEK_DAY_SHORT[dateObj.getDay()];
+  }, []);
+
+  const fetchDateSlots = useCallback(async (barberId, dateObj, durationMinutes) => {
     // Endpoint correto: /appointments/availability?barberId=&date=&duration=
     const response = await api.get(`/appointments/availability`, {
       params: {
@@ -53,7 +93,7 @@ const AgendamentoPage = () => {
         return timePart.substring(0, 5); // "09:00"
       })
       .filter(Boolean);
-  };
+  }, [formatDateToApi]);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [isSubmittingAppointment, setIsSubmittingAppointment] = useState(false);
   // null = ainda não escolheu, 'local' = pagar na barbearia, 'online' = pagar via MP
@@ -76,8 +116,6 @@ const AgendamentoPage = () => {
   const totalDuration = selectedServices.reduce((acc, curr) => acc + curr.durationMinutes, 0);
   const totalPrice = selectedServices.reduce((acc, curr) => acc + curr.price, 0);
 
-  const weekDayShort = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
-
   const formatCurrency = (value) => (
     new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -85,41 +123,10 @@ const AgendamentoPage = () => {
     }).format(value)
   );
 
-  const formatDateToApi = (dateObj) => {
-    if (!dateObj) return "";
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-    const day = String(dateObj.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
-  const getDateKey = (dateObj) => formatDateToApi(dateObj);
-
-  const buildDateWindow = (daysToShow = 14) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return Array.from({ length: daysToShow }, (_, index) => {
-      const nextDate = new Date(today);
-      nextDate.setDate(today.getDate() + index);
-      return nextDate;
-    });
-  };
-
-  const formatCompactDate = (dateObj) => {
-    const day = String(dateObj.getDate()).padStart(2, "0");
-    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-    return `${day}/${month}`;
-  };
-
-  const getRelativeDateLabel = (dateObj, index) => {
-    if (index === 0) return "Hoje";
-    if (index === 1) return "Amanhã";
-    return weekDayShort[dateObj.getDay()];
-  };
-
   useEffect(() => {
     const initializeDateOptions = async () => {
+      setOfflineTransactionalNotice("");
+
       if (!selectedBarber || selectedServices.length === 0 || totalDuration <= 0) {
         setDateOptions([]);
         setSelectedDate(null);
@@ -170,6 +177,9 @@ const AgendamentoPage = () => {
         }
       } catch (error) {
         console.error("Erro ao preparar datas:", error);
+        if (isOfflineTransactionalError(error)) {
+          setOfflineTransactionalNotice(getOfflineTransactionalMessage(error));
+        }
         setDateOptions([]);
         setSelectedDate(null);
         setAvailableSlots([]);
@@ -180,7 +190,17 @@ const AgendamentoPage = () => {
     };
 
     initializeDateOptions();
-  }, [selectedBarber, selectedServices, totalDuration]);
+  }, [
+    buildDateWindow,
+    fetchDateSlots,
+    formatCompactDate,
+    getDateKey,
+    getRelativeDateLabel,
+    selectedBarber,
+    selectedDate,
+    selectedServices.length,
+    totalDuration,
+  ]);
 
   const formatDateForSummary = (rawDate) => {
     if (!rawDate) return "--";
@@ -226,15 +246,6 @@ const AgendamentoPage = () => {
       .map((part) => part[0])
       .join("")
       .toUpperCase();
-  };
-
-  const clearSelections = () => {
-    setSelectedServices([]);
-    setSelectedBarber(null);
-    setSelectedDate(null);
-    setDateOptions([]);
-    setSelectedTime("");
-    setAvailableSlots([]);
   };
 
   const handleLogout = () => {
@@ -338,6 +349,8 @@ const AgendamentoPage = () => {
 
   useEffect(() => {
     const syncSelectedDateSlots = async () => {
+      setOfflineTransactionalNotice("");
+
       if (!selectedDate || !selectedBarber || totalDuration <= 0) {
         setAvailableSlots([]);
         setSelectedTime("");
@@ -372,6 +385,9 @@ const AgendamentoPage = () => {
           return;
         } catch (error) {
           console.error("Erro ao buscar horários da data selecionada:", error);
+          if (isOfflineTransactionalError(error)) {
+            setOfflineTransactionalNotice(getOfflineTransactionalMessage(error));
+          }
           setAvailableSlots([]);
           setSelectedTime("");
           return;
@@ -387,7 +403,7 @@ const AgendamentoPage = () => {
     };
 
     syncSelectedDateSlots();
-  }, [selectedDate, dateOptions, selectedTime, selectedBarber, totalDuration]);
+  }, [selectedDate, dateOptions, selectedTime, selectedBarber, totalDuration, fetchDateSlots, getDateKey]);
 
   // Handler: Selecionar/Deselecionar Serviço
   const handleServiceToggle = (service) => {
@@ -432,6 +448,7 @@ const AgendamentoPage = () => {
   const handleAgendar = async () => {
     try {
       setIsSubmittingAppointment(true);
+      setOfflineTransactionalNotice("");
 
       let timeString = selectedTime;
       if (timeString.length === 5) {
@@ -458,6 +475,10 @@ const AgendamentoPage = () => {
       toast.success("Agendamento realizado com sucesso!");
       navigate("/meus-agendamentos");
     } catch (error) {
+      if (isOfflineTransactionalError(error)) {
+        setOfflineTransactionalNotice(getOfflineTransactionalMessage(error));
+      }
+
       if (error.response && error.response.data) {
         toast.error(`Erro: ${error.response.data.message || "Falha ao agendar"}`);
       } else {
@@ -472,6 +493,7 @@ const AgendamentoPage = () => {
   const handleAgendarOnline = async () => {
     try {
       setIsSubmittingAppointment(true);
+      setOfflineTransactionalNotice("");
 
       let timeString = selectedTime;
       if (timeString.length === 5) timeString = `${timeString}:00`;
@@ -513,6 +535,10 @@ const AgendamentoPage = () => {
         navigate("/meus-agendamentos");
       }
     } catch (error) {
+      if (isOfflineTransactionalError(error)) {
+        setOfflineTransactionalNotice(getOfflineTransactionalMessage(error));
+      }
+
       if (error.response?.data) {
         toast.error(`Erro: ${error.response.data.message || "Falha ao iniciar pagamento"}`);
       } else {
@@ -524,8 +550,8 @@ const AgendamentoPage = () => {
   };
 
   return (
-    <div className={Styles.page_container}>
-      <div className={Styles.content_container}>
+    <div className={`ca-page ${Styles.page_container}`}>
+      <div className={`ca-container ${Styles.content_container}`}>
         <CustomerHeader activeTab="agendamentos" onLogout={handleLogout} />
         <CustomerNavbar activeTab="agendamentos" onLogout={handleLogout} />
 
@@ -534,6 +560,12 @@ const AgendamentoPage = () => {
           <h1 className={Styles.title}>Monte seu horário em poucos passos</h1>
           <p className={Styles.subtitle}>Selecione serviços, profissional, data e horário. Antes de confirmar, você verá um resumo completo.</p>
         </section>
+
+        {offlineTransactionalNotice && (
+          <p className={`${Styles.warning} ca-state ca-state--error`}>
+            {offlineTransactionalNotice}
+          </p>
+        )}
 
         <section className={Styles.section}>
           <h3 className={Styles.section_title}>1. Serviços</h3>
@@ -598,7 +630,16 @@ const AgendamentoPage = () => {
                       className={`${Styles.barberCard} ${isSelected ? Styles.barberCardSelected : ''} ${isDisabled ? Styles.barberCardDisabled : ''}`}
                       onClick={() => {
                         if (isDisabled) return;
+                        if (isSelected) {
+                          setSelectedBarber(null);
+                          setSelectedDate(null);
+                          setSelectedTime("");
+                          setDateOptions([]);
+                          setAvailableSlots([]);
+                          return;
+                        }
                         setSelectedBarber(barber.id);
+                        setSelectedDate(null);
                         setSelectedTime("");
                       }}
                       title={isDisabled ? 'Este profissional não realiza todos os serviços selecionados' : barber.name}
@@ -653,6 +694,12 @@ const AgendamentoPage = () => {
                       className={`${Styles.dateChip} ${selectedDate && option.key === getDateKey(selectedDate) ? Styles.dateChipSelected : ''}`}
                       onClick={() => {
                         if (option.status === "loaded" && !option.isAvailable) return;
+                        if (selectedDate && option.key === getDateKey(selectedDate)) {
+                          setSelectedDate(null);
+                          setSelectedTime("");
+                          setAvailableSlots([]);
+                          return;
+                        }
                         setSelectedDate(option.date);
                         setSelectedTime("");
                       }}
@@ -705,7 +752,7 @@ const AgendamentoPage = () => {
                           <button
                             key={time}
                             className={`${Styles.slot_button} ${selectedTime === time ? Styles.slot_selected : ''}`}
-                            onClick={() => setSelectedTime(time)}
+                            onClick={() => setSelectedTime((prev) => (prev === time ? "" : time))}
                           >
                             {time.substring(0, 5)}
                           </button>
@@ -736,7 +783,7 @@ const AgendamentoPage = () => {
                           <button
                             key={time}
                             className={`${Styles.slot_button} ${selectedTime === time ? Styles.slot_selected : ''}`}
-                            onClick={() => setSelectedTime(time)}
+                            onClick={() => setSelectedTime((prev) => (prev === time ? "" : time))}
                           >
                             {time.substring(0, 5)}
                           </button>
