@@ -3,6 +3,7 @@ package ifsp.edu.projeto.cortaai.paymentservice.controller;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.CreatePaymentDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialOverviewDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.MpConnectionStatusDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.TransactionDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.paymentservice.service.PaymentService;
@@ -81,6 +82,21 @@ public class PaymentController {
             @Parameter(description = "Firebase UID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
         return ResponseEntity.ok(paymentService.getMyPaymentsByFirebaseUid(firebaseUid));
     }
+
+        @Operation(summary = "Status da conexão Mercado Pago", description = "Retorna o status de vínculo da conta Mercado Pago do owner autenticado.")
+        @GetMapping("/mp-status")
+        public ResponseEntity<MpConnectionStatusDTO> getMpConnectionStatus(
+                        @Parameter(description = "Firebase UID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
+                return ResponseEntity.ok(paymentService.getMpConnectionStatusByFirebaseUid(firebaseUid));
+        }
+
+        @Operation(summary = "Desvincular conta Mercado Pago", description = "Remove as credenciais OAuth de Mercado Pago do owner autenticado.")
+        @PutMapping("/mp-disconnect")
+        public ResponseEntity<Void> disconnectMpConnection(
+                        @Parameter(description = "Firebase UID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
+                paymentService.disconnectMpByFirebaseUid(firebaseUid);
+                return ResponseEntity.noContent().build();
+        }
 
     @Operation(summary = "Resumo financeiro da barbearia", description = "Retorna receita de serviços, gastos com produtos (estoque interno), valor atual dos bens em estoque e resultado operacional no período.")
     @GetMapping("/my-shop/overview")

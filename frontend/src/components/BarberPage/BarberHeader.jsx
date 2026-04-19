@@ -47,6 +47,8 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
     const [agendaOpen, setAgendaOpen] = useState(false);
     const [gestaoOpen, setGestaoOpen] = useState(false);
     const [avatarOpen, setAvatarOpen] = useState(false);
+    const [mpStatusLoading, setMpStatusLoading] = useState(false);
+    const [mpStatus, setMpStatus] = useState({ linked: false, mpUserIdMasked: null, hasPublicKey: false });
 
     const agendaRef = useRef(null);
     const gestaoRef = useRef(null);
@@ -61,6 +63,31 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
     }, []);
+
+    useEffect(() => {
+        const loadMpStatus = async () => {
+            if (!isOwner) {
+                setMpStatus({ linked: false, mpUserIdMasked: null, hasPublicKey: false });
+                return;
+            }
+            try {
+                setMpStatusLoading(true);
+                const response = await api.get('/payments/mp-status');
+                const data = response.data || {};
+                setMpStatus({
+                    linked: Boolean(data.linked),
+                    mpUserIdMasked: data.mpUserIdMasked || null,
+                    hasPublicKey: Boolean(data.hasPublicKey)
+                });
+            } catch {
+                setMpStatus({ linked: false, mpUserIdMasked: null, hasPublicKey: false });
+            } finally {
+                setMpStatusLoading(false);
+            }
+        };
+
+        loadMpStatus();
+    }, [isOwner]);
 
     const agendaSubItems = [
         { id: 'agenda',           label: 'Minha Agenda',     icon: <CalendarBlank size={15} weight="duotone" /> },
@@ -84,6 +111,17 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
             if (authUrl) window.location.href = authUrl;
         } catch {
             toast.error('Não foi possível iniciar a vinculação com o Mercado Pago. Tente novamente.');
+        }
+    };
+
+    const handleMpDisconnect = async () => {
+        if (!window.confirm('Deseja desvincular a conta do Mercado Pago?')) return;
+        try {
+            await api.put('/payments/mp-disconnect');
+            setMpStatus({ linked: false, mpUserIdMasked: null, hasPublicKey: false });
+            toast.success('Conta Mercado Pago desvinculada com sucesso.');
+        } catch {
+            toast.error('Não foi possível desvincular a conta Mercado Pago.');
         }
     };
 
@@ -213,9 +251,25 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
                                 </button>
                             )}
                             {isOwner && (
-                                <button className={styles.dropdownItem} onClick={() => { handleMpConnect(); setAvatarOpen(false); }}>
-                                    <CreditCard size={15} weight="duotone" /> Vincular Mercado Pago
-                                </button>
+                                <>
+                                    <div className={styles.dropdownInfo}>
+                                        {mpStatusLoading
+                                            ? 'Mercado Pago: verificando...'
+                                            : mpStatus.linked
+                                                ? `Mercado Pago conectado (${mpStatus.mpUserIdMasked || 'conta vinculada'})`
+                                                : 'Mercado Pago não conectado'}
+                                    </div>
+
+                                    {!mpStatus.linked ? (
+                                        <button className={styles.dropdownItem} onClick={() => { handleMpConnect(); setAvatarOpen(false); }}>
+                                            <CreditCard size={15} weight="duotone" /> Vincular Mercado Pago
+                                        </button>
+                                    ) : (
+                                        <button className={styles.dropdownItem} onClick={() => { handleMpDisconnect(); setAvatarOpen(false); }}>
+                                            <CreditCard size={15} weight="duotone" /> Desvincular Mercado Pago
+                                        </button>
+                                    )}
+                                </>
                             )}
                             <div className={styles.dropdownDivider} />
                             <button className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`} onClick={onLogout}>

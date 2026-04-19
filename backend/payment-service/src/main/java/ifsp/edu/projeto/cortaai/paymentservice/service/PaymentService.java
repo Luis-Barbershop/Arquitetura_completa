@@ -8,15 +8,18 @@ import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialOverviewDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesPointDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.InventoryFinancialSummaryDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.MpConnectionStatusDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.TransactionDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.UserInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.event.PaymentApprovedEvent;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.ProductServiceClient;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.ScheduleServiceClient;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.UserServiceClient;
+import ifsp.edu.projeto.cortaai.paymentservice.model.DashboardKpiDaily;
 import ifsp.edu.projeto.cortaai.paymentservice.model.PaymentStatus;
 import ifsp.edu.projeto.cortaai.paymentservice.model.Transaction;
 import ifsp.edu.projeto.cortaai.paymentservice.model.WebhookLog;
+import ifsp.edu.projeto.cortaai.paymentservice.repository.DashboardKpiDailyRepository;
 import ifsp.edu.projeto.cortaai.paymentservice.repository.TransactionRepository;
 import ifsp.edu.projeto.cortaai.paymentservice.repository.WebhookLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +51,7 @@ public class PaymentService {
 
     private final TransactionRepository transactionRepository;
     private final WebhookLogRepository webhookLogRepository;
+    private final DashboardKpiDailyRepository dashboardKpiDailyRepository;
     private final ScheduleServiceClient scheduleServiceClient;
     private final UserServiceClient userServiceClient;
     private final ProductServiceClient productServiceClient;
@@ -198,6 +202,7 @@ public class PaymentService {
                     .orElseThrow(() -> new RuntimeException("Transação não encontrada para appointment: " + appointmentId));
 
             transaction.setMpPaymentId(resourceId);
+            PaymentStatus previousStatus = transaction.getStatus();
 
             // Mapear status do MP para nosso enum
             PaymentStatus newStatus = mapMpStatus(mpStatus);
@@ -205,7 +210,9 @@ public class PaymentService {
             transactionRepository.save(transaction);
 
             // Se aprovado: atualizar schedule + publicar evento
-            if (newStatus == PaymentStatus.APPROVED) {
+            if (newStatus == PaymentStatus.APPROVED && previousStatus != PaymentStatus.APPROVED) {
+                updateDailyKpiProjectionForApproved(transaction);
+
                 // Atualizar status no schedule-service via Feign
                 try {
                     scheduleServiceClient.updatePaymentStatus(appointmentId, "CONFIRMED");
@@ -288,6 +295,20 @@ public class PaymentService {
     }
 
     @Transactional(readOnly = true)
+    public MpConnectionStatusDTO getMpConnectionStatusByFirebaseUid(String firebaseUid) {
+        UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        validateOwnerBarber(user);
+        return userServiceClient.getBarberMpStatus(user.getId());
+    }
+
+    @Transactional
+    public void disconnectMpByFirebaseUid(String firebaseUid) {
+        UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        validateOwnerBarber(user);
+        userServiceClient.disconnectBarberMp(user.getId());
+    }
+
+    @Transactional(readOnly = true)
     public FinancialOverviewDTO getBarbershopOverviewByFirebaseUid(
             String firebaseUid,
             UUID barbershopId,
@@ -328,6 +349,15 @@ public class PaymentService {
 
         BigDecimal serviceRevenue = transactionRepository.sumAmountByBarbershopAndStatusAndCreatedAtBetween(
                 barbershopId, PaymentStatus.APPROVED, start, end);
+
+        if (startDate.equals(endDate)) {
+            DashboardKpiDaily kpi = dashboardKpiDailyRepository
+                    .findByBarbershopIdAndReferenceDate(barbershopId, startDate)
+                    .orElse(null);
+            if (kpi != null && kpi.getApprovedRevenue() != null) {
+                serviceRevenue = kpi.getApprovedRevenue();
+            }
+        }
 
         List<AppointmentInfoDTO> walkInAppointments = getWalkInAppointments(barbershopId, start, end);
         BigDecimal walkInRevenue = walkInAppointments.stream()
@@ -460,6 +490,35 @@ public class PaymentService {
         return date;
     }
 
+        private void updateDailyKpiProjectionForApproved(Transaction transaction) {
+            if (transaction.getBarbershopId() == null) {
+                log.warn("Transação {} sem barbershopId; projeção diária não atualizada.", transaction.getId());
+                return;
+            }
+
+            LocalDate referenceDate = (transaction.getCreatedAt() != null)
+                    ? transaction.getCreatedAt().toLocalDate()
+                    : LocalDate.now();
+
+            DashboardKpiDaily kpi = dashboardKpiDailyRepository
+                    .findByBarbershopIdAndReferenceDate(transaction.getBarbershopId(), referenceDate)
+                    .orElseGet(() -> DashboardKpiDaily.builder()
+                            .barbershopId(transaction.getBarbershopId())
+                            .referenceDate(referenceDate)
+                            .approvedRevenue(BigDecimal.ZERO)
+                            .approvedTransactionsCount(0)
+                            .build());
+
+            BigDecimal currentRevenue = kpi.getApprovedRevenue() == null ? BigDecimal.ZERO : kpi.getApprovedRevenue();
+            BigDecimal txAmount = transaction.getAmount() == null ? BigDecimal.ZERO : transaction.getAmount();
+            Integer currentCount = kpi.getApprovedTransactionsCount() == null ? 0 : kpi.getApprovedTransactionsCount();
+
+            kpi.setApprovedRevenue(currentRevenue.add(txAmount));
+            kpi.setApprovedTransactionsCount(currentCount + 1);
+
+            dashboardKpiDailyRepository.save(kpi);
+        }
+
     @Transactional(readOnly = true)
     public boolean canAccessBarbershopFinancials(UUID userId, UUID barbershopId, boolean ownerOnly) {
         UserInfoDTO user = userServiceClient.getUserById(userId);
@@ -490,6 +549,20 @@ public class PaymentService {
         }
 
         return barbershopId.equals(user.getBarbershopId());
+    }
+
+    private void validateOwnerBarber(UserInfoDTO user) {
+        if (user == null || user.getId() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario nao autenticado.");
+        }
+        if (!"BARBER".equalsIgnoreCase(user.getUserType())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas barbeiros podem gerenciar o Mercado Pago.");
+        }
+
+        String role = user.getRole() == null ? "" : user.getRole().toUpperCase(Locale.ROOT);
+        if (!role.contains("OWNER")) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas owner pode vincular/desvincular conta Mercado Pago.");
+        }
     }
 
     private PaymentStatus mapMpStatus(String mpStatus) {

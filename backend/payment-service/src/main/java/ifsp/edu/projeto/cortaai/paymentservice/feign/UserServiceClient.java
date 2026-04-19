@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.paymentservice.feign;
 
+import ifsp.edu.projeto.cortaai.paymentservice.dto.MpConnectionStatusDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.SaveMpCredentialsDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.UserInfoDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -25,4 +26,10 @@ public interface UserServiceClient {
 
     @GetMapping("/api/internal/users/by-firebase-uid/{uid}")
     UserInfoDTO getUserByFirebaseUid(@PathVariable("uid") String uid);
+
+    @GetMapping("/api/internal/users/barbers/{barberId}/mp-status")
+    MpConnectionStatusDTO getBarberMpStatus(@PathVariable("barberId") UUID barberId);
+
+    @PutMapping("/api/internal/users/barbers/{barberId}/mp-disconnect")
+    void disconnectBarberMp(@PathVariable("barberId") UUID barberId);
 }

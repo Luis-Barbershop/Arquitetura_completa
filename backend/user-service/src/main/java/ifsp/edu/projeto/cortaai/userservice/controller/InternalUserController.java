@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.controller;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.DayScheduleDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.MpConnectionStatusDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.UserInfoDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.SaveMpCredentialsDTO;
 import ifsp.edu.projeto.cortaai.userservice.exception.ApiErrorResponse;
@@ -234,6 +235,37 @@ public class InternalUserController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Consultar status de vínculo MP do barbeiro",
+            description = "Retorna se o barbeiro está vinculado ao Mercado Pago e metadados não sensíveis.")
+    @GetMapping("/barbers/{barberId}/mp-status")
+    public ResponseEntity<MpConnectionStatusDTO> getMpConnectionStatus(@PathVariable UUID barberId) {
+        Barber barber = barberRepository.findById(barberId)
+                .orElseThrow(() -> new RuntimeException("Barbeiro não encontrado: " + barberId));
+
+        boolean linked = barber.getMpAccessToken() != null && !barber.getMpAccessToken().isBlank();
+        String maskedUserId = maskMpUserId(barber.getMpUserId());
+        boolean hasPublicKey = barber.getMpPublicKey() != null && !barber.getMpPublicKey().isBlank();
+
+        return ResponseEntity.ok(new MpConnectionStatusDTO(linked, maskedUserId, hasPublicKey));
+    }
+
+    @Operation(summary = "Desvincular credenciais MP do barbeiro",
+            description = "Limpa as credenciais OAuth do Mercado Pago armazenadas para o barbeiro.")
+    @PutMapping("/barbers/{barberId}/mp-disconnect")
+    public ResponseEntity<Void> disconnectMpCredentials(@PathVariable UUID barberId) {
+        Barber barber = barberRepository.findById(barberId)
+                .orElseThrow(() -> new RuntimeException("Barbeiro não encontrado: " + barberId));
+
+        barber.setMpAccessToken(null);
+        barber.setMpRefreshToken(null);
+        barber.setMpUserId(null);
+        barber.setMpPublicKey(null);
+        barberRepository.save(barber);
+
+        log.info("Credenciais MP removidas para barberId={}", barberId);
+        return ResponseEntity.ok().build();
+    }
+
     /** Busca barbeiro por CPF (usado pelo barbershop-service para convites). */
     @Operation(summary = "Busca barbeiro por CPF (interno)",
                description = "Retorna o UserInfoDTO de um Barber pelo CPF. Usado pelo barbershop-service no fluxo de convite.")
@@ -290,5 +322,14 @@ public class InternalUserController {
                 barber.getImageUrl()
         );
     }
+
+        private String maskMpUserId(String mpUserId) {
+                if (mpUserId == null || mpUserId.isBlank()) {
+                        return null;
+                }
+                int visible = Math.min(4, mpUserId.length());
+                String suffix = mpUserId.substring(mpUserId.length() - visible);
+                return "****" + suffix;
+        }
 }
 

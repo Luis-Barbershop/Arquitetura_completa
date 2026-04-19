@@ -276,3 +276,15 @@
     background: rgba(224, 82, 82, 0.12);
     color: #ff6b6b;
 }
+
+.dropdownInfo {
+    padding: 8px 10px;
+    margin: 2px 0 4px;
+    border-radius: 8px;
+    background: rgba(212, 175, 55, 0.08);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    color: #d7d7d7;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    line-height: 1.35;
+}
