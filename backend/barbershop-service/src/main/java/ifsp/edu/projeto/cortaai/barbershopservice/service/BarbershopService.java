@@ -94,26 +94,45 @@ public class BarbershopService {
         try {
             Map<String, String> body = new HashMap<>();
             body.put("barbershopId", barbershopId != null ? barbershopId.toString() : null);
-            log.info("event=user-service-link-update-request userId={} barbershopId={} body={}", userId, barbershopId, body);
+        log.info("event=user-service-link-update-request userId={} barbershopId={}",
+            maskIdentifier(userId),
+            maskIdentifier(barbershopId));
             userServiceClient.updateUserBarbershopId(userId, body);
         } catch (FeignException.NotFound ex) {
             log.warn("event=user-service-link-update-not-found userId={} barbershopId={} httpStatus={} error={} message={}",
-                    userId, barbershopId, ex.status(), ex.getClass().getSimpleName(), ex.getMessage());
+            maskIdentifier(userId),
+            maskIdentifier(barbershopId),
+            ex.status(),
+            ex.getClass().getSimpleName(),
+            sanitizeMessage(ex.getMessage()));
             throw new NotFoundException("Barbeiro não encontrado no serviço de usuários: " + userId);
         } catch (FeignException ex) {
             log.error("event=user-service-link-update-feign-failure userId={} barbershopId={} httpStatus={} error={} message={}",
-                    userId, barbershopId, ex.status(), ex.getClass().getSimpleName(), ex.getMessage(), ex);
+            maskIdentifier(userId),
+            maskIdentifier(barbershopId),
+            ex.status(),
+            ex.getClass().getSimpleName(),
+            sanitizeMessage(ex.getMessage()),
+            ex);
             String detail = ex.status() > 0 ? " (HTTP " + ex.status() + ")" : "";
             throw new UserServiceUnavailableException(
                     "Não foi possível atualizar o vínculo da barbearia no serviço de usuários." + detail
             );
         } catch (UserServiceUnavailableException ex) {
             log.error("event=user-service-link-update-fallback-failure userId={} barbershopId={} error={} message={}",
-                    userId, barbershopId, ex.getClass().getSimpleName(), ex.getMessage(), ex);
+            maskIdentifier(userId),
+            maskIdentifier(barbershopId),
+            ex.getClass().getSimpleName(),
+            sanitizeMessage(ex.getMessage()),
+            ex);
             throw ex;
         } catch (Exception ex) {
             log.error("event=user-service-link-update-unexpected-failure userId={} barbershopId={} error={} message={}",
-                    userId, barbershopId, ex.getClass().getSimpleName(), ex.getMessage(), ex);
+            maskIdentifier(userId),
+            maskIdentifier(barbershopId),
+            ex.getClass().getSimpleName(),
+            sanitizeMessage(ex.getMessage()),
+            ex);
             String detail = (ex.getMessage() != null && !ex.getMessage().isBlank())
                     ? " Causa: " + ex.getMessage()
                     : "";
@@ -379,10 +398,15 @@ public class BarbershopService {
             );
             rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.RK_JOIN_REQUEST_CREATED, event);
             log.info("event=join-request-created-published requestId={} barberId={} shopId={} ownerId={}",
-                    saved.getId(), barber.getId(), shop.getId(), owner.getId());
+            maskIdentifier(saved.getId()),
+            maskIdentifier(barber.getId()),
+            maskIdentifier(shop.getId()),
+            maskIdentifier(owner.getId()));
         } catch (Exception ex) {
             // Falha na publicação do evento não deve reverter a solicitação
-            log.warn("event=join-request-rabbit-publish-failed requestId={} error={}", saved.getId(), ex.getMessage());
+        log.warn("event=join-request-rabbit-publish-failed requestId={} error={}",
+            maskIdentifier(saved.getId()),
+            sanitizeMessage(ex.getMessage()));
         }
     }
 
@@ -513,14 +537,20 @@ public class BarbershopService {
             );
             rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.RK_JOIN_REQUEST_CREATED, event);
             log.info("event=invite-created-published requestId={} barberId={} shopId={}",
-                    request.getId(), barber.getId(), shop.getId());
+            maskIdentifier(request.getId()),
+            maskIdentifier(barber.getId()),
+            maskIdentifier(shop.getId()));
         } catch (Exception ex) {
             log.warn("event=invite-rabbit-publish-failed barberId={} shopId={} error={}",
-                    barber.getId(), shop.getId(), ex.getMessage());
+            maskIdentifier(barber.getId()),
+            maskIdentifier(shop.getId()),
+            sanitizeMessage(ex.getMessage()));
         }
 
-        log.info("event=barber-invited ownerId={} barberId={} shopId={} cpf=***",
-                owner.getId(), barber.getId(), shop.getId());
+    log.info("event=barber-invited ownerId={} barberId={} shopId={} cpf=***",
+        maskIdentifier(owner.getId()),
+        maskIdentifier(barber.getId()),
+        maskIdentifier(shop.getId()));
     }
 
     /**
@@ -529,14 +559,17 @@ public class BarbershopService {
     @Transactional(readOnly = true)
     public List<JoinRequestDTO> getMyPendingInvites(String barberUid) {
         UserInfoDTO barber = resolveUserByUid(barberUid);
-        log.info("event=my-invites-request barberId={} uid={}", barber.getId(), barberUid);
+    log.info("event=my-invites-request barberId={} uid={}", maskIdentifier(barber.getId()), maskIdentifier(barberUid));
 
         List<BarbershopJoinRequest> invites;
         try {
             invites = joinRequestRepository
                     .findByBarberIdAndStatusAndRequestType(barber.getId(), JoinRequestStatus.PENDING, JoinRequestType.INVITE);
         } catch (Exception ex) {
-            log.error("event=my-invites-query-failed barberId={} error={}", barber.getId(), ex.getMessage(), ex);
+            log.error("event=my-invites-query-failed barberId={} error={}",
+                    maskIdentifier(barber.getId()),
+                    sanitizeMessage(ex.getMessage()),
+                    ex);
             return java.util.Collections.emptyList();
         }
 
@@ -582,7 +615,9 @@ public class BarbershopService {
         // Atualiza barbershopId no user-service
         updateUserBarbershop(barber.getId(), request.getBarbershop().getId());
 
-        log.info("event=invite-accepted barberId={} shopId={}", barber.getId(), request.getBarbershop().getId());
+    log.info("event=invite-accepted barberId={} shopId={}",
+        maskIdentifier(barber.getId()),
+        maskIdentifier(request.getBarbershop().getId()));
     }
 
     /**
@@ -604,7 +639,9 @@ public class BarbershopService {
         request.setStatus(JoinRequestStatus.REJECTED);
         joinRequestRepository.save(request);
 
-        log.info("event=invite-rejected barberId={} shopId={}", barber.getId(), request.getBarbershop().getId());
+    log.info("event=invite-rejected barberId={} shopId={}",
+        maskIdentifier(barber.getId()),
+        maskIdentifier(request.getBarbershop().getId()));
     }
 
     // ========== FLUXO 3: SAIR DA LOJA ==========
@@ -716,6 +753,27 @@ public class BarbershopService {
         }
 
         highlightRepository.delete(highlight);
+    }
+
+    private String maskIdentifier(Object value) {
+        if (value == null) {
+            return "***";
+        }
+        String normalized = value.toString().trim();
+        if (normalized.length() <= 6) {
+            return "***";
+        }
+        return normalized.substring(0, 4) + "..." + normalized.substring(normalized.length() - 2);
+    }
+
+    private String sanitizeMessage(String value) {
+        if (value == null || value.isBlank()) {
+            return "n/a";
+        }
+        return value
+                .replaceAll("(?i)bearer\\s+[a-z0-9._-]+", "bearer ***")
+                .replaceAll("(?i)token[=:\\s]+[^\\s,;]+", "token=***")
+                .replaceAll("(?i)authorization[^\\s]*", "authorization***");
     }
 }
 

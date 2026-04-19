@@ -166,16 +166,11 @@ public class InternalUserController {
             )
             @RequestBody Map<String, String> body) {
 
-        log.info("PUT /api/internal/users/{}/barbershop — body={}", id, body);
+        log.info("event=internal-user-barbershop-update-request userId={}", maskIdentifier(id));
 
         Optional<Barber> barber = barberRepository.findById(id);
         if (barber.isEmpty()) {
-            log.warn("Barber NOT FOUND by id={}", id);
-            // Fallback: tenta procurar por todas as formas possíveis
-            log.info("Listing all barbers for debug:");
-            barberRepository.findAll().forEach(b -> 
-                log.info("  barber: id={} email={} firebaseUid={}", b.getId(), b.getEmail(), b.getFirebaseUid())
-            );
+                        log.warn("event=internal-user-barbershop-update-not-found userId={}", maskIdentifier(id));
             return ResponseEntity.notFound().build();
         }
 
@@ -187,7 +182,9 @@ public class InternalUserController {
         Barber b = barber.get();
         b.setBarbershopId(barbershopId);
         barberRepository.save(b);
-        log.info("Barber {} barbershopId updated to {}", id, barbershopId);
+        log.info("event=internal-user-barbershop-updated userId={} barbershopId={}",
+                maskIdentifier(id),
+                maskIdentifier(barbershopId));
         return ResponseEntity.ok().build();
     }
     @PutMapping("/make-owner/{uid}")
@@ -204,7 +201,7 @@ public class InternalUserController {
             barber.setRole("ROLE_OWNER");
             barber.setActAsBarber(true);
             barberRepository.save(barber);
-            log.info("Barber {} promovido a ROLE_OWNER (actAsBarber=true) no banco de dados.", uid);
+                        log.info("event=barber-promoted-owner uid={}", maskIdentifier(uid));
         });
 
         return ResponseEntity.ok().build();
@@ -231,7 +228,9 @@ public class InternalUserController {
         barber.setMpUserId(dto.mpUserId());
         barber.setMpPublicKey(dto.mpPublicKey());
         barberRepository.save(barber);
-        log.info("Credenciais MP salvas para barberId={}, mpUserId={}", barberId, dto.mpUserId());
+        log.info("event=mp-credentials-saved barberId={} mpUserId={}",
+                maskIdentifier(barberId),
+                maskIdentifier(dto.mpUserId()));
         return ResponseEntity.ok().build();
     }
 
@@ -262,7 +261,7 @@ public class InternalUserController {
         barber.setMpPublicKey(null);
         barberRepository.save(barber);
 
-        log.info("Credenciais MP removidas para barberId={}", barberId);
+        log.info("event=mp-credentials-removed barberId={}", maskIdentifier(barberId));
         return ResponseEntity.ok().build();
     }
 
@@ -331,5 +330,18 @@ public class InternalUserController {
                 String suffix = mpUserId.substring(mpUserId.length() - visible);
                 return "****" + suffix;
         }
+
+                private String maskIdentifier(Object value) {
+                        if (value == null) {
+                                return "***";
+                        }
+
+                        String normalized = value.toString().trim();
+                        if (normalized.length() <= 6) {
+                                return "***";
+                        }
+
+                        return normalized.substring(0, 4) + "..." + normalized.substring(normalized.length() - 2);
+                }
 }
 

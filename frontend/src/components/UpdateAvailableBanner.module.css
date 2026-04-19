@@ -1,0 +1,76 @@
+.container {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 9999;
+  max-width: 360px;
+  width: calc(100% - 32px);
+  border: 1px solid rgba(193, 144, 6, 0.5);
+  border-radius: 12px;
+  background-color: #1b1b1b;
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  color: #ddb441;
+  font-size: 1rem;
+}
+
+.message {
+  font-size: 0.9rem;
+  color: #f1f1f1;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.primaryButton,
+.secondaryButton {
+  border-radius: 8px;
+  height: 34px;
+  padding: 0 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.primaryButton {
+  background-color: #c19006;
+  color: #121212;
+}
+
+.primaryButton:hover {
+  background-color: #ddb441;
+}
+
+.secondaryButton {
+  background-color: #3a3a3a;
+  color: #ffffff;
+}
+
+.secondaryButton:hover {
+  background-color: #4b4b4b;
+}
+
+@media screen and (max-width: 767px) {
+  .container {
+    right: 12px;
+    left: 12px;
+    bottom: 12px;
+    width: auto;
+    max-width: none;
+  }
+}

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,15 @@ import java.util.UUID;
 public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseTokenGatewayFilter.class);
+
+    @Value("${session.cookie.enabled:false}")
+    private boolean sessionCookieEnabled;
+
+    @Value("${session.bearer-fallback.enabled:true}")
+    private boolean sessionBearerFallbackEnabled;
+
+    @Value("${session.cookie.name:cortaai_session}")
+    private String sessionCookieName;
 
     /** Rotas que NÃO exigem autenticação Firebase. */
     private static final List<String> PUBLIC_PATHS = List.of(
@@ -125,32 +135,153 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             return chain.filter(exchangeWithCorrelation.mutate().request(sanitizedPublicRequest).build());
         }
 
-        String authHeader = exchangeWithCorrelation.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return unauthorized(exchangeWithCorrelation, "Token de autenticação ausente ou malformado.", correlationId);
+        TokenResolution tokenResolution = resolveToken(exchangeWithCorrelation, correlationId, path);
+        if (tokenResolution.token() == null || tokenResolution.token().isBlank()) {
+            return unauthorized(
+                    exchangeWithCorrelation,
+                    "Token de autenticação ausente ou malformado.",
+                    correlationId,
+                    "auth_token_missing",
+                    tokenResolution.source()
+            );
         }
 
-        String idToken = authHeader.substring(7);
-
-        return Mono.fromCallable(() -> firebaseAuth.verifyIdToken(idToken))
+        return Mono.fromCallable(() -> firebaseAuth.verifyIdToken(tokenResolution.token()))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(decodedToken -> {
                     if (requiresVerifiedEmail(decodedToken)) {
-                        log.info("event=gateway-email-not-verified uid={} correlationId={}", decodedToken.getUid(), correlationId);
-                        return unauthorized(exchangeWithCorrelation, "E-mail ainda nao verificado.", correlationId);
+                        log.info("event=gateway-email-not-verified uid={} correlationId={}", maskIdentifier(decodedToken.getUid()), correlationId);
+                        return unauthorized(
+                                exchangeWithCorrelation,
+                                "E-mail ainda nao verificado.",
+                                correlationId,
+                                "email_not_verified",
+                                tokenResolution.source()
+                        );
                     }
+
+                    log.info(
+                            "event=session-auth-success correlationId={} path={} authSource={} uid={} role={}",
+                            correlationId,
+                            path,
+                            tokenResolution.source(),
+                            maskIdentifier(decodedToken.getUid()),
+                            decodedToken.getClaims().getOrDefault("role", "CUSTOMER")
+                    );
 
                     ServerHttpRequest mutatedRequest = buildMutatedRequest(exchangeWithCorrelation, decodedToken, correlationId);
                     return chain.filter(exchangeWithCorrelation.mutate().request(mutatedRequest).build());
                 })
                 .onErrorResume(FirebaseAuthException.class, ex -> {
-                    log.warn("event=gateway-firebase-invalid-token correlationId={} message={}", correlationId, ex.getMessage());
-                    return unauthorized(exchangeWithCorrelation, "Token inválido ou expirado.", correlationId);
+                    log.warn(
+                            "event=session-auth-invalid-token correlationId={} path={} authSource={} message={}",
+                            correlationId,
+                            path,
+                            tokenResolution.source(),
+                            sanitizeExceptionMessage(ex)
+                    );
+                    return unauthorized(
+                            exchangeWithCorrelation,
+                            "Token inválido ou expirado.",
+                            correlationId,
+                            "invalid_or_expired_token",
+                            tokenResolution.source()
+                    );
                 })
                 .onErrorResume(Exception.class, ex -> {
-                    log.error("event=gateway-firebase-auth-error correlationId={} message={}", correlationId, ex.getMessage(), ex);
-                    return unauthorized(exchangeWithCorrelation, "Erro de autenticação.", correlationId);
+                    log.error(
+                            "event=session-auth-processing-error correlationId={} path={} authSource={} message={}",
+                            correlationId,
+                            path,
+                            tokenResolution.source(),
+                            sanitizeExceptionMessage(ex),
+                            ex
+                    );
+                    return unauthorized(
+                            exchangeWithCorrelation,
+                            "Erro de autenticação.",
+                            correlationId,
+                            "auth_processing_error",
+                            tokenResolution.source()
+                    );
                 });
+    }
+
+    private TokenResolution resolveToken(ServerWebExchange exchange, String correlationId, String path) {
+        String cookieToken = extractCookieToken(exchange);
+        if (sessionCookieEnabled && cookieToken != null && !cookieToken.isBlank()) {
+            log.info("event=session-cookie-token-used correlationId={} path={}", correlationId, path);
+            return new TokenResolution(cookieToken, "COOKIE", "cookie_token_present");
+        }
+
+        String bearerToken = extractBearerToken(exchange);
+        if (bearerToken != null && !bearerToken.isBlank()) {
+            if (sessionCookieEnabled) {
+                log.info("event=session-cookie-token-fallback-bearer correlationId={} path={}", correlationId, path);
+            }
+            return new TokenResolution(bearerToken, "BEARER", "bearer_token_present");
+        }
+
+        if (sessionCookieEnabled && !sessionBearerFallbackEnabled) {
+            log.warn("event=session-cookie-auth-missing correlationId={} path={} cookieName={}", correlationId, path, sessionCookieName);
+            return new TokenResolution(null, "NONE", "cookie_required_missing");
+        }
+
+        return new TokenResolution(null, "NONE", "bearer_missing_or_malformed");
+    }
+
+    private record TokenResolution(String token, String source, String reason) {
+    }
+
+    private String extractCookieToken(ServerWebExchange exchange) {
+        if (!sessionCookieEnabled || sessionCookieName == null || sessionCookieName.isBlank()) {
+            return null;
+        }
+
+        var cookie = exchange.getRequest().getCookies().getFirst(sessionCookieName);
+        if (cookie == null) {
+            return null;
+        }
+
+        return cookie.getValue();
+    }
+
+    private String extractBearerToken(ServerWebExchange exchange) {
+        if (sessionCookieEnabled && !sessionBearerFallbackEnabled) {
+            return null;
+        }
+
+        String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+
+        return authHeader.substring(7);
+    }
+
+    private String maskIdentifier(String value) {
+        if (value == null || value.isBlank()) {
+            return "***";
+        }
+
+        String normalized = value.trim();
+        if (normalized.length() <= 6) {
+            return "***";
+        }
+
+        return normalized.substring(0, 4) + "..." + normalized.substring(normalized.length() - 2);
+    }
+
+    private String sanitizeExceptionMessage(Throwable ex) {
+        String message = ex != null ? ex.getMessage() : null;
+        if (message == null || message.isBlank()) {
+            return "n/a";
+        }
+
+        return message
+                .replaceAll("(?i)bearer\\s+[a-z0-9._-]+", "bearer ***")
+                .replaceAll("(?i)authorization[^\\s]*", "authorization***")
+                .replaceAll("(?i)token[=:\\s]+[^\\s,;]+", "token=***");
     }
 
     private boolean isPublicPath(String path) {
@@ -258,12 +389,26 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
         return PUBLIC_AUTHORIZATION_ALLOWED_PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
-    private Mono<Void> unauthorized(ServerWebExchange exchange, String message, String correlationId) {
+    private Mono<Void> unauthorized(
+        ServerWebExchange exchange,
+        String message,
+        String correlationId,
+        String reasonCode,
+        String authSource
+    ) {
         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
         exchange.getResponse().getHeaders().set("X-Correlation-Id", correlationId);
 
         String path = exchange.getRequest().getURI().getPath();
+    log.warn(
+        "event=session-auth-unauthorized correlationId={} path={} reason={} authSource={}",
+        correlationId,
+        path,
+        reasonCode,
+        authSource
+    );
+
         String body = String.format(
                 "{\"timestamp\":\"%s\",\"status\":401,\"error\":\"Unauthorized\",\"message\":\"%s\"," +
                         "\"cause\":\"FirebaseAuthException\",\"origin\":\"api-gateway\"," +

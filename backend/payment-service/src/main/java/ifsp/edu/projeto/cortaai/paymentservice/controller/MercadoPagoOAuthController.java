@@ -143,7 +143,7 @@ public class MercadoPagoOAuthController {
 
             if (response.statusCode() >= 400) {
                 String error = root.path("error_description").asText("Erro desconhecido");
-                log.error("MP OAuth token exchange failed: {}", error);
+                                log.error("event=mp-oauth-token-exchange-failed status={} message={}", response.statusCode(), sanitizeMessage(error));
                 throw new RuntimeException("Falha ao trocar code pelo access_token: " + error);
             }
 
@@ -157,7 +157,7 @@ public class MercadoPagoOAuthController {
                     accessToken, refreshToken, mpUserId, publicKey
             ));
 
-            log.info("MP OAuth concluído com sucesso para barberId={}, mpUserId={}", barberId, mpUserId);
+            log.info("event=mp-oauth-linked barberId={} mpUserId={}", maskIdentifier(barberId), maskIdentifier(mpUserId));
 
             // Redireciona para o dashboard do barbeiro
             return ResponseEntity.status(302)
@@ -165,11 +165,34 @@ public class MercadoPagoOAuthController {
                     .build();
 
         } catch (IllegalArgumentException e) {
-            log.error("state inválido (não é UUID): {}", state);
+                        log.error("event=mp-oauth-invalid-state state={}", maskIdentifier(state));
             throw new RuntimeException("Parâmetro state inválido.");
         } catch (Exception e) {
-            log.error("Erro no MP callback: {}", e.getMessage());
+                        log.error("event=mp-oauth-callback-error cause={}", e.getClass().getSimpleName());
             throw new RuntimeException("Erro ao processar callback do Mercado Pago: " + e.getMessage());
         }
     }
+
+        private String maskIdentifier(Object value) {
+                if (value == null) {
+                        return "***";
+                }
+
+                String normalized = value.toString().trim();
+                if (normalized.length() <= 6) {
+                        return "***";
+                }
+
+                return normalized.substring(0, 4) + "..." + normalized.substring(normalized.length() - 2);
+        }
+
+        private String sanitizeMessage(String value) {
+                if (value == null || value.isBlank()) {
+                        return "n/a";
+                }
+
+                return value
+                                .replaceAll("(?i)token[=:\\s]+[^\\s,;]+", "token=***")
+                                .replaceAll("(?i)secret[=:\\s]+[^\\s,;]+", "secret=***");
+        }
 }

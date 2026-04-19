@@ -180,6 +180,10 @@ Avançar para **Fase 4 (PWA base segura)** e depois **Fase 5 (hardening avançad
 1. PR-F5-05: desenho técnico + contrato de transição.
 2. PR-F5-06: implementação piloto (ambiente controlado).
 
+**Artefato desta etapa**
+- `analises/PR_F5_05_CONTRATO_MIGRACAO_SESSAO_SENSIVEL_2026-04-19.md`
+- `analises/PR_F5_06_PILOTO_SESSAO_COOKIE_2026-04-19.md`
+
 **DoD**
 - Sem regressão de login nas jornadas críticas.
 - Plano de rollback imediato validado.
@@ -236,14 +240,27 @@ Avançar para **Fase 4 (PWA base segura)** e depois **Fase 5 (hardening avançad
 
 ---
 
-## 9) Próximos 3 passos imediatos (execução)
+## 9) Próximos passos (status atualizado)
 
-1. **Abrir PR-F4-01** com `manifest.webmanifest` e estrutura de ícones.
-2. **Abrir PR-F4-02** com registro de SW controlado por env e sem ativação padrão em produção.
-3. **Abrir PR-F4-03** com regras iniciais de caching (app shell + network-first nas rotas transacionais).
+### Itens executados nesta trilha
+
+1. **PR-F4-01/F4-02/F4-03** concluídos (manifest, SW com toggle e cache inicial).
+2. **PR-F4-04/F4-05/F4-06** concluídos (offline contextual, banner de update e telemetria PWA).
+3. **PR-F5-01 até PR-F5-06** concluídos (pipeline de segurança, LGPD logs, contrato e piloto de sessão).
+
+### Próximo passo imediato
+
+- Iniciar **PR-F6-01** conforme `analises/PLANO_PROXIMO_CICLO_FASE6_2026-04-19.md`.
 
 ---
 
 ## 10) Conclusão
 
 A continuidade do planning/SDD está pronta para execução incremental, com foco em evolução de produto (PWA) e maturidade de segurança (hardening avançado) sem regressão funcional. O plano mantém compatibilidade, qualidade verificável por gate e rollback operacional claro.
+
+---
+
+## 11) Fechamento formal e próximo ciclo
+
+- Fechamento da Fase 5: `analises/RELATORIO_FECHAMENTO_FASE5_2026-04-19.md`
+- Próximo ciclo (Fase 6 operacional): `analises/PLANO_PROXIMO_CICLO_FASE6_2026-04-19.md`

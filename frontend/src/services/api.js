@@ -4,15 +4,51 @@ import { toast } from 'react-toastify';
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.cortaai.shop/api';
 const normalizedBaseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
 
+const SESSION_COOKIE_MODE = import.meta.env.VITE_SESSION_COOKIE_MODE === 'true';
+const SESSION_BEARER_FALLBACK = import.meta.env.VITE_SESSION_BEARER_FALLBACK !== 'false';
+const SESSION_COOKIE_CANARY_PERCENT = Math.max(
+    0,
+    Math.min(100, Number.parseInt(import.meta.env.VITE_SESSION_COOKIE_CANARY_PERCENT || '0', 10) || 0),
+);
+
+const getSessionIdentity = () =>
+    localStorage.getItem('userId') || localStorage.getItem('userEmail') || localStorage.getItem('userRole') || '';
+
+const hashToPercent = (value) => {
+    if (!value) return 100;
+
+    let hash = 0;
+    for (let i = 0; i < value.length; i += 1) {
+        hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+    }
+
+    return hash % 100;
+};
+
+const shouldUseCookiePilotForCurrentUser = () => {
+    if (!SESSION_COOKIE_MODE) return false;
+    if (SESSION_COOKIE_CANARY_PERCENT >= 100) return true;
+    if (SESSION_COOKIE_CANARY_PERCENT <= 0) return false;
+
+    return hashToPercent(getSessionIdentity()) < SESSION_COOKIE_CANARY_PERCENT;
+};
+
 const api = axios.create({
     baseURL: normalizedBaseUrl,
+    withCredentials: SESSION_COOKIE_MODE,
 });
 
 api.interceptors.request.use(async (config) => {
+    const useCookiePilot = shouldUseCookiePilotForCurrentUser();
+    config.withCredentials = useCookiePilot;
+
     const token = localStorage.getItem('token');
-    if (token) {
+    if (token && (!useCookiePilot || SESSION_BEARER_FALLBACK)) {
         config.headers.Authorization = `Bearer ${token}`;
+    } else if (config.headers?.Authorization) {
+        delete config.headers.Authorization;
     }
+
     return config;
 });
 
@@ -38,7 +74,7 @@ api.interceptors.response.use(
         switch (status) {
             case 401:
                 toast.error('Sessao expirada. Faca login novamente.');
-                if (localStorage.getItem('token')) {
+                if (localStorage.getItem('token') || localStorage.getItem('userId') || localStorage.getItem('userEmail')) {
                     localStorage.clear();
                     setTimeout(() => { window.location.href = '/login'; }, 1500);
                 }

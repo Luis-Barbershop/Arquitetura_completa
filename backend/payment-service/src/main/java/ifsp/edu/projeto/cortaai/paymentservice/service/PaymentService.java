@@ -76,7 +76,6 @@ public class PaymentService {
      */
     private static final BigDecimal PLATFORM_FEE_RATE = new BigDecimal("0.05");
     private static final UUID WALK_IN_CUSTOMER_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
-
     /**
      * Cria um pagamento (Checkout Pro do Mercado Pago) com suporte a Split.
      * 1. Busca agendamento via Feign
@@ -150,13 +149,16 @@ public class PaymentService {
                     .checkoutUrl(preference.getInitPoint())
                     .build();
 
-            Transaction saved = transactionRepository.save(transaction);
-            log.info("Pagamento criado: txId={}, preferenceId={}, method={}", saved.getId(), preference.getId(), paymentMethod);
+        Transaction saved = transactionRepository.save(transaction);
+        log.info("event=payment-created txId={} preferenceId={} method={}",
+            maskIdentifier(saved.getId()),
+            maskIdentifier(preference.getId()),
+            paymentMethod);
 
             return toDTO(saved);
 
         } catch (Exception e) {
-            log.error("Erro ao criar preferência no Mercado Pago: {}", e.getMessage());
+            log.error("event=payment-create-failed cause={}", e.getClass().getSimpleName(), e);
             throw new RuntimeException("Falha ao criar pagamento: " + e.getMessage());
         }
     }
@@ -177,7 +179,7 @@ public class PaymentService {
     public void processWebhook(String resourceId, String eventType, String rawPayload) {
         // Idempotência: verificar se já processamos
         if (webhookLogRepository.existsByMpResourceIdAndProcessedTrue(resourceId)) {
-            log.info("Webhook já processado: resourceId={}", resourceId);
+            log.info("event=webhook-already-processed resourceId={}", maskIdentifier(resourceId));
             return;
         }
 
@@ -191,7 +193,7 @@ public class PaymentService {
         webhookLogRepository.save(webhookLog);
 
         if (!"payment".equals(eventType)) {
-            log.info("Webhook ignorado: eventType={}", eventType);
+            log.info("event=webhook-ignored eventType={}", eventType);
             webhookLog.setProcessed(true);
             webhookLogRepository.save(webhookLog);
             return;
@@ -237,7 +239,7 @@ public class PaymentService {
                     var customerInfo = userServiceClient.getUserById(transaction.getCustomerId());
                     if (customerInfo != null) customerEmail = customerInfo.getEmail();
                 } catch (Exception e) {
-                    log.warn("Não foi possível buscar email do customer {}", transaction.getCustomerId());
+                    log.warn("event=customer-email-fetch-failed customerId={}", maskIdentifier(transaction.getCustomerId()));
                 }
 
                 PaymentApprovedEvent event = new PaymentApprovedEvent(
@@ -252,16 +254,19 @@ public class PaymentService {
                         RabbitConfig.RK_PAYMENT_APPROVED,
                         event
                 );
-                log.info("Evento PaymentApproved publicado: txId={}", transaction.getId());
+                log.info("event=payment-approved-published txId={}", maskIdentifier(transaction.getId()));
             }
 
             webhookLog.setProcessed(true);
             webhookLogRepository.save(webhookLog);
 
-            log.info("Webhook processado: resourceId={}, status={}", resourceId, newStatus);
+            log.info("event=webhook-processed resourceId={} status={}", maskIdentifier(resourceId), newStatus);
 
         } catch (Exception e) {
-            log.error("Erro ao processar webhook: resourceId={}", resourceId, e);
+            log.error("event=webhook-process-failed resourceId={} cause={}",
+                    maskIdentifier(resourceId),
+                    e.getClass().getSimpleName(),
+                    e);
             throw new RuntimeException("Falha ao processar webhook: " + e.getMessage());
         }
     }
@@ -479,7 +484,9 @@ public class PaymentService {
                     startDate.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE),
                     endDate.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE));
         } catch (Exception ex) {
-            log.warn("Falha ao buscar resumo financeiro de estoque para a barbearia {}: {}", barbershopId, ex.getMessage());
+            log.warn("event=inventory-summary-fetch-failed barbershopId={} cause={}",
+                    maskIdentifier(barbershopId),
+                    ex.getClass().getSimpleName());
             inventorySummary = new InventoryFinancialSummaryDTO(barbershopId, BigDecimal.ZERO, BigDecimal.ZERO);
         }
 
@@ -572,7 +579,9 @@ public class PaymentService {
                 .filter(this::isWalkInForFinancialReport)
                 .toList();
         } catch (Exception ex) {
-            log.warn("Falha ao consultar agendamentos walk-in da barbearia {}: {}", barbershopId, ex.getMessage());
+            log.warn("event=walkin-appointments-fetch-failed barbershopId={} cause={}",
+                    maskIdentifier(barbershopId),
+                    ex.getClass().getSimpleName());
             return List.of();
         }
         }
@@ -598,7 +607,8 @@ public class PaymentService {
 
         private void updateDailyKpiProjectionForApproved(Transaction transaction) {
             if (transaction.getBarbershopId() == null) {
-                log.warn("Transação {} sem barbershopId; projeção diária não atualizada.", transaction.getId());
+                log.warn("event=kpi-daily-projection-skipped txId={} reason=missing-barbershop-id",
+                        maskIdentifier(transaction.getId()));
                 return;
             }
 
@@ -631,6 +641,18 @@ public class PaymentService {
         return checkBarbershopAccess(user, barbershopId, ownerOnly);
     }
 
+    private String maskIdentifier(Object value) {
+        if (value == null) {
+            return "***";
+        }
+
+        String normalized = value.toString().trim();
+        if (normalized.length() <= 6) {
+            return "***";
+        }
+
+        return normalized.substring(0, 4) + "..." + normalized.substring(normalized.length() - 2);
+    }
     @Transactional(readOnly = true)
     public boolean canAccessBarbershopFinancials(String firebaseUid, UUID barbershopId, boolean ownerOnly) {
         UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);

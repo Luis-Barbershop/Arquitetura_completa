@@ -38,7 +38,7 @@ public class WebhookController {
             @RequestHeader(value = "x-signature", required = false) String xSignature,
             @RequestHeader(value = "x-request-id", required = false) String xRequestId,
             @RequestBody Map<String, Object> payload) {
-        log.info("Webhook recebido (Mercado Pago)");
+        log.info("event=webhook-received source=mercadopago");
 
         try {
             String type = (String) payload.get("type");
@@ -53,7 +53,7 @@ public class WebhookController {
             String resourceId = data.get("id").toString();
 
             if (!paymentService.isWebhookTrusted(resourceId, xSignature, xRequestId)) {
-                log.warn("Webhook rejeitado por validacao de assinatura/replay: resourceId={}, type={}", resourceId, type);
+                log.warn("event=webhook-rejected-signature resourceId={} type={}", maskIdentifier(resourceId), type);
                 return ResponseEntity.ok().build();
             }
 
@@ -65,6 +65,19 @@ public class WebhookController {
         }
 
         return ResponseEntity.ok().build();
+    }
+
+    private String maskIdentifier(String value) {
+        if (value == null || value.isBlank()) {
+            return "***";
+        }
+
+        String normalized = value.trim();
+        if (normalized.length() <= 6) {
+            return "***";
+        }
+
+        return normalized.substring(0, 4) + "..." + normalized.substring(normalized.length() - 2);
     }
 
     private String buildWebhookAuditPayload(Map<String, Object> payload, String resourceId) {

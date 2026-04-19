@@ -58,7 +58,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         boolean emailVerified = extractEmailVerified(decoded);
         boolean verificationRequired = isEmailVerificationRequired(provider, emailVerified);
 
-        log.info("Firebase auth OK — uid={} provider={} userType={}", uid, provider, request.userType());
+    log.info("event=firebase-auth-ok uid={} provider={} userType={}", maskIdentifier(uid), provider, request.userType());
 
         String resolvedType = (request.userType() != null && !request.userType().isBlank())
                 ? request.userType().toUpperCase()
@@ -66,7 +66,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         String resolvedRole = "BARBER".equals(resolvedType) ? "ROLE_BARBER" : "ROLE_CUSTOMER";
 
         if (verificationRequired) {
-            log.info("Login bloqueado: e-mail ainda nao verificado para uid={}", uid);
+            log.info("event=login-blocked-email-not-verified uid={}", maskIdentifier(uid));
             return new AuthResponseDTO(
                     null,
                     name != null ? name : "Usuário",
@@ -96,7 +96,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         // Tenta como Barber primeiro (por UID)
         Optional<Barber> barberByUid = barberRepository.findByFirebaseUid(uid);
         if (barberByUid.isPresent()) {
-            log.info("Barber encontrado por UID={}", uid);
+            log.info("event=barber-found-by-uid uid={}", maskIdentifier(uid));
             assertRoleCompatible(request.userType(), "BARBER");
             return toAuthResponse(barberByUid.get(), emailVerified, false);
         }
@@ -104,7 +104,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         // Tenta como Customer (por UID)
         Optional<Customer> customerByUid = customerRepository.findByFirebaseUid(uid);
         if (customerByUid.isPresent()) {
-            log.info("Customer encontrado por UID={}", uid);
+            log.info("event=customer-found-by-uid uid={}", maskIdentifier(uid));
             assertRoleCompatible(request.userType(), "CUSTOMER");
             return toAuthResponse(customerByUid.get(), emailVerified, false);
         }
@@ -116,14 +116,14 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             Optional<Barber> barberByEmail = barberRepository.findByEmail(email);
             if (barberByEmail.isPresent()) {
                 Barber existing = barberByEmail.get();
-                log.info("Encontrado barber existente por email={} (migração). Retornando dados sem atualizar.", email);
+                log.info("event=barber-found-by-email-migration email={}", maskEmail(email));
                 assertRoleCompatible(request.userType(), "BARBER");
                 return toAuthResponse(existing, emailVerified, false);
             }
             Optional<Customer> customerByEmail = customerRepository.findByEmail(email);
             if (customerByEmail.isPresent()) {
                 Customer existing = customerByEmail.get();
-                log.info("Encontrado customer existente por email={} (migração). Retornando dados sem atualizar.", email);
+                log.info("event=customer-found-by-email-migration email={}", maskEmail(email));
                 assertRoleCompatible(request.userType(), "CUSTOMER");
                 return toAuthResponse(existing, emailVerified, false);
             }
@@ -131,7 +131,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
 
         // Usuário NOVO — NÃO salva no banco ainda!
         // Retorna um DTO provisório com profileComplete=false para o frontend mostrar o modal.
-        log.info("Usuário novo (não existe no banco). uid={} — aguardando complete-profile para salvar.", uid);
+    log.info("event=user-not-found-awaiting-complete-profile uid={}", maskIdentifier(uid));
         return new AuthResponseDTO(
                 null,                        // sem ID (ainda não foi salvo)
                 name != null ? name : "Usuário",
@@ -163,7 +163,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
     public AuthResponseDTO completeCustomerProfile(String firebaseUid, CompleteProfileCustomerDTO dto, String email) {
         Customer customer = customerRepository.findByFirebaseUid(firebaseUid)
                 .orElseGet(() -> {
-                    log.info("Customer não encontrado para UID={}, criando novo registro no complete-profile.", firebaseUid);
+                    log.info("event=customer-create-on-complete-profile uid={}", maskIdentifier(firebaseUid));
                     Customer novo = new Customer();
                     novo.setFirebaseUid(firebaseUid);
                     return novo;
@@ -200,7 +200,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             UserRecord userRecord = firebaseAuth.getUser(firebaseUid);
             emailVerified = userRecord.isEmailVerified();
         } catch (Exception e) {
-            log.warn("Não foi possível consultar emailVerified para uid={}: {}", firebaseUid, e.getMessage());
+            log.warn("event=email-verified-check-failed uid={} reason={}", maskIdentifier(firebaseUid), sanitizeMessage(e.getMessage()));
         }
         return toAuthResponse(customer, emailVerified, false);
     }
@@ -216,7 +216,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
     public AuthResponseDTO completeBarberProfile(String firebaseUid, CompleteProfileBarberDTO dto, String email) {
         Barber barber = barberRepository.findByFirebaseUid(firebaseUid)
                 .orElseGet(() -> {
-                    log.info("Barber não encontrado para UID={}, criando novo registro no complete-profile.", firebaseUid);
+                    log.info("event=barber-create-on-complete-profile uid={}", maskIdentifier(firebaseUid));
                     return Barber.builder()
                             .firebaseUid(firebaseUid)
                             .role("ROLE_BARBER")
@@ -257,7 +257,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             UserRecord userRecord = firebaseAuth.getUser(firebaseUid);
             emailVerified = userRecord.isEmailVerified();
         } catch (Exception e) {
-            log.warn("Não foi possível consultar emailVerified para uid={}: {}", firebaseUid, e.getMessage());
+            log.warn("event=email-verified-check-failed uid={} reason={}", maskIdentifier(firebaseUid), sanitizeMessage(e.getMessage()));
         }
         return toAuthResponse(barber, emailVerified, false);
     }
@@ -288,9 +288,9 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             claims.put("role", role);
             claims.put("isOwner", isOwner);
             FirebaseAuth.getInstance().setCustomUserClaims(uid, claims);
-            log.info("Custom claims atualizadas para UID {}: role={}, isOwner={}", uid, role, isOwner);
+            log.info("event=custom-claims-updated uid={} role={} isOwner={}", maskIdentifier(uid), role, isOwner);
         } catch (FirebaseAuthException e) {
-            log.error("Erro ao setar custom claims para o usuário {}: {}", uid, e.getMessage());
+            log.error("event=custom-claims-update-failed uid={} reason={}", maskIdentifier(uid), sanitizeMessage(e.getMessage()));
             throw new IllegalStateException("Falha ao atualizar permissões do usuário", e);
         }
     }
@@ -303,9 +303,42 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         try {
             return firebaseAuth.verifyIdToken(idToken);
         } catch (FirebaseAuthException e) {
-            log.warn("Token Firebase inválido: {}", e.getMessage());
+            log.warn("event=firebase-token-invalid reason={}", sanitizeMessage(e.getMessage()));
             throw new SecurityException("Token Firebase inválido ou expirado: " + e.getMessage());
         }
+    }
+
+    private String maskIdentifier(String value) {
+        if (value == null || value.isBlank()) {
+            return "***";
+        }
+        String normalized = value.trim();
+        if (normalized.length() <= 6) {
+            return "***";
+        }
+        return normalized.substring(0, 4) + "..." + normalized.substring(normalized.length() - 2);
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || email.isBlank() || !email.contains("@")) {
+            return "***";
+        }
+        String[] parts = email.split("@", 2);
+        String local = parts[0];
+        String domain = parts[1];
+        String localMasked = local.length() <= 2 ? "***" : local.substring(0, 2) + "***";
+        String domainMasked = domain.length() <= 3 ? "***" : domain.substring(0, 1) + "***";
+        return localMasked + "@" + domainMasked;
+    }
+
+    private String sanitizeMessage(String value) {
+        if (value == null || value.isBlank()) {
+            return "n/a";
+        }
+        return value
+                .replaceAll("(?i)bearer\\s+[a-z0-9._-]+", "bearer ***")
+                .replaceAll("(?i)token[=:\\s]+[^\\s,;]+", "token=***")
+                .replaceAll("(?i)authorization[^\\s]*", "authorization***");
     }
 
     /**
@@ -429,13 +462,17 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             BarbershopInfoDTO shop = barbershopServiceClient.getBarbershopById(barbershopId);
             return shop != null ? shop.name() : null;
         } catch (FeignException.NotFound ex) {
-            log.warn("Barbearia não encontrada para id={} durante montagem de /auth/me", barbershopId);
+            log.warn("event=barbershop-name-not-found id={}", maskIdentifier(String.valueOf(barbershopId)));
             return null;
         } catch (ExternalServiceUnavailableException ex) {
-            log.warn("Não foi possível resolver nome da barbearia id={} no momento: {}", barbershopId, ex.getMessage());
+            log.warn("event=barbershop-name-unavailable id={} reason={}",
+                    maskIdentifier(String.valueOf(barbershopId)),
+                    sanitizeMessage(ex.getMessage()));
             return null;
         } catch (Exception ex) {
-            log.warn("Falha inesperada ao resolver nome da barbearia id={}: {}", barbershopId, ex.getMessage());
+            log.warn("event=barbershop-name-resolve-failed id={} reason={}",
+                    maskIdentifier(String.valueOf(barbershopId)),
+                    sanitizeMessage(ex.getMessage()));
             return null;
         }
     }
