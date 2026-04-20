@@ -15,6 +15,15 @@ spring:
     deserialization:
       fail-on-unknown-properties: false
   cloud:
+    openfeign:
+      client:
+        config:
+          user-service:
+            connectTimeout: 2000
+            readTimeout: 3000
+          barbershop-service:
+            connectTimeout: 2000
+            readTimeout: 3000
     loadbalancer:
       cache:
         type: caffeine

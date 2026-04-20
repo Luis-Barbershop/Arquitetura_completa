@@ -36,6 +36,7 @@ const shouldUseCookiePilotForCurrentUser = () => {
 const api = axios.create({
     baseURL: normalizedBaseUrl,
     withCredentials: SESSION_COOKIE_MODE,
+    timeout: 10000,
 });
 
 api.interceptors.request.use(async (config) => {
