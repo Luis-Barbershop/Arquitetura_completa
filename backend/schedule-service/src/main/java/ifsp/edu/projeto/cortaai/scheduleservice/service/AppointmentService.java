@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -388,6 +389,12 @@ public class AppointmentService {
      * @param date            data solicitada
      * @param durationMinutes duração total dos serviços selecionados (mín. 15)
      */
+    @Cacheable(
+            value = "appointmentAvailability",
+            key = "#barberId + ':' + #date + ':' + #durationMinutes",
+            sync = true,
+            unless = "#result == null"
+    )
     @Transactional(readOnly = true)
     public List<TimeSlotDTO> getAvailability(UUID barberId, LocalDate date, int durationMinutes) {
         final int SLOT_STEP_MINUTES = 15;

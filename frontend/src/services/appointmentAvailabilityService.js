@@ -1,6 +1,9 @@
 import api from './api';
 
 const WEEK_SHORT = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+const AVAILABILITY_CACHE_TTL_MS = 60 * 1000;
+const availabilityCache = new Map();
+const inFlightAvailabilityRequests = new Map();
 
 export const formatDateToApi = (dateObj) => {
   const y = dateObj.getFullYear();
@@ -44,20 +47,78 @@ export const normalizeAvailabilitySlots = (availabilityResponse) => {
     .filter(Boolean);
 };
 
+const buildAvailabilityCacheKey = ({ barberId, dateObj, durationMinutes }) => {
+  const safeDuration = durationMinutes || 30;
+  return `${String(barberId)}:${formatDateToApi(dateObj)}:${safeDuration}`;
+};
+
+const getCachedAvailabilitySlots = (cacheKey) => {
+  const cachedEntry = availabilityCache.get(cacheKey);
+  if (!cachedEntry) return null;
+
+  if (cachedEntry.expiresAt <= Date.now()) {
+    availabilityCache.delete(cacheKey);
+    return null;
+  }
+
+  return [...cachedEntry.slots];
+};
+
+const cacheAvailabilitySlots = (cacheKey, slots) => {
+  availabilityCache.set(cacheKey, {
+    slots: [...slots],
+    expiresAt: Date.now() + AVAILABILITY_CACHE_TTL_MS,
+  });
+};
+
+export const clearAvailabilitySlotsCache = () => {
+  availabilityCache.clear();
+  inFlightAvailabilityRequests.clear();
+};
+
 export const fetchAvailabilitySlots = async ({
   barberId,
   dateObj,
   durationMinutes,
+  forceRefresh = false,
 }) => {
-  const response = await api.get('/appointments/availability', {
+  if (!barberId || !dateObj) return [];
+
+  const cacheKey = buildAvailabilityCacheKey({ barberId, dateObj, durationMinutes });
+
+  if (!forceRefresh) {
+    const cachedSlots = getCachedAvailabilitySlots(cacheKey);
+    if (cachedSlots) {
+      return cachedSlots;
+    }
+
+    const inFlightRequest = inFlightAvailabilityRequests.get(cacheKey);
+    if (inFlightRequest) {
+      const slots = await inFlightRequest;
+      return [...slots];
+    }
+  }
+
+  const requestPromise = api.get('/appointments/availability', {
     params: {
       barberId,
       date: formatDateToApi(dateObj),
       duration: durationMinutes || 30,
     },
-  });
+  })
+    .then((response) => {
+      const slots = normalizeAvailabilitySlots(response.data);
+      cacheAvailabilitySlots(cacheKey, slots);
+      return slots;
+    })
+    .finally(() => {
+      inFlightAvailabilityRequests.delete(cacheKey);
+    });
 
-  return normalizeAvailabilitySlots(response.data);
+  inFlightAvailabilityRequests.set(cacheKey, requestPromise);
+
+  const slots = await requestPromise;
+  return [...slots];
 };
 
 export const createDateOptionsBase = (days = 14) => {

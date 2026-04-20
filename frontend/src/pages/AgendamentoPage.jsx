@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiRefreshCw, FiChevronUp, FiChevronDown } from "react-icons/fi";
 import { toast } from "react-toastify";
@@ -15,8 +15,11 @@ import {
 
 import api from "../services/api";
 import { getShopBarbers, getShopServices } from "../services/barbershopService";
-
-const WEEK_DAY_SHORT = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
+import {
+  createDateOptionsBase,
+  fetchAvailabilitySlots,
+  formatDateToApi,
+} from "../services/appointmentAvailabilityService";
 
 const AgendamentoPage = () => {
   const { barbershopId } = useParams();
@@ -37,63 +40,7 @@ const AgendamentoPage = () => {
   const [expandedPeriods, setExpandedPeriods] = useState({ morning: true, afternoon: true });
   const [offlineTransactionalNotice, setOfflineTransactionalNotice] = useState("");
 
-  const formatDateToApi = useCallback((dateObj) => {
-    if (!dateObj) return "";
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-    const day = String(dateObj.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }, []);
-
-  const getDateKey = useCallback((dateObj) => formatDateToApi(dateObj), [formatDateToApi]);
-
-  const buildDateWindow = useCallback((daysToShow = 14) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return Array.from({ length: daysToShow }, (_, index) => {
-      const nextDate = new Date(today);
-      nextDate.setDate(today.getDate() + index);
-      return nextDate;
-    });
-  }, []);
-
-  const formatCompactDate = useCallback((dateObj) => {
-    const day = String(dateObj.getDate()).padStart(2, "0");
-    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-    return `${day}/${month}`;
-  }, []);
-
-  const getRelativeDateLabel = useCallback((dateObj, index) => {
-    if (index === 0) return "Hoje";
-    if (index === 1) return "Amanhã";
-    return WEEK_DAY_SHORT[dateObj.getDay()];
-  }, []);
-
-  const fetchDateSlots = useCallback(async (barberId, dateObj, durationMinutes) => {
-    // Endpoint correto: /appointments/availability?barberId=&date=&duration=
-    const response = await api.get(`/appointments/availability`, {
-      params: {
-        barberId,
-        date: formatDateToApi(dateObj),
-        duration: durationMinutes || 30,
-      },
-    });
-
-    const data = Array.isArray(response.data) ? response.data : [];
-    // TimeSlotDTO: { startTime: "2026-04-08T09:00:00", endTime: ..., available: true }
-    // Filtra apenas slots disponíveis e extrai o horário "HH:mm"
-    return data
-      .filter(slot => slot.available)
-      .map(slot => {
-        const raw = slot.startTime; // "2026-04-08T09:00:00" ou "09:00:00"
-        if (!raw) return null;
-        // Pega apenas a parte HH:mm — funciona tanto para ISO datetime quanto para time puro
-        const timePart = raw.includes('T') ? raw.split('T')[1] : raw;
-        return timePart.substring(0, 5); // "09:00"
-      })
-      .filter(Boolean);
-  }, [formatDateToApi]);
+  const getDateKey = (dateObj) => formatDateToApi(dateObj);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [isSubmittingAppointment, setIsSubmittingAppointment] = useState(false);
   // null = ainda não escolheu, 'local' = pagar na barbearia, 'online' = pagar via MP
@@ -124,7 +71,7 @@ const AgendamentoPage = () => {
   );
 
   useEffect(() => {
-    const initializeDateOptions = async () => {
+    const initializeDateOptions = () => {
       setOfflineTransactionalNotice("");
 
       if (!selectedBarber || selectedServices.length === 0 || totalDuration <= 0) {
@@ -138,43 +85,15 @@ const AgendamentoPage = () => {
       setIsLoadingDateOptions(true);
 
       try {
-        const windowDates = buildDateWindow(14);
-        const baseOptions = windowDates.map((dateObj, index) => ({
-          key: getDateKey(dateObj),
-          date: dateObj,
-          label: getRelativeDateLabel(dateObj, index),
-          compact: formatCompactDate(dateObj),
-          slots: [],
-          isAvailable: false,
+        const baseOptions = createDateOptionsBase(14).map((option) => ({
+          ...option,
           status: "idle",
         }));
 
-        // Carrega todos os 14 dias em paralelo — sem "Toque para consultar"
-        const results = await Promise.allSettled(
-          baseOptions.map((option) => fetchDateSlots(selectedBarber, option.date, totalDuration))
-        );
-
-        const hydratedOptions = baseOptions.map((option, index) => {
-          const result = results[index];
-          const slots = result.status === "fulfilled" ? result.value : [];
-          return { ...option, slots, isAvailable: slots.length > 0, status: "loaded" };
-        });
-
-        setDateOptions(hydratedOptions);
-
-        const selectedKey = selectedDate ? getDateKey(selectedDate) : null;
-        const stillValid = hydratedOptions.find((o) => o.key === selectedKey && o.isAvailable);
-        const firstAvailable = hydratedOptions.find((o) => o.isAvailable);
-
-        if (stillValid) {
-          setSelectedDate(stillValid.date);
-        } else if (firstAvailable) {
-          setSelectedDate(firstAvailable.date);
-          setSelectedTime(firstAvailable.slots[0] || "");
-        } else {
-          setSelectedDate(hydratedOptions[0]?.date || null);
-          setSelectedTime("");
-        }
+        setDateOptions(baseOptions);
+        setSelectedDate(null);
+        setAvailableSlots([]);
+        setSelectedTime("");
       } catch (error) {
         console.error("Erro ao preparar datas:", error);
         if (isOfflineTransactionalError(error)) {
@@ -191,13 +110,7 @@ const AgendamentoPage = () => {
 
     initializeDateOptions();
   }, [
-    buildDateWindow,
-    fetchDateSlots,
-    formatCompactDate,
-    getDateKey,
-    getRelativeDateLabel,
     selectedBarber,
-    selectedDate,
     selectedServices.length,
     totalDuration,
   ]);
@@ -366,10 +279,24 @@ const AgendamentoPage = () => {
         return;
       }
 
-      // Lazy-load: datas não pré-carregadas só consultam ao serem escolhidas.
-      if (selectedOption.status !== "loaded") {
+      // Consulta sob demanda: no máximo uma chamada por clique para datas em estado "idle".
+      if (selectedOption.status === "loading") {
+        return;
+      }
+
+      if (selectedOption.status === "idle") {
+        setDateOptions((prev) => prev.map((option) => (
+          option.key === selectedOption.key
+            ? { ...option, status: "loading" }
+            : option
+        )));
+
         try {
-          const slots = await fetchDateSlots(selectedBarber, selectedOption.date, totalDuration);
+          const slots = await fetchAvailabilitySlots({
+            barberId: selectedBarber,
+            dateObj: selectedOption.date,
+            durationMinutes: totalDuration,
+          });
 
           setDateOptions((prev) => prev.map((option) => (
             option.key === selectedOption.key
@@ -388,10 +315,23 @@ const AgendamentoPage = () => {
           if (isOfflineTransactionalError(error)) {
             setOfflineTransactionalNotice(getOfflineTransactionalMessage(error));
           }
+
+          setDateOptions((prev) => prev.map((option) => (
+            option.key === selectedOption.key
+              ? { ...option, status: "error", slots: [], isAvailable: false }
+              : option
+          )));
+
           setAvailableSlots([]);
           setSelectedTime("");
           return;
         }
+      }
+
+      if (selectedOption.status === "error") {
+        setAvailableSlots([]);
+        setSelectedTime("");
+        return;
       }
 
       const slots = selectedOption.slots || [];
@@ -403,7 +343,7 @@ const AgendamentoPage = () => {
     };
 
     syncSelectedDateSlots();
-  }, [selectedDate, dateOptions, selectedTime, selectedBarber, totalDuration, fetchDateSlots, getDateKey]);
+  }, [selectedDate, dateOptions, selectedTime, selectedBarber, totalDuration]);
 
   // Handler: Selecionar/Deselecionar Serviço
   const handleServiceToggle = (service) => {
@@ -700,6 +640,15 @@ const AgendamentoPage = () => {
                           setAvailableSlots([]);
                           return;
                         }
+
+                        if (option.status === "error") {
+                          setDateOptions((prev) => prev.map((currentOption) => (
+                            currentOption.key === option.key
+                              ? { ...currentOption, status: "idle", slots: [], isAvailable: false }
+                              : currentOption
+                          )));
+                        }
+
                         setSelectedDate(option.date);
                         setSelectedTime("");
                       }}
@@ -708,7 +657,11 @@ const AgendamentoPage = () => {
                       <span className={Styles.dateChipLabel}>{option.label}</span>
                       <strong className={Styles.dateChipValue}>{option.compact}</strong>
                       <small className={Styles.dateChipMeta}>
-                        {option.status !== "loaded"
+                        {option.status === "loading"
+                          ? 'Consultando...'
+                          : option.status === "error"
+                            ? 'Falha ao consultar'
+                            : option.status !== "loaded"
                           ? 'Toque para consultar'
                           : option.isAvailable
                             ? `${option.slots.length} horários`
