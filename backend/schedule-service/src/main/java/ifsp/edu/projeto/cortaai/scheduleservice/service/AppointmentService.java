@@ -392,8 +392,7 @@ public class AppointmentService {
     @Cacheable(
             value = "appointmentAvailability",
             key = "#barberId + ':' + #date + ':' + #durationMinutes",
-            sync = true,
-            unless = "#result == null"
+            sync = true
     )
     @Transactional(readOnly = true)
     public List<TimeSlotDTO> getAvailability(UUID barberId, LocalDate date, int durationMinutes) {
