@@ -4,6 +4,7 @@ import ifsp.edu.projeto.cortaai.notificationservice.config.RabbitConfig;
 import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentCancelledEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentConcludedEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentCreatedEvent;
+import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentRescheduledEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.event.JoinRequestCreatedEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.event.PaymentApprovedEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.service.DeduplicationService;
@@ -56,6 +57,17 @@ public class NotificationEventListener {
         notificationService.notifyAppointmentConcluded(
                 event.getCustomerId(), event.getCustomerEmail(), event.getCustomerName(),
                 event.getBarberName(), event.getBarbershopName());
+    }
+
+    @RabbitListener(queues = RabbitConfig.QUEUE_APPOINTMENT_RESCHEDULED)
+    public void onAppointmentRescheduled(AppointmentRescheduledEvent event) {
+        log.info("Evento recebido: appointment.rescheduled id={}", event.getAppointmentId());
+        if (deduplicationService.isDuplicate("APPOINTMENT_RESCHEDULED", event.getAppointmentId().toString())) return;
+
+        notificationService.notifyAppointmentRescheduled(
+                event.getCustomerId(), event.getCustomerEmail(), event.getCustomerName(),
+                event.getBarberId(), event.getBarberEmail(), event.getBarberName(),
+                event.getBarbershopName(), event.getOldStartTime(), event.getNewStartTime());
     }
 
     @RabbitListener(queues = RabbitConfig.QUEUE_PAYMENT_APPROVED)

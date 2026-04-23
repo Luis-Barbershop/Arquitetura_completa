@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -261,22 +262,10 @@ public class AppointmentService {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Agendamento não encontrado."));
 
-        if (appointment.getStatus() == AppointmentStatus.CANCELLED) {
-            throw new ConflictException("Agendamento já está cancelado.");
-        }
+        ensureStatusCanBeCancelled(appointment.getStatus());
 
-        // Verificar que caller é customer, barber ou owner da barbearia
-        UserInfoDTO caller = userServiceClient.getUserByEmail(callerEmail);
-        boolean isCustomer = caller.getId().equals(appointment.getCustomerId());
-        boolean isBarber = caller.getId().equals(appointment.getBarberId());
-
-        if (!isCustomer && !isBarber) {
-            // Verificar se é owner da barbearia
-            BarbershopInfoDTO shop = barbershopServiceClient.getBarbershopById(appointment.getBarbershopId());
-            if (shop == null || !caller.getId().equals(shop.getOwnerId())) {
-                throw new NotFoundException("Você não tem permissão para cancelar este agendamento.");
-            }
-        }
+        UserInfoDTO caller = resolveCallerByEmail(callerEmail);
+        ensureCallerCanManageAppointment(appointment, caller, "cancelar");
 
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointmentRepository.save(appointment);
@@ -310,17 +299,90 @@ public class AppointmentService {
         log.info("Evento AppointmentCancelledEvent publicado para appointment {}", appointment.getId());
     }
 
+    // ========== REAGENDAMENTO ==========
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public void rescheduleAppointment(String callerEmail, UUID appointmentId, RescheduleAppointmentDTO dto) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new NotFoundException("Agendamento não encontrado."));
+
+        ensureStatusCanBeRescheduled(appointment.getStatus());
+
+        UserInfoDTO caller = resolveCallerByEmail(callerEmail);
+        ensureCallerCanManageAppointment(appointment, caller, "reagendar");
+
+        LocalDateTime newStartTime = dto.newStartTime();
+        if (newStartTime == null) {
+            throw new ConflictException("Novo horário inicial deve ser informado.");
+        }
+        if (newStartTime.equals(appointment.getStartTime())) {
+            throw new ConflictException("Novo horário deve ser diferente do horário atual.");
+        }
+
+        long durationMinutes = Duration.between(appointment.getStartTime(), appointment.getEndTime()).toMinutes();
+        if (durationMinutes <= 0) {
+            throw new ConflictException("Não foi possível identificar a duração do agendamento para reagendamento.");
+        }
+
+        LocalDateTime newEndTime = newStartTime.plusMinutes(durationMinutes);
+
+        ensureNoConflictForSlot(appointment.getBarberId(), newStartTime, newEndTime, appointment.getId());
+
+        boolean isBlocked = barberBlockRepository
+                .existsByBarberIdAndStartTimeLessThanAndEndTimeGreaterThan(
+                        appointment.getBarberId(), newEndTime, newStartTime);
+        if (isBlocked) {
+            throw new ConflictException("O barbeiro está indisponível neste período (bloqueio de agenda).");
+        }
+
+        LocalDateTime previousStartTime = appointment.getStartTime();
+        appointment.setStartTime(newStartTime);
+        appointment.setEndTime(newEndTime);
+
+        if (appointment.getStatus() == AppointmentStatus.CONFIRMED
+                || appointment.getStatus() == AppointmentStatus.IN_PROGRESS) {
+            appointment.setStatus(AppointmentStatus.SCHEDULED);
+        }
+
+        appointmentRepository.save(appointment);
+
+        String customerEmail = null;
+        String barberEmail = null;
+        try {
+            UserInfoDTO customerInfo = userServiceClient.getUserById(appointment.getCustomerId());
+            if (customerInfo != null) customerEmail = customerInfo.getEmail();
+        } catch (Exception e) {
+            log.warn("Não foi possível buscar email do customer: {}", e.getMessage());
+        }
+        try {
+            UserInfoDTO barberInfo = userServiceClient.getUserById(appointment.getBarberId());
+            if (barberInfo != null) barberEmail = barberInfo.getEmail();
+        } catch (Exception e) {
+            log.warn("Não foi possível buscar email do barber: {}", e.getMessage());
+        }
+
+        AppointmentRescheduledEvent event = new AppointmentRescheduledEvent(
+                appointment.getId(), appointment.getCustomerId(),
+                appointment.getBarberId(), appointment.getBarbershopId(),
+                appointment.getCustomerName(), customerEmail,
+                appointment.getBarberName(), barberEmail,
+                appointment.getBarbershopName(), previousStartTime,
+                newStartTime, newEndTime, callerEmail
+        );
+        rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.rescheduled", event);
+        log.info("Evento AppointmentRescheduledEvent publicado para appointment {}", appointment.getId());
+    }
+
     // ========== CONCLUSÃO ==========
 
     public void concludeAppointment(String callerEmail, UUID appointmentId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new NotFoundException("Agendamento não encontrado."));
 
-        // Verificar que caller é o barber
-        UserInfoDTO caller = userServiceClient.getUserByEmail(callerEmail);
-        if (!caller.getId().equals(appointment.getBarberId())) {
-            throw new NotFoundException("Apenas o barbeiro do agendamento pode concluí-lo.");
-        }
+        ensureStatusCanBeConcluded(appointment.getStatus());
+
+        UserInfoDTO caller = resolveCallerByEmail(callerEmail);
+        ensureCallerCanManageAppointment(appointment, caller, "concluir");
 
         appointment.setStatus(AppointmentStatus.COMPLETED);
         appointmentRepository.save(appointment);
@@ -575,13 +637,92 @@ public class AppointmentService {
     }
 
     private void ensureNoConflictForSlot(UUID barberId, LocalDateTime startTime, LocalDateTime endTime) {
+        ensureNoConflictForSlot(barberId, startTime, endTime, null);
+    }
+
+    private void ensureNoConflictForSlot(UUID barberId, LocalDateTime startTime, LocalDateTime endTime, UUID appointmentIdToIgnore) {
         try {
-            List<Appointment> conflicts = appointmentRepository.findConflictsForUpdate(barberId, startTime, endTime);
+            List<Appointment> conflicts;
+            if (appointmentIdToIgnore == null) {
+                conflicts = appointmentRepository.findConflictsForUpdate(barberId, startTime, endTime);
+            } else {
+                conflicts = appointmentRepository.findConflictsForUpdateExcludingAppointment(
+                        barberId, appointmentIdToIgnore, startTime, endTime);
+            }
+
             if (!conflicts.isEmpty()) {
                 throw new ConflictException("O barbeiro já possui um agendamento neste horário.");
             }
         } catch (PessimisticLockingFailureException ex) {
             throw new ConflictException("Não foi possível reservar o horário neste momento. Tente novamente.");
+        }
+    }
+
+    private UserInfoDTO resolveCallerByEmail(String callerEmail) {
+        UserInfoDTO caller = userServiceClient.getUserByEmail(callerEmail);
+        if (caller == null || caller.getId() == null) {
+            throw new NotFoundException("Usuário autenticado não encontrado.");
+        }
+        return caller;
+    }
+
+    private void ensureCallerCanManageAppointment(Appointment appointment, UserInfoDTO caller, String action) {
+        boolean isCustomer = caller.getId().equals(appointment.getCustomerId());
+        boolean isBarber = caller.getId().equals(appointment.getBarberId());
+
+        if (isCustomer || isBarber) {
+            return;
+        }
+
+        boolean isOwner = isCallerOwnerFromAppointmentBarbershop(appointment.getBarbershopId(), caller.getId());
+
+        if (!isOwner) {
+            throw new ForbiddenException("Você não tem permissão para " + action + " este agendamento.");
+        }
+    }
+
+    private boolean isCallerOwnerFromAppointmentBarbershop(UUID barbershopId, UUID callerId) {
+        if (barbershopId == null || callerId == null) {
+            return false;
+        }
+
+        BarbershopInfoDTO shop = barbershopServiceClient.getBarbershopById(barbershopId);
+        return shop != null && callerId.equals(shop.getOwnerId());
+    }
+
+    private void ensureStatusCanBeCancelled(AppointmentStatus status) {
+        if (status == AppointmentStatus.CANCELLED) {
+            throw new ConflictException("Agendamento já está cancelado.");
+        }
+        if (status == AppointmentStatus.COMPLETED || status == AppointmentStatus.CONCLUDED) {
+            throw new ConflictException("Agendamentos concluídos não podem ser cancelados.");
+        }
+        if (status == AppointmentStatus.NO_SHOW) {
+            throw new ConflictException("Agendamentos com NO_SHOW não podem ser cancelados.");
+        }
+    }
+
+    private void ensureStatusCanBeConcluded(AppointmentStatus status) {
+        if (status == AppointmentStatus.COMPLETED || status == AppointmentStatus.CONCLUDED) {
+            throw new ConflictException("Agendamento já está concluído.");
+        }
+        if (status == AppointmentStatus.CANCELLED) {
+            throw new ConflictException("Agendamentos cancelados não podem ser concluídos.");
+        }
+        if (status == AppointmentStatus.NO_SHOW) {
+            throw new ConflictException("Agendamentos com NO_SHOW não podem ser concluídos.");
+        }
+    }
+
+    private void ensureStatusCanBeRescheduled(AppointmentStatus status) {
+        if (status == AppointmentStatus.CANCELLED) {
+            throw new ConflictException("Agendamentos cancelados não podem ser reagendados.");
+        }
+        if (status == AppointmentStatus.COMPLETED || status == AppointmentStatus.CONCLUDED) {
+            throw new ConflictException("Agendamentos concluídos não podem ser reagendados.");
+        }
+        if (status == AppointmentStatus.NO_SHOW) {
+            throw new ConflictException("Agendamentos com NO_SHOW não podem ser reagendados.");
         }
     }
 

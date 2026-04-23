@@ -28,6 +28,16 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                                        @Param("startTime") LocalDateTime startTime,
                                        @Param("endTime") LocalDateTime endTime);
 
+                @Lock(LockModeType.PESSIMISTIC_WRITE)
+                @Query("SELECT a FROM Appointment a WHERE a.barberId = :barberId " +
+                        "AND a.id <> :appointmentId " +
+                        "AND a.status NOT IN ('CANCELLED', 'NO_SHOW') " +
+                        "AND a.startTime < :endTime AND a.endTime > :startTime")
+                List<Appointment> findConflictsForUpdateExcludingAppointment(@Param("barberId") UUID barberId,
+                                                                             @Param("appointmentId") UUID appointmentId,
+                                                                             @Param("startTime") LocalDateTime startTime,
+                                                                             @Param("endTime") LocalDateTime endTime);
+
     List<Appointment> findByCustomerIdOrderByStartTimeDesc(UUID customerId);
 
     List<Appointment> findByBarberIdOrderByStartTimeDesc(UUID barberId);

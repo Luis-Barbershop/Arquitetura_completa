@@ -103,6 +103,23 @@ public class AppointmentController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Reagendar agendamento", description = "Altera o horário de um agendamento existente de forma explícita e segura.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Agendamento reagendado"),
+            @ApiResponse(responseCode = "404", description = "Agendamento não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Estado inválido para reagendamento ou conflito de horário",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    @PutMapping("/{id}/reschedule")
+    public ResponseEntity<Void> rescheduleAppointment(
+            @Parameter(hidden = true) @RequestHeader("X-User-Email") String userEmail,
+            @Parameter(description = "UUID do agendamento") @PathVariable UUID id,
+            @Parameter(description = "Novo horário inicial do agendamento") @RequestBody @Valid RescheduleAppointmentDTO dto) {
+        appointmentService.rescheduleAppointment(userEmail, id, dto);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Concluir agendamento", description = "Marca um agendamento como concluído de forma explícita e segura.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Agendamento concluído"),

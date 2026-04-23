@@ -171,6 +171,65 @@ public class EmailService {
         send(toEmail, subject, body);
     }
 
+      // ─── Atendimento reagendado ────────────────────────────────────────────────
+
+      @Async
+      public void sendRescheduledToCustomer(
+          String toEmail, String customerName,
+          String barbershopName, String barberName,
+          LocalDateTime oldStartTime, LocalDateTime newStartTime) {
+
+        String subject = "🔁 Agendamento reagendado — CortaAI";
+        String body = baseTemplate(
+            "Horario atualizado!",
+            String.format("Olá, <strong>%s</strong>!", customerName),
+            String.format("""
+                Seu agendamento na <strong>%s</strong> com <strong>%s</strong>
+                foi reagendado.
+                <br><br>
+                <table style="width:100%%;border-collapse:collapse;">
+                  <tr><td style="padding:6px 0;color:#888;">Horario anterior</td>
+                    <td style="padding:6px 0;font-weight:600;">%s</td></tr>
+                  <tr><td style="padding:6px 0;color:#888;">Novo horario</td>
+                    <td style="padding:6px 0;font-weight:600;color:#c19006;">%s</td></tr>
+                </table>
+                """,
+                barbershopName, barberName,
+                oldStartTime.format(FORMATTER),
+                newStartTime.format(FORMATTER)),
+            "Ver meus agendamentos", "https://cortaai.shop/meus-agendamentos"
+        );
+        send(toEmail, subject, body);
+      }
+
+      @Async
+      public void sendRescheduledToBarber(
+          String toEmail, String barberName,
+          String customerName,
+          LocalDateTime oldStartTime, LocalDateTime newStartTime) {
+
+        String subject = "🔁 Atendimento reagendado — CortaAI";
+        String body = baseTemplate(
+            "Agenda atualizada!",
+            String.format("Olá, <strong>%s</strong>!", barberName),
+            String.format("""
+                O atendimento com <strong>%s</strong> foi reagendado.
+                <br><br>
+                <table style="width:100%%;border-collapse:collapse;">
+                  <tr><td style="padding:6px 0;color:#888;">Horario anterior</td>
+                    <td style="padding:6px 0;font-weight:600;">%s</td></tr>
+                  <tr><td style="padding:6px 0;color:#888;">Novo horario</td>
+                    <td style="padding:6px 0;font-weight:600;color:#c19006;">%s</td></tr>
+                </table>
+                """,
+                customerName,
+                oldStartTime.format(FORMATTER),
+                newStartTime.format(FORMATTER)),
+            "Ver minha agenda", "https://cortaai.shop/barberHome"
+        );
+        send(toEmail, subject, body);
+      }
+
     // ─── Pagamento aprovado → cliente ───────────────────────────────────────────
 
     @Async

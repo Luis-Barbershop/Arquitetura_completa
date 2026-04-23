@@ -17,6 +17,7 @@ public class RabbitConfig {
     public static final String QUEUE_APPOINTMENT_CREATED = "notification.appointment.created";
     public static final String QUEUE_APPOINTMENT_CANCELLED = "notification.appointment.cancelled";
     public static final String QUEUE_APPOINTMENT_CONCLUDED = "notification.appointment.concluded";
+    public static final String QUEUE_APPOINTMENT_RESCHEDULED = "notification.appointment.rescheduled";
     public static final String QUEUE_PAYMENT_APPROVED = "notification.payment.approved";
     public static final String QUEUE_JOIN_REQUEST_CREATED = "notification.barbershop.join-request.created";
 
@@ -24,6 +25,7 @@ public class RabbitConfig {
     public static final String RK_APPOINTMENT_CREATED = "appointment.created";
     public static final String RK_APPOINTMENT_CANCELLED = "appointment.cancelled";
     public static final String RK_APPOINTMENT_CONCLUDED = "appointment.concluded";
+    public static final String RK_APPOINTMENT_RESCHEDULED = "appointment.rescheduled";
     public static final String RK_PAYMENT_APPROVED = "payment.approved";
     public static final String RK_JOIN_REQUEST_CREATED = "barbershop.join-request.created";
 
@@ -46,6 +48,11 @@ public class RabbitConfig {
     @Bean
     public Queue appointmentConcludedQueue() {
         return QueueBuilder.durable(QUEUE_APPOINTMENT_CONCLUDED).build();
+    }
+
+    @Bean
+    public Queue appointmentRescheduledQueue() {
+        return QueueBuilder.durable(QUEUE_APPOINTMENT_RESCHEDULED).build();
     }
 
     @Bean
@@ -72,6 +79,11 @@ public class RabbitConfig {
     @Bean
     public Binding bindAppointmentConcluded() {
         return BindingBuilder.bind(appointmentConcludedQueue()).to(exchange()).with(RK_APPOINTMENT_CONCLUDED);
+    }
+
+    @Bean
+    public Binding bindAppointmentRescheduled() {
+        return BindingBuilder.bind(appointmentRescheduledQueue()).to(exchange()).with(RK_APPOINTMENT_RESCHEDULED);
     }
 
     @Bean

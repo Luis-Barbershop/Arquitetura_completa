@@ -370,16 +370,48 @@
     background-color: rgb(46 95 153 / 14%);
 }
 
+.cardActions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 150px;
+}
+
+.rescheduleButton,
+.concludeButton,
 .cancelButton {
     background-color: transparent;
-    border: 1px solid #8f2a2a;
-    color: #ffb4b4;
     padding: 0.54rem 0.84rem;
     border-radius: 10px;
     cursor: pointer;
     font-weight: 700;
     font-family: 'Space Grotesk', sans-serif;
     transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.rescheduleButton {
+    border: 1px solid #7e6425;
+    color: #f5dc9c;
+}
+
+.rescheduleButton:hover {
+    background-color: #3d3013;
+    transform: translateY(-1px);
+}
+
+.concludeButton {
+    border: 1px solid #2e5f99;
+    color: #a8ceff;
+}
+
+.concludeButton:hover {
+    background-color: #1b2f47;
+    transform: translateY(-1px);
+}
+
+.cancelButton {
+    border: 1px solid #8f2a2a;
+    color: #ffb4b4;
 }
 
 .cancelButton:hover {
@@ -588,6 +620,9 @@
         align-items: flex-start;
     }
 
+    .cardActions,
+    .rescheduleButton,
+    .concludeButton,
     .cancelButton,
     .reviewButton {
         width: 100%;

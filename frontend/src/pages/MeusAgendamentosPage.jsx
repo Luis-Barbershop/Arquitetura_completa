@@ -3,7 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { FiArrowLeft, FiCalendar, FiCheckCircle, FiClock, FiRefreshCw, FiScissors, FiXCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import Styles from './CSS/MeusAgendamentos.module.css';
-import { getMyAppointments, cancelAppointment, getBarbershopSchedule } from '../services/appointmentService';
+import {
+    getMyAppointments,
+    cancelAppointment,
+    concludeAppointment,
+    rescheduleAppointment,
+    getBarbershopSchedule,
+} from '../services/appointmentService';
 import { createBarbershopReview } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
@@ -28,6 +34,13 @@ const MeusAgendamentosPage = () => {
     const [cancelingAppointmentId, setCancelingAppointmentId] = useState(null);
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+    const [concludingAppointmentId, setConcludingAppointmentId] = useState(null);
+    const [isConcludeModalOpen, setIsConcludeModalOpen] = useState(false);
+    const [isSubmittingConclude, setIsSubmittingConclude] = useState(false);
+    const [reschedulingAppointmentId, setReschedulingAppointmentId] = useState(null);
+    const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+    const [isSubmittingReschedule, setIsSubmittingReschedule] = useState(false);
+    const [rescheduleDateTime, setRescheduleDateTime] = useState('');
     const [reviewingAppointment, setReviewingAppointment] = useState(null);
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -111,11 +124,101 @@ const MeusAgendamentosPage = () => {
             await cancelAppointment(cancelingAppointmentId);
             setIsCancelModalOpen(false);
             setCancelingAppointmentId(null);
-            carregarAgendamentos();
-        } catch {
-            toast.error("Erro ao cancelar. Tente novamente.");
+            await carregarAgendamentos();
+            toast.success('Agendamento cancelado com sucesso.');
+        } catch (error) {
+            const message = error?.response?.data?.message || 'Erro ao cancelar. Tente novamente.';
+            toast.error(message);
         } finally {
             setIsSubmittingCancel(false);
+        }
+    };
+
+    const toDateTimeLocalValue = (isoString) => {
+        const date = new Date(isoString);
+        if (Number.isNaN(date.getTime())) return '';
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    const toApiLocalDateTime = (dateTimeLocal) => {
+        if (!dateTimeLocal) return '';
+        if (dateTimeLocal.length === 16) {
+            return `${dateTimeLocal}:00`;
+        }
+        return dateTimeLocal;
+    };
+
+    const handleOpenConcludeModal = (id) => {
+        setConcludingAppointmentId(id);
+        setIsConcludeModalOpen(true);
+    };
+
+    const handleCloseConcludeModal = () => {
+        if (isSubmittingConclude) return;
+        setIsConcludeModalOpen(false);
+        setConcludingAppointmentId(null);
+    };
+
+    const handleConfirmConclude = async () => {
+        if (!concludingAppointmentId) return;
+
+        try {
+            setIsSubmittingConclude(true);
+            await concludeAppointment(concludingAppointmentId);
+            setIsConcludeModalOpen(false);
+            setConcludingAppointmentId(null);
+            await carregarAgendamentos();
+            toast.success('Agendamento concluido com sucesso.');
+        } catch (error) {
+            const message = error?.response?.data?.message || 'Erro ao concluir. Tente novamente.';
+            toast.error(message);
+        } finally {
+            setIsSubmittingConclude(false);
+        }
+    };
+
+    const handleOpenRescheduleModal = (appointment) => {
+        setReschedulingAppointmentId(appointment.id);
+        setRescheduleDateTime(toDateTimeLocalValue(appointment.startTime));
+        setIsRescheduleModalOpen(true);
+    };
+
+    const handleCloseRescheduleModal = () => {
+        if (isSubmittingReschedule) return;
+        setIsRescheduleModalOpen(false);
+        setReschedulingAppointmentId(null);
+        setRescheduleDateTime('');
+    };
+
+    const handleConfirmReschedule = async () => {
+        if (!reschedulingAppointmentId) return;
+
+        const normalizedDateTime = toApiLocalDateTime(rescheduleDateTime);
+        if (!normalizedDateTime) {
+            toast.warn('Informe o novo horario do agendamento.');
+            return;
+        }
+
+        try {
+            setIsSubmittingReschedule(true);
+            await rescheduleAppointment(reschedulingAppointmentId, normalizedDateTime);
+            setIsRescheduleModalOpen(false);
+            setReschedulingAppointmentId(null);
+            setRescheduleDateTime('');
+            await carregarAgendamentos();
+            toast.success('Agendamento reagendado com sucesso.');
+        } catch (error) {
+            const message = error?.response?.data?.message || 'Erro ao reagendar. Tente novamente.';
+            toast.error(message);
+        } finally {
+            setIsSubmittingReschedule(false);
         }
     };
 
@@ -238,6 +341,10 @@ const MeusAgendamentosPage = () => {
         { key: 'COMPLETED', label: 'Concluidos' },
         { key: 'CANCELLED', label: 'Cancelados' },
     ];
+
+    const canInteractWithAppointment = (status) => {
+        return ['SCHEDULED', 'CONFIRMED', 'WALK_IN', 'IN_PROGRESS'].includes(status);
+    };
 
     const handleBarberTabChange = (tab) => {
         if (tab === 'agenda') {
@@ -442,14 +549,30 @@ const MeusAgendamentosPage = () => {
                                         </span>
                                     </div>
 
-                                    {/* Permite cancelar agendado/confirmado/encaixe */}
-                                    {['SCHEDULED', 'CONFIRMED', 'WALK_IN'].includes(app.status) && (
-                                        <button 
-                                            className={Styles.cancelButton}
-                                            onClick={() => handleOpenCancelModal(app.id)}
-                                        >
-                                            Cancelar
-                                        </button>
+                                    {canInteractWithAppointment(app.status) && (
+                                        <div className={Styles.cardActions}>
+                                            <button
+                                                className={Styles.rescheduleButton}
+                                                onClick={() => handleOpenRescheduleModal(app)}
+                                                disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule}
+                                            >
+                                                Reagendar
+                                            </button>
+                                            <button
+                                                className={Styles.concludeButton}
+                                                onClick={() => handleOpenConcludeModal(app.id)}
+                                                disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule}
+                                            >
+                                                Concluir
+                                            </button>
+                                            <button
+                                                className={Styles.cancelButton}
+                                                onClick={() => handleOpenCancelModal(app.id)}
+                                                disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule}
+                                            >
+                                                Cancelar
+                                            </button>
+                                        </div>
                                     )}
 
                                     {isCustomer && app.status === 'COMPLETED' && (
@@ -581,6 +704,75 @@ const MeusAgendamentosPage = () => {
                                     disabled={isSubmittingReview}
                                 >
                                     {isSubmittingReview ? 'Enviando...' : 'Enviar avaliacao'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {isConcludeModalOpen && (
+                    <div className={Styles.modalBackdrop} onClick={handleCloseConcludeModal}>
+                        <div className={Styles.modalCard} onClick={(e) => e.stopPropagation()}>
+                            <p className={Styles.modalKicker}>CONFIRMAR CONCLUSAO</p>
+                            <h3 className={Styles.modalTitle}>Deseja concluir este agendamento?</h3>
+                            <p className={Styles.modalSubtitle}>O status sera alterado para concluido.</p>
+
+                            <div className={Styles.modalActions}>
+                                <button
+                                    type="button"
+                                    className={Styles.modalSecondaryButton}
+                                    onClick={handleCloseConcludeModal}
+                                    disabled={isSubmittingConclude}
+                                >
+                                    Voltar
+                                </button>
+                                <button
+                                    type="button"
+                                    className={Styles.modalPrimaryButton}
+                                    onClick={handleConfirmConclude}
+                                    disabled={isSubmittingConclude}
+                                >
+                                    {isSubmittingConclude ? 'Concluindo...' : 'Confirmar conclusao'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {isRescheduleModalOpen && (
+                    <div className={Styles.modalBackdrop} onClick={handleCloseRescheduleModal}>
+                        <div className={Styles.modalCard} onClick={(e) => e.stopPropagation()}>
+                            <p className={Styles.modalKicker}>REAGENDAR ATENDIMENTO</p>
+                            <h3 className={Styles.modalTitle}>Escolha o novo horario</h3>
+                            <p className={Styles.modalSubtitle}>Atualize data e hora para reagendar o atendimento.</p>
+
+                            <div className={Styles.reviewFormGroup}>
+                                <label className={Styles.reviewLabel} htmlFor="reschedule-date-time">Novo horario</label>
+                                <input
+                                    id="reschedule-date-time"
+                                    type="datetime-local"
+                                    className={Styles.reviewSelect}
+                                    value={rescheduleDateTime}
+                                    onChange={(e) => setRescheduleDateTime(e.target.value)}
+                                />
+                            </div>
+
+                            <div className={Styles.modalActions}>
+                                <button
+                                    type="button"
+                                    className={Styles.modalSecondaryButton}
+                                    onClick={handleCloseRescheduleModal}
+                                    disabled={isSubmittingReschedule}
+                                >
+                                    Voltar
+                                </button>
+                                <button
+                                    type="button"
+                                    className={Styles.modalPrimaryButton}
+                                    onClick={handleConfirmReschedule}
+                                    disabled={isSubmittingReschedule}
+                                >
+                                    {isSubmittingReschedule ? 'Salvando...' : 'Confirmar reagendamento'}
                                 </button>
                             </div>
                         </div>

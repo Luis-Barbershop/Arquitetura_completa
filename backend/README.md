@@ -132,4 +132,5 @@ cd backend
 | `appointment.created` | schedule-service | notification-service |
 | `appointment.cancelled` | schedule-service | notification-service |
 | `appointment.concluded` | schedule-service | notification-service |
+| `appointment.rescheduled` | schedule-service | notification-service |
 | `payment.approved` | payment-service | notification-service |

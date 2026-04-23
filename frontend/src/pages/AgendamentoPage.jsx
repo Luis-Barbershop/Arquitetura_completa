@@ -17,8 +17,10 @@ import api from "../services/api";
 import { getShopBarbers, getShopServices } from "../services/barbershopService";
 import {
   createDateOptionsBase,
-  fetchAvailabilitySlots,
   formatDateToApi,
+  formatCompactDate,
+  getRelativeDateLabel,
+  hydrateDateOptionsWithAvailability,
 } from "../services/appointmentAvailabilityService";
 
 const AgendamentoPage = () => {
@@ -27,7 +29,6 @@ const AgendamentoPage = () => {
 
   const [servicesList, setServicesList] = useState([]);
   const [barbersList, setBarbersList] = useState([]);
-  const [availableSlots, setAvailableSlots] = useState([]); 
   const [barberActivitiesById, setBarberActivitiesById] = useState({});
   const [isLoadingBarberActivities, setIsLoadingBarberActivities] = useState(false);
 
@@ -71,13 +72,12 @@ const AgendamentoPage = () => {
   );
 
   useEffect(() => {
-    const initializeDateOptions = () => {
+    const initializeDateOptions = async () => {
       setOfflineTransactionalNotice("");
 
       if (!selectedBarber || selectedServices.length === 0 || totalDuration <= 0) {
         setDateOptions([]);
         setSelectedDate(null);
-        setAvailableSlots([]);
         setSelectedTime("");
         return;
       }
@@ -85,15 +85,28 @@ const AgendamentoPage = () => {
       setIsLoadingDateOptions(true);
 
       try {
-        const baseOptions = createDateOptionsBase(14).map((option) => ({
+        const baseOptions = createDateOptionsBase(14).map((option, i) => ({
           ...option,
-          status: "idle",
+          label: getRelativeDateLabel(option.date, i),
+          compact: formatCompactDate(option.date),
         }));
 
-        setDateOptions(baseOptions);
-        setSelectedDate(null);
-        setAvailableSlots([]);
-        setSelectedTime("");
+        const hydrated = await hydrateDateOptionsWithAvailability({
+          barberId: selectedBarber,
+          durationMinutes: totalDuration,
+          dateOptions: baseOptions,
+        });
+
+        setDateOptions(hydrated);
+
+        const firstAvailableDate = hydrated.find((option) => option.isAvailable);
+        if (firstAvailableDate) {
+          setSelectedDate(firstAvailableDate.date);
+          setSelectedTime(firstAvailableDate.slots[0] || "");
+        } else {
+          setSelectedDate(hydrated[0]?.date || null);
+          setSelectedTime("");
+        }
       } catch (error) {
         console.error("Erro ao preparar datas:", error);
         if (isOfflineTransactionalError(error)) {
@@ -101,7 +114,6 @@ const AgendamentoPage = () => {
         }
         setDateOptions([]);
         setSelectedDate(null);
-        setAvailableSlots([]);
         setSelectedTime("");
       } finally {
         setIsLoadingDateOptions(false);
@@ -129,11 +141,17 @@ const AgendamentoPage = () => {
   const selectedDateLabel = selectedDate ? formatDateForSummary(selectedDate) : "Selecione um dia";
   const nextAvailableDate = dateOptions.find((option) => option.isAvailable);
 
+  const currentSlots = useMemo(() => {
+    if (!selectedDate) return [];
+    const key = getDateKey(selectedDate);
+    return dateOptions.find((option) => option.key === key)?.slots || [];
+  }, [selectedDate, dateOptions]);
+
   const groupedSlots = useMemo(() => {
     const morning = [];
     const afternoon = [];
 
-    availableSlots.forEach((slot) => {
+    currentSlots.forEach((slot) => {
       const hour = Number(String(slot).split(':')[0]);
       if (Number.isNaN(hour)) return;
 
@@ -145,7 +163,7 @@ const AgendamentoPage = () => {
     });
 
     return { morning, afternoon };
-  }, [availableSlots]);
+  }, [currentSlots]);
 
   const togglePeriod = (period) => {
     setExpandedPeriods((prev) => ({ ...prev, [period]: !prev[period] }));
@@ -259,91 +277,6 @@ const AgendamentoPage = () => {
 
     if (barbershopId) fetchData();
   }, [barbershopId]);
-
-  useEffect(() => {
-    const syncSelectedDateSlots = async () => {
-      setOfflineTransactionalNotice("");
-
-      if (!selectedDate || !selectedBarber || totalDuration <= 0) {
-        setAvailableSlots([]);
-        setSelectedTime("");
-        return;
-      }
-
-      const selectedKey = getDateKey(selectedDate);
-      const selectedOption = dateOptions.find((option) => option.key === selectedKey);
-
-      if (!selectedOption) {
-        setAvailableSlots([]);
-        setSelectedTime("");
-        return;
-      }
-
-      // Consulta sob demanda: no máximo uma chamada por clique para datas em estado "idle".
-      if (selectedOption.status === "loading") {
-        return;
-      }
-
-      if (selectedOption.status === "idle") {
-        setDateOptions((prev) => prev.map((option) => (
-          option.key === selectedOption.key
-            ? { ...option, status: "loading" }
-            : option
-        )));
-
-        try {
-          const slots = await fetchAvailabilitySlots({
-            barberId: selectedBarber,
-            dateObj: selectedOption.date,
-            durationMinutes: totalDuration,
-          });
-
-          setDateOptions((prev) => prev.map((option) => (
-            option.key === selectedOption.key
-              ? { ...option, slots, isAvailable: slots.length > 0, status: "loaded" }
-              : option
-          )));
-
-          setAvailableSlots(slots);
-
-          if (!slots.some((slot) => slot === selectedTime)) {
-            setSelectedTime("");
-          }
-          return;
-        } catch (error) {
-          console.error("Erro ao buscar horários da data selecionada:", error);
-          if (isOfflineTransactionalError(error)) {
-            setOfflineTransactionalNotice(getOfflineTransactionalMessage(error));
-          }
-
-          setDateOptions((prev) => prev.map((option) => (
-            option.key === selectedOption.key
-              ? { ...option, status: "error", slots: [], isAvailable: false }
-              : option
-          )));
-
-          setAvailableSlots([]);
-          setSelectedTime("");
-          return;
-        }
-      }
-
-      if (selectedOption.status === "error") {
-        setAvailableSlots([]);
-        setSelectedTime("");
-        return;
-      }
-
-      const slots = selectedOption.slots || [];
-      setAvailableSlots(slots);
-
-      if (!slots.some((slot) => slot === selectedTime)) {
-        setSelectedTime("");
-      }
-    };
-
-    syncSelectedDateSlots();
-  }, [selectedDate, dateOptions, selectedTime, selectedBarber, totalDuration]);
 
   // Handler: Selecionar/Deselecionar Serviço
   const handleServiceToggle = (service) => {
@@ -575,7 +508,6 @@ const AgendamentoPage = () => {
                           setSelectedDate(null);
                           setSelectedTime("");
                           setDateOptions([]);
-                          setAvailableSlots([]);
                           return;
                         }
                         setSelectedBarber(barber.id);
@@ -633,39 +565,23 @@ const AgendamentoPage = () => {
                       type="button"
                       className={`${Styles.dateChip} ${selectedDate && option.key === getDateKey(selectedDate) ? Styles.dateChipSelected : ''}`}
                       onClick={() => {
-                        if (option.status === "loaded" && !option.isAvailable) return;
+                        if (!option.isAvailable) return;
                         if (selectedDate && option.key === getDateKey(selectedDate)) {
                           setSelectedDate(null);
                           setSelectedTime("");
-                          setAvailableSlots([]);
                           return;
                         }
-
-                        if (option.status === "error") {
-                          setDateOptions((prev) => prev.map((currentOption) => (
-                            currentOption.key === option.key
-                              ? { ...currentOption, status: "idle", slots: [], isAvailable: false }
-                              : currentOption
-                          )));
-                        }
-
                         setSelectedDate(option.date);
-                        setSelectedTime("");
+                        setSelectedTime(option.slots[0] || "");
                       }}
-                      disabled={option.status === "loaded" && !option.isAvailable}
+                      disabled={!option.isAvailable}
                     >
                       <span className={Styles.dateChipLabel}>{option.label}</span>
                       <strong className={Styles.dateChipValue}>{option.compact}</strong>
                       <small className={Styles.dateChipMeta}>
-                        {option.status === "loading"
-                          ? 'Consultando...'
-                          : option.status === "error"
-                            ? 'Falha ao consultar'
-                            : option.status !== "loaded"
-                          ? 'Toque para consultar'
-                          : option.isAvailable
-                            ? `${option.slots.length} horários`
-                            : 'Indisponível'}
+                        {option.isAvailable
+                          ? `${option.slots.length} horários`
+                          : 'Indisponível'}
                       </small>
                     </button>
                   ))
@@ -682,7 +598,7 @@ const AgendamentoPage = () => {
         <section className={Styles.section}>
           <h3 className={Styles.section_title}>4. Horário</h3>
           {selectedBarber && selectedDate && selectedServices.length > 0 ? (
-            availableSlots.length > 0 ? (
+            currentSlots.length > 0 ? (
               <div className={Styles.slots_periods}>
                 {groupedSlots.morning.length > 0 && (
                   <div className={Styles.periodCard}>

@@ -106,6 +106,18 @@ export const cancelAppointment = async (id) => {
     return response.data;
 };
 
+export const concludeAppointment = async (id) => {
+    const response = await api.put(`/appointments/${id}/conclude`);
+    return response.data;
+};
+
+export const rescheduleAppointment = async (id, newStartTime) => {
+    const response = await api.put(`/appointments/${id}/reschedule`, {
+        newStartTime,
+    });
+    return response.data;
+};
+
 export const getBarbershopSchedule = async (shopId, date) => {
     try {
         const response = await api.get(`/appointments/barbershop/${shopId}`, {

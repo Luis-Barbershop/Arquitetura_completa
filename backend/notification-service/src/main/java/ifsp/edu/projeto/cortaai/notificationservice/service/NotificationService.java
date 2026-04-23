@@ -118,6 +118,42 @@ public class NotificationService {
         }
     }
 
+    // ─── Atendimento reagendado ────────────────────────────────────────────────
+
+    @Transactional
+    public void notifyAppointmentRescheduled(
+            UUID customerId, String customerEmail, String customerName,
+            UUID barberId, String barberEmail, String barberName,
+            String barbershopName, LocalDateTime oldStartTime, LocalDateTime newStartTime) {
+
+        String oldSlot = oldStartTime.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm"));
+        String newSlot = newStartTime.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm"));
+
+        // IN_APP — cliente
+        createNotification(customerId, NotificationType.APPOINTMENT_RESCHEDULED,
+                "Agendamento reagendado",
+                String.format("Seu horario em %s foi alterado de %s para %s.",
+                        barbershopName, oldSlot, newSlot));
+
+        // IN_APP — barbeiro
+        createNotification(barberId, NotificationType.APPOINTMENT_RESCHEDULED,
+                "Agendamento reagendado",
+                String.format("Atendimento com %s foi alterado de %s para %s.",
+                        customerName, oldSlot, newSlot));
+
+        // E-mail — cliente
+        if (customerEmail != null && !customerEmail.isBlank()) {
+            emailService.sendRescheduledToCustomer(
+                    customerEmail, customerName, barbershopName, barberName, oldStartTime, newStartTime);
+        }
+
+        // E-mail — barbeiro
+        if (barberEmail != null && !barberEmail.isBlank()) {
+            emailService.sendRescheduledToBarber(
+                    barberEmail, barberName, customerName, oldStartTime, newStartTime);
+        }
+    }
+
     // ─── Pagamento aprovado ──────────────────────────────────────────────────────
 
     @Transactional
