@@ -9,6 +9,7 @@ import {
     completeProfileBarber,
     translateFirebaseError
 } from "../../services/authService"
+import { maskCpf, maskPhone, onlyDigits } from "../../utils/inputMasks"
 
 // ─── Avalia força da senha ────────────────────────────────────────────────────
 function evaluatePasswordStrength(pwd) {
@@ -151,6 +152,17 @@ function SignIn_inputs() {
 
         if (!name || !cpf || !tell || !birthDate) {
             setError("Preencha todos os campos obrigatórios.");
+            return;
+        }
+
+        const cpfDigits = onlyDigits(cpf);
+        const tellDigits = onlyDigits(tell);
+        if (cpfDigits.length !== 11) {
+            setError("CPF inválido. Informe 11 dígitos.");
+            return;
+        }
+        if (tellDigits.length !== 11) {
+            setError("Telefone inválido. Informe DDD + número com 11 dígitos.");
             return;
         }
 
@@ -347,9 +359,9 @@ function SignIn_inputs() {
                                 className={Styles.formInput}
                                 type="text"
                                 value={tell}
-                                onChange={e => setTell(e.target.value.replace(/\D/g, '').slice(0, 11))}
-                                placeholder="11999999999"
-                                maxLength={11}
+                                onChange={e => setTell(maskPhone(e.target.value))}
+                                placeholder="(11) 99999-9999"
+                                maxLength={15}
                                 inputMode="numeric"
                                 required
                             />
@@ -361,9 +373,9 @@ function SignIn_inputs() {
                                 className={Styles.formInput}
                                 type="text"
                                 value={cpf}
-                                onChange={e => setCpf(e.target.value.replace(/\D/g, '').slice(0, 11))}
-                                placeholder="Somente números (11 dígitos)"
-                                maxLength={11}
+                                onChange={e => setCpf(maskCpf(e.target.value))}
+                                placeholder="000.000.000-00"
+                                maxLength={14}
                                 inputMode="numeric"
                                 required
                             />

@@ -19,6 +19,7 @@ import {
     isOfflineTransactionalError,
     getOfflineTransactionalMessage,
 } from '../services/offlineTransactionalService';
+import { maskPhone, onlyDigits } from '../utils/inputMasks';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import styles from './CSS/BarberHomePage.module.css';
@@ -196,7 +197,11 @@ function BarberManualBookingPage() {
         if (!clientName.trim()) { toast.warn('Informe o nome do cliente.'); return; }
         if (selectedActivityIds.length === 0) { toast.warn('Selecione ao menos um serviço.'); return; }
         if (!selectedDate || !selectedTime) { toast.warn('Selecione a data e horário do atendimento.'); return; }
-        if (clientPhone && clientPhone.length !== 11) { toast.warn('Telefone deve conter exatamente 11 dígitos.'); return; }
+        const clientPhoneDigits = onlyDigits(clientPhone);
+        if (clientPhoneDigits && clientPhoneDigits.length !== 11) {
+            toast.warn('Telefone deve conter exatamente 11 dígitos.');
+            return;
+        }
 
         const shopId = barber?.barbershopId;
         if (!shopId) { toast.error('Você não está vinculado a nenhuma barbearia.'); return; }
@@ -206,7 +211,7 @@ function BarberManualBookingPage() {
             activityIds: selectedActivityIds,
             startTime: `${formatDateToApi(selectedDate)}T${selectedTime}:00`,
             clientName: clientName.trim(),
-            clientPhone: clientPhone || null,
+            clientPhone: clientPhoneDigits || null,
         };
 
         setSubmitting(true);
@@ -295,10 +300,10 @@ function BarberManualBookingPage() {
                             <div>
                                 <label style={labelStyle}>Telefone (opcional)</label>
                                 <input
-                                    style={inputStyle} type="tel" placeholder="Ex: 11999999999"
+                                    style={inputStyle} type="tel" placeholder="Ex: (11) 99999-9999"
                                     value={clientPhone}
-                                    onChange={e => setClientPhone(e.target.value.replace(/\D/g, '').slice(0, 11))}
-                                    maxLength={11}
+                                    onChange={e => setClientPhone(maskPhone(e.target.value))}
+                                    maxLength={15}
                                 />
                             </div>
                         </div>

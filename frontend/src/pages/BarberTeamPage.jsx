@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
 import { isCustomer, isOwnerUser } from '../services/userContext';
+import { maskCpf, onlyDigits } from '../utils/inputMasks';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import styles from './CSS/BarberHomePage.module.css';
@@ -22,14 +23,6 @@ function BarberTeamPage() {
     const [inviteCpf, setInviteCpf] = useState('');
     const [inviteError, setInviteError] = useState('');
     const [isSendingInvite, setIsSendingInvite] = useState(false);
-
-    const formatCpf = (value) => {
-        const digits = value.replace(/\D/g, '').slice(0, 11);
-        return digits
-            .replace(/(\d{3})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d)/, '$1.$2')
-            .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-    };
 
     useEffect(() => {
         if (isCustomer()) { navigate('/homepage', { replace: true }); return; }
@@ -55,13 +48,13 @@ function BarberTeamPage() {
     };
 
     const handleInviteCpfChange = (e) => {
-        setInviteCpf(formatCpf(e.target.value));
+        setInviteCpf(maskCpf(e.target.value));
         if (inviteError) setInviteError('');
     };
 
     const handleSubmitInvite = async (e) => {
         e.preventDefault();
-        const normalizedCpf = inviteCpf.replace(/\D/g, '');
+        const normalizedCpf = onlyDigits(inviteCpf);
         if (normalizedCpf.length !== 11) {
             setInviteError('Informe um CPF valido com 11 numeros.');
             return;

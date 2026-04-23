@@ -5,6 +5,7 @@ import api from '../services/api';
 import { getMyInvites, acceptInvite, rejectInvite, leaveShop, getMyWorkSchedule, saveMyWorkSchedule } from '../services/barbershopService';
 import { logoutUser } from '../services/authService';
 import { isCustomer } from '../services/userContext';
+import { maskCpf, maskPhone, onlyDigits } from '../utils/inputMasks';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import styles from './CSS/BarberHomePage.module.css';
@@ -20,6 +21,18 @@ const DAYS_OF_WEEK = [
 ];
 
 const EMPTY_BLOCK = { startTime: '', endTime: '' };
+
+function formatPhoneForProfile(value) {
+    const digits = onlyDigits(value);
+    if (!digits) return '—';
+    return maskPhone(digits);
+}
+
+function formatCpfForProfile(value) {
+    const digits = onlyDigits(value);
+    if (!digits) return '—';
+    return maskCpf(digits);
+}
 
 /* ── Componente seletor de horário HH:MM ────────────────────────────────── */
 function TimePicker({ value, onChange, disabled }) {
@@ -378,8 +391,8 @@ function BarberProfilePage() {
     };
 
     const hasLinkedBarbershop = !!barber?.barbershopId;
-    const phoneValue = barber?.tell || barber?.phone || barber?.phoneNumber || '—';
-    const cpfValue = barber?.documentCPF || barber?.documentCpf || barber?.cpf || '—';
+    const phoneValue = formatPhoneForProfile(barber?.tell || barber?.phone || barber?.phoneNumber);
+    const cpfValue = formatCpfForProfile(barber?.documentCPF || barber?.documentCpf || barber?.cpf);
 
     const handleTabChange = (tab) => {
         if (tab === 'home')       navigate('/barberHome');
