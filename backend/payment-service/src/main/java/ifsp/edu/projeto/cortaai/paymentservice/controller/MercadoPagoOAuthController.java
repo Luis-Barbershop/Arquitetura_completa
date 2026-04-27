@@ -60,6 +60,15 @@ public class MercadoPagoOAuthController {
     @Value("${mercadopago.redirect-uri}")
     private String mpRedirectUri;
 
+        @Value("${mercadopago.auth-base-url}")
+        private String mpAuthBaseUrl;
+
+                @Value("${mercadopago.api-base-url}")
+                private String mpApiBaseUrl;
+
+                @Value("${mercadopago.post-connect-redirect-url}")
+                private String mpPostConnectRedirectUrl;
+
     // ─── GET /mp-connect ────────────────────────────────────────────────────────
 
     @Operation(
@@ -74,7 +83,7 @@ public class MercadoPagoOAuthController {
                     """)
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "URL de autorização gerada com sucesso",
-                    content = @Content(schema = @Schema(example = "{\"authorizationUrl\": \"https://auth.mercadopago.com/...\"}"))),
+                    content = @Content(schema = @Schema(example = "{\"authorizationUrl\": \"https://auth.mercadopago.com.br/authorization?...\"}"))),
             @ApiResponse(responseCode = "400", description = "Parâmetro state (barberId) ausente",
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
@@ -83,7 +92,7 @@ public class MercadoPagoOAuthController {
             @Parameter(description = "ID do barbeiro logado (X-User-Id injetado pelo Gateway)", hidden = true)
             @RequestParam("state") UUID barberId) {
 
-        String url = "https://auth.mercadopago.com/authorization" +
+        String url = mpAuthBaseUrl + "/authorization" +
                 "?client_id=" + mpClientId +
                 "&response_type=code" +
                 "&platform_id=mp" +
@@ -133,7 +142,7 @@ public class MercadoPagoOAuthController {
                     "&redirect_uri=" + URLEncoder.encode(mpRedirectUri, StandardCharsets.UTF_8);
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://api.mercadopago.com/oauth/token"))
+                    .uri(URI.create(mpApiBaseUrl + "/oauth/token"))
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(formBody))
                     .build();
@@ -161,7 +170,7 @@ public class MercadoPagoOAuthController {
 
             // Redireciona para o dashboard do barbeiro
             return ResponseEntity.status(302)
-                    .location(URI.create("https://cortaai.shop/barberHome?mpLinked=true"))
+                    .location(URI.create(mpPostConnectRedirectUrl))
                     .build();
 
         } catch (IllegalArgumentException e) {
