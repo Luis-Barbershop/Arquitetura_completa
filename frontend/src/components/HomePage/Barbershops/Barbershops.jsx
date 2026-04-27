@@ -35,10 +35,21 @@ function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite }) {
   }, [barbershops, searchTerm]);
 
 
+  const skeletons = Array.from({ length: 6 });
+
   return (
     <div className={Styles.barbershops_container}>
       {loading ? (
-        <p>Carregando Barbearias...</p>
+        skeletons.map((_, i) => (
+          <div key={i} className={Styles.skeleton_card}>
+            <div className={Styles.skeleton_thumb} />
+            <div className={Styles.skeleton_body}>
+              <div className={`${Styles.skeleton_line} ${Styles.skeleton_line_medium}`} />
+              <div className={`${Styles.skeleton_line} ${Styles.skeleton_line_long}`} />
+              <div className={`${Styles.skeleton_line} ${Styles.skeleton_line_short}`} />
+            </div>
+          </div>
+        ))
       ) : filtered.length > 0 ? (
         filtered.map((shop) => (
           <Container_Barbericons 

@@ -38,36 +38,35 @@ function Favorite_barbershops({ favoriteIds = [] }) {
 
     return (
         <div className={Styles.favorite_barbershops_container}>
-            <div className={Styles.favorite_header}>
-                <h3>Minhas barbearias favoritas</h3>
-                <span>{favoriteBarbershops.length} salva(s)</span>
-            </div>
-
             {loading ? (
-                <p className={`${Styles.info_text} ca-state ca-state--loading`}>Carregando favoritas...</p>
+                <div className={Styles.stories_list}>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className={Styles.story_skeleton}>
+                            <div className={Styles.story_skeleton_avatar} />
+                            <div className={Styles.story_skeleton_label} />
+                        </div>
+                    ))}
+                </div>
             ) : hasError ? (
                 <p className={`${Styles.info_text} ca-state ca-state--error`}>
                     Nao foi possivel carregar suas favoritas agora. Tente novamente em instantes.
                 </p>
             ) : favoriteBarbershops.length > 0 ? (
-                <div className={Styles.favorites_list}>
+                <div className={Styles.stories_list}>
                     {favoriteBarbershops.map((shop) => (
                         <button
                             key={shop.id}
-                            className={Styles.favorite_item}
+                            className={Styles.story_item}
                             onClick={() => navigate(`/agendamentoPage/${shop.id}`)}
                         >
-                            <div className={Styles.favorite_item_thumb}>
+                            <div className={Styles.story_avatar}>
                                 <img
                                     src={shop.logoUrl || "./barbershop.jpg"}
                                     alt={`Logo da ${shop.name}`}
                                     onError={(e) => { e.target.src = "./barbershop.png"; }}
                                 />
                             </div>
-                            <div className={Styles.favorite_item_text}>
-                                <h4>{shop.name}</h4>
-                                <p>{shop.address}</p>
-                            </div>
+                            <span className={Styles.story_name}>{shop.name}</span>
                         </button>
                     ))}
                 </div>
