@@ -12,7 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final EmailService emailService;
+        private final PushNotificationService pushNotificationService;
 
     // ─── Agendamento criado ──────────────────────────────────────────────────────
 
@@ -42,6 +45,11 @@ public class NotificationService {
                         barbershopName, barberName,
                         startTime.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")),
                         totalPrice));
+        pushNotificationService.sendToUser(customerId,
+                "Agendamento confirmado!",
+                String.format("%s com %s em %s", barbershopName, barberName,
+                        startTime.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm"))),
+                pushData(NotificationType.APPOINTMENT_CREATED, "/meus-agendamentos"));
 
         // IN_APP — barbeiro
         createNotification(barberId, NotificationType.APPOINTMENT_CREATED,
@@ -50,6 +58,11 @@ public class NotificationService {
                         customerName,
                         startTime.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")),
                         totalPrice));
+        pushNotificationService.sendToUser(barberId,
+                "Novo agendamento!",
+                String.format("Cliente %s em %s", customerName,
+                        startTime.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm"))),
+                pushData(NotificationType.APPOINTMENT_CREATED, "/barberHome"));
 
         // E-mail — cliente
         if (customerEmail != null && !customerEmail.isBlank()) {
@@ -79,6 +92,11 @@ public class NotificationService {
                     String.format("O cliente %s cancelou o agendamento de %s.",
                             customerName,
                             startTime.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm"))));
+            pushNotificationService.sendToUser(barberId,
+                    "Agendamento cancelado",
+                    String.format("%s cancelou o horário de %s", customerName,
+                            startTime.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm"))),
+                    pushData(NotificationType.APPOINTMENT_CANCELLED, "/barberHome"));
 
             // E-mail — barbeiro
             if (barberEmail != null && !barberEmail.isBlank()) {
@@ -90,6 +108,10 @@ public class NotificationService {
             createNotification(customerId, NotificationType.APPOINTMENT_CANCELLED,
                     "Agendamento cancelado",
                     "O barbeiro cancelou o seu agendamento. Tente agendar novamente.");
+            pushNotificationService.sendToUser(customerId,
+                    "Agendamento cancelado",
+                    "O barbeiro cancelou seu horário.",
+                    pushData(NotificationType.APPOINTMENT_CANCELLED, "/meus-agendamentos"));
 
             // E-mail — cliente
             if (customerEmail != null && !customerEmail.isBlank()) {
@@ -110,6 +132,10 @@ public class NotificationService {
         createNotification(customerId, NotificationType.APPOINTMENT_CONCLUDED,
                 "Atendimento concluído!",
                 "Seu atendimento foi concluído. Que tal deixar uma avaliação?");
+        pushNotificationService.sendToUser(customerId,
+                "Atendimento concluído!",
+                "Seu atendimento foi finalizado. Deixe uma avaliação.",
+                pushData(NotificationType.APPOINTMENT_CONCLUDED, "/meus-agendamentos"));
 
         // E-mail — cliente
         if (customerEmail != null && !customerEmail.isBlank()) {
@@ -134,12 +160,20 @@ public class NotificationService {
                 "Agendamento reagendado",
                 String.format("Seu horario em %s foi alterado de %s para %s.",
                         barbershopName, oldSlot, newSlot));
+        pushNotificationService.sendToUser(customerId,
+                "Agendamento reagendado",
+                String.format("Novo horário: %s", newSlot),
+                pushData(NotificationType.APPOINTMENT_RESCHEDULED, "/meus-agendamentos"));
 
         // IN_APP — barbeiro
         createNotification(barberId, NotificationType.APPOINTMENT_RESCHEDULED,
                 "Agendamento reagendado",
                 String.format("Atendimento com %s foi alterado de %s para %s.",
                         customerName, oldSlot, newSlot));
+        pushNotificationService.sendToUser(barberId,
+                "Agendamento reagendado",
+                String.format("Atendimento de %s agora em %s", customerName, newSlot),
+                pushData(NotificationType.APPOINTMENT_RESCHEDULED, "/barberHome"));
 
         // E-mail — cliente
         if (customerEmail != null && !customerEmail.isBlank()) {
@@ -164,6 +198,10 @@ public class NotificationService {
         createNotification(customerId, NotificationType.PAYMENT_APPROVED,
                 "Pagamento aprovado!",
                 String.format("Seu pagamento de R$ %.2f foi aprovado com sucesso.", amount));
+        pushNotificationService.sendToUser(customerId,
+                "Pagamento aprovado!",
+                String.format("Pagamento de R$ %.2f confirmado.", amount),
+                pushData(NotificationType.PAYMENT_APPROVED, "/meus-agendamentos"));
 
         // E-mail — cliente
         if (customerEmail != null && !customerEmail.isBlank()) {
@@ -226,6 +264,10 @@ public class NotificationService {
                 "Novo pedido de entrada!",
                 String.format("O barbeiro %s quer entrar na sua barbearia %s. Acesse 'Meu Time' para aprovar ou recusar.",
                         barberName, barbershopName));
+        pushNotificationService.sendToUser(ownerId,
+                "Novo pedido de entrada!",
+                String.format("%s quer entrar na barbearia %s", barberName, barbershopName),
+                pushData(NotificationType.JOIN_REQUEST_RECEIVED, "/barber-team"));
 
         log.info("event=join-request-notification-created ownerId={} barberName={} shop={}",
                 ownerId, barberName, barbershopName);
@@ -239,6 +281,10 @@ public class NotificationService {
                 "Você recebeu um convite!",
                 String.format("A barbearia %s convidou você para fazer parte da equipe. Acesse 'Meu Perfil' para aceitar ou recusar.",
                         barbershopName));
+        pushNotificationService.sendToUser(barberId,
+                "Você recebeu um convite!",
+                String.format("A barbearia %s convidou você para o time.", barbershopName),
+                pushData(NotificationType.INVITE_RECEIVED, "/barberProfile"));
 
         log.info("event=invite-notification-created barberId={} shop={}", barberId, barbershopName);
     }
@@ -248,4 +294,11 @@ public class NotificationService {
                 n.getId(), n.getUserId(), n.getType(), n.getTitle(),
                 n.getMessage(), n.getChannel(), n.isRead(), n.getCreatedAt());
     }
+
+        private Map<String, String> pushData(NotificationType type, String deepLink) {
+                Map<String, String> data = new HashMap<>();
+                data.put("type", type.name());
+                data.put("deepLink", deepLink);
+                return data;
+        }
 }

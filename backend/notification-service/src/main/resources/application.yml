@@ -69,6 +69,11 @@ eureka:
 
 notification:
   from-email: ${NOTIFICATION_FROM_EMAIL:noreply@cortaai.com.br}
+  push:
+    enabled: ${NOTIFICATION_PUSH_ENABLED:false}
+    service-account-base64: ${NOTIFICATION_PUSH_SERVICE_ACCOUNT_BASE64:}
+    service-account-path: ${NOTIFICATION_PUSH_SERVICE_ACCOUNT_PATH:}
+    project-id: ${NOTIFICATION_PUSH_PROJECT_ID:}
 
 # ==================================================
 # SPRINGDOC / SWAGGER UI
