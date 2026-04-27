@@ -27,6 +27,22 @@ function AppShell() {
   const [isInstallPromptVisible, setIsInstallPromptVisible] = useState(false)
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia('(display-mode: standalone)')
+
+    const applyDisplayMode = () => {
+      const standalone = mediaQuery.matches || window.navigator.standalone === true
+      document.body.setAttribute('data-display-mode', standalone ? 'standalone' : 'browser')
+    }
+
+    applyDisplayMode()
+    mediaQuery.addEventListener('change', applyDisplayMode)
+
+    return () => {
+      mediaQuery.removeEventListener('change', applyDisplayMode)
+    }
+  }, [])
+
+  useEffect(() => {
     const unsubscribe = subscribeToServiceWorkerUpdate((hasUpdate) => {
       if (hasUpdate) {
         setIsUpdateAvailable(true)

@@ -1,7 +1,8 @@
 .container {
-    min-height: 100vh;
+    min-height: 100dvh;
     color: #e0e0e0;
     padding: 20px;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
     font-family: 'Roboto', sans-serif;
     background:
         radial-gradient(circle at 8% 12%, rgb(193 144 6 / 12%), transparent 24%),
