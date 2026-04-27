@@ -78,6 +78,21 @@ FIREBASE_SERVICE_ACCOUNT_JSON=👉 TROCAR: {"type":"service_account","project_id
 
 MP_ACCESS_TOKEN=👉 TROCAR: APP_USR-xxxxxxxxxxxx-xxxxxx-xxxxxxxxxxxxxxxx-xxxxxxxxx
 
+# 👉 TROCAR: credenciais OAuth de marketplace (fluxo "Vincular Mercado Pago").
+#
+#    Como obter:
+#    1. Suas integrações → Sua aplicação
+#    2. Credenciais de Produção → Client ID / Client Secret
+#    3. Em OAuth, cadastre exatamente a URL de redirecionamento abaixo
+#
+#    ⚠️ O MP valida correspondência exata do redirect_uri.
+#    ⚠️ Para produção do CortaAi, mantenha domínio https público (sem localhost).
+
+MP_CLIENT_ID=👉 TROCAR: 1234567890123456
+MP_CLIENT_SECRET=👉 TROCAR: APP_USR-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+MP_REDIRECT_URI=👉 TROCAR: https://api.cortaai.shop/api/payments/mp-callback
+MP_AUTH_BASE_URL=https://auth.mercadopago.com.br
+
 
 # ══════════════════════════════════════════════════════════════
 # ☁️  CLOUDINARY (Upload de fotos de barbearias e perfis)

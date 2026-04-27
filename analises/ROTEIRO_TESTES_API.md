@@ -990,6 +990,19 @@ Authorization: Bearer <<barber_token>>
 
 > Nota: Funcionalidade de **marketplace** — barbeiro conecta sua conta MP para receber pagamentos diretamente. Requer credenciais de marketplace configuradas (`MP_CLIENT_ID` + `MP_CLIENT_SECRET`).
 
+**Configuração recomendada para ambiente de testes (local):**
+
+```env
+MP_CLIENT_ID=<APP_ID_TESTE_MP>
+MP_CLIENT_SECRET=<CLIENT_SECRET_TESTE_MP>
+MP_REDIRECT_URI=http://localhost:8080/api/payments/mp-callback
+MP_AUTH_BASE_URL=https://auth.mercadopago.com.br
+MP_API_BASE_URL=https://api.mercadopago.com
+MP_POST_CONNECT_REDIRECT_URL=http://localhost:5173/barberHome?mpLinked=true
+```
+
+> ⚠️ `MP_CLIENT_SECRET` é obrigatório no callback OAuth (`/oauth/token`) e não deve ser substituído por `Access Token`.
+
 ---
 
 ### 9.6 — MP OAuth — Callback *(não testável manualmente)*
