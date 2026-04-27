@@ -225,9 +225,15 @@ public class MercadoPagoOAuthController {
         }
 
         private String buildPostConnectRedirectUrl(boolean linked, String reason) {
-                String separator = mpPostConnectRedirectUrl.contains("?") ? "&" : "?";
+                String redirectBase = mpPostConnectRedirectUrl;
+                int queryIndex = redirectBase.indexOf('?');
+                if (queryIndex >= 0) {
+                        redirectBase = redirectBase.substring(0, queryIndex);
+                }
+
+                String separator = redirectBase.contains("?") ? "&" : "?";
                 String linkedValue = linked ? "true" : "false";
-                return mpPostConnectRedirectUrl
+                return redirectBase
                                 + separator
                                 + "mpLinked=" + linkedValue
                                 + "&mpReason=" + URLEncoder.encode(reason, StandardCharsets.UTF_8);
