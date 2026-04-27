@@ -126,11 +126,11 @@ public class PaymentService {
                     .backUrls(backUrls)
                     .notificationUrl(notificationUrl)
                     .externalReference(appointmentId.toString())
-                    .autoReturn("approved");
-
-            // NOTA: application_fee (split de plataforma) será adicionado após
-            // implementação completa do OAuth do barbeiro (MP Marketplace).
-            // Por enquanto, o pagamento vai integralmente para a conta da plataforma.
+                    .autoReturn("approved")
+                    // "NONE" desabilita o modo marketplace para esta preferência, permitindo
+                    // usar o token da plataforma. Quando o split estiver implementado via
+                    // MPRequestOptions com o token OAuth do barbeiro, remover esta linha.
+                    .marketplace("NONE");
 
             PreferenceClient client = new PreferenceClient();
             Preference preference = client.create(preferenceBuilder.build());
