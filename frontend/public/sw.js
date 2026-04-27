@@ -15,6 +15,8 @@ const TRANSACIONAL_ENDPOINTS = [
   '/api/auth',
 ]
 
+const API_PREFIX = '/api/'
+
 const isHttpRequest = (request) => request.url.startsWith('http')
 
 const isNavigationRequest = (request) => request.mode === 'navigate'
@@ -27,6 +29,11 @@ const isAppShellAssetRequest = (requestUrl) => {
 const isStaticAssetRequest = (requestUrl) => {
   const url = new URL(requestUrl)
   return /\.(?:js|css|png|jpg|jpeg|svg|webp|ico|woff2?)$/i.test(url.pathname)
+}
+
+const isApiRequest = (requestUrl) => {
+  const url = new URL(requestUrl)
+  return url.pathname.startsWith(API_PREFIX)
 }
 
 const isTransacionalApiRequest = (requestUrl) => {
@@ -48,6 +55,47 @@ const networkFirstForTransacionalRequest = async (request) => {
         headers: { 'Content-Type': 'application/json' },
       },
     )
+  }
+}
+
+const networkFirstForApiRequest = async (request) => {
+  try {
+    return await fetch(request)
+  } catch {
+    return new Response(
+      JSON.stringify({
+        error: 'OFFLINE_API_UNAVAILABLE',
+        message: 'Operacao indisponivel offline. Tente novamente quando voltar a conexao.',
+      }),
+      {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    )
+  }
+}
+
+const networkFirstForNavigationRequest = async (request) => {
+  const cache = await caches.open(APP_SHELL_CACHE)
+
+  try {
+    const response = await fetch(request)
+    if (response && response.ok) {
+      cache.put(request, response.clone())
+    }
+    return response
+  } catch {
+    const cached = await cache.match(request)
+    if (cached) {
+      return cached
+    }
+
+    const indexFallback = await cache.match('/index.html')
+    if (indexFallback) {
+      return indexFallback
+    }
+
+    return new Response('Offline', { status: 503 })
   }
 }
 
@@ -77,7 +125,17 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  if (isNavigationRequest(request) || isAppShellAssetRequest(request.url) || isStaticAssetRequest(request.url)) {
+  if (isApiRequest(request.url)) {
+    event.respondWith(networkFirstForApiRequest(request))
+    return
+  }
+
+  if (isNavigationRequest(request)) {
+    event.respondWith(networkFirstForNavigationRequest(request))
+    return
+  }
+
+  if (isAppShellAssetRequest(request.url) || isStaticAssetRequest(request.url)) {
     event.respondWith(cacheFirstForAppShellRequest(request))
   }
 })

@@ -42,7 +42,7 @@ function BarberHomePage() {
         toast.error('Não foi possível vincular a conta Mercado Pago.');
       }
     }
-  }, []);
+  }, [location.search]);
 
   useEffect(() => {
     if (!isAuthorized) {
@@ -106,7 +106,7 @@ function BarberHomePage() {
   const firstName = barber?.name?.split(' ')[0] || 'Profissional';
 
   return (
-    <div className={`ca-page ${styles.pageContainer} ${hasLinkedBarbershop ? styles.withNavbar : styles.withoutNavbar}`}>
+    <div className={`ca-page ${styles.pageContainer} ${styles.withNavbar}`}>
       <div className={`ca-container ${styles.contentWrapper}`}>
         <BarberHeader
           barber={barber}
@@ -180,9 +180,13 @@ function BarberHomePage() {
         //   </div>
         )}
       </div>
-      {hasLinkedBarbershop && (
-        <BarberNavbar activeTab={activeTab} onTabChange={handleTabChange} isOwner={barber?.isOwner === true || isOwnerUser()} barbershopId={barber?.barbershopId} />
-      )}
+      <BarberNavbar
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        onLogout={handleOpenLogoutModal}
+        isOwner={barber?.isOwner === true || isOwnerUser()}
+        barbershopId={barber?.barbershopId}
+      />
 
       {isLogoutModalOpen && (
         <div className={styles.modalBackdrop} onClick={handleCloseLogoutModal}>
