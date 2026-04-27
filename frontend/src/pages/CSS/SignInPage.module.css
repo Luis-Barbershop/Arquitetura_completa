@@ -1,10 +1,12 @@
 .registerStage {
-    min-height: 100vh;
+    min-height: 100dvh;
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 2rem;
+    padding-top: calc(2rem + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
     background-color: #0d0d0d;
     background-image:
         radial-gradient(circle at 6% 12%, rgb(193 144 6 / 20%), transparent 28%),

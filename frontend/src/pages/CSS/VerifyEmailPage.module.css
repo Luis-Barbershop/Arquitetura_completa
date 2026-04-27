@@ -1,13 +1,15 @@
 /* VerifyEmailPage.module.css — segue design system CortaAI */
 
 .page {
-    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 2rem;
     padding: 2rem 1rem;
+    padding-top: calc(2rem + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
     background:
         radial-gradient(circle at 15% 20%, rgba(193, 144, 6, 0.10), transparent 30%),
         linear-gradient(180deg, #0e0e0e 0%, #111111 100%);

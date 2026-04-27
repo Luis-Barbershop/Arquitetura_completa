@@ -1,7 +1,8 @@
 .pageContainer {
-    min-height: 100vh;
+    min-height: 100dvh;
     width: 100%;
     padding: 20px;
+    padding-top: calc(20px + env(safe-area-inset-top, 0px));
     color: #f5f5f5;
     background:
         radial-gradient(circle at 10% 2%, rgb(193 144 6 / 13%), transparent 24%),
@@ -15,7 +16,7 @@
 }
 
 .loadingContainer {
-    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -485,5 +486,13 @@
 
     .inlineFields {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .pageContainer {
+        padding: 12px;
+        padding-top: calc(12px + env(safe-area-inset-top, 0px));
+        padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px));
     }
 }

@@ -1,7 +1,8 @@
 .pageContainer {
-    min-height: 100vh;
+    min-height: 100dvh;
     width: 100%;
     padding: 16px;
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
     color: #f5f5f5;
     background-color: #0f0f0f;
     background-image:
@@ -16,7 +17,7 @@
 }
 
 .loadingContainer {
-    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -444,6 +445,8 @@
 @media (max-width: 760px) {
     .pageContainer {
         padding: 12px;
+        padding-top: calc(12px + env(safe-area-inset-top, 0px));
+        padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px));
     }
 
     .metricsGrid {
