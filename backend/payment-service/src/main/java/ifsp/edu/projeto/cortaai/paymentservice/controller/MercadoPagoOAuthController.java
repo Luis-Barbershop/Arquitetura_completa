@@ -92,6 +92,14 @@ public class MercadoPagoOAuthController {
             @Parameter(description = "ID do barbeiro logado (X-User-Id injetado pelo Gateway)", hidden = true)
             @RequestParam("state") UUID barberId) {
 
+        if (!isOAuthFlowEnabled()) {
+            log.warn("event=mp-oauth-disabled-environment barberId={} reason=missing_client_secret", maskIdentifier(barberId));
+            return ResponseEntity.ok(java.util.Map.of(
+                    "authorizationUrl",
+                    buildPostConnectRedirectUrl(false, "oauth_disabled_in_test")
+            ));
+        }
+
         String url = mpAuthBaseUrl + "/authorization" +
                 "?client_id=" + mpClientId +
                 "&response_type=code" +
@@ -133,6 +141,13 @@ public class MercadoPagoOAuthController {
 
         try {
             UUID barberId = UUID.fromString(state);
+
+            if (!isOAuthFlowEnabled()) {
+                log.warn("event=mp-oauth-callback-skipped barberId={} reason=missing_client_secret", maskIdentifier(barberId));
+                return ResponseEntity.status(302)
+                        .location(URI.create(buildPostConnectRedirectUrl(false, "oauth_disabled_in_test")))
+                        .build();
+            }
 
             // Troca o authorization code pelo access_token
             String formBody = "grant_type=authorization_code" +
@@ -203,5 +218,18 @@ public class MercadoPagoOAuthController {
                 return value
                                 .replaceAll("(?i)token[=:\\s]+[^\\s,;]+", "token=***")
                                 .replaceAll("(?i)secret[=:\\s]+[^\\s,;]+", "secret=***");
+        }
+
+        private boolean isOAuthFlowEnabled() {
+                return mpClientSecret != null && !mpClientSecret.isBlank();
+        }
+
+        private String buildPostConnectRedirectUrl(boolean linked, String reason) {
+                String separator = mpPostConnectRedirectUrl.contains("?") ? "&" : "?";
+                String linkedValue = linked ? "true" : "false";
+                return mpPostConnectRedirectUrl
+                                + separator
+                                + "mpLinked=" + linkedValue
+                                + "&mpReason=" + URLEncoder.encode(reason, StandardCharsets.UTF_8);
         }
 }
