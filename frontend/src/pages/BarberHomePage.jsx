@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
 import { isOwnerUser } from '../services/userContext';
@@ -27,6 +28,21 @@ function BarberHomePage() {
     allowBarber: true,
   });
   const showInsights = import.meta.env.VITE_ENABLE_BARBER_INSIGHTS === 'true';
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const mpLinked = params.get('mpLinked');
+    const mpReason = params.get('mpReason');
+    if (mpLinked === 'true') {
+      toast.success('Conta Mercado Pago vinculada com sucesso!');
+    } else if (mpLinked === 'false') {
+      if (mpReason === 'oauth_disabled_in_test') {
+        toast.info('Vinculação simulada (ambiente de teste). Em produção o OAuth real será usado.');
+      } else {
+        toast.error('Não foi possível vincular a conta Mercado Pago.');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!isAuthorized) {
