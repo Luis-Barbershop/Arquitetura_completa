@@ -5,8 +5,10 @@ import './styles/tokens.css'
 import './styles/grid.css'
 import App from './App.jsx'
 import { registerServiceWorkerIfEnabled } from './services/pwaService'
+import { registerPushNotificationsIfPossible } from './services/pushNotificationService'
 
 registerServiceWorkerIfEnabled()
+void registerPushNotificationsIfPossible()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

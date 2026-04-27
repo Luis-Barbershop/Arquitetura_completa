@@ -1,6 +1,7 @@
 import api from './api';
 import { auth, googleProvider } from './firebase';
 import { signInWithPopup } from 'firebase/auth';
+import { registerPushNotificationsIfPossible, unregisterPushNotificationsIfPossible } from './pushNotificationService';
 
 const AUTH_ENDPOINTS = {
     login: '/auth/email/login',
@@ -158,6 +159,7 @@ export const loginUser = async (email, password) => {
         throw incompleteError;
     }
 
+    void registerPushNotificationsIfPossible();
     return { ...response.data, profile: verifyResponse.data };
 };
 
@@ -203,6 +205,7 @@ export const registerBarber = async (barberData) => {
 
 // ─── LOGOUT ───────────────────────────────────────────────────────────────────
 export const logoutUser = () => {
+    void unregisterPushNotificationsIfPossible();
     localStorage.clear();
 };
 
@@ -326,6 +329,7 @@ export const loginWithGoogle = async () => {
             throw incompleteError;
         }
 
+        void registerPushNotificationsIfPossible();
         return {
             idToken,
             localId: result.user.uid,
