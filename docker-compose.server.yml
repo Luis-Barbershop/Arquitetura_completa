@@ -101,8 +101,7 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/app/firebase-service-account.json
       - CORS_ALLOWED_ORIGINS=http://192.168.0.205:5173,http://localhost:5173,http://localhost:3000,https://cortaai.shop,https://web.cortaai.shop
     depends_on:
-      discovery:
-        condition: service_started
+      discovery: { condition: service_healthy }
     deploy:
       resources:
         limits:
@@ -130,10 +129,10 @@ services:
       - FIREBASE_WEB_API_KEY=${FIREBASE_WEB_API_KEY}
     depends_on:
       db: { condition: service_healthy }
-      discovery: { condition: service_started }
+      discovery: { condition: service_healthy }
     deploy:
       resources:
-        limits: { cpus: "1", memory: 300M }
+        limits: { cpus: "1", memory: 384M }
 
   barbershop-service:
     build: { context: ./backend, dockerfile: barbershop-service/Dockerfile }
@@ -154,6 +153,7 @@ services:
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
+      discovery: { condition: service_healthy }
     deploy:
       resources:
         limits: { cpus: "1", memory: 300M }
@@ -176,6 +176,7 @@ services:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
       redis: { condition: service_healthy }
+      discovery: { condition: service_healthy }
     deploy:
       resources:
         limits: { cpus: "1", memory: 300M }
@@ -204,6 +205,7 @@ services:
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
+      discovery: { condition: service_healthy }
     deploy:
       resources:
         limits: { cpus: "1", memory: 300M }
@@ -230,6 +232,7 @@ services:
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
+      discovery: { condition: service_healthy }
     deploy:
       resources:
         limits: { cpus: "1", memory: 300M }
@@ -250,6 +253,7 @@ services:
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
+      discovery: { condition: service_healthy }
     deploy:
       resources:
         limits: { cpus: "1", memory: 256M }
