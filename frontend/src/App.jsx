@@ -154,12 +154,19 @@ function AppShell() {
     setIsInstallPromptVisible(false)
   }
 
+  // Quando o prompt nativo está disponível, dispara direto sem overlay
+  useEffect(() => {
+    if (isInstallPromptVisible && isNativeInstallPromptAvailable) {
+      handleInstallApp()
+    }
+  }, [isInstallPromptVisible, isNativeInstallPromptAvailable])
+
   return (
     <main className="premiumRouteShell">
       <div key={location.pathname} className="premiumRouteEnter">
         <AppRoutes/>
       </div>
-      {isInstallPromptVisible && (
+      {isInstallPromptVisible && !isNativeInstallPromptAvailable && (
         <InstallAppPopup
           isNativeInstallPromptAvailable={isNativeInstallPromptAvailable}
           onInstall={handleInstallApp}

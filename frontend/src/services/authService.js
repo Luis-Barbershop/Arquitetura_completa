@@ -79,6 +79,24 @@ export const refreshSession = async () => {
 
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 // Usa o Firebase Identity Toolkit via backend: POST /api/auth/email/login
+// ─── RETRY para /auth/verify em caso de 503 (user-service ainda inicializando) ─
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const verifyWithRetry = async (idToken, userType, maxAttempts = 4, delayMs = 5000) => {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            return await api.post(AUTH_ENDPOINTS.verify, { idToken, userType });
+        } catch (err) {
+            const status = err?.response?.status;
+            if ((status === 503 || status === 502) && attempt < maxAttempts) {
+                await sleep(delayMs);
+                continue;
+            }
+            throw err;
+        }
+    }
+};
+
 // Retorna { idToken, refreshToken, expiresIn, localId, email, registered }
 export const loginUser = async (email, password) => {
     const response = await api.post(AUTH_ENDPOINTS.login, { email, password });
@@ -95,7 +113,7 @@ export const loginUser = async (email, password) => {
 
     let verifyResponse;
     try {
-        verifyResponse = await api.post(AUTH_ENDPOINTS.verify, { idToken, userType: userIntent });
+        verifyResponse = await verifyWithRetry(idToken, userIntent);
     } catch (verifyErr) {
         localStorage.removeItem('token');
         localStorage.removeItem('userId');
@@ -292,7 +310,7 @@ export const loginWithGoogle = async () => {
     const userIntent = sessionStorage.getItem('user_intent')?.toUpperCase() || null;
 
     try {
-        const verifyResponse = await api.post(AUTH_ENDPOINTS.verify, { idToken, userType: userIntent });
+        const verifyResponse = await verifyWithRetry(idToken, userIntent);
 
         if (verifyResponse?.data?.verificationRequired) {
             localStorage.removeItem('token');
