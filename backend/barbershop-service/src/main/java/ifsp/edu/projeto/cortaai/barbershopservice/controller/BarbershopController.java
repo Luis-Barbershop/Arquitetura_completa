@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -73,6 +74,15 @@ public class BarbershopController {
             @Parameter(description = "Dados da avaliação") @RequestBody @Valid CreateBarbershopReviewDTO dto) {
         barbershopService.createReview(principal.getName(), shopId, dto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @Operation(summary = "Consulta se o cliente já avaliou a barbearia", description = "Retorna se o cliente autenticado já enviou avaliação para a barbearia.")
+    @GetMapping("/{shopId}/reviews/me")
+    public ResponseEntity<Map<String, Boolean>> hasMyReview(
+            @Parameter(hidden = true) Principal principal,
+            @Parameter(description = "UUID da barbearia") @PathVariable UUID shopId) {
+        boolean reviewed = barbershopService.hasCustomerReviewed(principal.getName(), shopId);
+        return ResponseEntity.ok(Map.of("reviewed", reviewed));
     }
 
     // ========== FLUXO 1: GESTÃO DO DONO (OWNER) ==========

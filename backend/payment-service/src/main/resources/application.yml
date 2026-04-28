@@ -67,7 +67,7 @@ mercadopago:
   client-id: ${MP_CLIENT_ID}
   client-secret: ${MP_CLIENT_SECRET:}
   redirect-uri: ${MP_REDIRECT_URI:http://localhost:8080/api/payments/mp-callback}
-  notification-url: ${MP_NOTIFICATION_URL:http://localhost:8080/api/payments/webhook}
+  notification-url: ${MP_NOTIFICATION_URL:https://api.cortaai.shop/api/payments/webhook}
   marketplace-fee-percent: 5.0
   webhook:
     # Segredo de assinatura do webhook (Mercado Pago) — quando vazio, validação é desativada (compatibilidade local).
@@ -97,4 +97,3 @@ logging:
     com.netflix.discovery: WARN
     com.netflix.eureka: WARN
     org.springframework.cloud.loadbalancer: WARN
-

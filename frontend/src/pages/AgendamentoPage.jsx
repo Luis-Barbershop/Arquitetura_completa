@@ -384,6 +384,7 @@ const AgendamentoPage = () => {
         barberId: selectedBarber,
         activityIds: selectedServices.map((s) => s.id),
         startTime,
+        paymentMethod: "CREDIT_CARD",
       };
 
       const appointmentResponse = await api.post("/appointments", appointmentData);
@@ -790,4 +791,3 @@ const AgendamentoPage = () => {
 };
 
 export default AgendamentoPage;
-

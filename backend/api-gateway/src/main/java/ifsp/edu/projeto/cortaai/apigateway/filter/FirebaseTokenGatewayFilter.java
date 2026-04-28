@@ -55,11 +55,13 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             "/api/auth/email/exists", "/api/auth/email/exists/",
             // Recuperação e alteração de senha — não exigem token de Authorization
             "/api/auth/email/forgot-password", "/api/auth/email/forgot-password/",
+            "/api/auth/email/resend-forgot-password", "/api/auth/email/resend-forgot-password/",
             "/api/auth/email/change-password", "/api/auth/email/change-password/",
             // Reenvio de e-mail de verificação — usuário não está logado
             "/api/auth/email/resend-verification", "/api/auth/email/resend-verification/",
             "/api/auth/firebase-test/resend-verification", "/api/auth/firebase-test/resend-verification/",
             "/api/auth/firebase-test/forgot-password", "/api/auth/firebase-test/forgot-password/",
+            "/api/auth/firebase-test/resend-forgot-password", "/api/auth/firebase-test/resend-forgot-password/",
             "/api/auth/firebase-test/sign-in-email", "/api/auth/firebase-test/sign-in-email/",
             "/api/auth/firebase-test/verify-id-token", "/api/auth/firebase-test/verify-id-token/",
             "/api/auth/firebase-test/register-email", "/api/auth/firebase-test/register-email/",
@@ -445,4 +447,3 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
         return incomingCorrelationId;
     }
 }
-

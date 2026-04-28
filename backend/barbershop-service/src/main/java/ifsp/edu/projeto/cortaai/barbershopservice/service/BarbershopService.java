@@ -219,6 +219,21 @@ public class BarbershopService {
         barbershopReviewRepository.save(review);
     }
 
+    @Transactional(readOnly = true)
+    public boolean hasCustomerReviewed(String customerUid, UUID shopId) {
+        UserInfoDTO customer = resolveUserByUid(customerUid);
+
+        if (!"CUSTOMER".equals(customer.getUserType())) {
+            throw new ForbiddenException("Apenas clientes podem consultar a própria avaliação.");
+        }
+
+        if (!barbershopRepository.existsById(shopId)) {
+            throw new NotFoundException("Barbearia não encontrada.");
+        }
+
+        return barbershopReviewRepository.existsByBarbershop_IdAndCustomerId(shopId, customer.getId());
+    }
+
     // ========== FLUXO 1: GESTÃO DO DONO (OWNER) ==========
 
     public BarbershopDTO createBarbershop(String ownerUid, CreateBarbershopDTO dto, MultipartFile logoFile) throws IOException {
@@ -776,4 +791,3 @@ public class BarbershopService {
                 .replaceAll("(?i)authorization[^\\s]*", "authorization***");
     }
 }
-

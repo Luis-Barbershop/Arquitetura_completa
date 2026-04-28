@@ -107,6 +107,10 @@ public class AppointmentService {
         }
 
         // 8. Criar Appointment com snapshots desnormalizados
+        AppointmentStatus initialStatus = isOnlinePaymentMethod(dto.getPaymentMethod())
+                ? AppointmentStatus.PAYMENT_PENDING
+                : AppointmentStatus.SCHEDULED;
+
         Appointment appointment = Appointment.builder()
                 .customerId(customer.getId())   // UUID interno, resolvido pelo callerEmail
                 .barberId(dto.getBarberId())
@@ -117,7 +121,7 @@ public class AppointmentService {
                 .startTime(dto.getStartTime())
                 .endTime(endTime)
                 .totalPrice(totalPrice)
-                .status(AppointmentStatus.SCHEDULED)
+                .status(initialStatus)
                 .build();
 
         // 9. Criar AppointmentActivities (snapshots)
@@ -326,6 +330,7 @@ public class AppointmentService {
 
         LocalDateTime newEndTime = newStartTime.plusMinutes(durationMinutes);
 
+        ensureWithinBarberWorkSchedule(appointment.getBarberId(), newStartTime, newEndTime);
         ensureNoConflictForSlot(appointment.getBarberId(), newStartTime, newEndTime, appointment.getId());
 
         boolean isBlocked = barberBlockRepository
@@ -567,6 +572,7 @@ public class AppointmentService {
         if ("BARBER".equals(userType)) {
             return appointmentRepository.findByBarberIdOrderByStartTimeDesc(caller.getId())
                     .stream()
+                    .filter(this::includeInOperationalAgenda)
                     .map(appointmentMapper::toDTO)
                     .collect(Collectors.toList());
         }
@@ -583,6 +589,7 @@ public class AppointmentService {
         LocalDateTime dayEnd = date.atTime(23, 59, 59);
         return appointmentRepository.findByBarberIdAndStartTimeBetween(barberId, dayStart, dayEnd)
                 .stream()
+                .filter(this::includeInOperationalAgenda)
                 .map(appointmentMapper::toDTO)
                 .collect(Collectors.toList());
     }
@@ -618,6 +625,7 @@ public class AppointmentService {
         LocalDateTime dayEnd = date.atTime(23, 59, 59);
         return appointmentRepository.findByBarbershopIdAndStartTimeBetween(shopId, dayStart, dayEnd)
                 .stream()
+                .filter(this::includeInOperationalAgenda)
                 .map(appointmentMapper::toDTO)
                 .collect(Collectors.toList());
     }
@@ -655,6 +663,30 @@ public class AppointmentService {
             }
         } catch (PessimisticLockingFailureException ex) {
             throw new ConflictException("Não foi possível reservar o horário neste momento. Tente novamente.");
+        }
+    }
+
+    private void ensureWithinBarberWorkSchedule(UUID barberId, LocalDateTime startTime, LocalDateTime endTime) {
+        List<DayScheduleDTO> weekSchedule;
+        try {
+            weekSchedule = userServiceClient.getBarberWorkSchedule(barberId);
+        } catch (Exception ex) {
+            log.warn("Falha ao validar jornada do barbeiro {} para reagendamento", barberId, ex);
+            throw new ConflictException("Não foi possível validar a agenda de trabalho do barbeiro neste momento.");
+        }
+
+        boolean withinWorkSchedule = weekSchedule != null
+                && weekSchedule.stream()
+                .filter(day -> day.getDayOfWeek() == startTime.getDayOfWeek())
+                .flatMap(day -> day.getBlocks() == null ? java.util.stream.Stream.empty() : day.getBlocks().stream())
+                .anyMatch(block -> block.getStartTime() != null
+                        && block.getEndTime() != null
+                        && !startTime.toLocalTime().isBefore(block.getStartTime())
+                        && !endTime.toLocalTime().isAfter(block.getEndTime())
+                        && startTime.toLocalDate().equals(endTime.toLocalDate()));
+
+        if (!withinWorkSchedule) {
+            throw new ConflictException("O barbeiro não trabalha neste dia ou horário.");
         }
     }
 
@@ -703,6 +735,9 @@ public class AppointmentService {
     }
 
     private void ensureStatusCanBeConcluded(AppointmentStatus status) {
+        if (status == AppointmentStatus.PAYMENT_PENDING) {
+            throw new ConflictException("Agendamentos com pagamento pendente não podem ser concluídos.");
+        }
         if (status == AppointmentStatus.COMPLETED || status == AppointmentStatus.CONCLUDED) {
             throw new ConflictException("Agendamento já está concluído.");
         }
@@ -727,8 +762,20 @@ public class AppointmentService {
     }
 
     private boolean includeInOperationalReports(Appointment appointment) {
+        return includeInOperationalAgenda(appointment);
+    }
+
+    private boolean includeInOperationalAgenda(Appointment appointment) {
         return appointment.getStatus() != AppointmentStatus.CANCELLED
-                && appointment.getStatus() != AppointmentStatus.NO_SHOW;
+                && appointment.getStatus() != AppointmentStatus.NO_SHOW
+                && appointment.getStatus() != AppointmentStatus.PAYMENT_PENDING;
+    }
+
+    private boolean isOnlinePaymentMethod(String paymentMethod) {
+        if (paymentMethod == null || paymentMethod.isBlank()) {
+            return false;
+        }
+        return !"LOCAL".equalsIgnoreCase(paymentMethod.trim());
     }
 
     // ========== ATUALIZAÇÃO INTERNA (para payment-service) ==========
@@ -738,7 +785,7 @@ public class AppointmentService {
                 .orElseThrow(() -> new NotFoundException("Agendamento não encontrado."));
 
         try {
-            String normalized = status == null ? "" : status.toUpperCase();
+            String normalized = status == null ? "" : status.trim().replace("\"", "").toUpperCase();
             if ("PAID".equals(normalized)) {
                 normalized = "CONFIRMED";
             } else if ("CONCLUDED".equals(normalized)) {
@@ -754,4 +801,3 @@ public class AppointmentService {
         }
     }
 }
-

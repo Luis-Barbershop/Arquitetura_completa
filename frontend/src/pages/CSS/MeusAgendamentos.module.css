@@ -15,7 +15,7 @@
 }
 
 .content {
-    width: min(1160px, 96%);
+    width: min(1180px, 96%);
     margin: 0 auto;
 }
 
@@ -356,6 +356,12 @@
     border-color: #2f6d3f;
     color: #8fdb9f;
     background-color: rgb(47 109 63 / 16%);
+}
+
+.statusPending {
+    border-color: #8a6f24;
+    color: #ffe08a;
+    background-color: rgb(138 111 36 / 16%);
 }
 
 .statusCancelled {

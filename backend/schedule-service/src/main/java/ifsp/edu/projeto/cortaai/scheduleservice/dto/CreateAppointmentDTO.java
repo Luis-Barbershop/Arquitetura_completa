@@ -25,5 +25,6 @@ public class CreateAppointmentDTO {
 
     @NotNull
     private LocalDateTime startTime;
-}
 
+    private String paymentMethod;
+}

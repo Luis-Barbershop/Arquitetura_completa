@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+    confirmPasswordReset,
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    verifyPasswordResetCode,
+} from "firebase/auth";
 import { auth } from "../services/firebase";
 import { changePassword } from "../services/authService";
 import Styles from "./CSS/LoginPage.module.css";
@@ -33,16 +38,53 @@ function ChangePasswordPage() {
     const [error, setError] = useState(null);
     // null = resolvendo, true = pode trocar, false = login social
     const [canChangePassword, setCanChangePassword] = useState(null);
+    const [resetEmail, setResetEmail] = useState("");
+    const [resetCodeValid, setResetCodeValid] = useState(false);
     // Bloqueia o redirect enquanto o Firebase SDK não resolveu o estado inicial
     const [initializing, setInitializing] = useState(true);
     const navigate = useNavigate();
+    const location = useLocation();
     // Ref para evitar redirect do onAuthStateChanged enquanto mudança está em andamento
     const changingPassword = useRef(false);
 
     const idToken = localStorage.getItem("token");
+    const searchParams = new URLSearchParams(location.search);
+    const mode = searchParams.get("mode");
+    const oobCode = searchParams.get("oobCode");
+    const isPasswordResetFlow = mode === "resetPassword" && Boolean(oobCode);
 
-    // Fonte da verdade: providerData do Firebase SDK, não o localStorage
+    // Fluxo autenticado usa authProvider vindo do backend. O Firebase SDK pode
+    // não estar logado no browser quando o login por e-mail veio via backend.
     useEffect(() => {
+        if (isPasswordResetFlow) {
+            verifyPasswordResetCode(auth, oobCode)
+                .then((email) => {
+                    setResetEmail(email);
+                    setResetCodeValid(true);
+                    setCanChangePassword(true);
+                    setInitializing(false);
+                })
+                .catch(() => {
+                    setResetCodeValid(false);
+                    setError("Link de redefinicao invalido ou expirado. Solicite um novo link.");
+                    setInitializing(false);
+                });
+            return undefined;
+        }
+
+        const storedProvider = (localStorage.getItem("authProvider") || "").toUpperCase();
+        if (storedProvider) {
+            setCanChangePassword(storedProvider === "EMAIL");
+            setInitializing(false);
+            return undefined;
+        }
+
+        if (idToken) {
+            setCanChangePassword(true);
+            setInitializing(false);
+            return undefined;
+        }
+
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
             setInitializing(false);
             if (!firebaseUser) {
@@ -55,7 +97,7 @@ function ChangePasswordPage() {
             setCanChangePassword(hasPasswordProvider);
         });
         return () => unsubscribe();
-    }, [navigate]);
+    }, [idToken, isPasswordResetFlow, navigate, oobCode]);
 
     const passwordStrength = useMemo(() => evaluatePasswordStrength(newPassword), [newPassword]);
 
@@ -76,7 +118,12 @@ function ChangePasswordPage() {
             setError("As senhas nao coincidem.");
             return;
         }
-        if (!idToken) {
+        if (isPasswordResetFlow && !resetCodeValid) {
+            setError("Link de redefinicao invalido ou expirado. Solicite um novo link.");
+            return;
+        }
+
+        if (!isPasswordResetFlow && !idToken) {
             setError("Sessao expirada. Faca login novamente.");
             navigate("/");
             return;
@@ -85,6 +132,12 @@ function ChangePasswordPage() {
         setLoading(true);
         try {
             changingPassword.current = true;
+            if (isPasswordResetFlow) {
+                await confirmPasswordReset(auth, oobCode, newPassword);
+                setSuccess(true);
+                return;
+            }
+
             const { data } = await changePassword(idToken, newPassword);
 
             // Ressincroniza a sessão do Firebase SDK com a nova senha para evitar logout automático
@@ -144,23 +197,42 @@ function ChangePasswordPage() {
                         <div className={FPStyles.successBox}>
                             <span className={FPStyles.successIcon}>✓</span>
                             <h2>Senha alterada!</h2>
-                            <p>Sua senha foi atualizada com sucesso. Você continua conectado.</p>
+                            <p>
+                                {isPasswordResetFlow
+                                    ? "Sua senha foi atualizada com sucesso. Faca login com a nova senha."
+                                    : "Sua senha foi atualizada com sucesso. Você continua conectado."}
+                            </p>
+                            {isPasswordResetFlow && (
+                                <Link to="/login" className={FPStyles.backBtn}>Ir para o login</Link>
+                            )}
                         </div>
                     ) : (
                         <>
-                            <h2>Alterar senha</h2>
-                            <p>Escolha uma nova senha para sua conta.</p>
+                            <h2>{isPasswordResetFlow ? "Redefinir senha" : "Alterar senha"}</h2>
+                            <p>
+                                {isPasswordResetFlow
+                                    ? `Escolha uma nova senha para ${resetEmail || "sua conta"}.`
+                                    : "Escolha uma nova senha para sua conta."}
+                            </p>
 
                             {/* Resolvendo: aguardando Firebase confirmar o provedor */}
-                            {canChangePassword === null && (
+                            {canChangePassword === null && !(isPasswordResetFlow && error) && (
                                 <div className={FPStyles.successBox}>
-                                    <h2>Validando login...</h2>
-                                    <p>Identificando seu provedor de autenticação.</p>
+                                    <h2>{isPasswordResetFlow ? "Validando link..." : "Validando login..."}</h2>
+                                    <p>{isPasswordResetFlow ? "Conferindo o codigo de redefinicao." : "Identificando seu provedor de autenticação."}</p>
+                                </div>
+                            )}
+
+                            {isPasswordResetFlow && error && canChangePassword !== true && (
+                                <div className={FPStyles.successBox}>
+                                    <h2>Link indisponivel</h2>
+                                    <p className={FPStyles.errorMsg}>{error}</p>
+                                    <Link to="/forgot-password" className={FPStyles.backBtn}>Solicitar novo link</Link>
                                 </div>
                             )}
 
                             {/* Login social: bloqueia completamente o formulário */}
-                            {canChangePassword === false && (
+                            {canChangePassword === false && !isPasswordResetFlow && (
                                 <div className={FPStyles.successBox}>
                                     <h2>🔒 Conta vinculada ao Google</h2>
                                     <p>
@@ -244,7 +316,7 @@ function ChangePasswordPage() {
                             )}
 
                             <div className={Styles.footerActions}>
-                                <Link className={Styles.homeLink} to="/homepage">Cancelar</Link>
+                                <Link className={Styles.homeLink} to={isPasswordResetFlow ? "/login" : "/homepage"}>Cancelar</Link>
                             </div>
                         </>
                     )}

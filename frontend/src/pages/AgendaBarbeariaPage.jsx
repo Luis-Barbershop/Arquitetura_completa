@@ -59,6 +59,7 @@ const AgendaBarbeariaPage = () => {
     const translateStatus = (status) => {
         const map = {
             SCHEDULED: 'Agendado',
+            PAYMENT_PENDING: 'Pagamento pendente',
             WALK_IN: 'Encaixe',
             CANCELLED: 'Cancelado',
             COMPLETED: 'Concluído',
@@ -68,6 +69,7 @@ const AgendaBarbeariaPage = () => {
 
     const getStatusClass = (status) => {
         if (status === 'SCHEDULED') return Styles.statusScheduled;
+        if (status === 'PAYMENT_PENDING') return Styles.statusPending;
         if (status === 'CANCELLED') return Styles.statusCancelled;
         if (status === 'COMPLETED') return Styles.statusCompleted;
         return '';
@@ -81,6 +83,7 @@ const AgendaBarbeariaPage = () => {
     const filterItems = [
         { key: 'ALL',       label: 'Todos' },
         { key: 'SCHEDULED', label: 'Agendados' },
+        { key: 'PAYMENT_PENDING', label: 'Pendentes' },
         { key: 'WALK_IN',   label: 'Encaixe' },
         { key: 'COMPLETED', label: 'Concluídos' },
         { key: 'CANCELLED', label: 'Cancelados' },
@@ -198,6 +201,7 @@ const AgendaBarbeariaPage = () => {
                                         </span>
                                         <span className={`${Styles.statusChip} ${getStatusClass(app.status)}`}>
                                             {app.status === 'SCHEDULED' && <FiCalendar />}
+                                            {app.status === 'PAYMENT_PENDING' && <FiClock />}
                                             {app.status === 'COMPLETED' && <FiCheckCircle />}
                                             {app.status === 'CANCELLED' && <FiXCircle />}
                                             {app.status === 'WALK_IN' && <FiScissors />}

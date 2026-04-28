@@ -63,7 +63,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
     @Value("${app.web-base-url:https://web.cortaai.shop}")
     private String appWebBaseUrl;
 
-    @Value("${app.forgot-password-continue-url:https://web.cortaai.shop/login}")
+    @Value("${app.forgot-password-continue-url:https://web.cortaai.shop/change-password}")
     private String forgotPasswordContinueUrl;
 
     private final Map<String, Instant> forgotPasswordLastRequestByEmail = new ConcurrentHashMap<>();
@@ -540,6 +540,5 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
         }
     }
 }
-
 
 

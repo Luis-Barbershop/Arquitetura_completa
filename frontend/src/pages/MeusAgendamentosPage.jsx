@@ -10,7 +10,7 @@ import {
     rescheduleAppointment,
     getBarbershopSchedule,
 } from '../services/appointmentService';
-import { createBarbershopReview } from '../services/barbershopService';
+import { createBarbershopReview, hasReviewedBarbershop } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import CustomerHeader from '../components/HomePage/CustomerHeader';
@@ -83,6 +83,32 @@ const MeusAgendamentosPage = () => {
             }
 
             const sorted = data.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+            if (isCustomer) {
+                const completedShopIds = [...new Set(
+                    sorted
+                        .filter((item) => item.status === 'COMPLETED' && item.barbershopId)
+                        .map((item) => item.barbershopId)
+                )];
+
+                const reviewEntries = await Promise.all(
+                    completedShopIds.map(async (shopId) => {
+                        try {
+                            return [shopId, await hasReviewedBarbershop(shopId)];
+                        } catch (error) {
+                            console.warn('Nao foi possivel consultar avaliacao da barbearia:', shopId, error);
+                            return [shopId, false];
+                        }
+                    })
+                );
+                const reviewedByShop = Object.fromEntries(reviewEntries);
+
+                setAppointments(sorted.map((item) => ({
+                    ...item,
+                    hasReviewed: Boolean(reviewedByShop[item.barbershopId]),
+                })));
+                return;
+            }
+
             setAppointments(sorted);
         } catch (error) {
             console.error("Erro ao buscar agendamentos:", error);
@@ -250,9 +276,19 @@ const MeusAgendamentosPage = () => {
 
             setIsReviewModalOpen(false);
             setReviewingAppointment(null);
+            setAppointments((current) => current.map((appointment) => (
+                appointment.barbershopId === reviewingAppointment.barbershopId
+                    ? { ...appointment, hasReviewed: true }
+                    : appointment
+            )));
             toast.success('Avaliacao enviada com sucesso!');
         } catch (error) {
             if (error?.response?.status === 409) {
+                setAppointments((current) => current.map((appointment) => (
+                    appointment.barbershopId === reviewingAppointment.barbershopId
+                        ? { ...appointment, hasReviewed: true }
+                        : appointment
+                )));
                 toast.warn('Voce ja avaliou esta barbearia.');
             } else {
                 toast.error('Nao foi possivel enviar sua avaliacao. Tente novamente.');
@@ -274,6 +310,7 @@ const MeusAgendamentosPage = () => {
     const translateStatus = (status) => {
         const map = {
             'SCHEDULED': 'Agendado',
+            'PAYMENT_PENDING': 'Pagamento pendente',
             'CONFIRMED': 'Confirmado',
             'WALK_IN': 'Encaixe',
             'CANCELLED': 'Cancelado',
@@ -329,6 +366,7 @@ const MeusAgendamentosPage = () => {
 
     const getStatusClass = (status) => {
         if (status === 'SCHEDULED') return Styles.statusScheduled;
+        if (status === 'PAYMENT_PENDING') return Styles.statusPending;
         if (status === 'CANCELLED') return Styles.statusCancelled;
         if (status === 'COMPLETED') return Styles.statusCompleted;
         return '';
@@ -337,6 +375,7 @@ const MeusAgendamentosPage = () => {
     const filterItems = [
         { key: 'ALL', label: 'Todos' },
         { key: 'SCHEDULED', label: 'Agendados' },
+        { key: 'PAYMENT_PENDING', label: 'Pendentes' },
         { key: 'WALK_IN', label: 'Encaixe' },
         { key: 'COMPLETED', label: 'Concluidos' },
         { key: 'CANCELLED', label: 'Cancelados' },
@@ -542,6 +581,7 @@ const MeusAgendamentosPage = () => {
                                         <span className={`${Styles.statusChip} ${getStatusClass(app.status)}`}>
                                             {app.status === 'SCHEDULED' && <FiCalendar />}
                                             {app.status === 'CONFIRMED' && <FiCalendar />}
+                                            {app.status === 'PAYMENT_PENDING' && <FiClock />}
                                             {app.status === 'COMPLETED' && <FiCheckCircle />}
                                             {app.status === 'CANCELLED' && <FiXCircle />}
                                             {app.status === 'WALK_IN' && <FiScissors />}
@@ -575,7 +615,7 @@ const MeusAgendamentosPage = () => {
                                         </div>
                                     )}
 
-                                    {isCustomer && app.status === 'COMPLETED' && (
+                                    {isCustomer && app.status === 'COMPLETED' && !app.hasReviewed && (
                                         <button
                                             className={Styles.reviewButton}
                                             onClick={() => handleOpenReviewModal(app)}

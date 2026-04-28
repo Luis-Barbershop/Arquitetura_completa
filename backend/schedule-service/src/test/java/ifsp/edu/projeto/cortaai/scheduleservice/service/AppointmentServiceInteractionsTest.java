@@ -2,11 +2,14 @@ package ifsp.edu.projeto.cortaai.scheduleservice.service;
 
 import ifsp.edu.projeto.cortaai.scheduleservice.config.RabbitConfig;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.BarbershopInfoDTO;
+import ifsp.edu.projeto.cortaai.scheduleservice.dto.DayScheduleDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.RescheduleAppointmentDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.UserInfoDTO;
+import ifsp.edu.projeto.cortaai.scheduleservice.dto.WorkBlockDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.event.AppointmentCancelledEvent;
 import ifsp.edu.projeto.cortaai.scheduleservice.event.AppointmentConcludedEvent;
 import ifsp.edu.projeto.cortaai.scheduleservice.event.AppointmentRescheduledEvent;
+import ifsp.edu.projeto.cortaai.scheduleservice.exception.ConflictException;
 import ifsp.edu.projeto.cortaai.scheduleservice.exception.ForbiddenException;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.BarbershopServiceClient;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.UserServiceClient;
@@ -23,7 +26,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -133,6 +138,10 @@ class AppointmentServiceInteractionsTest {
 
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
         when(userServiceClient.getUserByEmail("barber@cortaai.com")).thenReturn(barber);
+        when(userServiceClient.getBarberWorkSchedule(barberId))
+                .thenReturn(List.of(new DayScheduleDTO(DayOfWeek.SATURDAY, List.of(
+                        new WorkBlockDTO(LocalTime.of(9, 0), LocalTime.of(18, 0))
+                ))));
         when(appointmentRepository.findConflictsForUpdateExcludingAppointment(eq(barberId), eq(appointmentId), eq(newStart), eq(newStart.plusMinutes(30))))
                 .thenReturn(List.of());
         when(barberBlockRepository.existsByBarberIdAndStartTimeLessThanAndEndTimeGreaterThan(eq(barberId), eq(newStart.plusMinutes(30)), eq(newStart)))
@@ -176,6 +185,43 @@ class AppointmentServiceInteractionsTest {
 
         verify(appointmentRepository, never()).save(any(Appointment.class));
         verify(rabbitTemplate, never()).convertAndSend(any(String.class), any(String.class), any(Object.class));
+    }
+
+    @Test
+    void shouldDenyConcludingAppointmentWithPendingPayment() {
+        UUID appointmentId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+
+        Appointment appointment = buildAppointment(appointmentId, customerId, barberId, shopId, AppointmentStatus.PAYMENT_PENDING);
+
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
+
+        assertThatThrownBy(() -> appointmentService.concludeAppointment("barber@cortaai.com", appointmentId))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Agendamentos com pagamento pendente não podem ser concluídos.");
+
+        verify(userServiceClient, never()).getUserByEmail(any(String.class));
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+        verify(rabbitTemplate, never()).convertAndSend(any(String.class), any(String.class), any(Object.class));
+    }
+
+    @Test
+    void shouldUpdateAppointmentToPaymentPendingFromPaymentService() {
+        UUID appointmentId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+
+        Appointment appointment = buildAppointment(appointmentId, customerId, barberId, shopId, AppointmentStatus.SCHEDULED);
+
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
+
+        appointmentService.updatePaymentStatus(appointmentId, "\"PAYMENT_PENDING\"");
+
+        assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.PAYMENT_PENDING);
+        verify(appointmentRepository).save(appointment);
     }
 
     private Appointment buildAppointment(UUID appointmentId,

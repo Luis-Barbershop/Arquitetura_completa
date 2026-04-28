@@ -70,9 +70,9 @@ public class InternalAppointmentController {
     @PutMapping("/{id}/payment-status")
     public ResponseEntity<Void> updatePaymentStatus(
             @Parameter(description = "UUID do agendamento") @PathVariable UUID id,
-            @RequestBody String status) {
-        appointmentService.updatePaymentStatus(id, status);
+            @RequestParam(required = false) String status,
+            @RequestBody(required = false) String bodyStatus) {
+        appointmentService.updatePaymentStatus(id, status != null ? status : bodyStatus);
         return ResponseEntity.noContent().build();
     }
 }
-

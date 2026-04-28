@@ -33,6 +33,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -64,6 +65,9 @@ public class PaymentService {
 
     @Value("${mercadopago.notification-url}")
     private String notificationUrl;
+
+    @Value("${mercadopago.post-connect-redirect-url}")
+    private String postConnectRedirectUrl;
 
     @Value("${mercadopago.webhook.secret:}")
     private String webhookSecret;
@@ -116,9 +120,9 @@ public class PaymentService {
                     .build();
 
             PreferenceBackUrlsRequest backUrls = PreferenceBackUrlsRequest.builder()
-                    .success("https://cortaai.shop/payment/success")
-                    .failure("https://cortaai.shop/payment/failure")
-                    .pending("https://cortaai.shop/payment/pending")
+                    .success(paymentReturnUrl("success"))
+                    .failure(paymentReturnUrl("failure"))
+                    .pending(paymentReturnUrl("pending"))
                     .build();
 
             PreferenceRequest.PreferenceRequestBuilder preferenceBuilder = PreferenceRequest.builder()
@@ -150,6 +154,7 @@ public class PaymentService {
                     .build();
 
         Transaction saved = transactionRepository.save(transaction);
+        updateAppointmentStatus(appointmentId, "PAYMENT_PENDING");
         log.info("event=payment-created txId={} preferenceId={} method={}",
             maskIdentifier(saved.getId()),
             maskIdentifier(preference.getId()),
@@ -226,12 +231,7 @@ public class PaymentService {
             if (newStatus == PaymentStatus.APPROVED && previousStatus != PaymentStatus.APPROVED) {
                 updateDailyKpiProjectionForApproved(transaction);
 
-                // Atualizar status no schedule-service via Feign
-                try {
-                    scheduleServiceClient.updatePaymentStatus(appointmentId, "CONFIRMED");
-                } catch (Exception e) {
-                    log.error("Falha ao atualizar payment status no schedule-service", e);
-                }
+                updateAppointmentStatus(appointmentId, "CONFIRMED");
 
                 // Publicar evento para notification-service
                 String customerEmail = null;
@@ -255,6 +255,12 @@ public class PaymentService {
                         event
                 );
                 log.info("event=payment-approved-published txId={}", maskIdentifier(transaction.getId()));
+            } else if (newStatus == PaymentStatus.REJECTED
+                    || newStatus == PaymentStatus.CANCELLED
+                    || newStatus == PaymentStatus.REFUNDED) {
+                updateAppointmentStatus(appointmentId, "CANCELLED");
+            } else if (newStatus == PaymentStatus.PENDING || newStatus == PaymentStatus.IN_PROCESS) {
+                updateAppointmentStatus(appointmentId, "PAYMENT_PENDING");
             }
 
             webhookLog.setProcessed(true);
@@ -702,6 +708,28 @@ public class PaymentService {
             case "in_process", "pending", "authorized" -> PaymentStatus.IN_PROCESS;
             default -> PaymentStatus.PENDING;
         };
+    }
+
+    private String paymentReturnUrl(String result) {
+        return webBaseUrl() + "/meus-agendamentos?payment=" + result;
+    }
+
+    private String webBaseUrl() {
+        try {
+            URI redirectUri = URI.create(postConnectRedirectUrl);
+            return redirectUri.getScheme() + "://" + redirectUri.getAuthority();
+        } catch (Exception ex) {
+            log.warn("event=payment-return-url-fallback invalidPostConnectRedirectUrl={}", postConnectRedirectUrl);
+            return "https://web.cortaai.shop";
+        }
+    }
+
+    private void updateAppointmentStatus(UUID appointmentId, String status) {
+        try {
+            scheduleServiceClient.updatePaymentStatus(appointmentId, status);
+        } catch (Exception e) {
+            log.error("Falha ao atualizar payment status no schedule-service", e);
+        }
     }
 
     private TransactionDTO toDTO(Transaction tx) {
