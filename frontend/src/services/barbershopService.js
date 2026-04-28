@@ -52,6 +52,25 @@ export const createBarbershop = async (shopData, imageFile) => {
     return response.data;
 };
 
+export const updateMyBarbershop = async (shopData) => {
+    const response = await api.put('/barbershops/my-shop', shopData);
+    return response.data;
+};
+
+export const uploadMyBarbershopLogo = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/barbershops/my-shop/upload-logo', formData);
+    return response.data;
+};
+
+export const uploadMyBarbershopBanner = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/barbershops/my-shop/upload-banner', formData);
+    return response.data;
+};
+
 // Busca os barbeiros de uma loja específica (Público)
 export const getShopBarbers = async (shopId) => {
     if (!shopId) return [];

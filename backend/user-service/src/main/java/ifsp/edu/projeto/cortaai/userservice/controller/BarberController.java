@@ -13,8 +13,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Set;
@@ -158,4 +160,20 @@ public class BarberController {
             @Parameter(description = "UUID do barbeiro") @PathVariable UUID id) {
         return ResponseEntity.ok(workScheduleService.getScheduleByBarberId(id));
     }
+
+        @Operation(summary = "Upload/atualização da foto de perfil do barbeiro autenticado")
+        @ApiResponses({
+                        @ApiResponse(responseCode = "200", description = "Upload realizado com sucesso (retorna a URL da imagem)"),
+                        @ApiResponse(responseCode = "400", description = "Arquivo ausente ou inválido",
+                                        content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+                        @ApiResponse(responseCode = "503", description = "Falha ao comunicar com o serviço de armazenamento",
+                                        content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+        })
+        @PostMapping(value = "/me/upload-photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        public ResponseEntity<String> uploadBarberPhoto(
+                        @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
+                        @RequestParam("file") MultipartFile file) {
+                String imageUrl = barberService.updateProfilePhotoByFirebaseUid(firebaseUid, file);
+                return ResponseEntity.ok(imageUrl);
+        }
 }

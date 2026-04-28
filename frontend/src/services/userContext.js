@@ -49,6 +49,8 @@ export const isLoggedIn = () => !!localStorage.getItem('token');
  */
 export const getBarbershopId = () => localStorage.getItem('barbershopId') || null;
 
+export const getHomeRouteByRole = () => (isBarber() ? '/barberHome' : '/homepage');
+
 /**
  * Retorna o objeto de acesso do barbeiro:
  *   { canManageTeam, canManageStock, canViewDashboard, canManageShopServices }

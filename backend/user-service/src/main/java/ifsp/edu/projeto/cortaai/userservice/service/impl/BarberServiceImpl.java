@@ -2,18 +2,22 @@ package ifsp.edu.projeto.cortaai.userservice.service.impl;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.AssignActivitiesDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.BarberDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.UploadResultDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.UpdateBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.mapper.BarberMapper;
 import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository;
 import ifsp.edu.projeto.cortaai.userservice.service.BarberService;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
+import ifsp.edu.projeto.cortaai.userservice.service.storage.StorageService;
+import ifsp.edu.projeto.cortaai.userservice.exception.ExternalServiceUnavailableException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashSet;
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -29,6 +33,7 @@ public class BarberServiceImpl implements BarberService {
     private final BarberRepository barberRepository;
     private final BarberMapper barberMapper;
     private final FirebaseAuthService firebaseAuthService;
+    private final StorageService storageService;
 
     @Override
     public BarberDTO update(UUID id, UpdateBarberDTO dto) {
@@ -108,6 +113,26 @@ public class BarberServiceImpl implements BarberService {
     @Override
     public boolean tellExists(String tell) {
         return barberRepository.existsByTellIgnoreCase(tell);
+    }
+
+    @Override
+    public String updateProfilePhotoByFirebaseUid(String firebaseUid, MultipartFile file) {
+        Barber barber = barberRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
+
+        try {
+            String oldPublicId = barber.getImageUrlPublicId();
+            if (oldPublicId != null) {
+                storageService.deleteFile(oldPublicId);
+            }
+            UploadResultDTO uploadResult = storageService.uploadFile(file, "barber-profiles");
+            barber.setImageUrl(uploadResult.getSecureUrl());
+            barber.setImageUrlPublicId(uploadResult.getPublicId());
+            barberRepository.save(barber);
+            return uploadResult.getSecureUrl();
+        } catch (IOException e) {
+            throw new ExternalServiceUnavailableException("Falha ao fazer upload da foto: " + e.getMessage());
+        }
     }
 
     // ========== HABILIDADES ==========

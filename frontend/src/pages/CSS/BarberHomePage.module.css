@@ -1240,3 +1240,142 @@
         grid-template-columns: 1fr;
     }
 }
+
+.hiddenFileInput {
+    display: none;
+}
+
+.profilePhotoPlaceholder {
+    width: 88px;
+    height: 88px;
+    border-radius: 18px;
+    border: 1px dashed #3b3b3b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9a9a9a;
+    font-size: 0.82rem;
+    font-family: 'Space Grotesk', sans-serif;
+    margin-bottom: 0.4rem;
+}
+
+.profileUploadButton {
+    width: fit-content;
+    border: none;
+    border-radius: 10px;
+    background: #2b2b2b;
+    color: #ececec;
+    padding: 0.5rem 0.8rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.82rem;
+    cursor: pointer;
+    margin-bottom: 0.35rem;
+}
+
+.profileUploadButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.shopEditForm {
+    margin-top: 0.9rem;
+    display: grid;
+    gap: 0.7rem;
+}
+
+.shopField {
+    display: grid;
+    gap: 0.3rem;
+}
+
+.shopField span {
+    color: #d6d6d6;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem;
+}
+
+.shopField input {
+    width: 100%;
+    border: 1px solid #3a3a3a;
+    border-radius: 10px;
+    background: #151515;
+    color: #f1f1f1;
+    padding: 0.6rem 0.7rem;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.shopMediaGrid {
+    display: grid;
+    gap: 0.6rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.shopMediaCard {
+    border: 1px solid #363636;
+    border-radius: 12px;
+    background: #151515;
+    padding: 0.65rem;
+    display: grid;
+    gap: 0.55rem;
+}
+
+.shopMediaLabel {
+    color: #d0d0d0;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.shopMediaImage,
+.shopMediaImageBanner,
+.shopMediaPlaceholder {
+    width: 100%;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.shopMediaImage {
+    aspect-ratio: 1 / 1;
+}
+
+.shopMediaImageBanner {
+    aspect-ratio: 16 / 9;
+}
+
+.shopMediaPlaceholder {
+    aspect-ratio: 16 / 9;
+    border: 1px dashed #404040;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8f8f8f;
+    font-size: 0.76rem;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.shopMediaButton,
+.saveShopButton {
+    border: none;
+    border-radius: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.shopMediaButton {
+    height: 36px;
+    background: #2b2b2b;
+    color: #f0f0f0;
+}
+
+.saveShopButton {
+    height: 40px;
+    background: linear-gradient(135deg, #c19006, #7a5500);
+    color: #fff;
+}
+
+.shopMediaButton:disabled,
+.saveShopButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

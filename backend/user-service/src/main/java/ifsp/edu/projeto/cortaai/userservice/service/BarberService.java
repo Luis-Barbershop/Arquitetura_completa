@@ -3,6 +3,7 @@ package ifsp.edu.projeto.cortaai.userservice.service;
 import ifsp.edu.projeto.cortaai.userservice.dto.AssignActivitiesDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.BarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.UpdateBarberDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Set;
@@ -24,4 +25,6 @@ public interface BarberService {
     boolean emailExists(String email);
     boolean documentCPFExists(String documentCPF);
     boolean tellExists(String tell);
+
+    String updateProfilePhotoByFirebaseUid(String firebaseUid, MultipartFile file);
 }

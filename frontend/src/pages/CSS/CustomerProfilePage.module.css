@@ -1,0 +1,129 @@
+.pageContainer {
+  min-height: 100vh;
+  background: #101010;
+  padding: 1.2rem 0.8rem 6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loadingState {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cfcfcf;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.card {
+  width: min(760px, 100%);
+  background: #171717;
+  border: 1px solid #2d2d2d;
+  border-radius: 18px;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cardHeader h1 {
+  margin: 0;
+  color: #f2f2f2;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.3rem;
+}
+
+.cardHeader p {
+  margin: 0.4rem 0 0;
+  color: #a5a5a5;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+}
+
+.photoSection {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.profilePhoto,
+.profileInitials {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+.profileInitials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-family: 'Space Grotesk', sans-serif;
+  background: linear-gradient(135deg, #c19006, #7a5500);
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.field span {
+  color: #cfcfcf;
+  font-size: 0.85rem;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.field input {
+  width: 100%;
+  border: 1px solid #363636;
+  border-radius: 10px;
+  background: #111;
+  color: #f2f2f2;
+  padding: 0.62rem 0.75rem;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.field input:disabled {
+  color: #8f8f8f;
+}
+
+.primaryButton,
+.secondaryButton {
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+}
+
+.primaryButton {
+  height: 42px;
+  color: #fff;
+  background: linear-gradient(135deg, #c19006, #7a5500);
+}
+
+.secondaryButton {
+  height: 38px;
+  padding: 0 0.9rem;
+  color: #f3f3f3;
+  background: #2a2a2a;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

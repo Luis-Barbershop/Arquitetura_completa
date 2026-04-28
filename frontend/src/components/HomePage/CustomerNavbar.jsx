@@ -5,6 +5,7 @@ import {
     CalendarBlank,
     DotsThreeOutline,
     X,
+    UserCircle,
     Lock,
     SignOut,
 } from '@phosphor-icons/react';
@@ -29,6 +30,7 @@ function CustomerNavbar({ activeTab = 'home', onLogout }) {
     ];
 
     const drawerItems = [
+        { id: 'perfil', label: 'Meu Perfil', Icon: UserCircle, path: '/homepage/perfil' },
         ...(canChangePassword
             ? [{ id: 'senha',  label: 'Alterar Senha', Icon: Lock,        path: '/change-password' }]
             : []),

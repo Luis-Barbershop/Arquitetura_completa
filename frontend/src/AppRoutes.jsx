@@ -18,6 +18,7 @@ import BarberTeamPage from './pages/BarberTeamPage';
 import BarberDashboardPage from './pages/BarberDashboardPage';
 import BarberManualBookingPage from './pages/BarberManualBookingPage';
 import AgendaBarbeariaPage from './pages/AgendaBarbeariaPage';
+import CustomerProfilePage from './pages/CustomerProfilePage';
 import Site from './pages/Site';
 
 
@@ -39,6 +40,7 @@ function AppRoutes() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/change-password" element={<ChangePasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
+  <Route path="/homepage/perfil" element={<CustomerProfilePage />} />
       <Route path='/barberHome/perfil' element={<BarberProfilePage />} />
       <Route path='/barberHome/time' element={<BarberTeamPage />} />
       <Route path='/barberHome/dashboard' element={<BarberDashboardPage />} />
