@@ -100,6 +100,8 @@ services:
       - EUREKA_HOST=discovery
       - GOOGLE_APPLICATION_CREDENTIALS=/app/firebase-service-account.json
       - CORS_ALLOWED_ORIGINS=http://192.168.0.205:5173,http://localhost:5173,http://localhost:3000,https://cortaai.shop,https://web.cortaai.shop
+      - EUREKA_CLIENT_REGISTRYFETCHINTERVALSECONDS=5
+      - EUREKA_CLIENT_INSTANCEINFOREPLICATIONINTERVALSECONDS=5
     depends_on:
       discovery: { condition: service_healthy }
     deploy:
@@ -127,6 +129,8 @@ services:
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
       - FIREBASE_WEB_API_KEY=${FIREBASE_WEB_API_KEY}
+      - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
+      - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
     depends_on:
       db: { condition: service_healthy }
       discovery: { condition: service_healthy }
@@ -150,6 +154,8 @@ services:
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
+      - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
+      - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -172,6 +178,8 @@ services:
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - REDIS_HOST=redis
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
+      - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
+      - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -202,6 +210,8 @@ services:
       - MP_API_BASE_URL=${MP_API_BASE_URL}
       - MP_POST_CONNECT_REDIRECT_URL=${MP_POST_CONNECT_REDIRECT_URL}
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
+      - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
+      - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -229,6 +239,8 @@ services:
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - NOTIFICATION_FROM_EMAIL=${NOTIFICATION_FROM_EMAIL}
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
+      - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
+      - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -250,6 +262,8 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
+      - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
+      - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
