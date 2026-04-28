@@ -192,6 +192,20 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
                     );
                 })
                 .onErrorResume(Exception.class, ex -> {
+                    // Erros de roteamento (serviço não encontrado no Eureka, timeout de LB, etc.)
+                    // NÃO são erros de autenticação — devem propagar normalmente para que o
+                    // gateway retorne 503/504 ao cliente em vez de um 401 enganoso.
+                    Throwable unwrapped = reactor.core.Exceptions.unwrap(ex);
+                    if (unwrapped instanceof org.springframework.web.server.ResponseStatusException) {
+                        log.warn(
+                                "event=gateway-routing-error correlationId={} path={} status={} message={}",
+                                correlationId,
+                                path,
+                                ((org.springframework.web.server.ResponseStatusException) unwrapped).getStatusCode(),
+                                sanitizeExceptionMessage(unwrapped)
+                        );
+                        return Mono.error(ex);
+                    }
                     log.error(
                             "event=session-auth-processing-error correlationId={} path={} authSource={} message={}",
                             correlationId,
