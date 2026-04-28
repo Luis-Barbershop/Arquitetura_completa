@@ -15,9 +15,10 @@ import {
     CreditCard,
     SignOut,
 } from '@phosphor-icons/react';
+import cortaAiLogo from '/CortaAiLogo.png';
 import api from '../../services/api';
 import NotificationBell from '../NotificationBell/NotificationBell';
-import { isOwnerUser, getBarbershopId } from '../../services/userContext';
+import { isOwnerUser, getBarbershopId, getHomeRouteByRole } from '../../services/userContext';
 import styles from './CSS/BarberHeader.module.css';
 
 /**
@@ -127,13 +128,18 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
         <header className={styles.header}>
             {/* ── Brand ─── */}
             <div className={styles.brand}>
-                <div className={styles.brandBadge}>
-                    <Scissors size={20} weight="duotone" />
-                </div>
-                <div className={styles.brandText}>
-                    <span className={styles.brandName}>CortaAI</span>
-                    <span className={styles.brandSub}>Painel profissional</span>
-                </div>
+                <button
+                    type="button"
+                    className={styles.brandButton}
+                    onClick={() => navigate(getHomeRouteByRole())}
+                    aria-label="Ir para a página inicial"
+                >
+                    <img src={cortaAiLogo} alt="CortaAI" className={styles.brandLogo} />
+                    <div className={styles.brandText}>
+                        <span className={styles.brandName}>CortaAI</span>
+                        <span className={styles.brandSub}>Painel profissional</span>
+                    </div>
+                </button>
             </div>
 
             {/* ── Nav central ─── */}
@@ -229,7 +235,11 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
                         onClick={() => setAvatarOpen(o => !o)}
                         aria-label="Menu do usuário"
                     >
-                        <span className={styles.avatarCircle}>{initials}</span>
+                        {barber?.imageUrl ? (
+                            <img src={barber.imageUrl} alt="Foto de perfil" className={styles.avatarImage} />
+                        ) : (
+                            <span className={styles.avatarCircle}>{initials}</span>
+                        )}
                         <CaretDown size={12} weight="bold" className={avatarOpen ? styles.caretOpen : styles.caret} />
                     </button>
 

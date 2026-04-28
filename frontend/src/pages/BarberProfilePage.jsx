@@ -1,13 +1,25 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../services/api';
-import { getMyInvites, acceptInvite, rejectInvite, leaveShop, getMyWorkSchedule, saveMyWorkSchedule } from '../services/barbershopService';
+import {
+    getMyInvites,
+    acceptInvite,
+    rejectInvite,
+    leaveShop,
+    getMyWorkSchedule,
+    saveMyWorkSchedule,
+    getBarbershopById,
+    updateMyBarbershop,
+    uploadMyBarbershopLogo,
+    uploadMyBarbershopBanner,
+} from '../services/barbershopService';
 import { logoutUser } from '../services/authService';
 import { isCustomer } from '../services/userContext';
 import { maskCpf, maskPhone, onlyDigits } from '../utils/inputMasks';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
+import { uploadBarberProfilePhoto } from '../services/userProfileService';
 import styles from './CSS/BarberHomePage.module.css';
 
 const DAYS_OF_WEEK = [
@@ -59,6 +71,9 @@ function BarberProfilePage() {
     const navigate = useNavigate();
     const [barber, setBarber] = useState(null);
     const [loading, setLoading] = useState(true);
+    const profilePhotoInputRef = useRef(null);
+    const logoInputRef = useRef(null);
+    const bannerInputRef = useRef(null);
 
     // ── actAsBarber toggle ─────────────────────────────────────────────────────
     const [actAsBarber, setActAsBarber] = useState(true);
@@ -81,6 +96,14 @@ function BarberProfilePage() {
     const [invitesError, setInvitesError] = useState(false);
     const [inviteActionLoading, setInviteActionLoading] = useState(null);
     const [leavingShop, setLeavingShop] = useState(false);
+    const [uploadingProfilePhoto, setUploadingProfilePhoto] = useState(false);
+
+    const [loadingBarbershopInfo, setLoadingBarbershopInfo] = useState(false);
+    const [savingBarbershopInfo, setSavingBarbershopInfo] = useState(false);
+    const [uploadingLogo, setUploadingLogo] = useState(false);
+    const [uploadingBanner, setUploadingBanner] = useState(false);
+    const [barbershopForm, setBarbershopForm] = useState({ name: '', address: '' });
+    const [barbershopMedia, setBarbershopMedia] = useState({ logoUrl: '', bannerUrl: '' });
 
     useEffect(() => {
         if (isCustomer()) { navigate('/homepage', { replace: true }); return; }
@@ -129,6 +152,36 @@ function BarberProfilePage() {
             })
             .finally(() => setLoadingSchedule(false));
     }, [barber]);
+
+    useEffect(() => {
+        if (!barber?.isOwner || !barber?.barbershopId) {
+            return;
+        }
+
+        const loadBarbershopInfo = async () => {
+            setLoadingBarbershopInfo(true);
+            try {
+                const shop = await getBarbershopById(barber.barbershopId);
+                if (!shop) return;
+
+                setBarbershopForm({
+                    name: shop.name || '',
+                    address: shop.address || '',
+                });
+
+                setBarbershopMedia({
+                    logoUrl: shop.logoUrl || '',
+                    bannerUrl: shop.bannerUrl || '',
+                });
+            } catch {
+                toast.error('Não foi possível carregar os dados da barbearia.');
+            } finally {
+                setLoadingBarbershopInfo(false);
+            }
+        };
+
+        loadBarbershopInfo();
+    }, [barber?.barbershopId, barber?.isOwner]);
 
     // ── Funções auxiliares do schedule ──────────────────────────────────────────
     const toggleDay = useCallback((dayKey) => {
@@ -320,6 +373,91 @@ function BarberProfilePage() {
         navigate('/');
     };
 
+    const handleUploadProfilePhoto = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+
+        setUploadingProfilePhoto(true);
+        try {
+            const response = await uploadBarberProfilePhoto(file);
+            const imageUrl = typeof response === 'string' ? response : response?.imageUrl;
+
+            if (imageUrl) {
+                setBarber(prev => ({ ...prev, imageUrl }));
+                localStorage.setItem('userProfileImage', imageUrl);
+            }
+
+            toast.success('Foto de perfil atualizada!');
+        } catch (error) {
+            toast.error(error?.response?.data?.message || 'Erro ao enviar foto de perfil.');
+        } finally {
+            setUploadingProfilePhoto(false);
+        }
+    };
+
+    const handleBarbershopFormChange = (event) => {
+        const { name, value } = event.target;
+        setBarbershopForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSaveBarbershopInfo = async (event) => {
+        event.preventDefault();
+        setSavingBarbershopInfo(true);
+
+        try {
+            await updateMyBarbershop({
+                name: barbershopForm.name.trim(),
+                address: barbershopForm.address.trim(),
+            });
+            toast.success('Dados da barbearia atualizados com sucesso!');
+        } catch (error) {
+            toast.error(error?.response?.data?.message || 'Erro ao atualizar dados da barbearia.');
+        } finally {
+            setSavingBarbershopInfo(false);
+        }
+    };
+
+    const handleUploadLogo = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+
+        setUploadingLogo(true);
+        try {
+            const response = await uploadMyBarbershopLogo(file);
+            const logoUrl = typeof response === 'string' ? response : response?.logoUrl;
+            if (logoUrl) {
+                setBarbershopMedia(prev => ({ ...prev, logoUrl }));
+            }
+            toast.success('Logo da barbearia atualizada!');
+        } catch (error) {
+            toast.error(error?.response?.data?.message || 'Erro ao atualizar logo da barbearia.');
+        } finally {
+            setUploadingLogo(false);
+        }
+    };
+
+    const handleUploadBanner = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+
+        setUploadingBanner(true);
+        try {
+            const response = await uploadMyBarbershopBanner(file);
+            const bannerUrl = typeof response === 'string' ? response : response?.bannerUrl;
+            if (bannerUrl) {
+                setBarbershopMedia(prev => ({ ...prev, bannerUrl }));
+            }
+            toast.success('Banner da barbearia atualizado!');
+        } catch (error) {
+            toast.error(error?.response?.data?.message || 'Erro ao atualizar banner da barbearia.');
+        } finally {
+            setUploadingBanner(false);
+        }
+    };
+
     // ── actAsBarber ────────────────────────────────────────────────────────────
     const handleActAsBarberToggle = async (newValue) => {
         setSavingActAsBarber(true);
@@ -395,13 +533,14 @@ function BarberProfilePage() {
     const cpfValue = formatCpfForProfile(barber?.documentCPF || barber?.documentCpf || barber?.cpf);
 
     const handleTabChange = (tab) => {
-        if (tab === 'home')       navigate('/barberHome');
-        else if (tab === 'agenda')    navigate('/meus-agendamentos');
-        else if (tab === 'servicos')  navigate('/barberHome/servicos');
-        else if (tab === 'estoque')   navigate('/barberHome/estoque');
-        else if (tab === 'time')      navigate('/barberHome/time');
-        else if (tab === 'dashboards') navigate('/barberHome/dashboard');
-    else if (tab === 'agenda-equipe') navigate('/meus-agendamentos?view=team');
+        if (tab === 'home')              navigate('/barberHome');
+        else if (tab === 'perfil')       navigate('/barberHome/perfil');
+        else if (tab === 'agenda')       navigate('/meus-agendamentos');
+        else if (tab === 'servicos')     navigate('/barberHome/servicos');
+        else if (tab === 'estoque')      navigate('/barberHome/estoque');
+        else if (tab === 'time')         navigate('/barberHome/time');
+        else if (tab === 'dashboards')   navigate('/barberHome/dashboard');
+        else if (tab === 'agenda-equipe')     navigate('/meus-agendamentos?view=team');
         else if (tab === 'novo-agendamento') navigate('/barberHome/novo-agendamento');
     };
 
@@ -437,6 +576,24 @@ function BarberProfilePage() {
                                         className={styles.profilePhoto}
                                     />
                                 )}
+                                {!barber.imageUrl && (
+                                    <div className={styles.profilePhotoPlaceholder}>Sem foto</div>
+                                )}
+                                <input
+                                    ref={profilePhotoInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleUploadProfilePhoto}
+                                    className={styles.hiddenFileInput}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => profilePhotoInputRef.current?.click()}
+                                    disabled={uploadingProfilePhoto}
+                                    className={styles.profileUploadButton}
+                                >
+                                    {uploadingProfilePhoto ? 'Enviando foto...' : 'Alterar foto'}
+                                </button>
                                 <div><strong>Nome:</strong> {barber.name}</div>
                                 <div><strong>E-mail:</strong> {barber.email}</div>
                                 <div><strong>Telefone:</strong> {phoneValue}</div>
@@ -622,6 +779,92 @@ function BarberProfilePage() {
                                             <strong>Atuar como barbeiro</strong> — aparecer na lista de profissionais disponíveis para agendamento
                                         </span>
                                     </label>
+
+                                    {loadingBarbershopInfo ? (
+                                        <p className={styles.profileMutedText}>Carregando dados da barbearia...</p>
+                                    ) : (
+                                        <form onSubmit={handleSaveBarbershopInfo} className={styles.shopEditForm}>
+                                            <label className={styles.shopField}>
+                                                <span>Nome da barbearia</span>
+                                                <input
+                                                    name="name"
+                                                    value={barbershopForm.name}
+                                                    onChange={handleBarbershopFormChange}
+                                                    maxLength={80}
+                                                    required
+                                                />
+                                            </label>
+
+                                            <label className={styles.shopField}>
+                                                <span>Endereço</span>
+                                                <input
+                                                    name="address"
+                                                    value={barbershopForm.address}
+                                                    onChange={handleBarbershopFormChange}
+                                                    maxLength={140}
+                                                    required
+                                                />
+                                            </label>
+
+                                            <div className={styles.shopMediaGrid}>
+                                                <div className={styles.shopMediaCard}>
+                                                    <span className={styles.shopMediaLabel}>Logo</span>
+                                                    {barbershopMedia.logoUrl ? (
+                                                        <img src={barbershopMedia.logoUrl} alt="Logo da barbearia" className={styles.shopMediaImage} />
+                                                    ) : (
+                                                        <div className={styles.shopMediaPlaceholder}>Sem logo</div>
+                                                    )}
+                                                    <input
+                                                        ref={logoInputRef}
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={handleUploadLogo}
+                                                        className={styles.hiddenFileInput}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => logoInputRef.current?.click()}
+                                                        disabled={uploadingLogo}
+                                                        className={styles.shopMediaButton}
+                                                    >
+                                                        {uploadingLogo ? 'Enviando...' : 'Trocar logo'}
+                                                    </button>
+                                                </div>
+
+                                                <div className={styles.shopMediaCard}>
+                                                    <span className={styles.shopMediaLabel}>Banner</span>
+                                                    {barbershopMedia.bannerUrl ? (
+                                                        <img src={barbershopMedia.bannerUrl} alt="Banner da barbearia" className={styles.shopMediaImageBanner} />
+                                                    ) : (
+                                                        <div className={styles.shopMediaPlaceholder}>Sem banner</div>
+                                                    )}
+                                                    <input
+                                                        ref={bannerInputRef}
+                                                        type="file"
+                                                        accept="image/*"
+                                                        onChange={handleUploadBanner}
+                                                        className={styles.hiddenFileInput}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => bannerInputRef.current?.click()}
+                                                        disabled={uploadingBanner}
+                                                        className={styles.shopMediaButton}
+                                                    >
+                                                        {uploadingBanner ? 'Enviando...' : 'Trocar banner'}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                type="submit"
+                                                disabled={savingBarbershopInfo}
+                                                className={styles.saveShopButton}
+                                            >
+                                                {savingBarbershopInfo ? 'Salvando dados...' : 'Salvar dados da barbearia'}
+                                            </button>
+                                        </form>
+                                    )}
                                 </div>
                             )}
 

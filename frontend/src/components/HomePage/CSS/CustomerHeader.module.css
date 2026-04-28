@@ -29,6 +29,16 @@
     flex-shrink: 0;
 }
 
+.brandButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
 .brandBadge {
     width: 40px;
     height: 40px;
@@ -38,6 +48,14 @@
     align-items: center;
     justify-content: center;
     color: #fff;
+    flex-shrink: 0;
+}
+
+.brandLogo {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    object-fit: contain;
     flex-shrink: 0;
 }
 
@@ -222,6 +240,14 @@
     font-size: 0.72rem;
     font-weight: 700;
     color: #fff;
+    flex-shrink: 0;
+}
+
+.avatarImage {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    object-fit: cover;
     flex-shrink: 0;
 }
 

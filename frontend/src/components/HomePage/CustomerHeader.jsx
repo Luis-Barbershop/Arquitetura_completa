@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import {
     House,
     CalendarBlank,
-    Scissors,
     CaretDown,
+    UserCircle,
     Lock,
     SignOut,
 } from '@phosphor-icons/react';
+import cortaAiLogo from '/CortaAiLogo.png';
 import NotificationBell from '../NotificationBell/NotificationBell';
+import { getHomeRouteByRole } from '../../services/userContext';
 import styles from './CSS/CustomerHeader.module.css';
 
 /**
@@ -26,6 +28,7 @@ function CustomerHeader({ activeTab = 'home', onLogout }) {
     const navigate = useNavigate();
     const canChangePassword = (localStorage.getItem('authProvider') || 'EMAIL').toUpperCase() === 'EMAIL';
     const userName = localStorage.getItem('userName') || 'Cliente';
+    const userProfileImage = localStorage.getItem('userProfileImage') || '';
 
     const [avatarOpen, setAvatarOpen] = useState(false);
     const avatarRef = useRef(null);
@@ -49,13 +52,18 @@ function CustomerHeader({ activeTab = 'home', onLogout }) {
         <header className={styles.header}>
             {/* ── Brand ─── */}
             <div className={styles.brand}>
-                <div className={styles.brandBadge}>
-                    <Scissors size={20} weight="duotone" />
-                </div>
-                <div className={styles.brandText}>
-                    <span className={styles.brandName}>CortaAI</span>
-                    <span className={styles.brandSub}>Painel do cliente</span>
-                </div>
+                <button
+                    type="button"
+                    className={styles.brandButton}
+                    onClick={() => navigate(getHomeRouteByRole())}
+                    aria-label="Ir para a página inicial"
+                >
+                    <img src={cortaAiLogo} alt="CortaAI" className={styles.brandLogo} />
+                    <div className={styles.brandText}>
+                        <span className={styles.brandName}>CortaAI</span>
+                        <span className={styles.brandSub}>Painel do cliente</span>
+                    </div>
+                </button>
             </div>
 
             {/* ── Nav central ─── */}
@@ -87,7 +95,11 @@ function CustomerHeader({ activeTab = 'home', onLogout }) {
                         onClick={() => setAvatarOpen(o => !o)}
                         aria-label="Menu do usuário"
                     >
-                        <span className={styles.avatarCircle}>{initials}</span>
+                        {userProfileImage ? (
+                            <img src={userProfileImage} alt="Foto de perfil" className={styles.avatarImage} />
+                        ) : (
+                            <span className={styles.avatarCircle}>{initials}</span>
+                        )}
                         <CaretDown size={12} weight="bold" className={avatarOpen ? styles.caretOpen : styles.caret} />
                     </button>
 
@@ -98,6 +110,12 @@ function CustomerHeader({ activeTab = 'home', onLogout }) {
                                 <span className={styles.avatarDropdownRole}>Cliente</span>
                             </div>
                             <div className={styles.dropdownDivider} />
+                            <button
+                                className={styles.dropdownItem}
+                                onClick={() => { navigate('/homepage/perfil'); setAvatarOpen(false); }}
+                            >
+                                <UserCircle size={15} weight="duotone" /> Meu Perfil
+                            </button>
                             {canChangePassword && (
                                 <button
                                     className={styles.dropdownItem}
