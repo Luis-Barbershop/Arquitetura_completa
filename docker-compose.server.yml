@@ -156,13 +156,14 @@ services:
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
       - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
       - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
+      - JAVA_TOOL_OPTIONS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=65.0 -XX:MetaspaceSize=64m -XX:MaxMetaspaceSize=96m
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
       discovery: { condition: service_healthy }
     deploy:
       resources:
-        limits: { cpus: "1", memory: 300M }
+        limits: { cpus: "1", memory: 384M }
 
   schedule-service:
     build: { context: ./backend, dockerfile: schedule-service/Dockerfile }
@@ -180,6 +181,7 @@ services:
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
       - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
       - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
+      - JAVA_TOOL_OPTIONS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=65.0 -XX:MetaspaceSize=64m -XX:MaxMetaspaceSize=96m
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -187,7 +189,7 @@ services:
       discovery: { condition: service_healthy }
     deploy:
       resources:
-        limits: { cpus: "1", memory: 300M }
+        limits: { cpus: "1", memory: 384M }
 
   payment-service:
     build: { context: ./backend, dockerfile: payment-service/Dockerfile }
@@ -212,13 +214,14 @@ services:
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
       - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
       - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
+      - JAVA_TOOL_OPTIONS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=65.0 -XX:MetaspaceSize=64m -XX:MaxMetaspaceSize=96m
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
       discovery: { condition: service_healthy }
     deploy:
       resources:
-        limits: { cpus: "1", memory: 300M }
+        limits: { cpus: "1", memory: 384M }
 
   notification-service:
     build: { context: ./backend, dockerfile: notification-service/Dockerfile }
@@ -241,13 +244,14 @@ services:
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
       - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
       - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
+      - JAVA_TOOL_OPTIONS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=65.0 -XX:MetaspaceSize=64m -XX:MaxMetaspaceSize=96m
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
       discovery: { condition: service_healthy }
     deploy:
       resources:
-        limits: { cpus: "1", memory: 300M }
+        limits: { cpus: "1", memory: 384M }
 
   product-service:
     build: { context: ./backend, dockerfile: product-service/Dockerfile }
@@ -264,13 +268,14 @@ services:
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
       - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
       - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
+      - JAVA_TOOL_OPTIONS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=65.0 -XX:MetaspaceSize=64m -XX:MaxMetaspaceSize=96m
     depends_on:
       db: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
       discovery: { condition: service_healthy }
     deploy:
       resources:
-        limits: { cpus: "1", memory: 256M }
+        limits: { cpus: "1", memory: 320M }
 
   frontend:
     build:
