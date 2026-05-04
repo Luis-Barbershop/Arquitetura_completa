@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.barbershopservice.dto;
 
+import ifsp.edu.projeto.cortaai.barbershopservice.validator.CNPJ;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -18,10 +19,10 @@ public class CreateBarbershopDTO {
     @NotBlank
     @Size(min = 14, max = 14)
     @Pattern(regexp = "^[0-9]{14}$", message = "CNPJ deve conter exatamente 14 dígitos numéricos")
+    @CNPJ
     private String cnpj;
 
     @Size(max = 255)
     @Pattern(regexp = "^[\\p{L}\\p{M}\\p{N}\\s,.°ºª\\-/:()'\"+]+$", message = "Endereço contém caracteres inválidos")
     private String address;
 }
-

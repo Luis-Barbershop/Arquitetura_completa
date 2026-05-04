@@ -1,11 +1,12 @@
 import './App.css'
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import 'react-toastify/dist/ReactToastify.css';
 import AppRoutes from './AppRoutes';
 import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import UpdateAvailableBanner from './components/UpdateAvailableBanner';
 import InstallAppPopup from './components/InstallAppPopup';
+import PushNotificationPrompt from './components/PushNotificationPrompt';
 import {
   applyServiceWorkerUpdate,
   isInstallPromptAvailable,
@@ -14,6 +15,10 @@ import {
   subscribeToServiceWorkerUpdate,
 } from './services/pwaService';
 import { PWA_METRICS, trackPwaMetric } from './services/pwaTelemetryService';
+import {
+  canPromptForPushNotifications,
+  requestPushNotificationsPermissionAndRegister,
+} from './services/pushNotificationService';
 
 const INSTALL_AFTER_LOGIN_FLAG = 'pwa_install_after_login'
 const LOGIN_SUCCESS_EVENT = 'cortaai:login-success'
@@ -65,6 +70,14 @@ function AppShell() {
   const [isNativeInstallPromptAvailable, setIsNativeInstallPromptAvailable] = useState(
     isInstallPromptAvailable(),
   )
+  const [isPushPromptVisible, setIsPushPromptVisible] = useState(false)
+  const [isRegisteringPush, setIsRegisteringPush] = useState(false)
+
+  const showPushPromptIfEligible = useCallback(async () => {
+    if (await canPromptForPushNotifications()) {
+      setIsPushPromptVisible(true)
+    }
+  }, [])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(display-mode: standalone)')
@@ -117,6 +130,8 @@ function AppShell() {
       if (shouldShowInstallPromptNow()) {
         setIsInstallPromptVisible(true)
       }
+
+      void showPushPromptIfEligible()
     }
 
     window.addEventListener(LOGIN_SUCCESS_EVENT, handleLoginSuccess)
@@ -124,7 +139,7 @@ function AppShell() {
     return () => {
       window.removeEventListener(LOGIN_SUCCESS_EVENT, handleLoginSuccess)
     }
-  }, [])
+  }, [showPushPromptIfEligible])
 
   const handleUpdateNow = () => {
     applyServiceWorkerUpdate()
@@ -154,23 +169,37 @@ function AppShell() {
     setIsInstallPromptVisible(false)
   }
 
-  // Quando o prompt nativo está disponível, dispara direto sem overlay
-  useEffect(() => {
-    if (isInstallPromptVisible && isNativeInstallPromptAvailable) {
-      handleInstallApp()
+  const handleEnablePush = async () => {
+    setIsRegisteringPush(true)
+    const registered = await requestPushNotificationsPermissionAndRegister()
+    setIsRegisteringPush(false)
+
+    if (registered || Notification.permission !== 'default') {
+      setIsPushPromptVisible(false)
     }
-  }, [isInstallPromptVisible, isNativeInstallPromptAvailable])
+  }
+
+  const handleDismissPushPrompt = () => {
+    setIsPushPromptVisible(false)
+  }
 
   return (
     <main className="premiumRouteShell">
       <div key={location.pathname} className="premiumRouteEnter">
         <AppRoutes/>
       </div>
-      {isInstallPromptVisible && !isNativeInstallPromptAvailable && (
+      {isInstallPromptVisible && (
         <InstallAppPopup
           isNativeInstallPromptAvailable={isNativeInstallPromptAvailable}
           onInstall={handleInstallApp}
           onDismiss={handleDismissInstall}
+        />
+      )}
+      {isPushPromptVisible && (
+        <PushNotificationPrompt
+          isRegistering={isRegisteringPush}
+          onEnable={handleEnablePush}
+          onDismiss={handleDismissPushPrompt}
         />
       )}
       {isUpdateAvailable && (

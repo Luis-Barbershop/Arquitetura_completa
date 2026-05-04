@@ -6,27 +6,37 @@ const ENABLE_PUSH = import.meta.env.VITE_ENABLE_PUSH === 'true'
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || ''
 const PUSH_TOKEN_STORAGE_KEY = 'pushToken'
 
-const canAttemptPushRegistration = () => {
+const canAttemptPushRegistration = async () => {
   if (!ENABLE_PUSH) return false
   if (!localStorage.getItem('token')) return false
   if (!('Notification' in window)) return false
   if (!('serviceWorker' in navigator)) return false
   if (!VAPID_KEY) return false
-  return true
+  return isSupported()
 }
 
-export const registerPushNotificationsIfPossible = async () => {
-  if (!canAttemptPushRegistration()) {
+export const canPromptForPushNotifications = async () => {
+  if (!(await canAttemptPushRegistration())) {
     return false
   }
 
-  const messagingSupported = await isSupported()
-  if (!messagingSupported) {
+  return Notification.permission === 'default'
+}
+
+export const registerPushNotificationsIfPossible = async ({ requestPermission = false } = {}) => {
+  if (!(await canAttemptPushRegistration())) {
     return false
   }
 
   if (Notification.permission === 'default') {
-    await Notification.requestPermission()
+    if (!requestPermission) {
+      return false
+    }
+
+    const permission = await Notification.requestPermission()
+    if (permission !== 'granted') {
+      return false
+    }
   }
 
   if (Notification.permission !== 'granted') {
@@ -61,6 +71,9 @@ export const registerPushNotificationsIfPossible = async () => {
     return false
   }
 }
+
+export const requestPushNotificationsPermissionAndRegister = () =>
+  registerPushNotificationsIfPossible({ requestPermission: true })
 
 export const unregisterPushNotificationsIfPossible = async () => {
   const token = localStorage.getItem(PUSH_TOKEN_STORAGE_KEY)

@@ -108,3 +108,8 @@ logging:
     org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: WARN
     org.springframework.security: WARN
 
+app:
+  security:
+    crypto:
+      # Base64 de uma chave AES de 32 bytes. Gere com: openssl rand -base64 32
+      key: ${CORTAAI_DATA_CRYPTO_KEY:}

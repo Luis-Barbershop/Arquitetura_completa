@@ -12,6 +12,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -29,6 +30,13 @@ public class PushNotificationService {
 
     public void sendToUser(UUID userId, String title, String body, Map<String, String> data) {
         if (!pushEnabled) {
+            log.info("event=push-skipped reason=push-disabled userId={}", userId);
+            return;
+        }
+
+        List<DeviceToken> activeTokens = deviceTokenRepository.findByUserIdAndActiveTrue(userId);
+        if (activeTokens.isEmpty()) {
+            log.info("event=push-skipped reason=no-active-tokens userId={}", userId);
             return;
         }
 
@@ -38,18 +46,28 @@ public class PushNotificationService {
             return;
         }
 
-        for (DeviceToken token : deviceTokenRepository.findByUserIdAndActiveTrue(userId)) {
+        log.info("event=push-send-started userId={} tokenCount={} type={}",
+                userId,
+                activeTokens.size(),
+                data != null ? data.get("type") : null);
+
+        for (DeviceToken token : activeTokens) {
             try {
                 Message message = Message.builder()
                         .setToken(token.getToken())
                         .setNotification(Notification.builder().setTitle(title).setBody(body).build())
-                        .putAllData(data)
+                        .putAllData(data != null ? data : Map.of())
                         .build();
 
-                firebaseMessaging.send(message);
-            } catch (FirebaseMessagingException ex) {
-                log.warn("event=push-send-failed userId={} errorCode={} message={}",
+                String messageId = firebaseMessaging.send(message);
+                log.info("event=push-send-success userId={} tokenSuffix={} messageId={}",
                         userId,
+                        maskSuffix(token.getToken()),
+                        messageId);
+            } catch (FirebaseMessagingException ex) {
+                log.warn("event=push-send-failed userId={} tokenSuffix={} errorCode={} message={}",
+                        userId,
+                        maskSuffix(token.getToken()),
                         ex.getMessagingErrorCode(),
                         ex.getMessage());
 
@@ -57,7 +75,10 @@ public class PushNotificationService {
                     deviceTokenService.deactivateTokenByValue(token.getToken());
                 }
             } catch (Exception ex) {
-                log.warn("event=push-send-generic-failed userId={} error={}", userId, ex.getMessage());
+                log.warn("event=push-send-generic-failed userId={} tokenSuffix={} error={}",
+                        userId,
+                        maskSuffix(token.getToken()),
+                        ex.getMessage());
             }
         }
     }
@@ -67,5 +88,12 @@ public class PushNotificationService {
                 ex.getMessagingErrorCode().name().equals("UNREGISTERED")
                         || ex.getMessagingErrorCode().name().equals("INVALID_ARGUMENT")
         );
+    }
+
+    private String maskSuffix(String token) {
+        if (token == null || token.length() <= 6) {
+            return token;
+        }
+        return token.substring(token.length() - 6);
     }
 }

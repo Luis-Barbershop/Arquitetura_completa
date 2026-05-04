@@ -1,5 +1,8 @@
 package ifsp.edu.projeto.cortaai.userservice.model;
 
+import ifsp.edu.projeto.cortaai.userservice.security.crypto.SensitiveStringConverter;
+import ifsp.edu.projeto.cortaai.userservice.security.crypto.SensitiveLocalDateConverter;
+import ifsp.edu.projeto.cortaai.userservice.security.crypto.PrivacyHash;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
@@ -42,13 +45,19 @@ public class Barber implements UserDetails {
     private String name;
 
     // CORREÇÃO: O telefone agora é opcional (removido o nullable = false)
-    @Column(unique = true, length = 15)
+    @Convert(converter = SensitiveStringConverter.class)
+    @Column(unique = true, length = 128)
     private String tell;
 
-    @Column(nullable = false, unique = true, length = 70)
+    @Convert(converter = SensitiveStringConverter.class)
+    @Column(nullable = false, unique = true, length = 256)
     private String email;
 
-    @Column(name = "document_cpf", unique = true, length = 14)
+    @Column(name = "email_hash", unique = true, length = 64)
+    private String emailHash;
+
+    @Convert(converter = SensitiveStringConverter.class)
+    @Column(name = "document_cpf", unique = true, length = 128)
     private String documentCPF;
 
     @Column
@@ -92,7 +101,8 @@ public class Barber implements UserDetails {
     @Column(name = "work_end_time")
     private LocalTime workEndTime;
 
-    @Column(name = "birth_date")
+    @Convert(converter = SensitiveLocalDateConverter.class)
+    @Column(name = "birth_date", length = 128)
     private LocalDate birthDate;
 
     @Column(name = "image_url")
@@ -106,12 +116,14 @@ public class Barber implements UserDetails {
      * Access token OAuth do barbeiro no Mercado Pago.
      * Usado para criar pagamentos em nome dele no split.
      */
+    @Convert(converter = SensitiveStringConverter.class)
     @Column(name = "mp_access_token", columnDefinition = "TEXT")
     private String mpAccessToken;
 
     /**
      * Refresh token para renovar o mpAccessToken quando expirar.
      */
+    @Convert(converter = SensitiveStringConverter.class)
     @Column(name = "mp_refresh_token", columnDefinition = "TEXT")
     private String mpRefreshToken;
 
@@ -119,7 +131,8 @@ public class Barber implements UserDetails {
      * ID numérico do usuário no Mercado Pago (collector_id).
      * Referenciado como marketplace_owner_id no split.
      */
-    @Column(name = "mp_user_id", length = 60)
+    @Convert(converter = SensitiveStringConverter.class)
+    @Column(name = "mp_user_id", length = 256)
     private String mpUserId;
 
     /**
@@ -145,6 +158,12 @@ public class Barber implements UserDetails {
     @LastModifiedDate
     @Column(name = "last_updated")
     private LocalDateTime lastUpdated;
+
+    @PrePersist
+    @PreUpdate
+    private void updatePrivacyIndexes() {
+        this.emailHash = PrivacyHash.emailHash(this.email);
+    }
 
     // Métodos do UserDetails para o Spring Security
     @Override

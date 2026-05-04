@@ -1,5 +1,6 @@
-const SW_VERSION = 'cortaai-sw-v2'
+const SW_VERSION = 'cortaai-sw-v3'
 const APP_SHELL_CACHE = `${SW_VERSION}-app-shell`
+const NOTIFICATION_ICON = '/pwa/icon-192.svg'
 
 const APP_SHELL_ASSETS = [
   '/',
@@ -113,6 +114,64 @@ const cacheFirstForAppShellRequest = async (request) => {
   return response
 }
 
+const readPushPayload = (event) => {
+  if (!event.data) {
+    return {}
+  }
+
+  try {
+    return event.data.json()
+  } catch {
+    return {
+      notification: {
+        title: 'CortaAi',
+        body: event.data.text(),
+      },
+    }
+  }
+}
+
+const resolveNotificationDeepLink = (data = {}) => {
+  const deepLink = data.deepLink || data.link || '/'
+
+  try {
+    const targetUrl = new URL(deepLink, self.location.origin)
+    if (targetUrl.origin !== self.location.origin) {
+      return self.location.origin
+    }
+
+    return targetUrl.href
+  } catch {
+    return self.location.origin
+  }
+}
+
+const focusOrOpenAppWindow = async (targetUrl) => {
+  const clientList = await self.clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true,
+  })
+
+  const sameOriginClient = clientList.find((client) => {
+    try {
+      return new URL(client.url).origin === self.location.origin
+    } catch {
+      return false
+    }
+  })
+
+  if (sameOriginClient) {
+    if ('navigate' in sameOriginClient) {
+      const navigatedClient = await sameOriginClient.navigate(targetUrl)
+      return navigatedClient?.focus()
+    }
+
+    return sameOriginClient.focus()
+  }
+
+  return self.clients.openWindow(targetUrl)
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event
 
@@ -170,4 +229,38 @@ self.addEventListener('message', (event) => {
   if (event.data === 'GET_SW_VERSION') {
     event.source?.postMessage({ type: 'SW_VERSION', version: SW_VERSION })
   }
+})
+
+self.addEventListener('push', (event) => {
+  const payload = readPushPayload(event)
+  const notificationPayload = payload.notification || {}
+  const dataPayload = {
+    ...(payload.data || {}),
+  }
+
+  if (payload.fcmOptions?.link && !dataPayload.deepLink) {
+    dataPayload.deepLink = payload.fcmOptions.link
+  }
+
+  const title = notificationPayload.title || dataPayload.title || payload.title || 'CortaAi'
+  const body = notificationPayload.body || dataPayload.body || payload.body || 'Voce tem uma nova notificacao.'
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: NOTIFICATION_ICON,
+      badge: NOTIFICATION_ICON,
+      data: {
+        ...dataPayload,
+        deepLink: dataPayload.deepLink || '/',
+      },
+    }),
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+
+  const targetUrl = resolveNotificationDeepLink(event.notification.data)
+  event.waitUntil(focusOrOpenAppWindow(targetUrl))
 })

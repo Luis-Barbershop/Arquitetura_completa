@@ -3,12 +3,12 @@ package ifsp.edu.projeto.cortaai.userservice.dto;
 import ifsp.edu.projeto.cortaai.userservice.validator.CustomerDocumentCPFUnique;
 import ifsp.edu.projeto.cortaai.userservice.validator.CustomerEmailUnique;
 import ifsp.edu.projeto.cortaai.userservice.validator.CustomerTellUnique;
+import ifsp.edu.projeto.cortaai.userservice.validator.CPF;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.validator.constraints.br.CPF;
 
 @Getter
 @Setter
@@ -42,4 +42,3 @@ public class CustomerCreateDTO {
     @Size(max = 70)
     private String password;
 }
-

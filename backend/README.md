@@ -39,7 +39,7 @@ Backend do **CortaAi**, um sistema de marketplace para barbearias. A aplicação
 | **schedule-service** | 8083 | `schedule_db` | Agendamentos, disponibilidade, bloqueios de horário |
 | **payment-service** | 8084 | `payment_db` | Integração Mercado Pago (Checkout Pro), webhooks, transações |
 | **notification-service** | 8085 | `notification_db` | Notificações in-app e email, listeners de eventos RabbitMQ |
-| **product-service** | 8086 | `product_db` | Produtos, pedidos, controle de estoque |
+| **product-service** | 8086 | `product_db` | Produtos e controle de estoque |
 
 ---
 
@@ -75,6 +75,16 @@ cd Arquitetura_completa
 cp .env.example .env
 # Preencha os valores no .env
 ```
+
+Para a criptografia de dados sensíveis, gere e configure uma chave única por ambiente:
+
+```bash
+openssl rand -base64 32
+```
+
+Use o valor em `CORTAAI_DATA_CRYPTO_KEY`. Sem essa chave, `user-service`, `barbershop-service` e `schedule-service` não inicializam, para evitar salvar CPF, CNPJ, tokens OAuth e snapshots pessoais sem proteção.
+
+Antes do deploy em uma base já existente, aplique os patches SQL `db/patch_lgpd_encryption.sql` dos serviços afetados (`user-service`, `barbershop-service`, `schedule-service`). Eles aumentam/alteram os tipos das colunas antes do backfill automático criptografar valores legados.
 
 ### 2. Suba tudo com Docker
 ```bash

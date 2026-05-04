@@ -53,9 +53,9 @@ services:
     container_name: cortaai-redis
     ports:
       - "6380:6379"
-    command: redis-server --maxmemory 32mb --maxmemory-policy allkeys-lru
+    command: redis-server --maxmemory 32mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD}
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -127,6 +127,7 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - CORTAAI_DATA_CRYPTO_KEY=${CORTAAI_DATA_CRYPTO_KEY}
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
       - FIREBASE_WEB_API_KEY=${FIREBASE_WEB_API_KEY}
       - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
@@ -153,6 +154,7 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - CORTAAI_DATA_CRYPTO_KEY=${CORTAAI_DATA_CRYPTO_KEY}
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
       - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
       - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
@@ -178,6 +180,8 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - CORTAAI_DATA_CRYPTO_KEY=${CORTAAI_DATA_CRYPTO_KEY}
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
       - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
       - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
@@ -227,6 +231,8 @@ services:
     build: { context: ./backend, dockerfile: notification-service/Dockerfile }
     image: cortaai/notification-service:latest
     container_name: notification-service
+    volumes:
+      - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/notification_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
@@ -236,11 +242,15 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - NOTIFICATION_FROM_EMAIL=${NOTIFICATION_FROM_EMAIL}
+      - NOTIFICATION_PUSH_ENABLED=${NOTIFICATION_PUSH_ENABLED:-true}
+      - NOTIFICATION_PUSH_SERVICE_ACCOUNT_PATH=/app/firebase-service-account.json
+      - NOTIFICATION_PUSH_PROJECT_ID=${NOTIFICATION_PUSH_PROJECT_ID:-cortaai-480b8}
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
       - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
       - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
@@ -284,7 +294,10 @@ services:
       args:
         # Usa caminho relativo — Nginx faz proxy reverso para o gateway
         # Evita CORS cross-origin (web.cortaai.shop → api.cortaai.shop)
-        - VITE_API_URL=/api
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-/api}
+        - VITE_ENABLE_PWA=${VITE_ENABLE_PWA:-true}
+        - VITE_ENABLE_PUSH=${VITE_ENABLE_PUSH:-true}
+        - VITE_FIREBASE_VAPID_KEY=${VITE_FIREBASE_VAPID_KEY:-}
     image: cortaai/frontend:latest
     container_name: cortaai-web
     ports: ["5173:80"]

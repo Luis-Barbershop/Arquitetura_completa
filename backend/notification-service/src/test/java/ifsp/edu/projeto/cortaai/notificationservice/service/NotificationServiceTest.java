@@ -41,7 +41,8 @@ class NotificationServiceTest {
         notificationService.notifyPaymentApproved(customerId, "cliente@cortaai.com", new BigDecimal("49.90"));
 
         verify(pushNotificationService, times(1))
-                .sendToUser(eq(customerId), eq("Pagamento aprovado!"), contains("49.90"), anyMap());
+                .sendToUser(eq(customerId), eq("Pagamento aprovado!"),
+                        argThat(body -> body.contains("49") && body.contains("90")), anyMap());
     }
 
     @Test

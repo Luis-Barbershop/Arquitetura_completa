@@ -114,3 +114,7 @@ logging:
 app:
   web-base-url: ${APP_WEB_BASE_URL:https://web.cortaai.shop}
   forgot-password-continue-url: ${APP_FORGOT_PASSWORD_CONTINUE_URL:https://web.cortaai.shop/change-password}
+  security:
+    crypto:
+      # Base64 de uma chave AES de 32 bytes. Gere com: openssl rand -base64 32
+      key: ${CORTAAI_DATA_CRYPTO_KEY:}

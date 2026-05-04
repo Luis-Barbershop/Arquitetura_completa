@@ -132,7 +132,7 @@ spring:
         - id: product-service
           uri: lb://product-service
           predicates:
-            - Path=/api/products, /api/products/**, /api/orders, /api/orders/**
+            - Path=/api/products, /api/products/**
 
         # Notification Service
         - id: notification-service

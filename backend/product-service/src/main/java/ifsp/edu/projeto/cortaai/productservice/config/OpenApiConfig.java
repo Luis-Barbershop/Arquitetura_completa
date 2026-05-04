@@ -14,7 +14,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Product Service API")
-                        .description("Serviço de produtos — catálogo de produtos e gerenciamento de pedidos")
+                        .description("Serviço de produtos — catálogo e controle de estoque")
                         .version("1.0")
                         .contact(new Contact()
                                 .name("CortaAí")

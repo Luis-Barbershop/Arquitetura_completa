@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.barbershopservice.model;
 
+import ifsp.edu.projeto.cortaai.barbershopservice.security.crypto.SensitiveStringConverter;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,7 +38,8 @@ public class Barbershop {
     @Column(nullable = false, length = 255)
     private String name;
 
-    @Column(nullable = false, unique = true, length = 14)
+    @Convert(converter = SensitiveStringConverter.class)
+    @Column(nullable = false, unique = true, length = 128)
     private String cnpj;
 
     @Column(length = 255)

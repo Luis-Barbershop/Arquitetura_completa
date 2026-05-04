@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.userservice.dto;
 
+import ifsp.edu.projeto.cortaai.userservice.validator.CPF;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -41,6 +42,7 @@ public record FirebaseEmailRegisterRequestDTO(
         String tell,
 
         @NotBlank(message = "documentCPF é obrigatório")
+        @CPF
         String documentCPF,
 
         /** Data de nascimento no formato yyyy-MM-dd. */
