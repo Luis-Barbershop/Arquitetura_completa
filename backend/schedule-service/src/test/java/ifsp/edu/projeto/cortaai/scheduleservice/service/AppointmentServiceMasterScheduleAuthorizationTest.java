@@ -1,7 +1,6 @@
 package ifsp.edu.projeto.cortaai.scheduleservice.service;
 
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.AppointmentDTO;
-import ifsp.edu.projeto.cortaai.scheduleservice.dto.BarbershopInfoDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.UserInfoDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.exception.ForbiddenException;
 import ifsp.edu.projeto.cortaai.scheduleservice.exception.NotFoundException;
@@ -66,10 +65,7 @@ class AppointmentServiceMasterScheduleAuthorizationTest {
         UserInfoDTO caller = new UserInfoDTO();
         caller.setId(ownerId);
         caller.setUserType("BARBER");
-
-        BarbershopInfoDTO shop = new BarbershopInfoDTO();
-        shop.setId(shopId);
-        shop.setOwnerId(ownerId);
+        caller.setBarbershopId(shopId);
 
         Appointment appointment = Appointment.builder()
                 .id(UUID.randomUUID())
@@ -89,7 +85,6 @@ class AppointmentServiceMasterScheduleAuthorizationTest {
         dto.setId(appointment.getId());
 
         when(userServiceClient.getUserByEmail("owner@cortaai.com")).thenReturn(caller);
-        when(barbershopServiceClient.getBarbershopById(shopId)).thenReturn(shop);
         when(appointmentRepository.findByBarbershopIdAndStartTimeBetween(eq(shopId), any(LocalDateTime.class), any(LocalDateTime.class)))
                 .thenReturn(List.of(appointment));
         when(appointmentMapper.toDTO(appointment)).thenReturn(dto);
@@ -104,24 +99,19 @@ class AppointmentServiceMasterScheduleAuthorizationTest {
     @Test
     void shouldDenyAccessForNonOwner() {
         UUID shopId = UUID.randomUUID();
-        UUID ownerId = UUID.randomUUID();
         UUID callerId = UUID.randomUUID();
         LocalDate date = LocalDate.of(2026, 4, 16);
 
         UserInfoDTO caller = new UserInfoDTO();
         caller.setId(callerId);
         caller.setUserType("BARBER");
-
-        BarbershopInfoDTO shop = new BarbershopInfoDTO();
-        shop.setId(shopId);
-        shop.setOwnerId(ownerId);
+        caller.setBarbershopId(UUID.randomUUID());
 
         when(userServiceClient.getUserByEmail("barber@cortaai.com")).thenReturn(caller);
-        when(barbershopServiceClient.getBarbershopById(shopId)).thenReturn(shop);
 
         assertThatThrownBy(() -> appointmentService.getBarbershopSchedule(shopId, date, "barber@cortaai.com", "cid-456"))
                 .isInstanceOf(ForbiddenException.class)
-                .hasMessage("Apenas o owner da barbearia pode visualizar a agenda da equipe.");
+                .hasMessage("Apenas barbeiros vinculados a esta barbearia podem visualizar a agenda da equipe.");
 
         verify(appointmentRepository, never()).findByBarbershopIdAndStartTimeBetween(any(), any(), any());
         verify(appointmentMapper, never()).toDTO(any());

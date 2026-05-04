@@ -35,11 +35,6 @@ public class StockMovement {
     @Column(nullable = false)
     private Integer quantity;
 
-    /**
-     * Referência opcional externa (mantida para compatibilidade).
-     */
-    private UUID orderId;
-
     private String reason;
 
     @CreatedDate

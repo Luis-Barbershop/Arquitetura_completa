@@ -112,7 +112,7 @@ public class ProductController {
     /**
      * Desativa (soft delete) um produto.
      */
-    @Operation(summary = "Desativar produto", description = "Realiza um soft delete no produto, ocultando-o das listagens, mas mantendo seu histórico para os pedidos antigos.")
+    @Operation(summary = "Desativar produto", description = "Realiza um soft delete no produto, ocultando-o das listagens e mantendo o histórico de estoque.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Produto desativado"),
             @ApiResponse(responseCode = "404", description = "Produto não encontrado",

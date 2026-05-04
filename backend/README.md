@@ -39,7 +39,7 @@ Backend do **CortaAi**, um sistema de marketplace para barbearias. A aplicação
 | **schedule-service** | 8083 | `schedule_db` | Agendamentos, disponibilidade, bloqueios de horário |
 | **payment-service** | 8084 | `payment_db` | Integração Mercado Pago (Checkout Pro), webhooks, transações |
 | **notification-service** | 8085 | `notification_db` | Notificações in-app e email, listeners de eventos RabbitMQ |
-| **product-service** | 8086 | `product_db` | Produtos, pedidos, controle de estoque |
+| **product-service** | 8086 | `product_db` | Produtos e controle de estoque |
 
 ---
 
