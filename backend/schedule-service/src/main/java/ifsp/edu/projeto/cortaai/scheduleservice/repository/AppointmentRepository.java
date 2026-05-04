@@ -45,5 +45,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     List<Appointment> findByBarberIdAndStartTimeBetween(UUID barberId, LocalDateTime start, LocalDateTime end);
 
     List<Appointment> findByBarbershopIdAndStartTimeBetween(UUID barbershopId, LocalDateTime start, LocalDateTime end);
-}
 
+    @Query(value = "SELECT * FROM appointments WHERE customer_name IS NOT NULL AND customer_name <> '' AND customer_name NOT LIKE 'enc:v1:%'", nativeQuery = true)
+    List<Appointment> findWithLegacyPlainCustomerName();
+}

@@ -47,11 +47,14 @@ public @interface BarberDocumentCPFUnique {
             @SuppressWarnings("unchecked") final Map<String, String> pathVariables =
                     ((Map<String, String>)request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE));
             final String currentId = pathVariables.get("id");
-            if (currentId != null && value.equalsIgnoreCase(barberServiceImpl.get(UUID.fromString(currentId)).documentCPF())) {
+            if (currentId != null && onlyDigits(value).equals(onlyDigits(barberServiceImpl.get(UUID.fromString(currentId)).documentCPF()))) {
                 return true;
             }
             return !barberServiceImpl.documentCPFExists(value);
         }
+
+        private String onlyDigits(String value) {
+            return value == null ? null : value.replaceAll("\\D", "");
+        }
     }
 }
-

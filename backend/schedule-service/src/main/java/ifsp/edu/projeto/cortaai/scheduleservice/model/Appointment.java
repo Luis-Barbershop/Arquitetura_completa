@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.scheduleservice.model;
 
 import ifsp.edu.projeto.cortaai.scheduleservice.model.enums.AppointmentStatus;
+import ifsp.edu.projeto.cortaai.scheduleservice.security.crypto.SensitiveStringConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -49,7 +50,8 @@ public class Appointment {
 
     // --- Dados desnormalizados (snapshots copiados na criação) ---
 
-    @Column(name = "customer_name", nullable = false, length = 70)
+    @Convert(converter = SensitiveStringConverter.class)
+    @Column(name = "customer_name", nullable = false, length = 256)
     private String customerName;
 
     @Column(name = "barber_name", nullable = false, length = 70)

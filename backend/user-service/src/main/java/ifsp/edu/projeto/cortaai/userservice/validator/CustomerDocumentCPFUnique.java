@@ -47,11 +47,14 @@ public @interface CustomerDocumentCPFUnique {
             @SuppressWarnings("unchecked") final Map<String, String> pathVariables =
                     ((Map<String, String>)request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE));
             final String currentId = pathVariables.get("id");
-            if (currentId != null && value.equalsIgnoreCase(customerServiceImpl.get(UUID.fromString(currentId)).getDocumentCPF())) {
+            if (currentId != null && onlyDigits(value).equals(onlyDigits(customerServiceImpl.get(UUID.fromString(currentId)).getDocumentCPF()))) {
                 return true;
             }
             return !customerServiceImpl.documentCPFExists(value);
         }
+
+        private String onlyDigits(String value) {
+            return value == null ? null : value.replaceAll("\\D", "");
+        }
     }
 }
-

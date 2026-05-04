@@ -5,6 +5,7 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 
 import ifsp.edu.projeto.cortaai.userservice.service.impl.BarberServiceImpl;
+import ifsp.edu.projeto.cortaai.userservice.security.crypto.PrivacyHash;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Constraint;
 import jakarta.validation.ConstraintValidator;
@@ -47,11 +48,10 @@ public @interface BarberEmailUnique {
             @SuppressWarnings("unchecked") final Map<String, String> pathVariables =
                     ((Map<String, String>)request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE));
             final String currentId = pathVariables.get("id");
-            if (currentId != null && value.equalsIgnoreCase(barberServiceImpl.get(UUID.fromString(currentId)).email())) {
+            if (currentId != null && PrivacyHash.normalizeEmail(value).equals(PrivacyHash.normalizeEmail(barberServiceImpl.get(UUID.fromString(currentId)).email()))) {
                 return true;
             }
             return !barberServiceImpl.emailExists(value);
         }
     }
 }
-

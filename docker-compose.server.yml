@@ -53,9 +53,9 @@ services:
     container_name: cortaai-redis
     ports:
       - "6380:6379"
-    command: redis-server --maxmemory 32mb --maxmemory-policy allkeys-lru
+    command: redis-server --maxmemory 32mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD}
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -127,6 +127,7 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - CORTAAI_DATA_CRYPTO_KEY=${CORTAAI_DATA_CRYPTO_KEY}
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
       - FIREBASE_WEB_API_KEY=${FIREBASE_WEB_API_KEY}
       - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
@@ -153,6 +154,7 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - CORTAAI_DATA_CRYPTO_KEY=${CORTAAI_DATA_CRYPTO_KEY}
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
       - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
       - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
@@ -178,6 +180,8 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - CORTAAI_DATA_CRYPTO_KEY=${CORTAAI_DATA_CRYPTO_KEY}
       - SPRINGDOC_SERVER_URL=https://api.cortaai.shop
       - EUREKA_INSTANCE_LEASERENEWALINTERVALSECONDS=10
       - EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONSECONDS=30
@@ -238,6 +242,7 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}

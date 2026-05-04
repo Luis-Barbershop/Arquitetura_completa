@@ -17,6 +17,7 @@ import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository;
 import ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository;
+import ifsp.edu.projeto.cortaai.userservice.security.crypto.PrivacyHash;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +52,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         FirebaseToken decoded = verifyToken(request.idToken());
 
         String uid      = decoded.getUid();
-        String email    = decoded.getEmail();
+        String email    = PrivacyHash.normalizeEmail(decoded.getEmail());
         String name     = decoded.getName();
         String photoUrl = decoded.getPicture();
         String provider = extractProvider(decoded);
@@ -174,11 +175,11 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         }
         if (customer.getEmail() == null || customer.getEmail().isBlank()) {
             if (email != null && !email.isBlank()) {
-                customer.setEmail(email);
+                customer.setEmail(PrivacyHash.normalizeEmail(email));
             } else {
                 var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
                 if (auth != null && auth.getCredentials() instanceof String emailFromHeader) {
-                    customer.setEmail(emailFromHeader);
+                    customer.setEmail(PrivacyHash.normalizeEmail(emailFromHeader));
                 } else {
                     customer.setEmail(firebaseUid + "@firebase.local");
                 }
@@ -188,7 +189,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             customer.setName("Usuário");
         }
         customer.setTell(dto.tell());
-        customer.setDocumentCPF(dto.documentCPF());
+        customer.setDocumentCPF(onlyDigits(dto.documentCPF()));
         if (dto.birthDate() != null) customer.setBirthDate(dto.birthDate());
         customer.setAuthProvider(customer.getAuthProvider() != null ? customer.getAuthProvider() : "EMAIL");
 
@@ -230,11 +231,11 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         }
         if (barber.getEmail() == null || barber.getEmail().isBlank()) {
             if (email != null && !email.isBlank()) {
-                barber.setEmail(email);
+                barber.setEmail(PrivacyHash.normalizeEmail(email));
             } else {
                 var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
                 if (auth != null && auth.getCredentials() instanceof String emailFromHeader) {
-                    barber.setEmail(emailFromHeader);
+                    barber.setEmail(PrivacyHash.normalizeEmail(emailFromHeader));
                 } else {
                     barber.setEmail(firebaseUid + "@firebase.local");
                 }
@@ -244,7 +245,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
             barber.setName("Barbeiro");
         }
         barber.setTell(dto.tell());
-        barber.setDocumentCPF(dto.documentCPF());
+        barber.setDocumentCPF(onlyDigits(dto.documentCPF()));
         if (dto.birthDate() != null) barber.setBirthDate(dto.birthDate());
         barber.setOwner(dto.isOwner());
         barber.setAuthProvider(barber.getAuthProvider() != null ? barber.getAuthProvider() : "EMAIL");
@@ -339,6 +340,10 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
                 .replaceAll("(?i)bearer\\s+[a-z0-9._-]+", "bearer ***")
                 .replaceAll("(?i)token[=:\\s]+[^\\s,;]+", "token=***")
                 .replaceAll("(?i)authorization[^\\s]*", "authorization***");
+    }
+
+    private String onlyDigits(String value) {
+        return value == null ? null : value.replaceAll("\\D", "");
     }
 
     /**

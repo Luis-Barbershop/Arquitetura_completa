@@ -10,6 +10,7 @@ import ifsp.edu.projeto.cortaai.userservice.exception.NotFoundException;
 import ifsp.edu.projeto.cortaai.userservice.mapper.CustomerMapper;
 import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository;
+import ifsp.edu.projeto.cortaai.userservice.security.crypto.PrivacyHash;
 import ifsp.edu.projeto.cortaai.userservice.service.CustomerService;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import ifsp.edu.projeto.cortaai.userservice.service.storage.StorageService;
@@ -72,7 +73,7 @@ public class CustomerServiceImpl implements CustomerService {
                 String name = userRecord.getDisplayName();
                 String email = userRecord.getEmail();
                 novo.setName((name != null && !name.isBlank()) ? name : "Usuário");
-                novo.setEmail((email != null && !email.isBlank()) ? email : (firebaseUid + "@firebase.local"));
+                novo.setEmail((email != null && !email.isBlank()) ? PrivacyHash.normalizeEmail(email) : (firebaseUid + "@firebase.local"));
             } catch (FirebaseAuthException e) {
                 novo.setName("Usuário");
                 novo.setEmail(firebaseUid + "@firebase.local");
@@ -106,8 +107,8 @@ public class CustomerServiceImpl implements CustomerService {
 
         customer.setName(customerDTO.getName());
         customer.setTell(customerDTO.getTell());
-        customer.setEmail(customerDTO.getEmail());
-        customer.setDocumentCPF(customerDTO.getDocumentCPF());
+        customer.setEmail(PrivacyHash.normalizeEmail(customerDTO.getEmail()));
+        customer.setDocumentCPF(onlyDigits(customerDTO.getDocumentCPF()));
         if (customerDTO.getBirthDate() != null) {
             customer.setBirthDate(customerDTO.getBirthDate());
         }
@@ -181,14 +182,15 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public boolean emailExists(final String email) {
-        return customerRepository.existsByEmailIgnoreCase(email);
+        return customerRepository.existsByEmailIgnoreCase(PrivacyHash.normalizeEmail(email));
     }
 
     @Override
     public boolean documentCPFExists(final String documentCPF) {
-        return customerRepository.existsByDocumentCPFIgnoreCase(documentCPF);
+        return customerRepository.existsByDocumentCPFIgnoreCase(onlyDigits(documentCPF));
     }
 
-
-    
+    private String onlyDigits(String value) {
+        return value == null ? null : value.replaceAll("\\D", "");
+    }
 }

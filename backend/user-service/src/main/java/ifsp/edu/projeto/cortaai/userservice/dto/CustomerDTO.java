@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import ifsp.edu.projeto.cortaai.userservice.validator.CPF;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -33,6 +34,7 @@ public class CustomerDTO {
     @NotNull
     @Size(min = 11, max = 11)
     @Pattern(regexp = "^[0-9]{11}$", message = "CPF deve conter exatamente 11 dígitos numéricos")
+    @CPF
     private String documentCPF;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
@@ -40,4 +42,3 @@ public class CustomerDTO {
 
     private String imageUrl;
 }
-

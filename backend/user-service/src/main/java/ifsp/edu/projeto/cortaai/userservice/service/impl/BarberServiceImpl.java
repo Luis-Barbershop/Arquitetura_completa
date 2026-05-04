@@ -7,6 +7,7 @@ import ifsp.edu.projeto.cortaai.userservice.dto.UpdateBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.mapper.BarberMapper;
 import ifsp.edu.projeto.cortaai.userservice.model.Barber;
 import ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository;
+import ifsp.edu.projeto.cortaai.userservice.security.crypto.PrivacyHash;
 import ifsp.edu.projeto.cortaai.userservice.service.BarberService;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import ifsp.edu.projeto.cortaai.userservice.service.storage.StorageService;
@@ -42,7 +43,7 @@ public class BarberServiceImpl implements BarberService {
 
         if (dto.getName() != null)  barber.setName(dto.getName());
         if (dto.getTell() != null)  barber.setTell(dto.getTell());
-        if (dto.getEmail() != null) barber.setEmail(dto.getEmail());
+        if (dto.getEmail() != null) barber.setEmail(PrivacyHash.normalizeEmail(dto.getEmail()));
         if (dto.getBirthDate() != null) barber.setBirthDate(dto.getBirthDate());
 
         // Horários de expediente — editáveis por qualquer barbeiro (owner, colaborador ou sem barbearia)
@@ -102,12 +103,12 @@ public class BarberServiceImpl implements BarberService {
 
     @Override
     public boolean emailExists(String email) {
-        return barberRepository.existsByEmailIgnoreCase(email);
+        return barberRepository.existsByEmailIgnoreCase(PrivacyHash.normalizeEmail(email));
     }
 
     @Override
     public boolean documentCPFExists(String documentCPF) {
-        return barberRepository.existsByDocumentCPFIgnoreCase(documentCPF);
+        return barberRepository.existsByDocumentCPFIgnoreCase(onlyDigits(documentCPF));
     }
 
     @Override
@@ -162,5 +163,9 @@ public class BarberServiceImpl implements BarberService {
         }
         barberRepository.save(barber);
         return barber.getAssignedActivityIds();
+    }
+
+    private String onlyDigits(String value) {
+        return value == null ? null : value.replaceAll("\\D", "");
     }
 }

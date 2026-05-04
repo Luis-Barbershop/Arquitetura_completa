@@ -35,10 +35,11 @@ services:
   redis:
     image: redis:7-alpine
     container_name: cortaai-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD}
     ports:
       - "6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -98,6 +99,7 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - CORTAAI_DATA_CRYPTO_KEY=${CORTAAI_DATA_CRYPTO_KEY}
       - JAVA_TOOL_OPTIONS=-Xms64m -Xmx192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m
     depends_on:
       db:
@@ -122,6 +124,7 @@ services:
       - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
       - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
       - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - CORTAAI_DATA_CRYPTO_KEY=${CORTAAI_DATA_CRYPTO_KEY}
       - JAVA_TOOL_OPTIONS=-Xms64m -Xmx192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m
     depends_on:
       db:
@@ -146,6 +149,8 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - CORTAAI_DATA_CRYPTO_KEY=${CORTAAI_DATA_CRYPTO_KEY}
       - JAVA_TOOL_OPTIONS=-Xms64m -Xmx192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m
     depends_on:
       db:
@@ -205,6 +210,7 @@ services:
       - RABBITMQ_USER=${RABBITMQ_USER}
       - RABBITMQ_PASS=${RABBITMQ_PASS}
       - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}

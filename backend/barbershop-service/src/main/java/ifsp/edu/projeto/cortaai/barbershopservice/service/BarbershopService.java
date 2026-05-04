@@ -243,11 +243,13 @@ public class BarbershopService {
         if (barbershopRepository.findByOwnerId(owner.getId()).isPresent()) {
             throw new DomainConflictException("Você já possui uma barbearia.");
         }
-        if (barbershopRepository.existsByCnpj(dto.getCnpj())) {
+        String cnpj = onlyDigits(dto.getCnpj());
+        if (barbershopRepository.existsByCnpj(cnpj)) {
             throw new DomainConflictException("CNPJ já cadastrado.");
         }
 
         Barbershop shop = barbershopMapper.toEntity(dto);
+        shop.setCnpj(cnpj);
         shop.setOwnerId(owner.getId());
 
         Barbershop saved = barbershopRepository.save(shop);
@@ -382,8 +384,9 @@ public class BarbershopService {
             throw new DomainConflictException("Você já faz parte de uma barbearia. Saia antes de solicitar entrada em outra.");
         }
 
-        Barbershop shop = barbershopRepository.findByCnpj(cnpj)
-                .orElseThrow(() -> new NotFoundException("Barbearia com CNPJ " + cnpj + " não encontrada."));
+        String cleanCnpj = onlyDigits(cnpj);
+        Barbershop shop = barbershopRepository.findByCnpj(cleanCnpj)
+                .orElseThrow(() -> new NotFoundException("Barbearia com CNPJ " + cleanCnpj + " não encontrada."));
 
         // Verifica se já existe um pedido pendente
         joinRequestRepository.findByBarberIdAndBarbershopId(barber.getId(), shop.getId())
@@ -495,7 +498,7 @@ public class BarbershopService {
         UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
 
-        String cleanCpf = cpf.replaceAll("\\D", "");
+        String cleanCpf = onlyDigits(cpf);
         if (cleanCpf.length() != 11) {
             throw new DomainConflictException("CPF inválido. Informe 11 dígitos.");
         }
@@ -789,5 +792,9 @@ public class BarbershopService {
                 .replaceAll("(?i)bearer\\s+[a-z0-9._-]+", "bearer ***")
                 .replaceAll("(?i)token[=:\\s]+[^\\s,;]+", "token=***")
                 .replaceAll("(?i)authorization[^\\s]*", "authorization***");
+    }
+
+    private String onlyDigits(String value) {
+        return value == null ? null : value.replaceAll("\\D", "");
     }
 }

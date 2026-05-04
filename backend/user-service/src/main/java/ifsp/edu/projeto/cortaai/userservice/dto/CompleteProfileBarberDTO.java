@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import ifsp.edu.projeto.cortaai.userservice.validator.CPF;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
@@ -21,6 +22,7 @@ public record CompleteProfileBarberDTO(
 
         @NotBlank(message = "CPF é obrigatório")
         @Size(min = 11, max = 14, message = "CPF deve ter entre 11 e 14 caracteres")
+        @CPF
         String documentCPF,
 
         /** Nome de exibição (opcional). */
