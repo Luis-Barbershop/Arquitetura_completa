@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.paymentservice.controller;
 
+import ifsp.edu.projeto.cortaai.paymentservice.dto.BarberFinancialPerformanceResponseDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.CreatePaymentDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialOverviewDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesDTO;
@@ -117,5 +118,13 @@ public class PaymentController {
             @Parameter(description = "Data final (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
             @Parameter(description = "Agrupamento: DAY ou WEEK") @RequestParam(required = false, defaultValue = "DAY") String groupBy) {
         return ResponseEntity.ok(paymentService.getBarbershopSeriesByFirebaseUid(firebaseUid, barbershopId, from, to, groupBy));
+    }
+
+    @Operation(summary = "Desempenho financeiro por barbeiro", description = "Retorna ranking de barbeiros com receita gerada e participação percentual. Apenas o owner pode acessar.")
+    @GetMapping("/my-shop/barber-performance")
+    public ResponseEntity<List<BarberFinancialPerformanceResponseDTO>> getBarberPerformance(
+            @RequestHeader("X-User-UID") String firebaseUid,
+            @RequestParam UUID barbershopId) {
+        return ResponseEntity.ok(paymentService.getBarberFinancialPerformance(firebaseUid, barbershopId));
     }
 }

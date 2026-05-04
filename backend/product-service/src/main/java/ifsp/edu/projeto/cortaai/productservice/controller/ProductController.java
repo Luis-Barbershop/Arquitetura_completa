@@ -3,6 +3,7 @@ package ifsp.edu.projeto.cortaai.productservice.controller;
 import ifsp.edu.projeto.cortaai.productservice.dto.CreateProductDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.InventoryPageDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.ProductDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.StockHealthAlertResponseDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.StockMovementDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.UpdateProductDTO;
 import ifsp.edu.projeto.cortaai.productservice.exception.ApiErrorResponse;
@@ -132,5 +133,12 @@ public class ProductController {
             @Parameter(description = "Página (base 0)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Tamanho da página") @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(productService.getStockMovementHistory(id, page, size));
+    }
+
+    @Operation(summary = "Alertas de saúde do estoque", description = "Retorna todos os produtos com indicação de estoque crítico via view v_stock_health_alert.")
+    @GetMapping("/analytics/stock-health")
+    public ResponseEntity<List<StockHealthAlertResponseDTO>> getStockHealthAlert(
+            @RequestParam UUID barbershopId) {
+        return ResponseEntity.ok(productService.getStockHealthAlert(barbershopId));
     }
 }

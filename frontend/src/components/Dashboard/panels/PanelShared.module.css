@@ -1,0 +1,269 @@
+/* ======= Shared Panel Styles ======= */
+
+.empty {
+    color: var(--color-text-secondary, #888);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 20px 0;
+}
+
+/* ---- Card list (BarberPerformance) ---- */
+.cardList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card {
+    background: var(--color-bg, #111);
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border, #2a2a2a);
+}
+
+.cardTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.cardName {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--color-text-primary, #f0f0f0);
+}
+
+.cardBadge {
+    font-size: 0.75rem;
+    background: var(--color-primary, #e0b04b);
+    color: #000;
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-weight: 600;
+}
+
+.cardFooter {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #888);
+    margin-top: 4px;
+}
+
+/* ---- Bar track (shared) ---- */
+.barTrack {
+    height: 6px;
+    background: var(--color-border, #2a2a2a);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.barFill {
+    height: 100%;
+    background: var(--color-primary, #e0b04b);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+.barFillRetention {
+    background: #4bc0e0;
+}
+
+/* ---- Summary grid (StockHealth) ---- */
+.summaryGrid {
+    display: flex;
+    gap: 12px;
+}
+
+.summaryCard {
+    flex: 1;
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+    border: 1px solid var(--color-border, #2a2a2a);
+}
+
+.summaryCard.danger {
+    border-color: #e05454;
+    background: rgba(224, 84, 84, 0.08);
+}
+
+.summaryCard.ok {
+    border-color: #54e077;
+    background: rgba(84, 224, 119, 0.08);
+}
+
+.summaryValue {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #f0f0f0);
+}
+
+.summaryLabel {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #888);
+}
+
+/* ---- Thermometer ---- */
+.thermometerList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.thermoRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.thermoDate {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary, #888);
+    min-width: 78px;
+}
+
+.thermoBarTrack {
+    flex: 1;
+    height: 8px;
+    background: var(--color-border, #2a2a2a);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+}
+
+.thermoBarActive {
+    height: 100%;
+    background: var(--color-primary, #e0b04b);
+    transition: width 0.3s ease;
+}
+
+.thermoBarLost {
+    height: 100%;
+    background: #e05454;
+    transition: width 0.3s ease;
+}
+
+.thermoCount {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary, #888);
+    min-width: 24px;
+    text-align: right;
+}
+
+.thermoLegend {
+    display: flex;
+    gap: 12px;
+    font-size: 0.7rem;
+    margin-top: 8px;
+}
+
+.legendActive { color: var(--color-primary, #e0b04b); }
+.legendLost   { color: #e05454; }
+
+/* ---- Skill Grid ---- */
+.skillGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.skillCard {
+    background: var(--color-bg, #111);
+    border: 1px solid var(--color-border, #2a2a2a);
+    border-radius: 8px;
+    padding: 10px 12px;
+    min-width: 140px;
+    flex: 1;
+}
+
+.skillBarberName {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-primary, #e0b04b);
+    margin: 0 0 6px;
+}
+
+.skillRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #888);
+    padding: 2px 0;
+    border-bottom: 1px solid var(--color-border, #2a2a2a);
+}
+
+.skillActivity {
+    flex: 1;
+}
+
+.skillTimes {
+    font-weight: 600;
+    color: var(--color-text-primary, #f0f0f0);
+}
+
+/* ---- Bar chart list (acquisition / retention) ---- */
+.barChartList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.barChartRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.barChartLabel {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary, #888);
+    min-width: 60px;
+}
+
+.barChartValue {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary, #888);
+    min-width: 28px;
+    text-align: right;
+}
+
+/* ---- Table (shared report view) ---- */
+.tableWrapper {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+}
+
+.table th {
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--color-border, #2a2a2a);
+    color: var(--color-text-secondary, #888);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--color-border, #2a2a2a);
+    color: var(--color-text-primary, #f0f0f0);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.rowDanger td {
+    color: #e05454;
+}

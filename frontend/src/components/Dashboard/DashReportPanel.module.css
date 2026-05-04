@@ -1,0 +1,112 @@
+.panelWrapper {
+    background: var(--color-surface, #1a1a1a);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border: 1px solid var(--color-border, #2a2a2a);
+}
+
+.panelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.panelTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-primary, #f0f0f0);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.panelControls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.toggleBtn {
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--color-primary, #e0b04b);
+    background: transparent;
+    color: var(--color-primary, #e0b04b);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.toggleBtn:hover {
+    background: var(--color-primary, #e0b04b);
+    color: #000;
+}
+
+.toggleBtn.inactive {
+    border-color: var(--color-text-secondary, #888);
+    color: var(--color-text-secondary, #888);
+}
+
+.toggleBtn.inactive:hover {
+    background: var(--color-text-secondary, #888);
+    color: #000;
+}
+
+.refreshBtn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: opacity 0.2s;
+}
+
+.refreshBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.allHiddenMsg {
+    text-align: center;
+    color: var(--color-text-secondary, #888);
+    font-size: 0.85rem;
+    padding: 16px 0;
+}
+
+.panelBody {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.pane {
+    flex: 1;
+    min-width: 0;
+    transition: flex 0.3s ease;
+}
+
+.pane.fullWidth {
+    flex: 1;
+}
+
+.paneLabel {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--color-text-secondary, #888);
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+    margin-top: 0;
+}
+
+@media (max-width: 768px) {
+    .panelBody {
+        flex-direction: column;
+    }
+}

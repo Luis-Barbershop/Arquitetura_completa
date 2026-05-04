@@ -5,6 +5,7 @@ import ifsp.edu.projeto.cortaai.productservice.dto.InventoryPageDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.InventoryFinancialSummaryDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.InventoryProductItemDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.ProductDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.StockHealthAlertResponseDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.StockMovementDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.UpdateProductDTO;
 import ifsp.edu.projeto.cortaai.productservice.mapper.ProductMapper;
@@ -14,6 +15,7 @@ import ifsp.edu.projeto.cortaai.productservice.model.ProductCategory;
 import ifsp.edu.projeto.cortaai.productservice.model.StockMovement;
 import ifsp.edu.projeto.cortaai.productservice.repository.ProductRepository;
 import ifsp.edu.projeto.cortaai.productservice.repository.StockMovementRepository;
+import ifsp.edu.projeto.cortaai.productservice.repository.analytics.VStockHealthAlertRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -39,6 +41,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final StockMovementRepository stockMovementRepository;
     private final ProductMapper productMapper;
+    private final VStockHealthAlertRepository vStockHealthAlertRepository;
 
     @Transactional
     public ProductDTO createProduct(CreateProductDTO dto) {
@@ -226,5 +229,19 @@ public class ProductService {
                 lowStock,
                 product.isActive()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<StockHealthAlertResponseDTO> getStockHealthAlert(UUID barbershopId) {
+        return vStockHealthAlertRepository.findByBarbershopId(barbershopId.toString()).stream()
+                .map(p -> new StockHealthAlertResponseDTO(
+                        p.getProductId(),
+                        p.getProductName(),
+                        p.getCategory(),
+                        p.getCurrentStock(),
+                        p.getPredictedMinimum(),
+                        p.getRequiresRestock() != null && p.getRequiresRestock() == 1
+                ))
+                .toList();
     }
 }

@@ -4,6 +4,7 @@ import com.mercadopago.client.preference.*;
 import com.mercadopago.resources.preference.Preference;
 import ifsp.edu.projeto.cortaai.paymentservice.config.RabbitConfig;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.AppointmentInfoDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.BarberFinancialPerformanceResponseDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialOverviewDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesPointDTO;
@@ -11,6 +12,8 @@ import ifsp.edu.projeto.cortaai.paymentservice.dto.InventoryFinancialSummaryDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.MpConnectionStatusDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.TransactionDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.UserInfoDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.model.analytics.VBarberFinancialPerformance;
+import ifsp.edu.projeto.cortaai.paymentservice.repository.analytics.VBarberFinancialPerformanceRepository;
 import ifsp.edu.projeto.cortaai.paymentservice.event.PaymentApprovedEvent;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.ProductServiceClient;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.ScheduleServiceClient;
@@ -58,6 +61,7 @@ public class PaymentService {
     private final TransactionRepository transactionRepository;
     private final WebhookLogRepository webhookLogRepository;
     private final DashboardKpiDailyRepository dashboardKpiDailyRepository;
+    private final VBarberFinancialPerformanceRepository vBarberFinancialPerformanceRepository;
     private final ScheduleServiceClient scheduleServiceClient;
     private final UserServiceClient userServiceClient;
     private final ProductServiceClient productServiceClient;
@@ -435,6 +439,22 @@ public class PaymentService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissao para acessar o financeiro desta barbearia.");
         }
         return getBarbershopOverview(barbershopId, from, to);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BarberFinancialPerformanceResponseDTO> getBarberFinancialPerformance(String firebaseUid, UUID barbershopId) {
+        if (!canAccessBarbershopFinancials(firebaseUid, barbershopId, true)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso restrito ao owner da barbearia.");
+        }
+        return vBarberFinancialPerformanceRepository.findAll().stream()
+                .map(v -> new BarberFinancialPerformanceResponseDTO(
+                        v.getBarberId(),
+                        v.getBarberName(),
+                        v.getTotalAppointments(),
+                        v.getGeneratedRevenue(),
+                        v.getContributionPercentage()
+                ))
+                .toList();
     }
 
     @Transactional(readOnly = true)
