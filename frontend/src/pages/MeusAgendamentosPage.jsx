@@ -49,6 +49,7 @@ const MeusAgendamentosPage = () => {
     const [offlineTransactionalNotice, setOfflineTransactionalNotice] = useState('');
     const [viewMode, setViewMode] = useState('list'); // 'list' | 'timeline'
     const [dateFilter, setDateFilter] = useState(new Date().toLocaleDateString('en-CA'));
+    const [mineRangeMode, setMineRangeMode] = useState('day'); // 'day' | 'week' | 'month'
     const [reviewHover, setReviewHover] = useState(0);
 
     // Determina o papel com base na chave correta do localStorage ('userRole')
@@ -378,9 +379,33 @@ const MeusAgendamentosPage = () => {
     });
 
     const filteredAppointments = sortedAppointments.filter((app) => {
-        if (activeFilter !== 'ALL' && app.status !== activeFilter) return false;
-        if (!isCustomer && agendaView === 'mine' && dateFilter) {
-            return app.startTime?.slice(0, 10) === dateFilter;
+        // Filtro de status — CONFIRMED aparece junto com SCHEDULED em "Agendados"
+        if (activeFilter === 'SCHEDULED') {
+            if (!['SCHEDULED', 'CONFIRMED'].includes(app.status)) return false;
+        } else if (activeFilter !== 'ALL' && app.status !== activeFilter) {
+            return false;
+        }
+
+        // Filtro de data para barbeiro na visão "mine"
+        if (!isCustomer && agendaView === 'mine') {
+            const appDate = app.startTime?.slice(0, 10);
+            if (!appDate) return false;
+            if (mineRangeMode === 'day') {
+                return appDate === dateFilter;
+            }
+            if (mineRangeMode === 'week') {
+                const anchor = new Date(dateFilter + 'T00:00:00');
+                const weekStart = new Date(anchor);
+                weekStart.setDate(anchor.getDate() - anchor.getDay() + 1);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                const ws = weekStart.toLocaleDateString('en-CA');
+                const we = weekEnd.toLocaleDateString('en-CA');
+                return appDate >= ws && appDate <= we;
+            }
+            if (mineRangeMode === 'month') {
+                return appDate.slice(0, 7) === dateFilter.slice(0, 7);
+            }
         }
         return true;
     });
@@ -479,7 +504,13 @@ const MeusAgendamentosPage = () => {
 
     const shiftDateFilter = (days) => {
         const d = new Date(dateFilter + 'T00:00:00');
-        d.setDate(d.getDate() + days);
+        if (mineRangeMode === 'week') {
+            d.setDate(d.getDate() + days * 7);
+        } else if (mineRangeMode === 'month') {
+            d.setMonth(d.getMonth() + days);
+        } else {
+            d.setDate(d.getDate() + days);
+        }
         setDateFilter(d.toLocaleDateString('en-CA'));
     };
 
@@ -491,6 +522,17 @@ const MeusAgendamentosPage = () => {
 
     const formatDateDisplay = (dateStr) => {
         const d = new Date(dateStr + 'T00:00:00');
+        if (mineRangeMode === 'month') {
+            return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        }
+        if (mineRangeMode === 'week') {
+            const start = new Date(d);
+            start.setDate(d.getDate() - d.getDay() + 1); // segunda
+            const end = new Date(start);
+            end.setDate(start.getDate() + 6); // domingo
+            const fmt = (x) => x.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+            return `${fmt(start)} – ${fmt(end)}`;
+        }
         const isToday = dateStr === todayStr;
         const isTomorrow = dateStr === (() => { const t = new Date(); t.setDate(t.getDate() + 1); return t.toLocaleDateString('en-CA'); })();
         const isYesterday = dateStr === (() => { const t = new Date(); t.setDate(t.getDate() - 1); return t.toLocaleDateString('en-CA'); })();
@@ -719,6 +761,21 @@ const MeusAgendamentosPage = () => {
 
                         {/* Navegação de data */}
                         <div className={Styles.dateNavRow}>
+                            {/* Tabs de range — só na view mine */}
+                            {agendaView === 'mine' && (
+                                <div className={Styles.viewToggle} style={{ marginRight: '0.5rem' }}>
+                                    {[{ key: 'day', label: 'Dia' }, { key: 'week', label: 'Semana' }, { key: 'month', label: 'Mês' }].map(r => (
+                                        <button
+                                            key={r.key}
+                                            className={mineRangeMode === r.key ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
+                                            onClick={() => setMineRangeMode(r.key)}
+                                            type="button"
+                                        >
+                                            {r.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                             <button
                                 className={Styles.dateNavBtn}
                                 onClick={() => agendaView === 'team' ? shiftTeamDate(-1) : shiftDateFilter(-1)}
@@ -730,9 +787,19 @@ const MeusAgendamentosPage = () => {
                             <label className={Styles.dateNavLabel} title="Clique para escolher data">
                                 {formatDateDisplay(agendaView === 'team' ? teamDate : dateFilter)}
                                 <input
-                                    type="date"
-                                    value={agendaView === 'team' ? teamDate : dateFilter}
-                                    onChange={(e) => agendaView === 'team' ? setTeamDate(e.target.value) : setDateFilter(e.target.value)}
+                                    type={agendaView === 'mine' && mineRangeMode === 'month' ? 'month' : 'date'}
+                                    value={agendaView === 'mine' && mineRangeMode === 'month'
+                                        ? dateFilter.slice(0, 7)
+                                        : (agendaView === 'team' ? teamDate : dateFilter)}
+                                    onChange={(e) => {
+                                        if (agendaView === 'team') {
+                                            setTeamDate(e.target.value);
+                                        } else if (mineRangeMode === 'month') {
+                                            setDateFilter(e.target.value + '-01');
+                                        } else {
+                                            setDateFilter(e.target.value);
+                                        }
+                                    }}
                                     className={Styles.dateNavInputHidden}
                                     aria-label="Selecionar data"
                                 />
