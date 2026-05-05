@@ -267,3 +267,65 @@
 .rowDanger td {
     color: #e05454;
 }
+
+/* ======= Recharts panels ======= */
+
+.chartContainer {
+    width: 100%;
+    padding: 4px 0;
+}
+
+.chartSubtitle {
+    font-size: 0.82rem;
+    color: #a0a0a0;
+    margin: 0 0 6px 4px;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+/* BarberPerformance table view: pie + table side by side */
+.chartWithTable {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pieContainer {
+    width: 100%;
+}
+
+/* BarberSkillMatrix: tab selector per barber */
+.tabRow {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.tabBtn {
+    background: transparent;
+    border: 1px solid #333;
+    border-radius: 999px;
+    color: #a0a0a0;
+    font-size: 0.78rem;
+    padding: 3px 12px;
+    cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tabBtn:hover {
+    background: rgba(193, 144, 6, 0.1);
+    border-color: #c19006;
+    color: #e8b923;
+}
+
+.tabBtnActive {
+    background: rgba(193, 144, 6, 0.18);
+    border: 1px solid #c19006;
+    border-radius: 999px;
+    color: #e8b923;
+    font-size: 0.78rem;
+    padding: 3px 12px;
+    cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+}

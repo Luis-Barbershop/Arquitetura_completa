@@ -1,21 +1,41 @@
 import React from 'react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import styles from './PanelShared.module.css';
 
 function StockHealthPanel({ data }) {
     if (!data?.length) return <p className={styles.empty}>Sem dados disponíveis.</p>;
-    const alerts = data.filter(d => d.requiresRestock);
-    const ok = data.filter(d => !d.requiresRestock);
+
+    const alerts = data.filter(d => d.requiresRestock).length;
+    const ok = data.filter(d => !d.requiresRestock).length;
+
+    const pieData = [
+        { name: 'Saudável', value: ok },
+        { name: 'Repor', value: alerts },
+    ];
 
     return (
-        <div className={styles.summaryGrid}>
-            <div className={`${styles.summaryCard} ${styles.danger}`}>
-                <span className={styles.summaryValue}>{alerts.length}</span>
-                <span className={styles.summaryLabel}>Reposição necessária</span>
-            </div>
-            <div className={`${styles.summaryCard} ${styles.ok}`}>
-                <span className={styles.summaryValue}>{ok.length}</span>
-                <span className={styles.summaryLabel}>Estoque saudável</span>
-            </div>
+        <div className={styles.chartContainer}>
+            <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                    <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={85}
+                        paddingAngle={4}
+                        dataKey="value"
+                        label={({ name, value }) => `${name}: ${value}`}
+                    >
+                        <Cell fill="#10b981" />
+                        <Cell fill="#ef4444" />
+                    </Pie>
+                    <Tooltip
+                        contentStyle={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 8 }}
+                        formatter={(v, name) => [v, name]}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 12, color: '#a0a0a0' }} />
+                </PieChart>
+            </ResponsiveContainer>
         </div>
     );
 }
