@@ -34,6 +34,6 @@ public interface BarbershopRepository extends JpaRepository<Barbershop, UUID> {
     @Query(value = "SELECT COUNT(*) FROM barbershops WHERE cnpj = :cnpj", nativeQuery = true)
     long countByCnpjRaw(@Param("cnpj") String cnpj);
 
-    @Query(value = "SELECT * FROM barbershops WHERE cnpj IS NOT NULL AND cnpj <> '' AND cnpj NOT LIKE 'enc:v1:%'", nativeQuery = true)
+    @Query("SELECT b FROM Barbershop b WHERE b.cnpj IS NOT NULL AND b.cnpj <> '' AND b.cnpj NOT LIKE 'enc:v1:%'")
     List<Barbershop> findWithLegacyPlainCnpj();
 }
