@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    include: ['recharts'],
+  },
   build: {
     rollupOptions: {
       output: {
@@ -12,7 +15,7 @@ export default defineConfig({
             return
           }
 
-          if (id.includes('react') || id.includes('scheduler')) {
+          if (id.includes('react') || id.includes('scheduler') || id.includes('recharts')) {
             return 'vendor-react'
           }
 
