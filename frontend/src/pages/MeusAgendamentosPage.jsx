@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiCalendar, FiCheckCircle, FiClock, FiRefreshCw, FiScissors, FiXCircle } from 'react-icons/fi';
+import { FiBarChart2, FiCalendar, FiCheckCircle, FiChevronLeft, FiChevronRight, FiClock, FiList, FiRefreshCw, FiScissors, FiStar, FiUsers, FiXCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import Styles from './CSS/MeusAgendamentos.module.css';
 import {
@@ -47,6 +47,9 @@ const MeusAgendamentosPage = () => {
     const [reviewRating, setReviewRating] = useState(5);
     const [reviewComment, setReviewComment] = useState('');
     const [offlineTransactionalNotice, setOfflineTransactionalNotice] = useState('');
+    const [viewMode, setViewMode] = useState('list'); // 'list' | 'timeline'
+    const [dateFilter, setDateFilter] = useState(new Date().toLocaleDateString('en-CA'));
+    const [reviewHover, setReviewHover] = useState(0);
 
     // Determina o papel com base na chave correta do localStorage ('userRole')
     const isCustomer = checkIsCustomer();
@@ -130,6 +133,24 @@ const MeusAgendamentosPage = () => {
     useEffect(() => {
         setCurrentPage(1);
     }, [activeFilter]);
+
+    const todayStr = useMemo(() => new Date().toLocaleDateString('en-CA'), []);
+
+    const stats = useMemo(() => ({
+        today: appointments.filter(a => a.startTime?.slice(0, 10) === todayStr).length,
+        active: appointments.filter(a => ['SCHEDULED', 'WALK_IN', 'CONFIRMED'].includes(a.status)).length,
+        completed: appointments.filter(a => a.status === 'COMPLETED').length,
+        cancelled: appointments.filter(a => a.status === 'CANCELLED').length,
+    }), [appointments, todayStr]);
+
+    const getDurationLabel = (app) => {
+        if (!app.startTime || !app.endTime) return null;
+        const mins = Math.round((new Date(app.endTime) - new Date(app.startTime)) / 60000);
+        if (mins <= 0) return null;
+        return mins >= 60
+            ? `${Math.floor(mins / 60)}h${mins % 60 > 0 ? `${mins % 60}min` : ''}`
+            : `${mins}min`;
+    };
 
     const handleOpenCancelModal = (id) => {
         setCancelingAppointmentId(id);
@@ -339,6 +360,11 @@ const MeusAgendamentosPage = () => {
     };
 
     const sortedAppointments = [...appointments].sort((a, b) => {
+        // Na visão de dia do barbeiro, ordenar por hora crescente
+        if (!isCustomer && agendaView === 'mine' && dateFilter) {
+            return new Date(a.startTime) - new Date(b.startTime);
+        }
+
         if (activeFilter === 'ALL') {
             const aCancelled = a.status === 'CANCELLED';
             const bCancelled = b.status === 'CANCELLED';
@@ -352,8 +378,11 @@ const MeusAgendamentosPage = () => {
     });
 
     const filteredAppointments = sortedAppointments.filter((app) => {
-        if (activeFilter === 'ALL') return true;
-        return app.status === activeFilter;
+        if (activeFilter !== 'ALL' && app.status !== activeFilter) return false;
+        if (!isCustomer && agendaView === 'mine' && dateFilter) {
+            return app.startTime?.slice(0, 10) === dateFilter;
+        }
+        return true;
     });
 
     const itemsPerPage = 10;
@@ -448,6 +477,158 @@ const MeusAgendamentosPage = () => {
         navigate('/');
     };
 
+    const shiftDateFilter = (days) => {
+        const d = new Date(dateFilter + 'T00:00:00');
+        d.setDate(d.getDate() + days);
+        setDateFilter(d.toLocaleDateString('en-CA'));
+    };
+
+    const shiftTeamDate = (days) => {
+        const d = new Date(teamDate + 'T00:00:00');
+        d.setDate(d.getDate() + days);
+        setTeamDate(d.toLocaleDateString('en-CA'));
+    };
+
+    const formatDateDisplay = (dateStr) => {
+        const d = new Date(dateStr + 'T00:00:00');
+        const isToday = dateStr === todayStr;
+        const isTomorrow = dateStr === (() => { const t = new Date(); t.setDate(t.getDate() + 1); return t.toLocaleDateString('en-CA'); })();
+        const isYesterday = dateStr === (() => { const t = new Date(); t.setDate(t.getDate() - 1); return t.toLocaleDateString('en-CA'); })();
+        if (isToday) return 'Hoje';
+        if (isTomorrow) return 'Amanhã';
+        if (isYesterday) return 'Ontem';
+        return d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    };
+
+    const renderTimeline = () => {
+        const activeDate = agendaView === 'team' ? teamDate : dateFilter;
+        const dayAppointments = appointments.filter(a => a.startTime?.slice(0, 10) === activeDate);
+
+        const PX_PER_MIN = 80 / 60;
+        const START_HOUR = 7;
+        const END_HOUR = 21;
+        const totalHeight = (END_HOUR - START_HOUR) * 80;
+
+        const getTop = (iso) => {
+            const d = new Date(iso);
+            return Math.max(0, ((d.getHours() - START_HOUR) * 60 + d.getMinutes()) * PX_PER_MIN);
+        };
+
+        const getHeight = (start, end) =>
+            Math.max(36, Math.round((new Date(end) - new Date(start)) / 60000) * PX_PER_MIN);
+
+        const borderByStatus = {
+            SCHEDULED: '#c19006', CONFIRMED: '#10b981', WALK_IN: '#7c3aed',
+            PAYMENT_PENDING: '#f97316', COMPLETED: '#10b981', CANCELLED: '#555',
+        };
+        const bgByStatus = {
+            SCHEDULED: 'rgba(193,144,6,0.14)', CONFIRMED: 'rgba(16,185,129,0.12)',
+            WALK_IN: 'rgba(124,58,237,0.14)', PAYMENT_PENDING: 'rgba(249,115,22,0.14)',
+            COMPLETED: 'rgba(16,185,129,0.09)', CANCELLED: 'rgba(80,80,80,0.1)',
+        };
+
+        const nowTop = (() => {
+            if (activeDate !== todayStr) return null;
+            const now = new Date();
+            const t = ((now.getHours() - START_HOUR) * 60 + now.getMinutes()) * PX_PER_MIN;
+            return t >= 0 && t <= totalHeight ? t : null;
+        })();
+
+        const hourLabels = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => ({
+            label: `${String(START_HOUR + i).padStart(2, '0')}:00`,
+            top: i * 80,
+        }));
+
+        const renderAppBlock = (app) => (
+            <div
+                key={app.id}
+                className={Styles.timelineBlock}
+                style={{
+                    top: getTop(app.startTime),
+                    height: getHeight(app.startTime, app.endTime),
+                    background: bgByStatus[app.status] || 'rgba(193,144,6,0.14)',
+                    borderLeft: `3px solid ${borderByStatus[app.status] || '#c19006'}`,
+                }}
+            >
+                <span className={Styles.tlTime}>
+                    {new Date(app.startTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+                <span className={Styles.tlName}>{app.customerName || 'Cliente'}</span>
+                <span className={Styles.tlService}>{toServiceSummary(app)}</span>
+            </div>
+        );
+
+        if (dayAppointments.length === 0) {
+            return (
+                <div className={`${Styles.empty} ca-state ca-state--empty`} style={{ marginTop: '2rem' }}>
+                    <h3>Nenhum atendimento neste dia.</h3>
+                    <p>Navegue para outro dia ou ajuste os filtros.</p>
+                </div>
+            );
+        }
+
+        if (agendaView === 'mine') {
+            return (
+                <div className={Styles.timelineWrapper}>
+                    <div className={Styles.timelineScroll}>
+                        <div className={Styles.timeLabels}>
+                            {hourLabels.map(h => (
+                                <div key={h.label} className={Styles.timeLabel} style={{ top: h.top }}>{h.label}</div>
+                            ))}
+                        </div>
+                        <div className={Styles.timelineGrid} style={{ height: totalHeight }}>
+                            {hourLabels.map(h => (
+                                <div key={h.label} className={Styles.hourLine} style={{ top: h.top }} />
+                            ))}
+                            {dayAppointments.map(app => renderAppBlock(app))}
+                            {nowTop !== null && <div className={Styles.nowLine} style={{ top: nowTop }} />}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Team view: coluna por barbeiro
+        const barberMap = new Map();
+        dayAppointments.forEach(a => {
+            const key = a.barberId || a.barberName || 'unknown';
+            if (!barberMap.has(key)) barberMap.set(key, { key, name: a.barberName || 'Barbeiro', appointments: [] });
+            barberMap.get(key).appointments.push(a);
+        });
+        const barbers = [...barberMap.values()];
+
+        return (
+            <div className={Styles.timelineWrapper}>
+                <div className={Styles.timelineTeamScroll}>
+                    <div className={Styles.timeLabels}>
+                        {hourLabels.map(h => (
+                            <div key={h.label} className={Styles.timeLabel} style={{ top: h.top }}>{h.label}</div>
+                        ))}
+                    </div>
+                    <div className={Styles.timelineTeamColumns}>
+                        {barbers.map(barber => (
+                            <div key={barber.key} className={Styles.timelineColumn}>
+                                <div className={Styles.tlColHeader}>
+                                    <span className={Styles.tlColAvatar}>
+                                        {(barber.name || 'B').charAt(0).toUpperCase()}
+                                    </span>
+                                    {barber.name}
+                                </div>
+                                <div className={Styles.timelineGrid} style={{ height: totalHeight }}>
+                                    {hourLabels.map(h => (
+                                        <div key={h.label} className={Styles.hourLine} style={{ top: h.top }} />
+                                    ))}
+                                    {barber.appointments.map(app => renderAppBlock(app))}
+                                    {nowTop !== null && <div className={Styles.nowLine} style={{ top: nowTop }} />}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className={Styles.container}>
             <div className={Styles.content}>
@@ -490,48 +671,121 @@ const MeusAgendamentosPage = () => {
                     </p>
                 )}
 
+                {/* ── Stats bar ── */}
                 {!isCustomer && (
-                    <div className={Styles.filtersRow}>
-                        {isOwner && (
-                            <>
-                                <button
-                                    className={agendaView === 'mine' ? Styles.filterButtonActive : Styles.filterButton}
-                                    onClick={() => {
-                                        setAgendaView('mine');
-                                        navigate('/meus-agendamentos');
-                                    }}
-                                >
-                                    Minha Agenda
-                                </button>
-                                <button
-                                    className={agendaView === 'team' ? Styles.filterButtonActive : Styles.filterButton}
-                                    onClick={() => {
-                                        setAgendaView('team');
-                                        navigate('/meus-agendamentos?view=team');
-                                    }}
-                                >
-                                    Agenda da Equipe
-                                </button>
-
-                                {agendaView === 'team' && (
-                                    <>
-                                        <input
-                                            type="date"
-                                            value={teamDate}
-                                            onChange={(e) => setTeamDate(e.target.value)}
-                                            className={Styles.filterButton}
-                                            style={{ cursor: 'pointer' }}
-                                        />
-                                        <button className={Styles.filterButton} onClick={() => setTeamDate(new Date().toLocaleDateString('en-CA'))}>
-                                            Hoje
-                                        </button>
-                                    </>
-                                )}
-                            </>
-                        )}
+                    <div className={Styles.statsBar}>
+                        {[
+                            { label: 'Hoje', value: stats.today, filter: null, icon: <FiCalendar size={16} />, accent: '#c19006' },
+                            { label: 'Ativos', value: stats.active, filter: 'SCHEDULED', icon: <FiClock size={16} />, accent: '#3b82f6' },
+                            { label: 'Concluídos', value: stats.completed, filter: 'COMPLETED', icon: <FiCheckCircle size={16} />, accent: '#10b981' },
+                            { label: 'Cancelados', value: stats.cancelled, filter: 'CANCELLED', icon: <FiXCircle size={16} />, accent: '#ef4444' },
+                        ].map(item => (
+                            <button
+                                key={item.label}
+                                className={Styles.statCard}
+                                style={{ '--accent': item.accent }}
+                                onClick={() => item.filter && setActiveFilter(item.filter)}
+                                type="button"
+                            >
+                                <span className={Styles.statIcon}>{item.icon}</span>
+                                <span className={Styles.statValue}>{item.value}</span>
+                                <span className={Styles.statLabel}>{item.label}</span>
+                            </button>
+                        ))}
                     </div>
                 )}
 
+                {/* ── Seletor mine/team + navegação de data ── */}
+                {!isCustomer && (
+                    <div className={Styles.controlsRow}>
+                        {isOwner && (
+                            <div className={Styles.viewToggle}>
+                                <button
+                                    className={agendaView === 'mine' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
+                                    onClick={() => { setAgendaView('mine'); navigate('/meus-agendamentos'); }}
+                                    type="button"
+                                >
+                                    <FiScissors size={14} /> Minha Agenda
+                                </button>
+                                <button
+                                    className={agendaView === 'team' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
+                                    onClick={() => { setAgendaView('team'); navigate('/meus-agendamentos?view=team'); }}
+                                    type="button"
+                                >
+                                    <FiUsers size={14} /> Equipe
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Navegação de data */}
+                        <div className={Styles.dateNavRow}>
+                            <button
+                                className={Styles.dateNavBtn}
+                                onClick={() => agendaView === 'team' ? shiftTeamDate(-1) : shiftDateFilter(-1)}
+                                aria-label="Dia anterior"
+                                type="button"
+                            >
+                                <FiChevronLeft size={18} />
+                            </button>
+                            <label className={Styles.dateNavLabel} title="Clique para escolher data">
+                                {formatDateDisplay(agendaView === 'team' ? teamDate : dateFilter)}
+                                <input
+                                    type="date"
+                                    value={agendaView === 'team' ? teamDate : dateFilter}
+                                    onChange={(e) => agendaView === 'team' ? setTeamDate(e.target.value) : setDateFilter(e.target.value)}
+                                    className={Styles.dateNavInputHidden}
+                                    aria-label="Selecionar data"
+                                />
+                            </label>
+                            <button
+                                className={Styles.dateNavBtn}
+                                onClick={() => agendaView === 'team' ? shiftTeamDate(1) : shiftDateFilter(1)}
+                                aria-label="Próximo dia"
+                                type="button"
+                            >
+                                <FiChevronRight size={18} />
+                            </button>
+                            <button
+                                className={Styles.dateNavTodayBtn}
+                                onClick={() => agendaView === 'team' ? setTeamDate(todayStr) : setDateFilter(todayStr)}
+                                type="button"
+                            >
+                                Hoje
+                            </button>
+                            <button
+                                className={Styles.dateNavRefreshBtn}
+                                onClick={carregarAgendamentos}
+                                aria-label="Atualizar"
+                                type="button"
+                            >
+                                <FiRefreshCw size={14} />
+                            </button>
+                        </div>
+
+                        {/* Toggle lista / timeline */}
+                        <div className={Styles.viewToggle}>
+                            <button
+                                className={viewMode === 'list' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
+                                onClick={() => setViewMode('list')}
+                                type="button"
+                                title="Visão lista"
+                            >
+                                <FiList size={14} /> Lista
+                            </button>
+                            <button
+                                className={viewMode === 'timeline' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
+                                onClick={() => setViewMode('timeline')}
+                                type="button"
+                                title="Visão timeline"
+                            >
+                                <FiBarChart2 size={14} /> Timeline
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Filtros de status (apenas no modo lista) ── */}
+                {(isCustomer || viewMode === 'list') && (
                 <div className={Styles.filtersRow}>
                     {filterItems.map((filter) => (
                         <button
@@ -543,44 +797,52 @@ const MeusAgendamentosPage = () => {
                         </button>
                     ))}
                 </div>
+                )}
 
-                {loading ? (
+                {/* ── Timeline view ── */}
+                {!isCustomer && viewMode === 'timeline' && !loading && renderTimeline()}
+
+                {/* ── Lista view ── */}
+                {(isCustomer || viewMode === 'list') && loading && (
                     <div className={`${Styles.loadingState} ca-state ca-state--loading`}>Carregando agendamentos...</div>
-                ) : filteredAppointments.length === 0 ? (
+                )}
+
+                {(isCustomer || viewMode === 'list') && !loading && filteredAppointments.length === 0 && (
                     <div className={`${Styles.empty} ca-state ca-state--empty`}>
                         <h3>Nenhum agendamento neste filtro.</h3>
                         {isCustomer && <p>Que tal marcar um horário agora?</p>}
                     </div>
-                ) : (
+                )}
+
+                {(isCustomer || viewMode === 'list') && !loading && filteredAppointments.length > 0 && (
                     <div>
                         <div className={Styles.list}>
-                            {paginatedAppointments.map(app => (
+                            {paginatedAppointments.map(app => {
+                                const durationLabel = getDurationLabel(app);
+                                const mainInfoText = isCustomer
+                                    ? `Com: ${app.barberName} (${app.barbershopName})`
+                                    : agendaView === 'team'
+                                        ? `${app.barberName || 'Barbeiro'} → ${app.customerName || 'Cliente'}`
+                                        : `Cliente: ${app.customerName}`;
+                                return (
                                 <div key={app.id} className={Styles.card}>
-                                    
                                     <div className={Styles.info}>
                                         <span className={Styles.datePill}>
                                             <FiClock />
                                             {formatData(app.startTime)}
-                                        </span>
-                                        
-                                        {/* Se sou Cliente, mostro o Barbeiro. Se sou Barbeiro, mostro o Cliente */}
-                                        <span className={Styles.mainInfo}>
-                                            {isCustomer 
-                                                ? `Com: ${app.barberName} (${app.barbershopName})`
-                                                : (agendaView === 'team'
-                                                    ? `Barbeiro: ${app.barberName || 'Barbeiro'} • Cliente: ${app.customerName || 'Cliente'}`
-                                                    : `Cliente: ${app.customerName}`)
-                                            }
+                                            {durationLabel && (
+                                                <span className={Styles.durationBadge}>{durationLabel}</span>
+                                            )}
                                         </span>
 
-                                        {/* Lista de serviços (caso seu DTO retorne activityNames como lista) */}
+                                        <span className={Styles.mainInfo}>{mainInfoText}</span>
+
                                         <span className={Styles.details}>
                                             {toServiceSummary(app)}
                                         </span>
 
                                         <span className={`${Styles.statusChip} ${getStatusClass(app.status)}`}>
-                                            {app.status === 'SCHEDULED' && <FiCalendar />}
-                                            {app.status === 'CONFIRMED' && <FiCalendar />}
+                                            {(app.status === 'SCHEDULED' || app.status === 'CONFIRMED') && <FiCalendar />}
                                             {app.status === 'PAYMENT_PENDING' && <FiClock />}
                                             {app.status === 'COMPLETED' && <FiCheckCircle />}
                                             {app.status === 'CANCELLED' && <FiXCircle />}
@@ -624,7 +886,8 @@ const MeusAgendamentosPage = () => {
                                         </button>
                                     )}
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         {totalPages > 1 && (
@@ -636,7 +899,6 @@ const MeusAgendamentosPage = () => {
                                 >
                                     Anterior
                                 </button>
-
                                 <div className={Styles.paginationNumbers}>
                                     {Array.from({ length: totalPages }, (_, index) => {
                                         const page = index + 1;
@@ -651,7 +913,6 @@ const MeusAgendamentosPage = () => {
                                         );
                                     })}
                                 </div>
-
                                 <button
                                     className={Styles.paginationButton}
                                     onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
@@ -701,19 +962,32 @@ const MeusAgendamentosPage = () => {
                             <p className={Styles.modalSubtitle}>Sua opiniao ajuda outros clientes a escolher melhor.</p>
 
                             <div className={Styles.reviewFormGroup}>
-                                <label className={Styles.reviewLabel} htmlFor="review-rating">Nota (1 a 5)</label>
-                                <select
-                                    id="review-rating"
-                                    className={Styles.reviewSelect}
-                                    value={reviewRating}
-                                    onChange={(e) => setReviewRating(e.target.value)}
-                                >
-                                    <option value={1}>1</option>
-                                    <option value={2}>2</option>
-                                    <option value={3}>3</option>
-                                    <option value={4}>4</option>
-                                    <option value={5}>5</option>
-                                </select>
+                                <label className={Styles.reviewLabel}>Sua avaliação</label>
+                                <div className={Styles.starsRow}>
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <button
+                                            key={star}
+                                            type="button"
+                                            className={Styles.starBtn}
+                                            onClick={() => setReviewRating(star)}
+                                            onMouseEnter={() => setReviewHover(star)}
+                                            onMouseLeave={() => setReviewHover(0)}
+                                            aria-label={`${star} estrela${star > 1 ? 's' : ''}`}
+                                        >
+                                            <FiStar
+                                                size={32}
+                                                className={`${Styles.starIcon} ${(reviewHover || reviewRating) >= star ? Styles.starFilled : ''}`}
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className={Styles.ratingLabel}>
+                                    {reviewRating === 1 && '😞 Péssimo'}
+                                    {reviewRating === 2 && '😕 Ruim'}
+                                    {reviewRating === 3 && '😐 Regular'}
+                                    {reviewRating === 4 && '😊 Bom'}
+                                    {reviewRating === 5 && '🤩 Excelente!'}
+                                </p>
                             </div>
 
                             <div className={Styles.reviewFormGroup}>
