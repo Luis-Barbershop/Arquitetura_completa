@@ -92,6 +92,7 @@ MP_CLIENT_ID=👉 TROCAR: 1234567890123456
 MP_CLIENT_SECRET=👉 TROCAR: APP_USR-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 MP_REDIRECT_URI=👉 TROCAR: https://api.cortaai.shop/api/payments/mp-callback
 MP_AUTH_BASE_URL=https://auth.mercadopago.com.br
+MP_AUTHORIZATION_API_BASE_URL=https://api.mercadolibre.com
 
 
 # ══════════════════════════════════════════════════════════════

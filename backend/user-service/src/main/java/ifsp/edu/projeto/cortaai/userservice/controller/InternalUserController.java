@@ -248,6 +248,21 @@ public class InternalUserController {
         return ResponseEntity.ok(new MpConnectionStatusDTO(linked, maskedUserId, hasPublicKey));
     }
 
+    @Operation(summary = "Consultar credenciais MP do barbeiro",
+            description = "Endpoint interno para o payment-service revogar a autorização OAuth antes de limpar as credenciais.")
+    @GetMapping("/barbers/{barberId}/mp-credentials")
+    public ResponseEntity<SaveMpCredentialsDTO> getMpCredentials(@PathVariable UUID barberId) {
+        Barber barber = barberRepository.findById(barberId)
+                .orElseThrow(() -> new RuntimeException("Barbeiro não encontrado: " + barberId));
+
+        return ResponseEntity.ok(new SaveMpCredentialsDTO(
+                barber.getMpAccessToken(),
+                barber.getMpRefreshToken(),
+                barber.getMpUserId(),
+                barber.getMpPublicKey()
+        ));
+    }
+
     @Operation(summary = "Desvincular credenciais MP do barbeiro",
             description = "Limpa as credenciais OAuth do Mercado Pago armazenadas para o barbeiro.")
     @PutMapping("/barbers/{barberId}/mp-disconnect")
@@ -344,4 +359,3 @@ public class InternalUserController {
                         return normalized.substring(0, 4) + "..." + normalized.substring(normalized.length() - 2);
                 }
 }
-

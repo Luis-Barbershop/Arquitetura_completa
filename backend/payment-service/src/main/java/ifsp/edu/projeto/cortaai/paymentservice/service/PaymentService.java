@@ -10,6 +10,7 @@ import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesPointDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.InventoryFinancialSummaryDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.MpConnectionStatusDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.SaveMpCredentialsDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.TransactionDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.UserInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.model.analytics.VBarberFinancialPerformance;
@@ -65,6 +66,7 @@ public class PaymentService {
     private final ScheduleServiceClient scheduleServiceClient;
     private final UserServiceClient userServiceClient;
     private final ProductServiceClient productServiceClient;
+    private final MercadoPagoAuthorizationClient mercadoPagoAuthorizationClient;
     private final RabbitTemplate rabbitTemplate;
 
     @Value("${mercadopago.notification-url}")
@@ -426,6 +428,8 @@ public class PaymentService {
     public void disconnectMpByFirebaseUid(String firebaseUid) {
         UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
         validateOwnerBarber(user);
+        SaveMpCredentialsDTO credentials = userServiceClient.getBarberMpCredentials(user.getId());
+        mercadoPagoAuthorizationClient.revokeSellerAuthorization(credentials);
         userServiceClient.disconnectBarberMp(user.getId());
     }
 

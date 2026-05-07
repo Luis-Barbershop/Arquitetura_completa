@@ -61,6 +61,7 @@ eureka:
 mercadopago:
   auth-base-url: ${MP_AUTH_BASE_URL:https://auth.mercadopago.com.br}
   api-base-url: ${MP_API_BASE_URL:https://api.mercadopago.com}
+  authorization-api-base-url: ${MP_AUTHORIZATION_API_BASE_URL:https://api.mercadolibre.com}
   post-connect-redirect-url: ${MP_POST_CONNECT_REDIRECT_URL:http://localhost:5173/barberHome?mpLinked=true}
   access-token: ${MP_ACCESS_TOKEN}
   public-key: ${MP_PUBLIC_KEY}

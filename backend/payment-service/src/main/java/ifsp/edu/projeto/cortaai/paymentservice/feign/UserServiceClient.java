@@ -30,6 +30,9 @@ public interface UserServiceClient {
     @GetMapping("/api/internal/users/barbers/{barberId}/mp-status")
     MpConnectionStatusDTO getBarberMpStatus(@PathVariable("barberId") UUID barberId);
 
+    @GetMapping("/api/internal/users/barbers/{barberId}/mp-credentials")
+    SaveMpCredentialsDTO getBarberMpCredentials(@PathVariable("barberId") UUID barberId);
+
     @PutMapping("/api/internal/users/barbers/{barberId}/mp-disconnect")
     void disconnectBarberMp(@PathVariable("barberId") UUID barberId);
 }

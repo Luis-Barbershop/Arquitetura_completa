@@ -5,6 +5,7 @@ import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialOverviewDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.InventoryFinancialSummaryDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.MpConnectionStatusDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.SaveMpCredentialsDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.TransactionDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.UserInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.ProductServiceClient;
@@ -36,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -56,6 +58,8 @@ class PaymentServiceFinancialsTest {
     private UserServiceClient userServiceClient;
     @Mock
     private ProductServiceClient productServiceClient;
+    @Mock
+    private MercadoPagoAuthorizationClient mercadoPagoAuthorizationClient;
     @Mock
     private RabbitTemplate rabbitTemplate;
 
@@ -97,11 +101,31 @@ class PaymentServiceFinancialsTest {
 
         when(userServiceClient.getUserByFirebaseUid("owner-firebase")).thenReturn(owner);
         when(userServiceClient.getBarberMpStatus(ownerId)).thenReturn(status);
+        when(userServiceClient.getBarberMpCredentials(ownerId))
+                .thenReturn(new SaveMpCredentialsDTO("mp-token", "refresh-token", "1234567899", "public-key"));
 
         assertThat(paymentService.getMpConnectionStatusByFirebaseUid("owner-firebase")).isEqualTo(status);
 
         paymentService.disconnectMpByFirebaseUid("owner-firebase");
 
+        verify(mercadoPagoAuthorizationClient).revokeSellerAuthorization(
+                new SaveMpCredentialsDTO("mp-token", "refresh-token", "1234567899", "public-key"));
+        verify(userServiceClient).disconnectBarberMp(ownerId);
+    }
+
+    @Test
+    void shouldClearMercadoPagoLocallyWhenThereAreNoStoredCredentials() {
+        UUID ownerId = UUID.randomUUID();
+        UserInfoDTO owner = user(ownerId, "BARBER", "SHOP_OWNER", UUID.randomUUID());
+
+        when(userServiceClient.getUserByFirebaseUid("owner-firebase")).thenReturn(owner);
+        when(userServiceClient.getBarberMpCredentials(ownerId))
+                .thenReturn(new SaveMpCredentialsDTO(null, null, null, null));
+
+        paymentService.disconnectMpByFirebaseUid("owner-firebase");
+
+        verify(mercadoPagoAuthorizationClient).revokeSellerAuthorization(
+                new SaveMpCredentialsDTO(null, null, null, null));
         verify(userServiceClient).disconnectBarberMp(ownerId);
     }
 
@@ -113,6 +137,7 @@ class PaymentServiceFinancialsTest {
         assertThatThrownBy(() -> paymentService.disconnectMpByFirebaseUid("barber-firebase"))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("403 FORBIDDEN");
+        verify(mercadoPagoAuthorizationClient, never()).revokeSellerAuthorization(any());
     }
 
     @Test
