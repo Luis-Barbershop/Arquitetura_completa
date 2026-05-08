@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     House,
     CalendarBlank,
+    CalendarX,
     Scissors,
     Users,
     ChartBar,
@@ -40,7 +41,7 @@ function BarberNavbar({ activeTab, onTabChange, onLogout }) {
         ? [
             { id: 'home',     label: 'Home',    Icon: House },
             { id: 'agenda',   label: 'Agenda',  Icon: CalendarBlank },
-            { id: 'servicos', label: 'Serviços', Icon: Scissors },
+            ...(isOwner ? [{ id: 'servicos', label: 'Serviços', Icon: Scissors }] : []),
             ...(isOwner ? [{ id: 'time', label: 'Time', Icon: Users }] : []),
         ]
         : [
@@ -51,6 +52,7 @@ function BarberNavbar({ activeTab, onTabChange, onLogout }) {
     // Itens do drawer "Mais"
     const drawerItems = [
         ...(hasShop ? [{ id: 'novo-agendamento', label: 'Novo Encaixe', Icon: PlusCircle }] : []),
+        ...(hasShop ? [{ id: 'indisponibilidade', label: 'Indisponibilidade', Icon: CalendarX }] : []),
         ...(hasShop && isOwner ? [{ id: 'dashboards', label: 'Dashboard', Icon: ChartBar }] : []),
         ...(hasShop && isOwner ? [{ id: 'estoque', label: 'Estoque', Icon: Package }] : []),
         ...(!mainItems.some((item) => item.id === 'perfil') ? [{ id: 'perfil', label: 'Meu Perfil', Icon: UserCircle }] : []),

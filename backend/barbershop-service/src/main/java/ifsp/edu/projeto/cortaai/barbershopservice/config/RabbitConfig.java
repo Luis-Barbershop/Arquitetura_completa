@@ -21,6 +21,9 @@ public class RabbitConfig {
     /** Routing key para pedido de entrada de barbeiro na barbearia. */
     public static final String RK_JOIN_REQUEST_CREATED = "barbershop.join-request.created";
 
+    /** Routing key para remoção de colaborador da barbearia. */
+    public static final String RK_BARBER_REMOVED = "barber.removed";
+
     @Bean
     public TopicExchange cortaaiEventsExchange() {
         // durable=true, autoDelete=false — mesmos parâmetros do notification-service

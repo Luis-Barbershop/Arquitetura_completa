@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * DTO para atualizar um produto.
@@ -20,6 +21,8 @@ public record UpdateProductDTO(
 
         @Positive
         BigDecimal price,
+
+        UUID categoryId,
 
         ProductCategory category,
 

@@ -5,6 +5,7 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -34,6 +35,12 @@ public class StockMovement {
 
     @Column(nullable = false)
     private Integer quantity;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal unitSalePrice;
+
+    @Column(length = 500)
+    private String notes;
 
     private String reason;
 

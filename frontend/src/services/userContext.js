@@ -8,7 +8,7 @@
  *   ROLE_CUSTOMER  → homepage do cliente (/homepage), meus agendamentos como cliente
  *   ROLE_BARBER    → painel do barbeiro (/barberHome), agenda como profissional
  *     isOwner=true  → acesso a Dashboard, Estoque, Equipe (Time), Gerenciar Serviços
- *     isOwner=false → acesso somente a Home, Agenda, Meus Serviços, Perfil
+ *     isOwner=false → acesso a Home, Agenda, Indisponibilidade, Habilidades e Perfil
  */
 
 /** Retorna o role armazenado no localStorage, ou null se não logado. */

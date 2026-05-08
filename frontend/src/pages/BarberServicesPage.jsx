@@ -77,6 +77,11 @@ function BarberServicesPage() {
       return;
     }
 
+    if (tab === 'indisponibilidade') {
+      navigate('/barber/indisponibilidade');
+      return;
+    }
+
     if (tab === 'perfil') {
       navigate('/barberHome/perfil');
       return;
@@ -141,17 +146,27 @@ function BarberServicesPage() {
   }, [navigate]);
 
   useEffect(() => {
+    if (!isOwner) {
+      setLoadingServices(false);
+      setServices([]);
+      return;
+    }
+
     loadServices();
-  }, [loadServices]);
+  }, [isOwner, loadServices]);
 
   useEffect(() => {
+    if (!isOwner) {
+      return undefined;
+    }
+
     // Mantém o painel atualizado automaticamente, sem ação manual.
     const intervalId = window.setInterval(() => {
       loadServices();
     }, 15000);
 
     return () => window.clearInterval(intervalId);
-  }, [loadServices]);
+  }, [isOwner, loadServices]);
 
   useEffect(() => () => {
     if (toastTimerRef.current) {
@@ -268,127 +283,126 @@ function BarberServicesPage() {
           barbershopId={barber?.barbershopId}
         />
 
-  <section className={`${styles.heroSection} ${styles.animateItem} ${styles.delay1}`}>
-          <p className={styles.heroKicker}>GESTÃO DE SERVIÇOS</p>
-          <h1>Cadastre e organize os serviços da sua barbearia</h1>
+        <section className={`${styles.heroSection} ${styles.animateItem} ${styles.delay1}`}>
+          <p className={styles.heroKicker}>{isOwner ? 'GESTÃO DE SERVIÇOS' : 'HABILIDADES'}</p>
+          <h1>{isOwner ? 'Cadastre e organize os serviços da sua barbearia' : 'Gerencie os serviços que você executa'}</h1>
           <p>
-            Mantenha seu catálogo atualizado para facilitar os agendamentos e melhorar a experiência dos clientes.
+            {isOwner
+              ? 'Mantenha seu catálogo atualizado para facilitar os agendamentos e melhorar a experiência dos clientes.'
+              : 'Selecione suas habilidades para que os clientes encontrem seus horários nos serviços certos.'}
           </p>
         </section>
 
-  <section className={`${styles.metricsGrid} ${styles.animateItem} ${styles.delay2}`}>
-          <article className={styles.metricCard}>
-            <span className={styles.metricLabel}>Total de serviços</span>
-            <strong className={styles.metricValue}>{totalServices}</strong>
-          </article>
+        {isOwner && (
+          <>
+            <section className={`${styles.metricsGrid} ${styles.animateItem} ${styles.delay2}`}>
+              <article className={styles.metricCard}>
+                <span className={styles.metricLabel}>Total de serviços</span>
+                <strong className={styles.metricValue}>{totalServices}</strong>
+              </article>
 
-          <article className={styles.metricCard}>
-            <span className={styles.metricLabel}>Preço médio</span>
-            <strong className={styles.metricValue}>{averagePrice}</strong>
-          </article>
+              <article className={styles.metricCard}>
+                <span className={styles.metricLabel}>Preço médio</span>
+                <strong className={styles.metricValue}>{averagePrice}</strong>
+              </article>
 
-          <article className={styles.metricCard}>
-            <span className={styles.metricLabel}>Duração média</span>
-            <strong className={styles.metricValue}>{averageDuration}</strong>
-          </article>
-        </section>
+              <article className={styles.metricCard}>
+                <span className={styles.metricLabel}>Duração média</span>
+                <strong className={styles.metricValue}>{averageDuration}</strong>
+              </article>
+            </section>
 
-  <section className={`${styles.managementGrid} ${styles.animateItem} ${styles.delay3}`}>
-          <article className={`${styles.panelCard} ${styles.servicesPanel}`}>
-            <div className={styles.panelHeader}>
-              <h2>Serviços Cadastrados</h2>
-              <span className={styles.autoUpdateBadge}>Atualização automática</span>
-            </div>
+            <section className={`${styles.managementGrid} ${styles.animateItem} ${styles.delay3}`}>
+              <article className={`${styles.panelCard} ${styles.servicesPanel}`}>
+                <div className={styles.panelHeader}>
+                  <h2>Serviços Cadastrados</h2>
+                  <span className={styles.autoUpdateBadge}>Atualização automática</span>
+                </div>
 
-            {loadingServices ? (
-              <p className={styles.mutedText}>Carregando serviços...</p>
-            ) : services.length ? (
-              <ul className={styles.servicesList}>
-                {services.map((service) => (
-                  <li key={service.id} className={styles.serviceItem}>
-                    <div className={styles.serviceMainInfo}>
-                      <p className={styles.serviceName}>{service.activityName}</p>
-                      <span className={styles.serviceMeta}>{service.durationMinutes} min</span>
-                    </div>
+                {loadingServices ? (
+                  <p className={styles.mutedText}>Carregando serviços...</p>
+                ) : services.length ? (
+                  <ul className={styles.servicesList}>
+                    {services.map((service) => (
+                      <li key={service.id} className={styles.serviceItem}>
+                        <div className={styles.serviceMainInfo}>
+                          <p className={styles.serviceName}>{service.activityName}</p>
+                          <span className={styles.serviceMeta}>{service.durationMinutes} min</span>
+                        </div>
 
-                    <div className={styles.serviceActions}>
-                      <strong className={styles.servicePrice}>R$ {Number(service.price).toFixed(2).replace('.', ',')}</strong>
-                      <button
-                        type="button"
-                        className={styles.deleteButton}
-                        onClick={() => handleDeleteService(service)}
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className={styles.mutedText}>Você ainda não cadastrou serviços. Use o formulário ao lado para adicionar.</p>
-            )}
-          </article>
+                        <div className={styles.serviceActions}>
+                          <strong className={styles.servicePrice}>R$ {Number(service.price).toFixed(2).replace('.', ',')}</strong>
+                          <button
+                            type="button"
+                            className={styles.deleteButton}
+                            onClick={() => handleDeleteService(service)}
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className={styles.mutedText}>Você ainda não cadastrou serviços. Use o formulário ao lado para adicionar.</p>
+                )}
+              </article>
 
-          <article className={styles.panelCard}>
-            <div className={styles.panelHeader}>
-              <h2>Novo serviço</h2>
-            </div>
+              <article className={styles.panelCard}>
+                <div className={styles.panelHeader}>
+                  <h2>Novo serviço</h2>
+                </div>
 
-            {!isOwner && (
-              <p className={styles.mutedText}>
-                Apenas o dono pode cadastrar servicos. Se voce acabou de criar a barbearia,
-                faca logout e login para atualizar seu token.
-              </p>
-            )}
+                <form className={styles.form} onSubmit={handleAddService}>
+                  <label className={styles.formLabel} htmlFor="service-name">Nome do serviço</label>
+                  <input
+                    id="service-name"
+                    className={styles.formInput}
+                    type="text"
+                    placeholder="Ex: Corte degradê"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={isSaving}
+                    required
+                  />
 
-            <form className={styles.form} onSubmit={handleAddService}>
-              <label className={styles.formLabel} htmlFor="service-name">Nome do serviço</label>
-              <input
-                id="service-name"
-                className={styles.formInput}
-                type="text"
-                placeholder="Ex: Corte degradê"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={isSaving}
-                required
-              />
+                  <label className={styles.formLabel} htmlFor="service-price">Preço (R$)</label>
+                  <input
+                    id="service-price"
+                    className={styles.formInput}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    disabled={isSaving}
+                    required
+                  />
 
-              <label className={styles.formLabel} htmlFor="service-price">Preço (R$)</label>
-              <input
-                id="service-price"
-                className={styles.formInput}
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                disabled={isSaving}
-                required
-              />
+                  <label className={styles.formLabel} htmlFor="service-duration">Duração (minutos)</label>
+                  <input
+                    id="service-duration"
+                    className={styles.formInput}
+                    type="number"
+                    min="5"
+                    max="300"
+                    step="5"
+                    placeholder="30"
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                    disabled={isSaving}
+                    required
+                  />
 
-              <label className={styles.formLabel} htmlFor="service-duration">Duração (minutos)</label>
-              <input
-                id="service-duration"
-                className={styles.formInput}
-                type="number"
-                min="5"
-                max="300"
-                step="5"
-                placeholder="30"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                disabled={isSaving}
-                required
-              />
-
-              <button type="submit" className={styles.primaryButton} disabled={isSaving}>
-                {isSaving ? 'Salvando...' : 'Adicionar serviço'}
-              </button>
-            </form>
-          </article>
-        </section>
+                  <button type="submit" className={styles.primaryButton} disabled={isSaving}>
+                    {isSaving ? 'Salvando...' : 'Adicionar serviço'}
+                  </button>
+                </form>
+              </article>
+            </section>
+          </>
+        )}
 
         {barber?.barbershopId && (
           <section className={styles.assignSection}>
@@ -450,4 +464,3 @@ function BarberServicesPage() {
 }
 
 export default BarberServicesPage;
-

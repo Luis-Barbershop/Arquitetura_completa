@@ -3,11 +3,9 @@ import { useState } from "react"
 import { useNavigate, Link, useLocation } from "react-router-dom"
 import { loginUser, loginWithGoogle, checkEmailExists, translateFirebaseError } from "../../services/authService"
 
-const INSTALL_AFTER_LOGIN_FLAG = 'pwa_install_after_login'
 const LOGIN_SUCCESS_EVENT = 'cortaai:login-success'
 
 const triggerPostLoginInstallPrompt = () => {
-    sessionStorage.setItem(INSTALL_AFTER_LOGIN_FLAG, 'true')
     window.dispatchEvent(new CustomEvent(LOGIN_SUCCESS_EVENT))
 }
 

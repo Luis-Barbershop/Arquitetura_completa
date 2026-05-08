@@ -1,83 +1,22 @@
 import './App.css'
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-toastify/dist/ReactToastify.css';
 import AppRoutes from './AppRoutes';
 import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import UpdateAvailableBanner from './components/UpdateAvailableBanner';
-import InstallAppPopup from './components/InstallAppPopup';
-import PushNotificationPrompt from './components/PushNotificationPrompt';
 import {
   applyServiceWorkerUpdate,
-  isInstallPromptAvailable,
   requestPwaInstall,
-  subscribeToInstallPrompt,
   subscribeToServiceWorkerUpdate,
 } from './services/pwaService';
-import { PWA_METRICS, trackPwaMetric } from './services/pwaTelemetryService';
-import {
-  canPromptForPushNotifications,
-  requestPushNotificationsPermissionAndRegister,
-} from './services/pushNotificationService';
+import { requestPushNotificationsPermissionAndRegister } from './services/pushNotificationService';
 
-const INSTALL_AFTER_LOGIN_FLAG = 'pwa_install_after_login'
 const LOGIN_SUCCESS_EVENT = 'cortaai:login-success'
-const INSTALL_PROMPT_DISMISSED_UNTIL_KEY = 'pwa_install_prompt_dismissed_until'
-const INSTALL_PROMPT_COOLDOWN_DAYS = 15
-
-const getInstallPromptDismissedUntil = () => {
-  const rawValue = localStorage.getItem(INSTALL_PROMPT_DISMISSED_UNTIL_KEY)
-
-  if (!rawValue) {
-    return 0
-  }
-
-  const timestamp = Number.parseInt(rawValue, 10)
-  if (Number.isNaN(timestamp)) {
-    localStorage.removeItem(INSTALL_PROMPT_DISMISSED_UNTIL_KEY)
-    return 0
-  }
-
-  return timestamp
-}
-
-const isInstallPromptInCooldown = () => getInstallPromptDismissedUntil() > Date.now()
-
-const setInstallPromptCooldown = () => {
-  const cooldownInMs = INSTALL_PROMPT_COOLDOWN_DAYS * 24 * 60 * 60 * 1000
-  localStorage.setItem(
-    INSTALL_PROMPT_DISMISSED_UNTIL_KEY,
-    String(Date.now() + cooldownInMs),
-  )
-}
-
-const isStandaloneMode = () => {
-  const displayModeStandalone = window.matchMedia('(display-mode: standalone)').matches
-  const iosStandalone = window.navigator.standalone === true
-
-  return displayModeStandalone || iosStandalone
-}
-
-const shouldShowInstallPromptNow = () =>
-  sessionStorage.getItem(INSTALL_AFTER_LOGIN_FLAG) === 'true' &&
-  !isStandaloneMode() &&
-  !isInstallPromptInCooldown()
 
 function AppShell() {
   const location = useLocation()
   const [isUpdateAvailable, setIsUpdateAvailable] = useState(false)
-  const [isInstallPromptVisible, setIsInstallPromptVisible] = useState(false)
-  const [isNativeInstallPromptAvailable, setIsNativeInstallPromptAvailable] = useState(
-    isInstallPromptAvailable(),
-  )
-  const [isPushPromptVisible, setIsPushPromptVisible] = useState(false)
-  const [isRegisteringPush, setIsRegisteringPush] = useState(false)
-
-  const showPushPromptIfEligible = useCallback(async () => {
-    if (await canPromptForPushNotifications()) {
-      setIsPushPromptVisible(true)
-    }
-  }, [])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(display-mode: standalone)')
@@ -108,30 +47,9 @@ function AppShell() {
   }, [])
 
   useEffect(() => {
-    const unsubscribe = subscribeToInstallPrompt((isAvailable) => {
-      setIsNativeInstallPromptAvailable(isAvailable)
-
-      if (
-        sessionStorage.getItem(INSTALL_AFTER_LOGIN_FLAG) === 'true' &&
-        !isStandaloneMode() &&
-        !isInstallPromptInCooldown()
-      ) {
-        setIsInstallPromptVisible(true)
-      }
-    })
-
-    return () => {
-      unsubscribe()
-    }
-  }, [])
-
-  useEffect(() => {
     const handleLoginSuccess = () => {
-      if (shouldShowInstallPromptNow()) {
-        setIsInstallPromptVisible(true)
-      }
-
-      void showPushPromptIfEligible()
+      void requestPwaInstall()
+      void requestPushNotificationsPermissionAndRegister()
     }
 
     window.addEventListener(LOGIN_SUCCESS_EVENT, handleLoginSuccess)
@@ -139,48 +57,14 @@ function AppShell() {
     return () => {
       window.removeEventListener(LOGIN_SUCCESS_EVENT, handleLoginSuccess)
     }
-  }, [showPushPromptIfEligible])
+  }, [])
 
   const handleUpdateNow = () => {
     applyServiceWorkerUpdate()
   }
 
   const handleDismissUpdate = () => {
-    trackPwaMetric(PWA_METRICS.SW_UPDATE_DISMISSED)
     setIsUpdateAvailable(false)
-  }
-
-  const handleInstallApp = async () => {
-    const installed = await requestPwaInstall()
-    sessionStorage.removeItem(INSTALL_AFTER_LOGIN_FLAG)
-
-    if (!installed) {
-      trackPwaMetric(PWA_METRICS.PWA_INSTALL_PROMPT_DISMISSED)
-      setInstallPromptCooldown()
-    }
-
-    setIsInstallPromptVisible(false)
-  }
-
-  const handleDismissInstall = () => {
-    trackPwaMetric(PWA_METRICS.PWA_INSTALL_PROMPT_DISMISSED)
-    setInstallPromptCooldown()
-    sessionStorage.removeItem(INSTALL_AFTER_LOGIN_FLAG)
-    setIsInstallPromptVisible(false)
-  }
-
-  const handleEnablePush = async () => {
-    setIsRegisteringPush(true)
-    const registered = await requestPushNotificationsPermissionAndRegister()
-    setIsRegisteringPush(false)
-
-    if (registered || Notification.permission !== 'default') {
-      setIsPushPromptVisible(false)
-    }
-  }
-
-  const handleDismissPushPrompt = () => {
-    setIsPushPromptVisible(false)
   }
 
   return (
@@ -188,20 +72,6 @@ function AppShell() {
       <div key={location.pathname} className="premiumRouteEnter">
         <AppRoutes/>
       </div>
-      {isInstallPromptVisible && (
-        <InstallAppPopup
-          isNativeInstallPromptAvailable={isNativeInstallPromptAvailable}
-          onInstall={handleInstallApp}
-          onDismiss={handleDismissInstall}
-        />
-      )}
-      {isPushPromptVisible && (
-        <PushNotificationPrompt
-          isRegistering={isRegisteringPush}
-          onEnable={handleEnablePush}
-          onDismiss={handleDismissPushPrompt}
-        />
-      )}
       {isUpdateAvailable && (
         <UpdateAvailableBanner
           onUpdateNow={handleUpdateNow}

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Eye, EyeSlash } from '@phosphor-icons/react';
 import styles from './DashReportPanel.module.css';
 
 /**
@@ -38,14 +39,18 @@ function DashReportPanel({ title, dashContent, reportContent, onRefresh, refresh
                     <button
                         className={`${styles.toggleBtn} ${!dashVisible ? styles.inactive : ''}`}
                         onClick={() => setDashVisible(v => !v)}
+                        aria-label={dashVisible ? 'Ocultar dashboard' : 'Exibir dashboard'}
+                        title={dashVisible ? 'Ocultar dashboard' : 'Exibir dashboard'}
                     >
-                        {dashVisible ? 'Ocultar Dashboard' : 'Mostrar Dashboard'}
+                        {dashVisible ? <EyeSlash size={18} weight="bold" /> : <Eye size={18} weight="bold" />}
                     </button>
                     <button
                         className={`${styles.toggleBtn} ${!reportVisible ? styles.inactive : ''}`}
                         onClick={() => setReportVisible(v => !v)}
+                        aria-label={reportVisible ? 'Ocultar relatório' : 'Exibir relatório'}
+                        title={reportVisible ? 'Ocultar relatório' : 'Exibir relatório'}
                     >
-                        {reportVisible ? 'Ocultar Relatório' : 'Mostrar Relatório'}
+                        {reportVisible ? <EyeSlash size={18} weight="bold" /> : <Eye size={18} weight="bold" />}
                     </button>
                     {onRefresh && (
                         <button className={styles.refreshBtn} onClick={doRefresh} disabled={refreshing}>

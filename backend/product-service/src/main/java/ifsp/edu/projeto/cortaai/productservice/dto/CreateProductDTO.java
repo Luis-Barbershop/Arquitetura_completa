@@ -26,6 +26,8 @@ public record CreateProductDTO(
 
         @NotNull @Positive BigDecimal price,
 
+        UUID categoryId,
+
         ProductCategory category,
 
         Integer stockQuantity,

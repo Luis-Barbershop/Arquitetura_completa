@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../services/api';
@@ -9,32 +9,61 @@ import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import styles from './CSS/BarberHomePage.module.css';
 
-/**
- * Página "Meu Time" — convida barbeiros pelo CPF e lista pedidos pendentes.
- * Disponível apenas para donos (OWNER).
- */
 function BarberTeamPage() {
     const navigate = useNavigate();
     const [barber, setBarber] = useState(null);
     const [loading, setLoading] = useState(true);
-
-    // ── Convite por CPF ────────────────────────────────────────────────────
+    const [team, setTeam] = useState([]);
+    const [activities, setActivities] = useState([]);
+    const [selectedMember, setSelectedMember] = useState(null);
+    const [removalPlan, setRemovalPlan] = useState(null);
+    const [loadingConflicts, setLoadingConflicts] = useState(false);
+    const [commissionForm, setCommissionForm] = useState({ activityId: '', percentage: '' });
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [inviteCpf, setInviteCpf] = useState('');
     const [inviteError, setInviteError] = useState('');
     const [isSendingInvite, setIsSendingInvite] = useState(false);
+
+    const selectedCommissions = useMemo(
+        () => selectedMember?.commissions || [],
+        [selectedMember],
+    );
 
     useEffect(() => {
         if (isCustomer()) { navigate('/homepage', { replace: true }); return; }
         if (!isOwnerUser()) { navigate('/barberHome', { replace: true }); return; }
         const token = localStorage.getItem('token');
         if (!token) { navigate('/', { replace: true }); return; }
+
         api.get('/auth/me')
             .then(res => { setBarber(res.data); setLoading(false); })
             .catch(() => { setLoading(false); navigate('/'); });
     }, [navigate]);
 
-    // ── Convite por CPF handlers ───────────────────────────────────────────
+    const loadTeam = async () => {
+        if (!barber?.barbershopId) return;
+
+        try {
+            const [teamResponse, activitiesResponse] = await Promise.all([
+                api.get('/barbershops/my-shop/team'),
+                api.get(`/barbershops/${barber.barbershopId}/activities`),
+            ]);
+            const nextTeam = Array.isArray(teamResponse.data) ? teamResponse.data : [];
+            setTeam(nextTeam);
+            setActivities(Array.isArray(activitiesResponse.data) ? activitiesResponse.data : []);
+            if (selectedMember) {
+                setSelectedMember(nextTeam.find((member) => member.barberId === selectedMember.barberId) || null);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar time:', error);
+            toast.error('Nao foi possivel carregar a equipe.');
+        }
+    };
+
+    useEffect(() => {
+        loadTeam();
+    }, [barber?.barbershopId]);
+
     const handleOpenInviteModal = () => {
         setInviteError('');
         setInviteCpf('');
@@ -45,11 +74,6 @@ function BarberTeamPage() {
         if (isSendingInvite) return;
         setIsInviteModalOpen(false);
         setInviteError('');
-    };
-
-    const handleInviteCpfChange = (e) => {
-        setInviteCpf(maskCpf(e.target.value));
-        if (inviteError) setInviteError('');
     };
 
     const handleSubmitInvite = async (e) => {
@@ -74,6 +98,76 @@ function BarberTeamPage() {
         }
     };
 
+    const handleSaveCommission = async (event) => {
+        event.preventDefault();
+        if (!selectedMember || !commissionForm.activityId || !commissionForm.percentage) return;
+
+        try {
+            await api.post(`/barbershops/my-shop/team/${selectedMember.barberId}/commissions`, {
+                activityId: commissionForm.activityId,
+                percentage: Number(commissionForm.percentage),
+            });
+            setCommissionForm({ activityId: '', percentage: '' });
+            await loadTeam();
+            toast.success('Comissao salva.');
+        } catch (error) {
+            console.error('Erro ao salvar comissao:', error);
+            toast.error(error?.response?.data?.message || 'Nao foi possivel salvar a comissao.');
+        }
+    };
+
+    const handleDeleteCommission = async (ruleId) => {
+        if (!selectedMember) return;
+
+        try {
+            await api.delete(`/barbershops/my-shop/team/${selectedMember.barberId}/commissions/${ruleId}`);
+            await loadTeam();
+            toast.success('Comissao removida.');
+        } catch (error) {
+            console.error('Erro ao remover comissao:', error);
+            toast.error('Nao foi possivel remover a comissao.');
+        }
+    };
+
+    const handleOpenRemoval = async (member) => {
+        if (member.isOwner) return;
+
+        try {
+            setLoadingConflicts(true);
+            const response = await api.get(`/barbershops/my-shop/team/${member.barberId}/conflicts`);
+            setRemovalPlan({
+                member,
+                conflicts: Array.isArray(response.data) ? response.data : [],
+                action: 'CANCEL',
+                redistributeToId: '',
+            });
+        } catch (error) {
+            console.error('Erro ao consultar conflitos:', error);
+            toast.error(error?.response?.data?.message || 'Nao foi possivel consultar conflitos.');
+        } finally {
+            setLoadingConflicts(false);
+        }
+    };
+
+    const handleConfirmRemoval = async () => {
+        if (!removalPlan?.member) return;
+
+        try {
+            const payload = {
+                action: removalPlan.action,
+                redistributeToId: removalPlan.action === 'REDISTRIBUTE' ? removalPlan.redistributeToId : null,
+            };
+            await api.delete(`/barbershops/my-shop/team/${removalPlan.member.barberId}`, { data: payload });
+            if (selectedMember?.barberId === removalPlan.member.barberId) setSelectedMember(null);
+            setRemovalPlan(null);
+            await loadTeam();
+            toast.success('Colaborador removido.');
+        } catch (error) {
+            console.error('Erro ao remover colaborador:', error);
+            toast.error(error?.response?.data?.message || 'Nao foi possivel remover o colaborador.');
+        }
+    };
+
     const handleLogout = async () => {
         await logoutUser();
         navigate('/');
@@ -86,8 +180,9 @@ function BarberTeamPage() {
         else if (tab === 'estoque') navigate('/barberHome/estoque');
         else if (tab === 'perfil') navigate('/barberHome/perfil');
         else if (tab === 'dashboards') navigate('/barberHome/dashboard');
-    else if (tab === 'agenda-equipe') navigate('/meus-agendamentos?view=team');
+        else if (tab === 'agenda-equipe') navigate('/meus-agendamentos?view=team');
         else if (tab === 'novo-agendamento') navigate('/barberHome/novo-agendamento');
+        else if (tab === 'indisponibilidade') navigate('/barber/indisponibilidade');
     };
 
     if (loading) return <div className={styles.loadingContainer}>Carregando...</div>;
@@ -99,26 +194,91 @@ function BarberTeamPage() {
 
                 <section className={styles.heroSection}>
                     <p className={styles.heroKicker}>MEU TIME</p>
-                    <h1>Convites da equipe</h1>
-                    <p>Convide barbeiros para sua barbearia informando o CPF e deixe o aceite com o colaborador no perfil dele.</p>
+                    <h1>Equipe, comissões e remoção segura</h1>
+                    <p>Convide barbeiros, acompanhe membros vinculados e defina percentuais por serviço.</p>
                 </section>
 
-                <section className={`${styles.dashboardSection} ${styles.teamSectionNarrow} ${styles.animateItem} ${styles.delay2}`}>
+                <section className={`${styles.dashboardSection} ${styles.teamManagementGrid} ${styles.animateItem} ${styles.delay2}`}>
+                    <article className={styles.teamPanel}>
+                        <div className={styles.teamPanelHeader}>
+                            <h2>Equipe</h2>
+                            <button onClick={handleOpenInviteModal} className={styles.teamInviteButtonInline}>
+                                + Convidar
+                            </button>
+                        </div>
 
-                <button
-                    onClick={handleOpenInviteModal}
-                    className={styles.teamInviteButton}
-                >
-                    + Convidar barbeiro por CPF
-                </button>
-                <div className={styles.teamFlowCard}>
-                    <div>
-                        <p className={styles.teamFlowTitle}>Fluxo ativo de sociedade/equipe</p>
-                        <p className={styles.teamFlowText}>
-                            Dono envia convite por CPF. O barbeiro colaborador aceita ou recusa no perfil.
-                        </p>
-                    </div>
-                </div>
+                        <div className={styles.teamList}>
+                            {team.map((member) => (
+                                <article key={member.barberId} className={styles.teamMemberCard}>
+                                    <div className={styles.teamMemberMain}>
+                                        {member.imageUrl ? (
+                                            <img src={member.imageUrl} alt={member.name} className={styles.teamAvatar} />
+                                        ) : (
+                                            <span className={styles.teamAvatarFallback}>{member.name?.slice(0, 2)?.toUpperCase() || 'BR'}</span>
+                                        )}
+                                        <div>
+                                            <h3>{member.name}</h3>
+                                            <p>{member.email || 'Email indisponivel'}</p>
+                                            <span>{member.isOwner ? 'Owner' : 'Colaborador'}</span>
+                                        </div>
+                                    </div>
+                                    <div className={styles.teamMemberActions}>
+                                        <button type="button" onClick={() => setSelectedMember(member)}>Comissoes</button>
+                                        {!member.isOwner && (
+                                            <button type="button" className={styles.teamDangerButton} onClick={() => handleOpenRemoval(member)} disabled={loadingConflicts}>
+                                                {loadingConflicts ? 'Consultando...' : 'Remover'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
+                    </article>
+
+                    <aside className={styles.teamPanel}>
+                        <div className={styles.teamPanelHeader}>
+                            <h2>Comissões</h2>
+                        </div>
+
+                        {selectedMember ? (
+                            <>
+                                <p className={styles.teamFlowText}>Regras de {selectedMember.name}</p>
+                                <form className={styles.commissionForm} onSubmit={handleSaveCommission}>
+                                    <select
+                                        value={commissionForm.activityId}
+                                        onChange={(event) => setCommissionForm((prev) => ({ ...prev, activityId: event.target.value }))}
+                                    >
+                                        <option value="">Servico</option>
+                                        {activities.map((activity) => (
+                                            <option key={activity.id} value={activity.id}>{activity.activityName}</option>
+                                        ))}
+                                    </select>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        step="0.01"
+                                        placeholder="%"
+                                        value={commissionForm.percentage}
+                                        onChange={(event) => setCommissionForm((prev) => ({ ...prev, percentage: event.target.value }))}
+                                    />
+                                    <button type="submit">Salvar</button>
+                                </form>
+
+                                <ul className={styles.commissionList}>
+                                    {selectedCommissions.map((rule) => (
+                                        <li key={rule.id}>
+                                            <span>{rule.activityName}</span>
+                                            <strong>{Number(rule.percentage || 0).toFixed(2)}%</strong>
+                                            <button type="button" onClick={() => handleDeleteCommission(rule.id)}>Remover</button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </>
+                        ) : (
+                            <p className={styles.teamFlowText}>Selecione um membro para configurar percentuais por serviço.</p>
+                        )}
+                    </aside>
                 </section>
             </div>
             <BarberNavbar activeTab="time" onTabChange={handleTabChange} isOwner={true} barbershopId={barber?.barbershopId} />
@@ -139,7 +299,10 @@ function BarberTeamPage() {
                                 inputMode="numeric"
                                 placeholder="000.000.000-00"
                                 value={inviteCpf}
-                                onChange={handleInviteCpfChange}
+                                onChange={(event) => {
+                                    setInviteCpf(maskCpf(event.target.value));
+                                    if (inviteError) setInviteError('');
+                                }}
                                 maxLength={14}
                                 autoFocus
                                 className={styles.modalInput}
@@ -148,22 +311,90 @@ function BarberTeamPage() {
                             {inviteError && <p className={styles.modalError}>{inviteError}</p>}
 
                             <div className={styles.modalActions}>
-                                <button
-                                    type="button"
-                                    onClick={handleCloseInviteModal}
-                                    className={styles.modalSecondaryButton}
-                                >
+                                <button type="button" onClick={handleCloseInviteModal} className={styles.modalSecondaryButton}>
                                     Cancelar
                                 </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSendingInvite}
-                                    className={styles.modalPrimaryButton}
-                                >
+                                <button type="submit" disabled={isSendingInvite} className={styles.modalPrimaryButton}>
                                     {isSendingInvite ? 'Enviando...' : 'Enviar convite'}
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {removalPlan && (
+                <div className={styles.modalBackdrop} onClick={() => setRemovalPlan(null)}>
+                    <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
+                        <p className={styles.modalKicker}>REMOVER COLABORADOR</p>
+                        <h3 className={styles.modalTitle}>{removalPlan.member.name}</h3>
+                        <p className={styles.modalSubtitle}>
+                            {removalPlan.conflicts.length
+                                ? `${removalPlan.conflicts.length} agendamento(s) futuro(s) precisam de tratamento.`
+                                : 'Nenhum agendamento futuro encontrado para este colaborador.'}
+                        </p>
+
+                        {removalPlan.conflicts.length > 0 && (
+                            <ul className={styles.conflictList}>
+                                {removalPlan.conflicts.slice(0, 5).map((conflict) => (
+                                    <li key={conflict.id}>
+                                        <span>{new Date(conflict.startTime).toLocaleString('pt-BR')}</span>
+                                        <strong>{conflict.customerName || 'Cliente'}</strong>
+                                        <small>{conflict.status}</small>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+
+                        <div className={styles.removalOptions}>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="remove-action"
+                                    checked={removalPlan.action === 'CANCEL'}
+                                    onChange={() => setRemovalPlan((prev) => ({ ...prev, action: 'CANCEL', redistributeToId: '' }))}
+                                />
+                                Cancelar e notificar
+                            </label>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="remove-action"
+                                    checked={removalPlan.action === 'REDISTRIBUTE'}
+                                    onChange={() => setRemovalPlan((prev) => ({ ...prev, action: 'REDISTRIBUTE' }))}
+                                />
+                                Redistribuir
+                            </label>
+                        </div>
+
+                        {removalPlan.action === 'REDISTRIBUTE' && (
+                            <select
+                                className={styles.modalInput}
+                                value={removalPlan.redistributeToId}
+                                onChange={(event) => setRemovalPlan((prev) => ({ ...prev, redistributeToId: event.target.value }))}
+                            >
+                                <option value="">Escolha o destino</option>
+                                {team
+                                    .filter((member) => member.barberId !== removalPlan.member.barberId)
+                                    .map((member) => (
+                                        <option key={member.barberId} value={member.barberId}>{member.name}</option>
+                                    ))}
+                            </select>
+                        )}
+
+                        <div className={styles.modalActions}>
+                            <button type="button" onClick={() => setRemovalPlan(null)} className={styles.modalSecondaryButton}>
+                                Voltar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmRemoval}
+                                className={styles.modalPrimaryButton}
+                                disabled={removalPlan.action === 'REDISTRIBUTE' && !removalPlan.redistributeToId}
+                            >
+                                Confirmar remoção
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

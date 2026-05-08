@@ -40,9 +40,13 @@ public class Product {
     private BigDecimal price;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     @Builder.Default
     private ProductCategory category = ProductCategory.OTHER;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category dynamicCategory;
 
     @Column(nullable = false)
     @Builder.Default

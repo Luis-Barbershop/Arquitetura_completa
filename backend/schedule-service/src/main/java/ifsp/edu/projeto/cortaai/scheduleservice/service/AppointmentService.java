@@ -644,6 +644,15 @@ public class AppointmentService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<AppointmentDTO> getFutureAppointmentsByBarber(UUID barberId) {
+        LocalDateTime now = LocalDateTime.now(ZoneId.of(appTimezone));
+        return appointmentRepository.findFutureActiveByBarberId(barberId, now)
+                .stream()
+                .map(appointmentMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
     private void ensureNoConflictForSlot(UUID barberId, LocalDateTime startTime, LocalDateTime endTime) {
         ensureNoConflictForSlot(barberId, startTime, endTime, null);
     }

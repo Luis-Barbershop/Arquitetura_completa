@@ -60,18 +60,7 @@ export const refreshSession = async () => {
             ? 'BARBER'
             : 'CUSTOMER';
         const verifyResponse = await api.post(AUTH_ENDPOINTS.verify, { idToken, userType });
-        const role = verifyResponse.data?.role || localStorage.getItem('userRole');
-        const isOwner = verifyResponse.data?.isOwner || false;
-        localStorage.setItem('userRole', role);
-        localStorage.setItem('isOwner', String(isOwner));
-        if (verifyResponse.data?.id)
-            localStorage.setItem('internalUserId', String(verifyResponse.data.id));
-        if (verifyResponse.data?.barbershopId)
-            localStorage.setItem('barbershopId', String(verifyResponse.data.barbershopId));
-        if (verifyResponse.data?.name)
-            localStorage.setItem('userName', verifyResponse.data.name);
-        if (verifyResponse.data?.authProvider)
-            localStorage.setItem('authProvider', verifyResponse.data.authProvider);
+        persistVerifiedUserProfile(verifyResponse.data);
     } catch {
         // Se falhar o re-verify, mantém os valores atuais silenciosamente
     }
@@ -95,6 +84,28 @@ const verifyWithRetry = async (idToken, userType, maxAttempts = 4, delayMs = 500
             throw err;
         }
     }
+};
+
+const persistVerifiedUserProfile = (profile = {}) => {
+    const role = profile?.role || localStorage.getItem('userRole') || 'ROLE_CUSTOMER';
+    const isOwner = profile?.isOwner || false;
+
+    localStorage.setItem('userRole', role);
+    localStorage.setItem('isOwner', String(isOwner));
+    if (profile?.id)
+        localStorage.setItem('internalUserId', String(profile.id));
+    if (profile?.barbershopId)
+        localStorage.setItem('barbershopId', String(profile.barbershopId));
+    else
+        localStorage.removeItem('barbershopId');
+    if (profile?.barbershopName)
+        localStorage.setItem('barbershopName', profile.barbershopName);
+    else
+        localStorage.removeItem('barbershopName');
+    if (profile?.name)
+        localStorage.setItem('userName', profile.name);
+    if (profile?.authProvider)
+        localStorage.setItem('authProvider', profile.authProvider);
 };
 
 // Retorna { idToken, refreshToken, expiresIn, localId, email, registered }
@@ -140,19 +151,8 @@ export const loginUser = async (email, password) => {
         throw error;
     }
 
-    // Salva role e isOwner para uso no redirecionamento e em guards de rota
-    const role = verifyResponse.data?.role || 'ROLE_CUSTOMER';
-    const isOwner = verifyResponse.data?.isOwner || false;
-    localStorage.setItem('userRole', role);
-    localStorage.setItem('isOwner', String(isOwner));
-    if (verifyResponse.data?.id)
-        localStorage.setItem('internalUserId', String(verifyResponse.data.id));
-    if (verifyResponse.data?.barbershopId)
-        localStorage.setItem('barbershopId', String(verifyResponse.data.barbershopId));
-    if (verifyResponse.data?.name)
-        localStorage.setItem('userName', verifyResponse.data.name);
-    if (verifyResponse.data?.authProvider)
-        localStorage.setItem('authProvider', verifyResponse.data.authProvider);
+    // Salva role e dados da barbearia para uso no redirecionamento e em guards de rota
+    persistVerifiedUserProfile(verifyResponse.data);
     // Limpa a intenção após login bem-sucedido
     sessionStorage.removeItem('user_intent');
 
@@ -321,19 +321,8 @@ export const loginWithGoogle = async () => {
             throw error;
         }
 
-        // Salva role e isOwner para uso no redirecionamento e em guards de rota
-        const role = verifyResponse.data?.role || 'ROLE_CUSTOMER';
-        const isOwner = verifyResponse.data?.isOwner || false;
-        localStorage.setItem('userRole', role);
-        localStorage.setItem('isOwner', String(isOwner));
-        if (verifyResponse.data?.id)
-            localStorage.setItem('internalUserId', String(verifyResponse.data.id));
-        if (verifyResponse.data?.barbershopId)
-            localStorage.setItem('barbershopId', String(verifyResponse.data.barbershopId));
-        if (verifyResponse.data?.name)
-            localStorage.setItem('userName', verifyResponse.data.name);
-        if (verifyResponse.data?.authProvider)
-            localStorage.setItem('authProvider', verifyResponse.data.authProvider);
+        // Salva role e dados da barbearia para uso no redirecionamento e em guards de rota
+        persistVerifiedUserProfile(verifyResponse.data);
         // Limpa a intenção após login bem-sucedido
         sessionStorage.removeItem('user_intent');
 

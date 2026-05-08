@@ -1,10 +1,13 @@
 package ifsp.edu.projeto.cortaai.productservice.controller;
 
 import ifsp.edu.projeto.cortaai.productservice.dto.CreateProductDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.CategoryRequestDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.CategoryResponseDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.InventoryPageDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.ProductDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.StockHealthAlertResponseDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.StockMovementDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.StockMovementRequestDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.UpdateProductDTO;
 import ifsp.edu.projeto.cortaai.productservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.productservice.model.ProductCategory;
@@ -71,10 +74,11 @@ public class ProductController {
             @Parameter(description = "UUID da barbearia") @RequestParam UUID barbershopId,
             @Parameter(description = "Busca por nome/descricao") @RequestParam(required = false) String search,
             @Parameter(description = "Categoria do produto") @RequestParam(required = false) ProductCategory category,
+            @Parameter(description = "Categoria dinâmica") @RequestParam(required = false) UUID categoryId,
             @Parameter(description = "Filtrar apenas estoque baixo") @RequestParam(required = false) Boolean lowStock,
             @Parameter(description = "Página (base 0)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Tamanho da página") @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(productService.getInventoryPage(barbershopId, search, category, lowStock, page, size));
+        return ResponseEntity.ok(productService.getInventoryPage(barbershopId, search, category, categoryId, lowStock, page, size));
     }
 
     /**
@@ -133,6 +137,45 @@ public class ProductController {
             @Parameter(description = "Página (base 0)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Tamanho da página") @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(productService.getStockMovementHistory(id, page, size));
+    }
+
+    @Operation(summary = "Registra movimentação de estoque", description = "Registra entrada, consumo interno, venda, perda ou devolução e atualiza a quantidade do produto.")
+    @PostMapping("/stock-movements")
+    public ResponseEntity<StockMovementDTO> createStockMovement(
+            @RequestBody @Valid StockMovementRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.createStockMovement(dto));
+    }
+
+    @Operation(summary = "Lista categorias dinâmicas", description = "Retorna categorias criadas pelo owner para a barbearia.")
+    @GetMapping("/categories")
+    public ResponseEntity<List<CategoryResponseDTO>> getCategories(@RequestParam UUID barbershopId) {
+        return ResponseEntity.ok(productService.getCategories(barbershopId));
+    }
+
+    @Operation(summary = "Cria categoria dinâmica", description = "Cria uma categoria de estoque no escopo da barbearia.")
+    @PostMapping("/categories")
+    public ResponseEntity<CategoryResponseDTO> createCategory(
+            @RequestParam UUID barbershopId,
+            @RequestBody @Valid CategoryRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.createCategory(barbershopId, dto));
+    }
+
+    @Operation(summary = "Atualiza categoria dinâmica", description = "Renomeia uma categoria de estoque da barbearia.")
+    @PutMapping("/categories/{id}")
+    public ResponseEntity<CategoryResponseDTO> updateCategory(
+            @RequestParam UUID barbershopId,
+            @PathVariable UUID id,
+            @RequestBody @Valid CategoryRequestDTO dto) {
+        return ResponseEntity.ok(productService.updateCategory(barbershopId, id, dto));
+    }
+
+    @Operation(summary = "Exclui categoria dinâmica", description = "Exclui categoria se não houver produto ativo vinculado.")
+    @DeleteMapping("/categories/{id}")
+    public ResponseEntity<Void> deleteCategory(
+            @RequestParam UUID barbershopId,
+            @PathVariable UUID id) {
+        productService.deleteCategory(barbershopId, id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Alertas de saúde do estoque", description = "Retorna todos os produtos com indicação de estoque crítico via view v_stock_health_alert.")

@@ -61,6 +61,13 @@ public class InternalAppointmentController {
         return ResponseEntity.ok(appointmentService.getBarbershopAppointmentsByPeriod(barbershopId, from, to));
     }
 
+    @Operation(summary = "Busca agendamentos futuros de um barbeiro (interno)")
+    @GetMapping("/by-barber/{barberId}/future")
+    public ResponseEntity<List<AppointmentDTO>> getFutureAppointmentsByBarber(
+            @Parameter(description = "UUID do barbeiro") @PathVariable UUID barberId) {
+        return ResponseEntity.ok(appointmentService.getFutureAppointmentsByBarber(barberId));
+    }
+
     @Operation(summary = "Atualiza status de pagamento de um agendamento (interno)")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Status atualizado"),

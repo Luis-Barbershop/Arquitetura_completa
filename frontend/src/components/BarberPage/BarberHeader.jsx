@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import {
     House,
     CalendarBlank,
+    CalendarX,
     PlusCircle,
     Scissors,
     Users,
@@ -42,6 +43,7 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
     const isOwner   = isOwnerUser();
     const barbershopId = getBarbershopId();
     const hasShop   = Boolean(barbershopId);
+    const activeBarbershopName = localStorage.getItem('barbershopName') || barber?.barbershopName || '';
     const canChangePassword = (localStorage.getItem('authProvider') || 'EMAIL').toUpperCase() === 'EMAIL';
 
     const [agendaOpen, setAgendaOpen] = useState(false);
@@ -91,10 +93,13 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
 
     const agendaSubItems = [
         { id: 'agenda',           label: 'Minha Agenda',     icon: <CalendarBlank size={15} weight="duotone" /> },
-        ...(hasShop             ? [{ id: 'novo-agendamento', label: 'Novo Encaixe', icon: <PlusCircle size={15} weight="duotone" /> }] : []),
+        ...(hasShop             ? [
+            { id: 'novo-agendamento', label: 'Novo Encaixe', icon: <PlusCircle size={15} weight="duotone" /> },
+            { id: 'indisponibilidade', label: 'Indisponibilidade', icon: <CalendarX size={15} weight="duotone" /> },
+        ] : []),
     ];
 
-    const agendaActive  = ['agenda', 'novo-agendamento'].includes(activeTab);
+    const agendaActive  = ['agenda', 'novo-agendamento', 'indisponibilidade'].includes(activeTab);
     const gestaoActive  = ['dashboards', 'estoque'].includes(activeTab);
 
     const initials = barber?.name
@@ -177,7 +182,7 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
                     </div>
                 )}
 
-                {hasShop && (
+                {isOwner && hasShop && (
                     <button
                         className={activeTab === 'servicos' ? styles.navItemActive : styles.navItem}
                         onClick={() => onTabChange('servicos')}
@@ -227,6 +232,11 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
 
             {/* ── Direita: bell + avatar ─── */}
             <div className={styles.headerRight}>
+                {isOwner && hasShop && activeBarbershopName && (
+                    <span className={styles.activeBarbershop} title={activeBarbershopName}>
+                        {activeBarbershopName}
+                    </span>
+                )}
                 <NotificationBell userType="barber" />
 
                 <div className={styles.avatarWrapper} ref={avatarRef}>
