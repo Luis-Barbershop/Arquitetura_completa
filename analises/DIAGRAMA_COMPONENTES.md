@@ -9,39 +9,42 @@
 
 ```mermaid
 flowchart LR
-  subgraph FE[Frontend]
-    Pages[Páginas React]
-    UIServices[frontend/src/services/*Service.js]
+  %% =========================
+  %% FRONTEIRAS
+  %% =========================
+  subgraph FE[Frontend (React)]
+    Pages[Páginas / Componentes]
+    UIServices[services/*Service.js]
     ApiWrapper[services/api.js\nAxios Wrapper]
     Pages --> UIServices --> ApiWrapper
   end
 
-  subgraph GW[API Gateway]
-    Routes[Configuração de Rotas]
-    AuthFilter[Filter de autenticação Firebase]
-    HeaderInjector[Injeção de headers X-User-*]
-    ExHandlerGW[GlobalExceptionHandler]
+  subgraph GW[api-gateway]
+    Routes[Route Locator]
+    AuthFilter[Firebase Auth Filter]
+    HeaderInjector[Header Injector\nX-User-*]
+    GWHandler[GlobalExceptionHandler]
     Routes --> AuthFilter --> HeaderInjector
   end
 
   subgraph US[user-service]
-    CtrlUS[Controllers (DTO)]
-    SvcUS[Services]
-    RepoUS[Repositories]
-    MapperUS[Mappers]
-    MsgUS[Messaging Publisher/Listener]
+    CtrlUS[Controller DTO]
+    SvcUS[Service]
+    RepoUS[Repository JPA]
+    MapperUS[Mapper]
+    MsgUS[Publisher/Listener]
     CtrlUS --> SvcUS --> RepoUS
     SvcUS --> MapperUS
     SvcUS --> MsgUS
   end
 
   subgraph BS[barbershop-service]
-    CtrlBS[Controllers (DTO)]
-    SvcBS[Services]
-    RepoBS[Repositories]
-    MapperBS[Mappers]
-    FeignBS[Feign Clients]
-    MsgBS[Messaging Publisher/Listener]
+    CtrlBS[Controller DTO]
+    SvcBS[Service]
+    RepoBS[Repository JPA]
+    MapperBS[Mapper]
+    FeignBS[Feign Client]
+    MsgBS[Publisher/Listener]
     CtrlBS --> SvcBS --> RepoBS
     SvcBS --> MapperBS
     SvcBS --> FeignBS
@@ -49,12 +52,12 @@ flowchart LR
   end
 
   subgraph SS[schedule-service]
-    CtrlSS[Controllers (DTO)]
-    SvcSS[Services]
-    RepoSS[Repositories]
-    MapperSS[Mappers]
-    FeignSS[Feign Clients]
-    MsgSS[Messaging Publisher/Listener]
+    CtrlSS[Controller DTO]
+    SvcSS[Service]
+    RepoSS[Repository JPA]
+    MapperSS[Mapper]
+    FeignSS[Feign Client]
+    MsgSS[Publisher/Listener]
     CtrlSS --> SvcSS --> RepoSS
     SvcSS --> MapperSS
     SvcSS --> FeignSS
@@ -62,12 +65,12 @@ flowchart LR
   end
 
   subgraph PS[payment-service]
-    CtrlPS[Controllers (DTO)]
-    SvcPS[Services]
-    RepoPS[Repositories]
-    MapperPS[Mappers]
-    FeignPS[Feign Clients]
-    MsgPS[Messaging Publisher/Listener]
+    CtrlPS[Controller DTO]
+    SvcPS[Service]
+    RepoPS[Repository JPA]
+    MapperPS[Mapper]
+    FeignPS[Feign Client]
+    MsgPS[Publisher/Listener]
     CtrlPS --> SvcPS --> RepoPS
     SvcPS --> MapperPS
     SvcPS --> FeignPS
@@ -75,12 +78,12 @@ flowchart LR
   end
 
   subgraph PRS[product-service]
-    CtrlPRS[Controllers (DTO)]
-    SvcPRS[Services]
-    RepoPRS[Repositories]
-    MapperPRS[Mappers]
-    FeignPRS[Feign Clients]
-    MsgPRS[Messaging Publisher/Listener]
+    CtrlPRS[Controller DTO]
+    SvcPRS[Service]
+    RepoPRS[Repository JPA]
+    MapperPRS[Mapper]
+    FeignPRS[Feign Client]
+    MsgPRS[Publisher/Listener]
     CtrlPRS --> SvcPRS --> RepoPRS
     SvcPRS --> MapperPRS
     SvcPRS --> FeignPRS
@@ -88,15 +91,15 @@ flowchart LR
   end
 
   subgraph NS[notification-service]
-    ListenerNS[Messaging Listeners]
-    SvcNS[Notification Services]
+    ListenerNS[Rabbit Listeners]
+    SvcNS[Notification Service]
     DedupNS[Deduplicação Redis]
-    ProviderNS[Providers Email/Push]
+    ProviderNS[Provider Email/Push]
     ListenerNS --> SvcNS --> DedupNS
     SvcNS --> ProviderNS
   end
 
-  subgraph Infra[Infra Compartilhada]
+  subgraph INFRA[Infra Compartilhada]
     Rabbit[RabbitMQ]
     Redis[Redis]
     MySQL[(MySQL)]
@@ -105,35 +108,57 @@ flowchart LR
     Cloudinary[Cloudinary]
   end
 
-  ApiWrapper --> Routes
-  AuthFilter --> Firebase
+  %% =========================
+  %% CONTRATOS ENTRE BLOCOS
+  %% =========================
+  ApiWrapper -->|REST| Routes
+  AuthFilter -->|valida token| Firebase
 
-  HeaderInjector --> CtrlUS
-  HeaderInjector --> CtrlBS
-  HeaderInjector --> CtrlSS
-  HeaderInjector --> CtrlPS
-  HeaderInjector --> CtrlPRS
-  HeaderInjector --> ListenerNS
+  HeaderInjector -->|REST interno| CtrlUS
+  HeaderInjector -->|REST interno| CtrlBS
+  HeaderInjector -->|REST interno| CtrlSS
+  HeaderInjector -->|REST interno| CtrlPS
+  HeaderInjector -->|REST interno| CtrlPRS
 
-  MsgUS <--> Rabbit
-  MsgBS <--> Rabbit
-  MsgSS <--> Rabbit
-  MsgPS <--> Rabbit
-  MsgPRS <--> Rabbit
-  ListenerNS <--> Rabbit
+  SvcBS -->|consulta| FeignBS
+  SvcSS -->|consulta| FeignSS
+  SvcPS -->|consulta| FeignPS
+  SvcPRS -->|consulta| FeignPRS
 
-  RepoUS --> MySQL
-  RepoBS --> MySQL
-  RepoSS --> MySQL
-  RepoPS --> MySQL
-  RepoPRS --> MySQL
+  MsgUS <--> |eventos| Rabbit
+  MsgBS <--> |eventos| Rabbit
+  MsgSS <--> |eventos| Rabbit
+  MsgPS <--> |eventos| Rabbit
+  MsgPRS <--> |eventos| Rabbit
+  ListenerNS <--> |eventos| Rabbit
 
-  SvcSS --> Redis
-  DedupNS --> Redis
+  RepoUS -->|persistência| MySQL
+  RepoBS -->|persistência| MySQL
+  RepoSS -->|persistência| MySQL
+  RepoPS -->|persistência| MySQL
+  RepoPRS -->|persistência| MySQL
 
-  SvcPS --> MercadoPago
-  SvcUS --> Cloudinary
-  SvcBS --> Cloudinary
+  SvcSS -->|cache| Redis
+  DedupNS -->|idempotência| Redis
+
+  SvcPS -->|pagamentos| MercadoPago
+  SvcUS -->|mídia| Cloudinary
+  SvcBS -->|mídia| Cloudinary
+
+  %% =========================
+  %% ESTILO VISUAL
+  %% =========================
+  classDef fe fill:#E8F4FD,stroke:#1F78B4,stroke-width:1.5px,color:#0A2A43;
+  classDef gw fill:#FFF8E1,stroke:#F59E0B,stroke-width:1.5px,color:#6B450A;
+  classDef svc fill:#F3E8FF,stroke:#7C3AED,stroke-width:1.5px,color:#3E1A78;
+  classDef infra fill:#F1F5F9,stroke:#475569,stroke-width:1.5px,color:#1E293B;
+  classDef ext fill:#FFE4E6,stroke:#E11D48,stroke-width:1.5px,color:#6A1028;
+
+  class Pages,UIServices,ApiWrapper fe;
+  class Routes,AuthFilter,HeaderInjector,GWHandler gw;
+  class CtrlUS,SvcUS,RepoUS,MapperUS,MsgUS,CtrlBS,SvcBS,RepoBS,MapperBS,FeignBS,MsgBS,CtrlSS,SvcSS,RepoSS,MapperSS,FeignSS,MsgSS,CtrlPS,SvcPS,RepoPS,MapperPS,FeignPS,MsgPS,CtrlPRS,SvcPRS,RepoPRS,MapperPRS,FeignPRS,MsgPRS,ListenerNS,SvcNS,DedupNS,ProviderNS svc;
+  class Rabbit,Redis,MySQL infra;
+  class Firebase,MercadoPago,Cloudinary ext;
 ```
 
 ---
@@ -144,3 +169,9 @@ flowchart LR
 - Escritas entre serviços são orientadas a eventos via RabbitMQ.
 - Leitura cross-service ocorre via Feign em serviços que precisam de consulta externa.
 - `api-gateway` é o ponto de validação Firebase e propagação de contexto do usuário.
+
+## Legenda de leitura do diagrama
+
+- **Seta contínua (`-->`)**: chamada síncrona (REST/Feign) ou fluxo interno do serviço.
+- **Seta bidirecional (`<-->`)**: comunicação assíncrona por eventos no RabbitMQ.
+- **Rótulos de aresta** explicam o contrato (`REST`, `consulta`, `persistência`, `eventos`, `cache`).
