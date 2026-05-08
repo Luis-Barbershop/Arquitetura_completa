@@ -145,20 +145,52 @@ flowchart LR
   SvcUS -->|mídia| Cloudinary
   SvcBS -->|mídia| Cloudinary
 
-  %% =========================
-  %% ESTILO VISUAL
-  %% =========================
-  classDef fe fill:#E8F4FD,stroke:#1F78B4,stroke-width:1.5px,color:#0A2A43;
-  classDef gw fill:#FFF8E1,stroke:#F59E0B,stroke-width:1.5px,color:#6B450A;
-  classDef svc fill:#F3E8FF,stroke:#7C3AED,stroke-width:1.5px,color:#3E1A78;
-  classDef infra fill:#F1F5F9,stroke:#475569,stroke-width:1.5px,color:#1E293B;
-  classDef ext fill:#FFE4E6,stroke:#E11D48,stroke-width:1.5px,color:#6A1028;
+```
 
-  class Pages,UIServices,ApiWrapper fe;
-  class Routes,AuthFilter,HeaderInjector,GWHandler gw;
-  class CtrlUS,SvcUS,RepoUS,MapperUS,MsgUS,CtrlBS,SvcBS,RepoBS,MapperBS,FeignBS,MsgBS,CtrlSS,SvcSS,RepoSS,MapperSS,FeignSS,MsgSS,CtrlPS,SvcPS,RepoPS,MapperPS,FeignPS,MsgPS,CtrlPRS,SvcPRS,RepoPRS,MapperPRS,FeignPRS,MsgPRS,ListenerNS,SvcNS,DedupNS,ProviderNS svc;
-  class Rabbit,Redis,MySQL infra;
-  class Firebase,MercadoPago,Cloudinary ext;
+---
+
+## Diagrama visual da arquitetura (alto nível)
+
+```mermaid
+flowchart TB
+  Client[Cliente\nWeb/Mobile] --> Frontend[Frontend React]
+  Frontend --> Gateway[API Gateway]
+
+  Gateway --> USvc[user-service]
+  Gateway --> BSvc[barbershop-service]
+  Gateway --> SSvc[schedule-service]
+  Gateway --> PSvc[payment-service]
+  Gateway --> PrSvc[product-service]
+  Gateway --> NSvc[notification-service]
+
+  USvc -. registro .-> Eureka[Eureka]
+  BSvc -. registro .-> Eureka
+  SSvc -. registro .-> Eureka
+  PSvc -. registro .-> Eureka
+  PrSvc -. registro .-> Eureka
+  NSvc -. registro .-> Eureka
+  Gateway -. descoberta .-> Eureka
+
+  USvc --> DB[(MySQL)]
+  BSvc --> DB
+  SSvc --> DB
+  PSvc --> DB
+  PrSvc --> DB
+
+  SSvc --> Redis[(Redis)]
+  NSvc --> Redis
+
+  USvc <--> Rabbit[(RabbitMQ)]
+  BSvc <--> Rabbit
+  SSvc <--> Rabbit
+  PSvc <--> Rabbit
+  PrSvc <--> Rabbit
+  NSvc <--> Rabbit
+
+  Gateway --> Firebase[Firebase Auth]
+  PSvc --> MP[Mercado Pago]
+  USvc --> Cloud[Cloudinary]
+  BSvc --> Cloud
 ```
 
 ---
