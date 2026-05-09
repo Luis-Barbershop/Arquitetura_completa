@@ -806,44 +806,42 @@ const MeusAgendamentosPage = () => {
                 {/* ── Seletor mine/team + navegação de data ── */}
                 {!isCustomer && (
                     <div className={Styles.controlsWrapper}>
-                        {/* ── Linha 1: mine/equipe · Semana/Mês (cada grupo no seu contorno) ── */}
-                        <div className={Styles.controlsRow}>
-                            {isOwner && (
-                                <div className={Styles.viewToggle}>
-                                    <button
-                                        className={agendaView === 'mine' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
-                                        onClick={() => { setAgendaView('mine'); navigate('/meus-agendamentos'); }}
-                                        type="button"
-                                    >
-                                        <FiScissors size={14} /> Minha Agenda
-                                    </button>
-                                    <button
-                                        className={agendaView === 'team' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
-                                        onClick={() => { setAgendaView('team'); navigate('/meus-agendamentos?view=team'); }}
-                                        type="button"
-                                    >
-                                        <FiUsers size={14} /> Equipe
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Seletor de período — apenas Semana e Mês */}
-                            <div
-                                className={`${Styles.viewToggle} ${activeFilter !== 'ALL' ? Styles.viewToggleDisabled : ''}`}
-                                title={activeFilter !== 'ALL' ? 'Filtro de data desativado: exibindo todo o histórico do status selecionado' : undefined}
-                            >
-                                {[{ key: 'week', label: 'Semana' }, { key: 'month', label: 'Mês' }].map(r => (
-                                    <button
-                                        key={r.key}
-                                        className={rangeMode === r.key ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
-                                        onClick={() => { setRangeMode(r.key); if (activeFilter !== 'ALL') setActiveFilter('ALL'); }}
-                                        type="button"
-                                        disabled={activeFilter !== 'ALL'}
-                                    >
-                                        {r.label}
-                                    </button>
-                                ))}
+                        {/* mine/equipe */}
+                        {isOwner && (
+                            <div className={Styles.viewToggle}>
+                                <button
+                                    className={agendaView === 'mine' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
+                                    onClick={() => { setAgendaView('mine'); navigate('/meus-agendamentos'); }}
+                                    type="button"
+                                >
+                                    <FiScissors size={14} /> Minha Agenda
+                                </button>
+                                <button
+                                    className={agendaView === 'team' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
+                                    onClick={() => { setAgendaView('team'); navigate('/meus-agendamentos?view=team'); }}
+                                    type="button"
+                                >
+                                    <FiUsers size={14} /> Equipe
+                                </button>
                             </div>
+                        )}
+
+                        {/* Seletor de período — Semana e Mês */}
+                        <div
+                            className={`${Styles.viewToggle} ${activeFilter !== 'ALL' ? Styles.viewToggleDisabled : ''}`}
+                            title={activeFilter !== 'ALL' ? 'Filtro de data desativado: exibindo todo o histórico do status selecionado' : undefined}
+                        >
+                            {[{ key: 'week', label: 'Semana' }, { key: 'month', label: 'Mês' }].map(r => (
+                                <button
+                                    key={r.key}
+                                    className={rangeMode === r.key ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
+                                    onClick={() => { setRangeMode(r.key); if (activeFilter !== 'ALL') setActiveFilter('ALL'); }}
+                                    type="button"
+                                    disabled={activeFilter !== 'ALL'}
+                                >
+                                    {r.label}
+                                </button>
+                            ))}
                         </div>
 
                         {/* ── Linha 2: navegação de data + ações fixas na direita ── */}
