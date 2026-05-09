@@ -1,3 +1,6 @@
+# Arquivo de ambiente de produção: .env.prod (no servidor ZimaOS)
+# Uso: docker compose -f docker-compose.server.yml --env-file .env.prod up -d
+
 services:
   # ======== INFRAESTRUTURA ========
 
