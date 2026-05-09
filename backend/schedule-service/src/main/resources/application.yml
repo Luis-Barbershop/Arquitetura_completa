@@ -134,3 +134,11 @@ ai:
     api-key: ${GROQ_API_KEY:}
     url: https://api.groq.com/openai/v1/chat/completions
     model: llama-3.3-70b-versatile
+  openrouter:
+    api-key: ${OPENROUTER_API_KEY:}
+    url: https://openrouter.ai/api/v1/chat/completions
+    model: ${OPENROUTER_MODEL:mistralai/mistral-7b-instruct:free}
+  cohere:
+    api-key: ${COHERE_API_KEY:}
+    url: https://api.cohere.com/v2/chat
+    model: ${COHERE_MODEL:command-r}

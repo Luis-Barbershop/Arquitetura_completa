@@ -50,6 +50,24 @@ public class AiChatServiceImpl implements AiChatService {
     @Value("${ai.groq.model:llama-3.3-70b-versatile}")
     private String groqModel;
 
+    @Value("${ai.openrouter.api-key:}")
+    private String openrouterApiKey;
+
+    @Value("${ai.openrouter.url:https://openrouter.ai/api/v1/chat/completions}")
+    private String openrouterUrl;
+
+    @Value("${ai.openrouter.model:mistralai/mistral-7b-instruct:free}")
+    private String openrouterModel;
+
+    @Value("${ai.cohere.api-key:}")
+    private String cohereApiKey;
+
+    @Value("${ai.cohere.url:https://api.cohere.com/v2/chat}")
+    private String cohereUrl;
+
+    @Value("${ai.cohere.model:command-r}")
+    private String cohereModel;
+
     @Override
     @Transactional(readOnly = true)
     public AiChatResponseDTO chat(String userUid, String userRole, AiChatRequestDTO request) {
@@ -68,7 +86,23 @@ public class AiChatServiceImpl implements AiChatService {
             try {
                 return new AiChatResponseDTO(callGroq(prompt), "groq", request.mode());
             } catch (Exception e) {
-                log.error("gustave: Groq indisponível — {}", e.getMessage());
+                log.warn("gustave: Groq indisponível — {}", e.getMessage());
+            }
+        }
+
+        if (openrouterApiKey != null && !openrouterApiKey.isBlank()) {
+            try {
+                return new AiChatResponseDTO(callOpenRouter(prompt), "openrouter", request.mode());
+            } catch (Exception e) {
+                log.warn("gustave: OpenRouter indisponível — {}", e.getMessage());
+            }
+        }
+
+        if (cohereApiKey != null && !cohereApiKey.isBlank()) {
+            try {
+                return new AiChatResponseDTO(callCohere(prompt), "cohere", request.mode());
+            } catch (Exception e) {
+                log.error("gustave: Cohere indisponível — {}", e.getMessage());
             }
         }
 
@@ -220,5 +254,50 @@ public class AiChatServiceImpl implements AiChatService {
         List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
         Map<String, Object> msg = (Map<String, Object>) choices.get(0).get("message");
         return (String) msg.get("content");
+    }
+
+    @SuppressWarnings("unchecked")
+    private String callOpenRouter(String prompt) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(openrouterApiKey != null ? openrouterApiKey : "");
+        headers.set("HTTP-Referer", "https://cortaai.shop");
+        headers.set("X-Title", "CortaAi — gustave");
+
+        Map<String, Object> message = Map.of("role", "user", "content", prompt);
+        Map<String, Object> body = Map.of(
+                "model", openrouterModel,
+                "messages", List.of(message),
+                "max_tokens", 512
+        );
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+        Map<String, Object> response = restTemplate.postForObject(openrouterUrl != null ? openrouterUrl : "", entity, Map.class);
+        if (response == null) throw new IllegalStateException("Resposta nula do OpenRouter");
+
+        List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+        Map<String, Object> msg = (Map<String, Object>) choices.get(0).get("message");
+        return (String) msg.get("content");
+    }
+
+    @SuppressWarnings("unchecked")
+    private String callCohere(String prompt) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(cohereApiKey != null ? cohereApiKey : "");
+
+        Map<String, Object> body = Map.of(
+                "model", cohereModel,
+                "messages", List.of(Map.of("role", "user", "content", prompt))
+        );
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+        Map<String, Object> response = restTemplate.postForObject(cohereUrl != null ? cohereUrl : "", entity, Map.class);
+        if (response == null) throw new IllegalStateException("Resposta nula do Cohere");
+
+        // Cohere v2: response.message.content[0].text
+        Map<String, Object> msgObj = (Map<String, Object>) response.get("message");
+        List<Map<String, Object>> content = (List<Map<String, Object>>) msgObj.get("content");
+        return (String) content.get(0).get("text");
     }
 }
