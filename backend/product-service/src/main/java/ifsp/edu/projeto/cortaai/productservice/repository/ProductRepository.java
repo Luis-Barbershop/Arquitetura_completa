@@ -25,12 +25,16 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             "AND (:search IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
             "OR LOWER(COALESCE(p.description, '')) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "AND (:category IS NULL OR p.category = :category) " +
+            "AND (:categoryId IS NULL OR p.dynamicCategory.id = :categoryId) " +
             "AND (:lowStock IS NULL OR (:lowStock = true AND p.stockQuantity <= p.minStockQuantity) " +
             "OR (:lowStock = false AND p.stockQuantity > p.minStockQuantity))")
     Page<Product> findInventoryPageByFilters(
             @Param("barbershopId") UUID barbershopId,
             @Param("search") String search,
             @Param("category") ProductCategory category,
+            @Param("categoryId") UUID categoryId,
             @Param("lowStock") Boolean lowStock,
             Pageable pageable);
+
+    boolean existsByDynamicCategoryIdAndActiveTrue(UUID categoryId);
 }

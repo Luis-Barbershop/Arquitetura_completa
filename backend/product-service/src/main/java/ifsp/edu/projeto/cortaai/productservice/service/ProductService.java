@@ -1,18 +1,23 @@
 package ifsp.edu.projeto.cortaai.productservice.service;
 
 import ifsp.edu.projeto.cortaai.productservice.dto.CreateProductDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.CategoryRequestDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.CategoryResponseDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.InventoryPageDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.InventoryFinancialSummaryDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.InventoryProductItemDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.ProductDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.StockHealthAlertResponseDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.StockMovementDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.StockMovementRequestDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.UpdateProductDTO;
 import ifsp.edu.projeto.cortaai.productservice.mapper.ProductMapper;
+import ifsp.edu.projeto.cortaai.productservice.model.Category;
 import ifsp.edu.projeto.cortaai.productservice.model.MovementType;
 import ifsp.edu.projeto.cortaai.productservice.model.Product;
 import ifsp.edu.projeto.cortaai.productservice.model.ProductCategory;
 import ifsp.edu.projeto.cortaai.productservice.model.StockMovement;
+import ifsp.edu.projeto.cortaai.productservice.repository.CategoryRepository;
 import ifsp.edu.projeto.cortaai.productservice.repository.ProductRepository;
 import ifsp.edu.projeto.cortaai.productservice.repository.StockMovementRepository;
 import ifsp.edu.projeto.cortaai.productservice.repository.analytics.VStockHealthAlertRepository;
@@ -39,18 +44,21 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
     private final StockMovementRepository stockMovementRepository;
     private final ProductMapper productMapper;
     private final VStockHealthAlertRepository vStockHealthAlertRepository;
 
     @Transactional
     public ProductDTO createProduct(CreateProductDTO dto) {
+        Category category = resolveCategory(dto.barbershopId(), dto.categoryId());
         Product product = Product.builder()
                 .barbershopId(dto.barbershopId())
                 .name(dto.name())
                 .description(dto.description())
                 .price(dto.price())
                 .category(dto.category() != null ? dto.category() : ProductCategory.OTHER)
+                .dynamicCategory(category)
                 .stockQuantity(dto.stockQuantity() != null ? dto.stockQuantity() : 0)
                 .minStockQuantity(dto.minStockQuantity() != null ? dto.minStockQuantity() : 0)
                 .imageUrl(dto.imageUrl())
@@ -66,6 +74,7 @@ public class ProductService {
                     .type(MovementType.IN)
                     .quantity(saved.getStockQuantity())
                     .reason("Estoque inicial")
+                    .notes("Estoque inicial")
                     .build();
             stockMovementRepository.save(movement);
         }
@@ -86,6 +95,7 @@ public class ProductService {
     public InventoryPageDTO getInventoryPage(UUID barbershopId,
                                              String search,
                                              ProductCategory category,
+                                             UUID categoryId,
                                              Boolean lowStock,
                                              int page,
                                              int size) {
@@ -99,6 +109,7 @@ public class ProductService {
                 barbershopId,
                 searchTerm,
                 category,
+                categoryId,
                 lowStock,
                 pageable
         );
@@ -126,6 +137,7 @@ public class ProductService {
         if (dto.description() != null) product.setDescription(dto.description());
         if (dto.price() != null) product.setPrice(dto.price());
         if (dto.category() != null) product.setCategory(dto.category());
+        if (dto.categoryId() != null) product.setDynamicCategory(resolveCategory(product.getBarbershopId(), dto.categoryId()));
         if (dto.imageUrl() != null) product.setImageUrl(dto.imageUrl());
         if (dto.active() != null) product.setActive(dto.active());
         if (dto.minStockQuantity() != null) product.setMinStockQuantity(dto.minStockQuantity());
@@ -139,6 +151,7 @@ public class ProductService {
                     .type(type)
                     .quantity(Math.abs(diff))
                     .reason("Ajuste manual de estoque")
+                    .notes("Ajuste manual de estoque")
                     .build();
             stockMovementRepository.save(movement);
             product.setStockQuantity(dto.stockQuantity());
@@ -208,10 +221,105 @@ public class ProductService {
                         m.getProductId(),
                         m.getType(),
                         m.getQuantity(),
+                        m.getUnitSalePrice(),
+                        m.getNotes(),
                         m.getReason(),
                         m.getCreatedAt()
                 ))
                 .toList();
+    }
+
+    @Transactional
+    public StockMovementDTO createStockMovement(StockMovementRequestDTO dto) {
+        Product product = productRepository.findById(dto.productId())
+                .orElseThrow(() -> new RuntimeException("Produto não encontrado: " + dto.productId()));
+
+        MovementType type = dto.type();
+        int currentQuantity = product.getStockQuantity() != null ? product.getStockQuantity() : 0;
+        int delta = switch (type) {
+            case IN, RETURN -> dto.quantity();
+            case OUT, OUT_CONSUMPTION, OUT_SALE, LOSS -> -dto.quantity();
+        };
+        int nextQuantity = currentQuantity + delta;
+
+        if (type == MovementType.OUT_SALE && dto.unitSalePrice() == null) {
+            throw new IllegalArgumentException("unitSalePrice é obrigatório para venda.");
+        }
+        if (nextQuantity < 0) {
+            throw new IllegalStateException("Quantidade insuficiente em estoque");
+        }
+
+        StockMovement movement = StockMovement.builder()
+                .productId(product.getId())
+                .type(type)
+                .quantity(dto.quantity())
+                .unitSalePrice(dto.unitSalePrice())
+                .notes(dto.notes())
+                .reason(resolveMovementReason(type))
+                .build();
+
+        product.setStockQuantity(nextQuantity);
+        StockMovement saved = stockMovementRepository.save(movement);
+        productRepository.save(product);
+
+        return new StockMovementDTO(
+                saved.getId(),
+                saved.getProductId(),
+                saved.getType(),
+                saved.getQuantity(),
+                saved.getUnitSalePrice(),
+                saved.getNotes(),
+                saved.getReason(),
+                saved.getCreatedAt()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategoryResponseDTO> getCategories(UUID barbershopId) {
+        return categoryRepository.findByBarbershopIdOrderByNameAsc(barbershopId).stream()
+                .map(this::toCategoryResponse)
+                .toList();
+    }
+
+    @Transactional
+    public CategoryResponseDTO createCategory(UUID barbershopId, CategoryRequestDTO dto) {
+        String name = normalizeCategoryName(dto.name());
+        if (categoryRepository.existsByNameIgnoreCaseAndBarbershopId(name, barbershopId)) {
+            throw new IllegalStateException("Categoria já existe para esta barbearia.");
+        }
+
+        Category saved = categoryRepository.save(Category.builder()
+                .barbershopId(barbershopId)
+                .name(name)
+                .build());
+
+        return toCategoryResponse(saved);
+    }
+
+    @Transactional
+    public CategoryResponseDTO updateCategory(UUID barbershopId, UUID categoryId, CategoryRequestDTO dto) {
+        Category category = categoryRepository.findByIdAndBarbershopId(categoryId, barbershopId)
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada: " + categoryId));
+        String name = normalizeCategoryName(dto.name());
+        if (!category.getName().equalsIgnoreCase(name)
+                && categoryRepository.existsByNameIgnoreCaseAndBarbershopId(name, barbershopId)) {
+            throw new IllegalStateException("Categoria já existe para esta barbearia.");
+        }
+
+        category.setName(name);
+        return toCategoryResponse(categoryRepository.save(category));
+    }
+
+    @Transactional
+    public void deleteCategory(UUID barbershopId, UUID categoryId) {
+        Category category = categoryRepository.findByIdAndBarbershopId(categoryId, barbershopId)
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada: " + categoryId));
+
+        if (productRepository.existsByDynamicCategoryIdAndActiveTrue(categoryId)) {
+            throw new IllegalStateException("Categoria possui produtos ativos. Reclassifique antes de excluir.");
+        }
+
+        categoryRepository.delete(category);
     }
 
     private InventoryProductItemDTO toInventoryItem(Product product) {
@@ -222,6 +330,8 @@ public class ProductService {
         return new InventoryProductItemDTO(
                 product.getId(),
                 product.getName(),
+                product.getDynamicCategory() != null ? product.getDynamicCategory().getId() : null,
+                product.getDynamicCategory() != null ? product.getDynamicCategory().getName() : null,
                 product.getCategory(),
                 product.getPrice(),
                 product.getStockQuantity(),
@@ -243,5 +353,32 @@ public class ProductService {
                         p.getRequiresRestock() != null && p.getRequiresRestock() == 1
                 ))
                 .toList();
+    }
+
+    private Category resolveCategory(UUID barbershopId, UUID categoryId) {
+        if (categoryId == null) {
+            return null;
+        }
+        return categoryRepository.findByIdAndBarbershopId(categoryId, barbershopId)
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada: " + categoryId));
+    }
+
+    private CategoryResponseDTO toCategoryResponse(Category category) {
+        return new CategoryResponseDTO(category.getId(), category.getName(), category.getBarbershopId());
+    }
+
+    private String normalizeCategoryName(String name) {
+        return name == null ? "" : name.trim().replaceAll("\\s+", " ");
+    }
+
+    private String resolveMovementReason(MovementType type) {
+        return switch (type) {
+            case IN -> "Entrada";
+            case RETURN -> "Devolução";
+            case OUT -> "Saída";
+            case OUT_CONSUMPTION -> "Consumo interno";
+            case OUT_SALE -> "Venda";
+            case LOSS -> "Perda / Descarte";
+        };
     }
 }

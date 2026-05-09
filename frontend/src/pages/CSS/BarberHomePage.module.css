@@ -207,6 +207,26 @@
     }
 }
 
+@media (max-width: 900px) {
+    .teamManagementGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .teamMemberCard {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .teamMemberActions {
+        justify-content: flex-start;
+    }
+
+    .commissionForm,
+    .commissionList li {
+        grid-template-columns: 1fr;
+    }
+}
+
 .loadingContainer {
     color: white;
     text-align: center;
@@ -594,6 +614,236 @@
     color: #a6a6a6;
     line-height: 1.45;
     font-size: 0.9rem;
+}
+
+.teamManagementGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr);
+    gap: 14px;
+    align-items: start;
+}
+
+.teamPanel {
+    border: 1px solid #2f2f2f;
+    border-radius: 16px;
+    background:
+        radial-gradient(circle at 100% 0%, rgb(193 144 6 / 10%), transparent 30%),
+        linear-gradient(180deg, #181818 0%, #121212 100%);
+    padding: 1rem;
+}
+
+.teamPanelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.teamPanelHeader h2 {
+    margin: 0;
+    color: #f5f5f5;
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 1rem;
+}
+
+.teamInviteButtonInline {
+    height: 38px;
+    padding: 0 13px;
+    border: none;
+    border-radius: 10px;
+    background: #c19006;
+    color: #161616;
+    cursor: pointer;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 800;
+}
+
+.teamList {
+    display: grid;
+    gap: 10px;
+}
+
+.teamMemberCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid #2c2c2c;
+    border-radius: 14px;
+    background: #161616;
+    padding: 12px;
+}
+
+.teamMemberMain {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.teamAvatar,
+.teamAvatarFallback {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    flex: 0 0 auto;
+}
+
+.teamAvatar {
+    object-fit: cover;
+}
+
+.teamAvatarFallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #4b3b16;
+    background: #2c220f;
+    color: #f0d8a2;
+    font-weight: 800;
+}
+
+.teamMemberMain h3 {
+    margin: 0;
+    color: #f3f3f3;
+    font-size: 0.98rem;
+}
+
+.teamMemberMain p {
+    margin: 0.22rem 0;
+    color: #a9a194;
+    font-size: 0.84rem;
+    overflow-wrap: anywhere;
+}
+
+.teamMemberMain span {
+    color: #d7be7a;
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+
+.teamMemberActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.teamMemberActions button,
+.commissionForm button,
+.commissionList button {
+    min-height: 36px;
+    border-radius: 10px;
+    border: 1px solid #4b3b16;
+    background: #241d10;
+    color: #f0d8a2;
+    cursor: pointer;
+    padding: 0 12px;
+    font-weight: 800;
+}
+
+.teamDangerButton,
+.commissionList button {
+    border-color: #623131 !important;
+    background: #2a1414 !important;
+    color: #ffb7b7 !important;
+}
+
+.commissionForm {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 90px auto;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.commissionForm select,
+.commissionForm input {
+    height: 40px;
+    border: 1px solid #343434;
+    border-radius: 10px;
+    background: #141414;
+    color: #f2f2f2;
+    padding: 0 10px;
+}
+
+.commissionList {
+    list-style: none;
+    display: grid;
+    gap: 8px;
+}
+
+.commissionList li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #2c2c2c;
+    border-radius: 12px;
+    background: #151515;
+    padding: 10px;
+}
+
+.commissionList span {
+    color: #e7e1d4;
+    font-weight: 700;
+}
+
+.commissionList strong {
+    color: #f0d8a2;
+}
+
+.conflictList {
+    list-style: none;
+    display: grid;
+    gap: 8px;
+    margin: 12px 0;
+    max-height: 220px;
+    overflow: auto;
+}
+
+.conflictList li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 10px;
+    border: 1px solid #2f2f2f;
+    border-radius: 10px;
+    background: #151515;
+    padding: 10px;
+}
+
+.conflictList span {
+    color: #f0d8a2;
+    font-weight: 800;
+}
+
+.conflictList strong {
+    color: #f4f4f4;
+    font-size: 0.88rem;
+}
+
+.conflictList small {
+    color: #aaa;
+    grid-column: 1 / -1;
+}
+
+.removalOptions {
+    display: grid;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.removalOptions label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #e4dece;
+    font-weight: 700;
+}
+
+.removalOptions input {
+    accent-color: #c19006;
 }
 
 .profileStack {

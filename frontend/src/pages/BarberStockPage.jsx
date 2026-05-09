@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { PencilSimple, Trash } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import api from '../services/api';
@@ -6,57 +7,20 @@ import { logoutUser } from '../services/authService';
 import { isCustomer, isOwnerUser } from '../services/userContext';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
+import StockMovementModal from '../components/StockMovementModal/StockMovementModal';
 import styles from './CSS/BarberStockPage.module.css';
 
-const defaultItems = [
-  {
-    id: 'default-1',
-    name: 'Pomada Modeladora',
-    category: 'Finalizacao',
-    quantity: 0,
-    minQuantity: 0,
-    costPrice: 0,
-  },
-  {
-    id: 'default-2',
-    name: 'Navalha Descartavel',
-    category: 'Acessorios',
-    quantity: 0,
-    minQuantity: 0,
-    costPrice: 0,
-  },
-  {
-    id: 'default-3',
-    name: 'Toalha Profissional',
-    category: 'Higiene',
-    quantity: 0,
-    minQuantity: 0,
-    costPrice: 0,
-  },
-];
-
-const PRODUCT_CATEGORIES = [
-  { value: 'OTHER', label: 'Outros' },
-  { value: 'POMADE', label: 'Pomada' },
-  { value: 'WAX', label: 'Cera' },
-  { value: 'OIL', label: 'Oleo capilar' },
-  { value: 'BEARD_OIL', label: 'Oleo para barba' },
-  { value: 'AFTERSHAVE', label: 'Pos barba' },
-  { value: 'SHAMPOO', label: 'Shampoo' },
-  { value: 'CONDITIONER', label: 'Condicionador' },
-  { value: 'RAZOR', label: 'Navalha/Lamina' },
-  { value: 'SCISSORS', label: 'Tesoura' },
-  { value: 'COMB', label: 'Pente' },
-  { value: 'BRUSH', label: 'Escova' },
-  { value: 'ACCESSORY', label: 'Acessorio' },
-];
-
-const categoryLabelByValue = PRODUCT_CATEGORIES.reduce((acc, item) => {
-  acc[item.value] = item.label;
-  return acc;
-}, {});
-
 const asCurrency = (value) => `R$ ${Number(value || 0).toFixed(2).replace('.', ',')}`;
+
+const normalizeProduct = (item) => ({
+  id: item.id,
+  name: item.name || '',
+  categoryId: item.categoryId || null,
+  category: item.categoryName || item.category || 'Sem categoria',
+  quantity: Number(item.stockQuantity || 0),
+  minQuantity: Number(item.minStockQuantity || 0),
+  costPrice: Number(item.price || 0),
+});
 
 function BarberStockPage() {
   const navigate = useNavigate();
@@ -64,58 +28,33 @@ function BarberStockPage() {
   const [barber, setBarber] = useState(null);
   const [loadingBarber, setLoadingBarber] = useState(true);
   const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('Todas');
+  const [activePanel, setActivePanel] = useState('products');
+  const [movementProduct, setMovementProduct] = useState(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [editingCategory, setEditingCategory] = useState(null);
 
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('OTHER');
+  const [categoryId, setCategoryId] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [minQuantity, setMinQuantity] = useState('3');
   const [costPrice, setCostPrice] = useState('');
 
   const handleTabChange = (tab) => {
     if (tab === 'estoque') return;
-
-    if (tab === 'home') {
-      navigate('/barberHome');
-      return;
-    }
-
-    if (tab === 'agenda') {
-      navigate('/meus-agendamentos');
-      return;
-    }
-
-    if (tab === 'servicos') {
-      navigate('/barberHome/servicos');
-      return;
-    }
-
-    if (tab === 'novo-agendamento') {
-      navigate('/barberHome/novo-agendamento');
-      return;
-    }
-
-    if (tab === 'perfil') {
-      navigate('/barberHome/perfil');
-      return;
-    }
-
-    if (tab === 'time') {
-      navigate('/barberHome/time');
-      return;
-    }
-
-    if (tab === 'dashboards') {
-      navigate('/barberHome/dashboard');
-      return;
-    }
-
-    if (tab === 'agenda-equipe') {
-      navigate('/meus-agendamentos?view=team');
-    }
+    if (tab === 'home') navigate('/barberHome');
+    if (tab === 'agenda') navigate('/meus-agendamentos');
+    if (tab === 'servicos') navigate('/barberHome/servicos');
+    if (tab === 'novo-agendamento') navigate('/barberHome/novo-agendamento');
+    if (tab === 'perfil') navigate('/barberHome/perfil');
+    if (tab === 'time') navigate('/barberHome/time');
+    if (tab === 'dashboards') navigate('/barberHome/dashboard');
+    if (tab === 'agenda-equipe') navigate('/meus-agendamentos?view=team');
+    if (tab === 'indisponibilidade') navigate('/barber/indisponibilidade');
   };
 
   const handleLogout = () => {
@@ -124,19 +63,16 @@ function BarberStockPage() {
   };
 
   useEffect(() => {
-    // Guard: cliente não pode acessar painel de barbeiro
     if (isCustomer()) {
       navigate('/homepage', { replace: true });
       return;
     }
-    // Guard: estoque é funcionalidade exclusiva de owner
     if (!isOwnerUser()) {
       navigate('/barberHome', { replace: true });
       return;
     }
 
     const token = localStorage.getItem('token');
-
     if (!token) {
       navigate('/', { replace: true });
       return;
@@ -154,40 +90,28 @@ function BarberStockPage() {
       });
   }, [navigate]);
 
+  const loadStock = async () => {
+    if (!barber?.barbershopId) return;
+
+    try {
+      setLoadingItems(true);
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        api.get('/products', { params: { barbershopId: barber.barbershopId } }),
+        api.get('/products/categories', { params: { barbershopId: barber.barbershopId } }),
+      ]);
+
+      setItems((Array.isArray(productsResponse.data) ? productsResponse.data : []).map(normalizeProduct));
+      setCategories(Array.isArray(categoriesResponse.data) ? categoriesResponse.data : []);
+    } catch (error) {
+      console.error('Erro ao carregar estoque da API:', error);
+      toast.error('Nao foi possivel carregar o estoque.');
+    } finally {
+      setLoadingItems(false);
+    }
+  };
+
   useEffect(() => {
-    const loadProducts = async () => {
-      if (!barber?.barbershopId) {
-        setItems(defaultItems);
-        setLoadingItems(false);
-        return;
-      }
-
-      try {
-        setLoadingItems(true);
-        const response = await api.get('/products', {
-          params: { barbershopId: barber.barbershopId },
-        });
-
-        const apiItems = Array.isArray(response.data) ? response.data : [];
-        const normalized = apiItems.map((item) => ({
-          id: item.id,
-          name: item.name || '',
-          category: categoryLabelByValue[item.category] || 'Outros',
-          quantity: Number(item.stockQuantity || 0),
-          minQuantity: Number(item.minStockQuantity || 0),
-          costPrice: Number(item.price || 0),
-        }));
-
-        setItems(normalized);
-      } catch (error) {
-        console.error('Erro ao carregar estoque da API:', error);
-        setItems(defaultItems);
-      } finally {
-        setLoadingItems(false);
-      }
-    };
-
-    loadProducts();
+    loadStock();
   }, [barber?.barbershopId]);
 
   const totalProducts = items.length;
@@ -206,7 +130,7 @@ function BarberStockPage() {
     [items],
   );
 
-  const categories = useMemo(() => {
+  const filterOptions = useMemo(() => {
     const unique = [...new Set(items.map((item) => item.category).filter(Boolean))];
     return ['Todas', ...unique.sort((a, b) => a.localeCompare(b))];
   }, [items]);
@@ -227,11 +151,10 @@ function BarberStockPage() {
   const handleAddItem = async (e) => {
     e.preventDefault();
 
-    if (!name.trim() || !category.trim() || !quantity || !minQuantity || !costPrice) {
+    if (!name.trim() || !categoryId || !quantity || !minQuantity || !costPrice || !barber?.barbershopId) {
+      toast.info('Preencha produto, categoria, quantidade e valor.');
       return;
     }
-
-    if (!barber?.barbershopId) return;
 
     try {
       setIsSaving(true);
@@ -239,25 +162,15 @@ function BarberStockPage() {
       const response = await api.post('/products', {
         barbershopId: barber.barbershopId,
         name: name.trim(),
-        category,
+        categoryId,
         stockQuantity: Number(quantity),
         minStockQuantity: Number(minQuantity),
         price: Number(costPrice),
       });
 
-      const created = response.data;
-      const newItem = {
-        id: created.id,
-        name: created.name || name.trim(),
-        category: categoryLabelByValue[created.category] || categoryLabelByValue[category] || 'Outros',
-        quantity: Number(created.stockQuantity ?? quantity),
-        minQuantity: Number(created.minStockQuantity ?? minQuantity),
-        costPrice: Number(created.price ?? costPrice),
-      };
-
-      setItems((prev) => [newItem, ...prev]);
+      setItems((prev) => [normalizeProduct(response.data), ...prev]);
       setName('');
-      setCategory('OTHER');
+      setCategoryId('');
       setQuantity('1');
       setMinQuantity('3');
       setCostPrice('');
@@ -269,18 +182,68 @@ function BarberStockPage() {
     }
   };
 
-  const updateItemQuantity = async (id, delta) => {
-    const target = items.find((item) => item.id === id);
-    if (!target) return;
-
-    const nextQuantity = Math.max(0, Number(target.quantity || 0) + delta);
+  const handleCreateCategory = async (event) => {
+    event.preventDefault();
+    if (!newCategoryName.trim() || !barber?.barbershopId) return;
 
     try {
-      await api.put(`/products/${id}`, { stockQuantity: nextQuantity });
-      setItems((prev) => prev.map((item) => (item.id === id ? { ...item, quantity: nextQuantity } : item)));
+      const response = await api.post('/products/categories', { name: newCategoryName.trim() }, {
+        params: { barbershopId: barber.barbershopId },
+      });
+      setCategories((prev) => [...prev, response.data].sort((a, b) => a.name.localeCompare(b.name)));
+      setNewCategoryName('');
+      toast.success('Categoria criada.');
     } catch (error) {
-      console.error('Erro ao atualizar estoque:', error);
-      toast.error('Nao foi possivel atualizar a quantidade agora.');
+      console.error('Erro ao criar categoria:', error);
+      toast.error(error?.response?.data?.message || 'Nao foi possivel criar a categoria.');
+    }
+  };
+
+  const handleUpdateCategory = async (event) => {
+    event.preventDefault();
+    if (!editingCategory?.name?.trim() || !barber?.barbershopId) return;
+
+    try {
+      const response = await api.put(`/products/categories/${editingCategory.id}`, { name: editingCategory.name.trim() }, {
+        params: { barbershopId: barber.barbershopId },
+      });
+      setCategories((prev) => prev.map((cat) => (cat.id === response.data.id ? response.data : cat)));
+      setItems((prev) => prev.map((item) => (
+        item.categoryId === response.data.id ? { ...item, category: response.data.name } : item
+      )));
+      setEditingCategory(null);
+      toast.success('Categoria atualizada.');
+    } catch (error) {
+      console.error('Erro ao atualizar categoria:', error);
+      toast.error(error?.response?.data?.message || 'Nao foi possivel atualizar a categoria.');
+    }
+  };
+
+  const handleDeleteCategory = async (cat) => {
+    if (!window.confirm(`Excluir a categoria "${cat.name}"?`)) return;
+
+    try {
+      await api.delete(`/products/categories/${cat.id}`, {
+        params: { barbershopId: barber.barbershopId },
+      });
+      setCategories((prev) => prev.filter((item) => item.id !== cat.id));
+      if (categoryId === cat.id) setCategoryId('');
+      toast.success('Categoria excluida.');
+    } catch (error) {
+      console.error('Erro ao excluir categoria:', error);
+      toast.error(error?.response?.data?.message || 'Reclassifique produtos ativos antes de excluir.');
+    }
+  };
+
+  const handleCreateMovement = async (payload) => {
+    try {
+      await api.post('/products/stock-movements', payload);
+      await loadStock();
+      setMovementProduct(null);
+      toast.success('Movimentacao registrada.');
+    } catch (error) {
+      console.error('Erro ao movimentar estoque:', error);
+      toast.error(error?.response?.data?.message || 'Nao foi possivel registrar a movimentacao.');
     }
   };
 
@@ -312,23 +275,23 @@ function BarberStockPage() {
           barbershopId={barber?.barbershopId}
         />
 
-  <section className={`${styles.heroSection} ${styles.animateItem} ${styles.delay1}`}>
+        <section className={`${styles.heroSection} ${styles.animateItem} ${styles.delay1}`}>
           <div>
             <p className={styles.heroKicker}>GESTAO DE ESTOQUE</p>
-            <h1>Controle o estoque com mais clareza e rapidez</h1>
+            <h1>Controle o estoque com categorias e baixas rastreaveis</h1>
             <p>
-              Cadastre produtos, ajuste quantidades e acompanhe alertas de nivel minimo em um painel unico.
+              Cadastre produtos, organize categorias e registre consumo, venda, perda ou devolucao sem perder historico.
             </p>
           </div>
 
           <div className={styles.heroInfoCard}>
             <span>Painel ativo</span>
-            <strong>Atualizacao local em tempo real</strong>
-            <small>Seu assistente para a sua organização</small>
+            <strong>{categories.length} categorias</strong>
+            <small>{lowStockItems.length} produtos em alerta</small>
           </div>
         </section>
 
-  <section className={`${styles.metricsGrid} ${styles.animateItem} ${styles.delay2}`}>
+        <section className={`${styles.metricsGrid} ${styles.animateItem} ${styles.delay2}`}>
           <article className={styles.metricCard}>
             <span className={styles.metricLabel}>Produtos cadastrados</span>
             <strong className={styles.metricValue}>{totalProducts}</strong>
@@ -340,176 +303,270 @@ function BarberStockPage() {
           </article>
 
           <article className={styles.metricCard}>
-            <span className={styles.metricLabel}>Custo total estimado</span>
+            <span className={styles.metricLabel}>Valor total estimado</span>
             <strong className={styles.metricValue}>{asCurrency(totalCostValue)}</strong>
           </article>
         </section>
 
-  <section className={`${styles.managementGrid} ${styles.animateItem} ${styles.delay3}`}>
-          <aside className={`${styles.panelCard} ${styles.createPanel}`}>
+        <div className={styles.segmentedControl}>
+          <button
+            type="button"
+            className={activePanel === 'products' ? styles.segmentActive : ''}
+            onClick={() => setActivePanel('products')}
+          >
+            Produtos
+          </button>
+          <button
+            type="button"
+            className={activePanel === 'categories' ? styles.segmentActive : ''}
+            onClick={() => setActivePanel('categories')}
+          >
+            Categorias
+          </button>
+        </div>
+
+        {activePanel === 'products' ? (
+          <section className={`${styles.managementGrid} ${styles.animateItem} ${styles.delay3}`}>
+            <aside className={`${styles.panelCard} ${styles.createPanel}`}>
+              <div className={styles.panelHeader}>
+                <h2>Novo produto</h2>
+              </div>
+
+              <form className={styles.form} onSubmit={handleAddItem}>
+                <label className={styles.formLabel} htmlFor="stock-name">Nome do produto</label>
+                <input
+                  id="stock-name"
+                  className={styles.formInput}
+                  type="text"
+                  placeholder="Ex: Gel fixador"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+
+                <div className={styles.inlineFields}>
+                  <div>
+                    <label className={styles.formLabel} htmlFor="stock-category">Categoria</label>
+                    <select
+                      id="stock-category"
+                      className={styles.formInput}
+                      value={categoryId}
+                      onChange={(e) => setCategoryId(e.target.value)}
+                      required
+                    >
+                      <option value="">Selecione</option>
+                      {categories.map((option) => (
+                        <option key={option.id} value={option.id}>{option.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={styles.formLabel} htmlFor="stock-cost">Valor unitario (R$)</label>
+                    <input
+                      id="stock-cost"
+                      className={styles.formInput}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={costPrice}
+                      onChange={(e) => setCostPrice(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className={styles.inlineFields}>
+                  <div>
+                    <label className={styles.formLabel} htmlFor="stock-quantity">Quantidade inicial</label>
+                    <input
+                      id="stock-quantity"
+                      className={styles.formInput}
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className={styles.formLabel} htmlFor="stock-min">Quantidade minima</label>
+                    <input
+                      id="stock-min"
+                      className={styles.formInput}
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={minQuantity}
+                      onChange={(e) => setMinQuantity(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button type="submit" className={styles.primaryButton} disabled={isSaving || categories.length === 0}>
+                  {isSaving ? 'Salvando...' : 'Adicionar produto'}
+                </button>
+              </form>
+
+              <p className={styles.helperText}>Crie ao menos uma categoria antes de cadastrar produtos.</p>
+            </aside>
+
+            <article className={`${styles.panelCard} ${styles.listPanel}`}>
+              <div className={styles.panelHeader}>
+                <h2>Inventario de produtos</h2>
+                <span className={styles.lowStockBadge}>
+                  {lowStockItems.length === 0 ? 'Nenhum com estoque baixo' : `${lowStockItems.length} com estoque baixo`}
+                </span>
+              </div>
+
+              <div className={styles.filtersRow}>
+                <input
+                  className={styles.searchInput}
+                  type="text"
+                  placeholder="Buscar por nome ou categoria"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+
+                <select
+                  className={styles.filterSelect}
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                >
+                  {filterOptions.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+
+              {loadingItems ? (
+                <p className={styles.mutedText}>Carregando estoque...</p>
+              ) : filteredItems.length ? (
+                <ul className={styles.itemsList}>
+                  {filteredItems.map((item) => {
+                    const isLow = Number(item.quantity) <= Number(item.minQuantity);
+
+                    return (
+                      <li key={item.id} className={styles.itemCard}>
+                        <div className={styles.itemMainInfo}>
+                          <p className={styles.itemName}>{item.name}</p>
+                          <div className={styles.itemMetaRow}>
+                            <span className={styles.itemMeta}>{item.category}</span>
+                            <span className={isLow ? styles.itemAlert : styles.itemMeta}>
+                              Minimo: {item.minQuantity}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className={styles.itemRightInfo}>
+                          <strong className={styles.itemCost}>{asCurrency(item.costPrice)}</strong>
+                          <span className={styles.quantityPill}>{item.quantity} un.</span>
+
+                          <button
+                            type="button"
+                            className={styles.iconActionButton}
+                            onClick={() => setMovementProduct(item)}
+                            aria-label="Movimentar estoque"
+                            title="Movimentar estoque"
+                          >
+                            <PencilSimple size={18} weight="bold" />
+                          </button>
+
+                          <button
+                            type="button"
+                            className={styles.deleteButton}
+                            onClick={() => handleDeleteItem(item.id)}
+                            aria-label="Excluir item"
+                            title="Excluir item"
+                          >
+                            <Trash size={18} weight="bold" />
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className={styles.mutedText}>Nenhum produto encontrado com esse filtro.</p>
+              )}
+            </article>
+          </section>
+        ) : (
+          <section className={`${styles.panelCard} ${styles.categoriesPanel} ${styles.animateItem} ${styles.delay3}`}>
             <div className={styles.panelHeader}>
-              <h2>Novo produto</h2>
+              <h2>Categorias</h2>
+              <span className={styles.lowStockBadge}>{categories.length} cadastradas</span>
             </div>
 
-            <form className={styles.form} onSubmit={handleAddItem}>
-              <label className={styles.formLabel} htmlFor="stock-name">Nome do produto</label>
+            <form className={styles.categoryForm} onSubmit={handleCreateCategory}>
               <input
-                id="stock-name"
                 className={styles.formInput}
                 type="text"
-                placeholder="Ex: Gel fixador"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
+                placeholder="Ex: Finalizacao"
+                value={newCategoryName}
+                onChange={(event) => setNewCategoryName(event.target.value)}
               />
-
-              <div className={styles.inlineFields}>
-                <div>
-                  <label className={styles.formLabel} htmlFor="stock-category">Categoria</label>
-                  <select
-                    id="stock-category"
-                    className={styles.formInput}
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    required
-                  >
-                    {PRODUCT_CATEGORIES.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className={styles.formLabel} htmlFor="stock-cost">Custo unitario (R$)</label>
-                  <input
-                    id="stock-cost"
-                    className={styles.formInput}
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={costPrice}
-                    onChange={(e) => setCostPrice(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className={styles.inlineFields}>
-                <div>
-                  <label className={styles.formLabel} htmlFor="stock-quantity">Quantidade inicial</label>
-                  <input
-                    id="stock-quantity"
-                    className={styles.formInput}
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className={styles.formLabel} htmlFor="stock-min">Quantidade minima</label>
-                  <input
-                    id="stock-min"
-                    className={styles.formInput}
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={minQuantity}
-                    onChange={(e) => setMinQuantity(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <button type="submit" className={styles.primaryButton} disabled={isSaving}>
-                {isSaving ? 'Salvando...' : 'Adicionar produto'}
-              </button>
+              <button type="submit" className={styles.primaryButton}>Criar categoria</button>
             </form>
 
-            <p className={styles.helperText}>Dica: mantenha o minimo alinhado com sua demanda semanal.</p>
-          </aside>
-
-          <article className={`${styles.panelCard} ${styles.listPanel}`}>
-            <div className={styles.panelHeader}>
-              <h2>Inventario de produtos</h2>
-              <span className={styles.lowStockBadge}>
-                {lowStockItems.length === 0 ? 'Nenhum com estoque baixo' : `${lowStockItems.length} com estoque baixo`}
-              </span>
-            </div>
-
-            <div className={styles.filtersRow}>
-              <input
-                className={styles.searchInput}
-                type="text"
-                placeholder="Buscar por nome ou categoria"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-
-              <select
-                className={styles.filterSelect}
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                {categories.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </div>
-
-            {loadingItems ? (
-              <p className={styles.mutedText}>Carregando estoque...</p>
-            ) : filteredItems.length ? (
-              <ul className={styles.itemsList}>
-                {filteredItems.map((item) => {
-                  const isLow = Number(item.quantity) <= Number(item.minQuantity);
-
-                  return (
-                    <li key={item.id} className={styles.itemCard}>
-                      <div className={styles.itemMainInfo}>
-                        <p className={styles.itemName}>{item.name}</p>
-                        <div className={styles.itemMetaRow}>
-                          <span className={styles.itemMeta}>{item.category}</span>
-                          <span className={isLow ? styles.itemAlert : styles.itemMeta}>
-                            Minimo: {item.minQuantity}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className={styles.itemRightInfo}>
-                        <strong className={styles.itemCost}>{asCurrency(item.costPrice)}</strong>
-
-                        <div className={styles.quantityControl}>
-                          <button type="button" onClick={() => updateItemQuantity(item.id, -1)}>-</button>
-                          <span>{item.quantity}</span>
-                          <button type="button" onClick={() => updateItemQuantity(item.id, 1)}>+</button>
-                        </div>
-
-                        <button
-                          type="button"
-                          className={styles.deleteButton}
-                          onClick={() => handleDeleteItem(item.id)}
-                          aria-label="Excluir item"
-                        >
-                          🗑
-                        </button>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <p className={styles.mutedText}>Nenhum produto encontrado com esse filtro.</p>
+            {editingCategory && (
+              <form className={styles.categoryForm} onSubmit={handleUpdateCategory}>
+                <input
+                  className={styles.formInput}
+                  type="text"
+                  value={editingCategory.name}
+                  onChange={(event) => setEditingCategory((prev) => ({ ...prev, name: event.target.value }))}
+                  autoFocus
+                />
+                <button type="submit" className={styles.primaryButton}>Salvar</button>
+                <button type="button" className={styles.secondaryButton} onClick={() => setEditingCategory(null)}>Cancelar</button>
+              </form>
             )}
-          </article>
-        </section>
+
+            <ul className={styles.categoryList}>
+              {categories.map((cat) => (
+                <li key={cat.id} className={styles.categoryItem}>
+                  <span>{cat.name}</span>
+                  <div>
+                    <button
+                      type="button"
+                      className={styles.iconActionButton}
+                      onClick={() => setEditingCategory(cat)}
+                      aria-label="Editar categoria"
+                      title="Editar categoria"
+                    >
+                      <PencilSimple size={17} weight="bold" />
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.deleteButton}
+                      onClick={() => handleDeleteCategory(cat)}
+                      aria-label="Excluir categoria"
+                      title="Excluir categoria"
+                    >
+                      <Trash size={17} weight="bold" />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
 
       <BarberNavbar activeTab="estoque" onTabChange={handleTabChange} isOwner={true} barbershopId={barber?.barbershopId} />
+
+      {movementProduct && (
+        <StockMovementModal
+          product={movementProduct}
+          onClose={() => setMovementProduct(null)}
+          onConfirm={handleCreateMovement}
+        />
+      )}
     </div>
   );
 }

@@ -19,6 +19,7 @@ import { isCustomer } from '../services/userContext';
 import { maskCpf, maskPhone, onlyDigits } from '../utils/inputMasks';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
+import CropImageModal from '../components/CropImageModal/CropImageModal';
 import { uploadBarberProfilePhoto } from '../services/userProfileService';
 import styles from './CSS/BarberHomePage.module.css';
 
@@ -74,6 +75,7 @@ function BarberProfilePage() {
     const profilePhotoInputRef = useRef(null);
     const logoInputRef = useRef(null);
     const bannerInputRef = useRef(null);
+    const cropObjectUrlRef = useRef(null);
 
     // ── actAsBarber toggle ─────────────────────────────────────────────────────
     const [actAsBarber, setActAsBarber] = useState(true);
@@ -102,6 +104,7 @@ function BarberProfilePage() {
     const [savingBarbershopInfo, setSavingBarbershopInfo] = useState(false);
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [uploadingBanner, setUploadingBanner] = useState(false);
+    const [cropModal, setCropModal] = useState(null);
     const [barbershopForm, setBarbershopForm] = useState({ name: '', address: '' });
     const [barbershopMedia, setBarbershopMedia] = useState({ logoUrl: '', bannerUrl: '' });
 
@@ -115,10 +118,18 @@ function BarberProfilePage() {
                 const data = res.data;
                 setBarber(data);
                 setActAsBarber(data?.actAsBarber ?? true);
+                if (data?.barbershopName) localStorage.setItem('barbershopName', data.barbershopName);
+                if (data?.barbershopId) localStorage.setItem('barbershopId', String(data.barbershopId));
                 setLoading(false);
             })
             .catch(() => { setLoading(false); navigate('/'); });
     }, [navigate]);
+
+    useEffect(() => () => {
+        if (cropObjectUrlRef.current) {
+            URL.revokeObjectURL(cropObjectUrlRef.current);
+        }
+    }, []);
 
     // ── Carrega a grade de horários multi-bloco ────────────────────────────────
     useEffect(() => {
@@ -373,27 +384,34 @@ function BarberProfilePage() {
         navigate('/');
     };
 
+    const closeCropModal = useCallback(() => {
+        if (cropObjectUrlRef.current) {
+            URL.revokeObjectURL(cropObjectUrlRef.current);
+            cropObjectUrlRef.current = null;
+        }
+        setCropModal(null);
+    }, []);
+
+    const openCropModal = useCallback((target, file) => {
+        if (cropObjectUrlRef.current) {
+            URL.revokeObjectURL(cropObjectUrlRef.current);
+        }
+
+        const src = URL.createObjectURL(file);
+        cropObjectUrlRef.current = src;
+        setCropModal({
+            target,
+            src,
+            fileName: file.name,
+        });
+    }, []);
+
     const handleUploadProfilePhoto = async (event) => {
         const file = event.target.files?.[0];
         event.target.value = '';
         if (!file) return;
 
-        setUploadingProfilePhoto(true);
-        try {
-            const response = await uploadBarberProfilePhoto(file);
-            const imageUrl = typeof response === 'string' ? response : response?.imageUrl;
-
-            if (imageUrl) {
-                setBarber(prev => ({ ...prev, imageUrl }));
-                localStorage.setItem('userProfileImage', imageUrl);
-            }
-
-            toast.success('Foto de perfil atualizada!');
-        } catch (error) {
-            toast.error(error?.response?.data?.message || 'Erro ao enviar foto de perfil.');
-        } finally {
-            setUploadingProfilePhoto(false);
-        }
+        openCropModal('profile', file);
     };
 
     const handleBarbershopFormChange = (event) => {
@@ -410,6 +428,7 @@ function BarberProfilePage() {
                 name: barbershopForm.name.trim(),
                 address: barbershopForm.address.trim(),
             });
+            localStorage.setItem('barbershopName', barbershopForm.name.trim());
             toast.success('Dados da barbearia atualizados com sucesso!');
         } catch (error) {
             toast.error(error?.response?.data?.message || 'Erro ao atualizar dados da barbearia.');
@@ -423,14 +442,48 @@ function BarberProfilePage() {
         event.target.value = '';
         if (!file) return;
 
+        openCropModal('logo', file);
+    };
+
+    const handleConfirmCrop = async (blob) => {
+        if (!cropModal?.target) return;
+
+        const croppedFile = new File(
+            [blob],
+            cropModal.target === 'profile' ? 'foto-perfil.jpg' : 'logo-barbearia.jpg',
+            { type: blob.type || 'image/jpeg' },
+        );
+
+        if (cropModal.target === 'profile') {
+            setUploadingProfilePhoto(true);
+            try {
+                const response = await uploadBarberProfilePhoto(croppedFile);
+                const imageUrl = typeof response === 'string' ? response : response?.imageUrl;
+
+                if (imageUrl) {
+                    setBarber(prev => ({ ...prev, imageUrl }));
+                    localStorage.setItem('userProfileImage', imageUrl);
+                }
+
+                toast.success('Foto de perfil atualizada!');
+                closeCropModal();
+            } catch (error) {
+                toast.error(error?.response?.data?.message || 'Erro ao enviar foto de perfil.');
+            } finally {
+                setUploadingProfilePhoto(false);
+            }
+            return;
+        }
+
         setUploadingLogo(true);
         try {
-            const response = await uploadMyBarbershopLogo(file);
+            const response = await uploadMyBarbershopLogo(croppedFile);
             const logoUrl = typeof response === 'string' ? response : response?.logoUrl;
             if (logoUrl) {
                 setBarbershopMedia(prev => ({ ...prev, logoUrl }));
             }
             toast.success('Logo da barbearia atualizada!');
+            closeCropModal();
         } catch (error) {
             toast.error(error?.response?.data?.message || 'Erro ao atualizar logo da barbearia.');
         } finally {
@@ -542,6 +595,7 @@ function BarberProfilePage() {
         else if (tab === 'dashboards')   navigate('/barberHome/dashboard');
         else if (tab === 'agenda-equipe')     navigate('/meus-agendamentos?view=team');
         else if (tab === 'novo-agendamento') navigate('/barberHome/novo-agendamento');
+        else if (tab === 'indisponibilidade') navigate('/barber/indisponibilidade');
     };
 
     if (loading) return <div className={styles.loadingContainer}>Carregando perfil...</div>;
@@ -879,6 +933,17 @@ function BarberProfilePage() {
                     onTabChange={handleTabChange}
                     isOwner={barber?.isOwner === true}
                     barbershopId={barber?.barbershopId}
+                />
+            )}
+
+            {cropModal && (
+                <CropImageModal
+                    src={cropModal.src}
+                    title={cropModal.target === 'profile' ? 'Ajustar foto de perfil' : 'Ajustar logo da barbearia'}
+                    aspect={1}
+                    outputSize={{ width: 600, height: 600 }}
+                    onCancel={closeCropModal}
+                    onConfirm={handleConfirmCrop}
                 />
             )}
 

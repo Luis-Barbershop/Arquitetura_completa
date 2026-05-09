@@ -170,6 +170,59 @@ public class BarbershopController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Lista membros da equipe", description = "Retorna owner e colaboradores com regras de comissão por serviço.")
+    @GetMapping("/my-shop/team")
+    public ResponseEntity<List<TeamMemberResponseDTO>> listTeamMembers(@Parameter(hidden = true) Principal principal) {
+        return ResponseEntity.ok(barbershopService.listTeamMembers(principal.getName()));
+    }
+
+    @Operation(summary = "Lista comissões de um barbeiro", description = "Retorna regras de comissão por serviço do barbeiro.")
+    @GetMapping("/my-shop/team/{barberId}/commissions")
+    public ResponseEntity<List<CommissionRuleDTO>> getCommissions(
+            @Parameter(hidden = true) Principal principal,
+            @PathVariable UUID barberId) {
+        return ResponseEntity.ok(barbershopService.getCommissions(principal.getName(), barberId));
+    }
+
+    @Operation(summary = "Cria ou atualiza comissão", description = "Define percentual de comissão do barbeiro para um serviço.")
+    @PostMapping("/my-shop/team/{barberId}/commissions")
+    public ResponseEntity<CommissionRuleDTO> upsertCommission(
+            @Parameter(hidden = true) Principal principal,
+            @PathVariable UUID barberId,
+            @RequestBody @Valid CommissionRuleRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                barbershopService.upsertCommission(principal.getName(), barberId, dto)
+        );
+    }
+
+    @Operation(summary = "Remove comissão", description = "Remove regra de comissão de um barbeiro.")
+    @DeleteMapping("/my-shop/team/{barberId}/commissions/{ruleId}")
+    public ResponseEntity<Void> deleteCommission(
+            @Parameter(hidden = true) Principal principal,
+            @PathVariable UUID barberId,
+            @PathVariable UUID ruleId) {
+        barbershopService.deleteCommission(principal.getName(), barberId, ruleId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Lista conflitos de remoção", description = "Contrato para agendamentos futuros antes de remover colaborador.")
+    @GetMapping("/my-shop/team/{barberId}/conflicts")
+    public ResponseEntity<List<AppointmentSummaryDTO>> getRemovalConflicts(
+            @Parameter(hidden = true) Principal principal,
+            @PathVariable UUID barberId) {
+        return ResponseEntity.ok(barbershopService.getRemovalConflicts(principal.getName(), barberId));
+    }
+
+    @Operation(summary = "Remove membro da equipe", description = "Remove barbeiro, publicando evento barber.removed com ação escolhida.")
+    @DeleteMapping("/my-shop/team/{barberId}")
+    public ResponseEntity<Void> removeTeamMember(
+            @Parameter(hidden = true) Principal principal,
+            @PathVariable UUID barberId,
+            @RequestBody(required = false) RemoveTeamMemberRequestDTO dto) {
+        barbershopService.removeTeamMember(principal.getName(), barberId, dto);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Encerra as atividades da barbearia", description = "Exclui/Desativa permanentemente a barbearia do dono logado. Requer confirmação via DTO.")
     @DeleteMapping("/my-shop/close")
     public ResponseEntity<Void> closeBarbershop(

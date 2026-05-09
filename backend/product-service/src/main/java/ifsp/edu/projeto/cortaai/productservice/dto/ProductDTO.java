@@ -15,6 +15,8 @@ public record ProductDTO(
         String name,
         String description,
         BigDecimal price,
+        UUID categoryId,
+        String categoryName,
         ProductCategory category,
         Integer stockQuantity,
         Integer minStockQuantity,

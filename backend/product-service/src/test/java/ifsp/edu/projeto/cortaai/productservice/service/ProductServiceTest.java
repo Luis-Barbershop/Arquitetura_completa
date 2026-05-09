@@ -10,6 +10,7 @@ import ifsp.edu.projeto.cortaai.productservice.model.MovementType;
 import ifsp.edu.projeto.cortaai.productservice.model.Product;
 import ifsp.edu.projeto.cortaai.productservice.model.ProductCategory;
 import ifsp.edu.projeto.cortaai.productservice.model.StockMovement;
+import ifsp.edu.projeto.cortaai.productservice.repository.CategoryRepository;
 import ifsp.edu.projeto.cortaai.productservice.repository.ProductRepository;
 import ifsp.edu.projeto.cortaai.productservice.repository.StockMovementRepository;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,9 @@ class ProductServiceTest {
     private ProductRepository productRepository;
 
     @Mock
+    private CategoryRepository categoryRepository;
+
+    @Mock
     private StockMovementRepository stockMovementRepository;
 
     @Mock
@@ -59,6 +63,7 @@ class ProductServiceTest {
                 "Modeladora",
                 new BigDecimal("39.90"),
                 null,
+                null,
                 12,
                 null,
                 "https://cdn.test/pomada.png"
@@ -76,7 +81,7 @@ class ProductServiceTest {
                 .active(true)
                 .build();
         ProductDTO dto = new ProductDTO(productId, shopId, "Pomada", "Modeladora",
-                new BigDecimal("39.90"), ProductCategory.OTHER, 12, 0,
+                new BigDecimal("39.90"), null, null, ProductCategory.OTHER, 12, 0,
                 "https://cdn.test/pomada.png", true, null);
 
         when(productRepository.save(any(Product.class))).thenReturn(saved);
@@ -115,6 +120,7 @@ class ProductServiceTest {
                 "Shampoo Premium",
                 "Atualizado",
                 new BigDecimal("32.00"),
+                null,
                 ProductCategory.BEARD_OIL,
                 4,
                 1,
@@ -122,7 +128,7 @@ class ProductServiceTest {
                 false
         );
         ProductDTO dto = new ProductDTO(productId, product.getBarbershopId(), "Shampoo Premium", "Atualizado",
-                new BigDecimal("32.00"), ProductCategory.BEARD_OIL, 4, 1,
+                new BigDecimal("32.00"), null, null, ProductCategory.BEARD_OIL, 4, 1,
                 "https://cdn.test/shampoo.png", false, null);
 
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
@@ -156,10 +162,10 @@ class ProductServiceTest {
                 .active(true)
                 .build();
 
-        when(productRepository.findInventoryPageByFilters(eq(shopId), eq("gel"), eq(ProductCategory.OTHER), eq(true), any(Pageable.class)))
+        when(productRepository.findInventoryPageByFilters(eq(shopId), eq("gel"), eq(ProductCategory.OTHER), eq(null), eq(true), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(lowStockProduct)));
 
-        InventoryPageDTO page = productService.getInventoryPage(shopId, " gel ", ProductCategory.OTHER, true, -1, 500);
+        InventoryPageDTO page = productService.getInventoryPage(shopId, " gel ", ProductCategory.OTHER, null, true, -1, 500);
 
         assertThat(page.page()).isZero();
         assertThat(page.size()).isEqualTo(100);

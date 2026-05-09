@@ -111,6 +111,7 @@ const AgendaBarbeariaPage = () => {
         if (tab === 'time') { navigate('/barberHome/time'); return; }
         if (tab === 'dashboards') { navigate('/barberHome/dashboard'); return; }
         if (tab === 'novo-agendamento') { navigate('/barberHome/novo-agendamento'); return; }
+        if (tab === 'indisponibilidade') { navigate('/barber/indisponibilidade'); return; }
         navigate('/barberHome', { state: { activeTab: tab } });
     };
 

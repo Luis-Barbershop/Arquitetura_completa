@@ -8,6 +8,8 @@ import java.util.UUID;
 public record InventoryProductItemDTO(
         UUID id,
         String name,
+        UUID categoryId,
+        String categoryName,
         ProductCategory category,
         BigDecimal price,
         Integer stockQuantity,
@@ -15,4 +17,3 @@ public record InventoryProductItemDTO(
         boolean lowStock,
         boolean active
 ) {}
-

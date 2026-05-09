@@ -46,6 +46,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
 
     List<Appointment> findByBarbershopIdAndStartTimeBetween(UUID barbershopId, LocalDateTime start, LocalDateTime end);
 
+    @Query("SELECT a FROM Appointment a WHERE a.barberId = :barberId " +
+            "AND a.startTime >= :from " +
+            "AND a.status NOT IN ('CANCELLED', 'NO_SHOW', 'COMPLETED', 'CONCLUDED') " +
+            "ORDER BY a.startTime ASC")
+    List<Appointment> findFutureActiveByBarberId(
+            @Param("barberId") UUID barberId,
+            @Param("from") LocalDateTime from);
+
     @Query(value = "SELECT * FROM appointments WHERE customer_name IS NOT NULL AND customer_name <> '' AND customer_name NOT LIKE 'enc:v1:%'", nativeQuery = true)
     List<Appointment> findWithLegacyPlainCustomerName();
 }

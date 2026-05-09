@@ -498,6 +498,11 @@ const MeusAgendamentosPage = () => {
             return;
         }
 
+        if (tab === 'indisponibilidade') {
+            navigate('/barber/indisponibilidade');
+            return;
+        }
+
         navigate('/barberHome', { state: { activeTab: tab } });
     };
 

@@ -7,6 +7,7 @@ import ifsp.edu.projeto.cortaai.barbershopservice.exception.DomainConflictExcept
 import ifsp.edu.projeto.cortaai.barbershopservice.exception.ForbiddenException;
 import ifsp.edu.projeto.cortaai.barbershopservice.exception.NotFoundException;
 import ifsp.edu.projeto.cortaai.barbershopservice.exception.UserServiceUnavailableException;
+import ifsp.edu.projeto.cortaai.barbershopservice.feign.ScheduleServiceClient;
 import ifsp.edu.projeto.cortaai.barbershopservice.feign.UserServiceClient;
 import ifsp.edu.projeto.cortaai.barbershopservice.mapper.ActivityMapper;
 import ifsp.edu.projeto.cortaai.barbershopservice.mapper.BarbershopMapper;
@@ -25,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,11 +45,13 @@ public class BarbershopService {
     private final BarbershopReviewRepository barbershopReviewRepository;
     private final ActivityRepository activityRepository;
     private final BarbershopJoinRequestRepository joinRequestRepository;
+    private final BarberCommissionRuleRepository commissionRuleRepository;
     private final BarbershopHighlightRepository highlightRepository;
     private final BarbershopMapper barbershopMapper;
     private final ActivityMapper activityMapper;
     private final StorageService storageService;
     private final UserServiceClient userServiceClient;
+    private final ScheduleServiceClient scheduleServiceClient;
     private final RabbitTemplate rabbitTemplate;
 
     // ========== HELPERS ==========
@@ -326,8 +331,106 @@ public class BarbershopService {
     }
 
     public void removeBarber(String ownerUid, UUID barberId) {
+        removeTeamMember(ownerUid, barberId, new RemoveTeamMemberRequestDTO("CANCEL", null));
+    }
+
+    @Transactional(readOnly = true)
+    public List<TeamMemberResponseDTO> listTeamMembers(String ownerUid) {
         UserInfoDTO owner = resolveUserByUid(ownerUid);
         Barbershop shop = findOwnerShop(owner.getId());
+
+        List<UserInfoDTO> linkedBarbers;
+        try {
+            linkedBarbers = userServiceClient.getBarbersByBarbershop(shop.getId());
+        } catch (Exception ex) {
+            throw new UserServiceUnavailableException("Nao foi possivel consultar a equipe vinculada.");
+        }
+
+        Map<UUID, List<CommissionRuleDTO>> commissionsByBarber = commissionRuleRepository.findByBarbershopId(shop.getId())
+                .stream()
+                .collect(Collectors.groupingBy(
+                        BarberCommissionRule::getBarberId,
+                        Collectors.mapping(this::toCommissionRuleDTO, Collectors.toList())
+                ));
+
+        List<TeamMemberResponseDTO> team = new ArrayList<>();
+        team.add(toTeamMember(owner, true, commissionsByBarber.getOrDefault(owner.getId(), List.of())));
+
+        for (UserInfoDTO barber : linkedBarbers) {
+            if (barber == null || barber.getId() == null || barber.getId().equals(owner.getId())) {
+                continue;
+            }
+            team.add(toTeamMember(barber, false, commissionsByBarber.getOrDefault(barber.getId(), List.of())));
+        }
+
+        return team;
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommissionRuleDTO> getCommissions(String ownerUid, UUID barberId) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
+        Barbershop shop = findOwnerShop(owner.getId());
+        assertTeamMember(shop, owner, barberId);
+
+        return commissionRuleRepository.findByBarbershopIdAndBarberId(shop.getId(), barberId).stream()
+                .map(this::toCommissionRuleDTO)
+                .toList();
+    }
+
+    public CommissionRuleDTO upsertCommission(String ownerUid, UUID barberId, CommissionRuleRequestDTO dto) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
+        Barbershop shop = findOwnerShop(owner.getId());
+        assertTeamMember(shop, owner, barberId);
+
+        Activity activity = activityRepository.findById(dto.activityId())
+                .orElseThrow(() -> new NotFoundException("Atividade não encontrada."));
+        if (!activity.getBarbershop().getId().equals(shop.getId())) {
+            throw new ForbiddenException("Esta atividade não pertence à sua barbearia.");
+        }
+
+        BigDecimal percentage = dto.percentage();
+        BarberCommissionRule rule = commissionRuleRepository
+                .findByBarbershopIdAndBarberIdAndActivityId(shop.getId(), barberId, activity.getId())
+                .orElseGet(BarberCommissionRule::new);
+
+        rule.setBarbershopId(shop.getId());
+        rule.setBarberId(barberId);
+        rule.setActivity(activity);
+        rule.setPercentage(percentage);
+
+        return toCommissionRuleDTO(commissionRuleRepository.save(rule));
+    }
+
+    public void deleteCommission(String ownerUid, UUID barberId, UUID ruleId) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
+        Barbershop shop = findOwnerShop(owner.getId());
+        assertTeamMember(shop, owner, barberId);
+
+        BarberCommissionRule rule = commissionRuleRepository
+                .findByIdAndBarbershopIdAndBarberId(ruleId, shop.getId(), barberId)
+                .orElseThrow(() -> new NotFoundException("Regra de comissão não encontrada."));
+
+        commissionRuleRepository.delete(rule);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentSummaryDTO> getRemovalConflicts(String ownerUid, UUID barberId) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
+        Barbershop shop = findOwnerShop(owner.getId());
+        assertTeamMember(shop, owner, barberId);
+        try {
+            return scheduleServiceClient.getFutureAppointmentsByBarber(barberId).stream()
+                    .filter(appointment -> shop.getId().equals(appointment.barbershopId()))
+                    .toList();
+        } catch (Exception ex) {
+            throw new UserServiceUnavailableException("Nao foi possivel consultar conflitos no servico de agenda.");
+        }
+    }
+
+    public void removeTeamMember(String ownerUid, UUID barberId, RemoveTeamMemberRequestDTO dto) {
+        UserInfoDTO owner = resolveUserByUid(ownerUid);
+        Barbershop shop = findOwnerShop(owner.getId());
+        String action = dto != null && dto.action() != null ? dto.action().trim().toUpperCase() : "CANCEL";
 
         UserInfoDTO targetBarber = resolveUser(barberId);
         if (!"BARBER".equalsIgnoreCase(targetBarber.getUserType())) {
@@ -339,9 +442,21 @@ public class BarbershopService {
         if (targetBarber.getBarbershopId() == null || !targetBarber.getBarbershopId().equals(shop.getId())) {
             throw new ForbiddenException("Este barbeiro nao pertence a sua barbearia.");
         }
+        if ("REDISTRIBUTE".equals(action)) {
+            if (dto.redistributeToId() == null) {
+                throw new DomainConflictException("Escolha um barbeiro de destino para redistribuir.");
+            }
+            if (dto.redistributeToId().equals(barberId)) {
+                throw new DomainConflictException("O destino da redistribuição deve ser diferente do barbeiro removido.");
+            }
+            assertTeamMember(shop, owner, dto.redistributeToId());
+        } else if (!"CANCEL".equals(action)) {
+            throw new DomainConflictException("Ação inválida. Use REDISTRIBUTE ou CANCEL.");
+        }
 
         // Remove a associação do barbeiro com a barbearia no user-service
         updateUserBarbershop(barberId, null);
+        publishBarberRemoved(shop, targetBarber, action, dto != null ? dto.redistributeToId() : null);
     }
 
     public void closeBarbershop(String ownerUid, CloseBarbershopRequestDTO dto) {
@@ -771,6 +886,56 @@ public class BarbershopService {
         }
 
         highlightRepository.delete(highlight);
+    }
+
+    private void assertTeamMember(Barbershop shop, UserInfoDTO owner, UUID barberId) {
+        if (barberId.equals(owner.getId())) {
+            return;
+        }
+        UserInfoDTO barber = resolveUser(barberId);
+        if (barber.getBarbershopId() == null || !barber.getBarbershopId().equals(shop.getId())) {
+            throw new ForbiddenException("Este barbeiro nao pertence a sua barbearia.");
+        }
+    }
+
+    private TeamMemberResponseDTO toTeamMember(UserInfoDTO user, boolean owner, List<CommissionRuleDTO> commissions) {
+        return new TeamMemberResponseDTO(
+                user.getId(),
+                user.getName(),
+                user.getImageUrl(),
+                user.getEmail(),
+                owner,
+                user.getWorkStartTime(),
+                user.getWorkEndTime(),
+                commissions
+        );
+    }
+
+    private CommissionRuleDTO toCommissionRuleDTO(BarberCommissionRule rule) {
+        Activity activity = rule.getActivity();
+        return new CommissionRuleDTO(
+                rule.getId(),
+                activity != null ? activity.getId() : null,
+                activity != null ? activity.getActivityName() : null,
+                rule.getPercentage()
+        );
+    }
+
+    private void publishBarberRemoved(Barbershop shop, UserInfoDTO targetBarber, String action, UUID redistributeToId) {
+        try {
+            Map<String, Object> event = new HashMap<>();
+            event.put("barbershopId", shop.getId());
+            event.put("barbershopName", shop.getName());
+            event.put("barberId", targetBarber.getId());
+            event.put("action", action);
+            event.put("redistributeToId", redistributeToId);
+            rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.RK_BARBER_REMOVED, event);
+        } catch (Exception ex) {
+            log.warn("event=barber-removed-publish-failed barberId={} shopId={} error={}",
+                    maskIdentifier(targetBarber.getId()),
+                    maskIdentifier(shop.getId()),
+                    sanitizeMessage(ex.getMessage()));
+        }
     }
 
     private String maskIdentifier(Object value) {
