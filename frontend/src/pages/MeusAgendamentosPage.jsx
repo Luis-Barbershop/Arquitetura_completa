@@ -253,7 +253,12 @@ const MeusAgendamentosPage = () => {
             setReschedulingAppointmentId(null);
             setReschedulingAppointment(null);
             await carregarAgendamentos();
-            toast.success('Agendamento reagendado com sucesso.');
+
+            const dataFormatada = new Date(newStartTime).toLocaleString('pt-BR', {
+                weekday: 'long', day: '2-digit', month: 'long',
+                hour: '2-digit', minute: '2-digit',
+            });
+            toast.success(`Reagendado para ${dataFormatada}. Até lá! ✂️`, { autoClose: 5000 });
         } catch (error) {
             const message = error?.response?.data?.message || 'Erro ao reagendar. Tente novamente.';
             toast.error(message);
@@ -954,17 +959,9 @@ const MeusAgendamentosPage = () => {
                                     {canInteractWithAppointment(app.status) && (
                                         <div className={Styles.cardActions}>
                                             {isCustomer
-                                                ? (['SCHEDULED', 'CONFIRMED'].includes(app.status)
-                                                    && (new Date(app.startTime) - new Date()) / 3600000 > 3) && (
-                                                    <button
-                                                        className={Styles.rescheduleButton}
-                                                        onClick={() => handleOpenRescheduleModal(app)}
-                                                        disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule}
-                                                    >
-                                                        Reagendar
-                                                    </button>
-                                                )
-                                                : (
+                                                && ['SCHEDULED', 'CONFIRMED'].includes(app.status)
+                                                && (new Date(app.startTime) - new Date()) / 3600000 > 3
+                                                && (
                                                     <button
                                                         className={Styles.rescheduleButton}
                                                         onClick={() => handleOpenRescheduleModal(app)}
