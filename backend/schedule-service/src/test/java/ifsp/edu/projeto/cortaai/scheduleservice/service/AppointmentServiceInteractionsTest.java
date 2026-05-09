@@ -147,7 +147,7 @@ class AppointmentServiceInteractionsTest {
         when(barberBlockRepository.existsByBarberIdAndStartTimeLessThanAndEndTimeGreaterThan(eq(barberId), eq(newStart.plusMinutes(30)), eq(newStart)))
                 .thenReturn(false);
 
-        appointmentService.rescheduleAppointment("barber@cortaai.com", appointmentId, new RescheduleAppointmentDTO(newStart));
+        appointmentService.rescheduleAppointment("barber@cortaai.com", appointmentId, new RescheduleAppointmentDTO(newStart, null));
 
         assertThat(appointment.getStartTime()).isEqualTo(newStart);
         assertThat(appointment.getEndTime()).isEqualTo(newStart.plusMinutes(30));
