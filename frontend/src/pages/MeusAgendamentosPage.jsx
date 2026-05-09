@@ -750,22 +750,48 @@ const MeusAgendamentosPage = () => {
                             { label: 'Pendentes', value: stats.pending, filter: 'PAYMENT_PENDING', icon: <FiClock size={16} />, accent: '#f97316' },
                             { label: 'Concluídos', value: stats.completed, filter: 'COMPLETED', icon: <FiCheckCircle size={16} />, accent: '#10b981' },
                             { label: 'Cancelados', value: stats.cancelled, filter: 'CANCELLED', icon: <FiXCircle size={16} />, accent: '#ef4444' },
-                        ].map(item => (
-                            <button
-                                key={item.label}
-                                className={Styles.statCard}
-                                style={{ '--accent': item.accent }}
-                                onClick={() => item.filter && setActiveFilter(
-                                    activeFilter === item.filter ? 'ALL' : item.filter
-                                )}
-                                type="button"
-                            >
-                                <span className={Styles.statIcon}>{item.icon}</span>
-                                <span className={Styles.statValue}>{item.value}</span>
-                                <span className={Styles.statLabel}>{item.label}</span>
-                            </button>
-                        ))}
+                        ].map(item => {
+                            const isActive = item.filter && activeFilter === item.filter;
+                            return (
+                                <button
+                                    key={item.label}
+                                    className={`${Styles.statCard} ${isActive ? Styles.statCardActive : ''}`}
+                                    style={{ '--accent': item.accent }}
+                                    onClick={() => item.filter && setActiveFilter(
+                                        activeFilter === item.filter ? 'ALL' : item.filter
+                                    )}
+                                    type="button"
+                                    title={item.filter
+                                        ? (isActive ? `Clique para remover filtro "${item.label}"` : `Filtrar por: ${item.label}`)
+                                        : undefined}
+                                >
+                                    <span className={Styles.statIcon}>{item.icon}</span>
+                                    <span className={Styles.statValue}>{item.value}</span>
+                                    <span className={Styles.statLabel}>{item.label}</span>
+                                </button>
+                            );
+                        })}
                     </div>
+                )}
+
+                {/* Badge indicando filtro de status ativo */}
+                {!isCustomer && activeFilter !== 'ALL' && (
+                    <button
+                        type="button"
+                        className={Styles.activeFilterBadge}
+                        onClick={() => setActiveFilter('ALL')}
+                        title="Clique para remover o filtro"
+                    >
+                        <FiXCircle size={13} />
+                        Filtrando por: <strong>{{
+                            SCHEDULED: 'Ativos',
+                            WALK_IN: 'Encaixe',
+                            PAYMENT_PENDING: 'Pendentes',
+                            COMPLETED: 'Concluídos',
+                            CANCELLED: 'Cancelados',
+                        }[activeFilter] || activeFilter}</strong>
+                        &nbsp;— clique para ver todos
+                    </button>
                 )}
 
                 {/* ── Seletor mine/team + navegação de data ── */}
