@@ -148,6 +148,7 @@ public class Barber implements UserDetails {
             joinColumns = @JoinColumn(name = "barber_id")
     )
     @Column(name = "activity_id", length = 36)
+    @JdbcTypeCode(Types.VARCHAR)
     @Builder.Default
     private Set<UUID> assignedActivityIds = new HashSet<>();
 

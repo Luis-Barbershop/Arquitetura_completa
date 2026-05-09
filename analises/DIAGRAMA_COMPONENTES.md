@@ -1,209 +1,149 @@
-# 🧩 Diagrama de Componentes — CortaAi
+# 🧩 Diagrama de Componentes — CortaAi (UML)
 
 > **Data:** 08 de maio de 2026  
-> **Escopo:** componentes lógicos e contratos entre módulos
+> **Escopo:** componentes lógicos, contratos e integrações entre módulos
 
 ---
 
-## Visão de componentes da solução
+## Diagrama de componentes (padrão UML / PlantUML)
 
-```mermaid
-flowchart LR
-  %% =========================
-  %% FRONTEIRAS
-  %% =========================
-  subgraph FE[Frontend (React)]
-    Pages[Páginas / Componentes]
-    UIServices[services/*Service.js]
-    ApiWrapper[services/api.js\nAxios Wrapper]
-    Pages --> UIServices --> ApiWrapper
-  end
+```plantuml
+@startuml
+title CortaAi - Diagrama de Componentes UML
+left to right direction
+skinparam componentStyle rectangle
+skinparam packageStyle rectangle
 
-  subgraph GW[api-gateway]
-    Routes[Route Locator]
-    AuthFilter[Firebase Auth Filter]
-    HeaderInjector[Header Injector\nX-User-*]
-    GWHandler[GlobalExceptionHandler]
-    Routes --> AuthFilter --> HeaderInjector
-  end
+package "Frontend" {
+  component "Páginas e Componentes\n(React 18)" as FE_PAGES
+  component "Camada de Serviços\n(frontend/src/services/*Service.js)" as FE_SERVICES
+  component "API Wrapper\n(frontend/src/services/api.js)" as FE_API
 
-  subgraph US[user-service]
-    CtrlUS[Controller DTO]
-    SvcUS[Service]
-    RepoUS[Repository JPA]
-    MapperUS[Mapper]
-    MsgUS[Publisher/Listener]
-    CtrlUS --> SvcUS --> RepoUS
-    SvcUS --> MapperUS
-    SvcUS --> MsgUS
-  end
+  FE_PAGES --> FE_SERVICES : usa
+  FE_SERVICES --> FE_API : delega HTTP
+}
 
-  subgraph BS[barbershop-service]
-    CtrlBS[Controller DTO]
-    SvcBS[Service]
-    RepoBS[Repository JPA]
-    MapperBS[Mapper]
-    FeignBS[Feign Client]
-    MsgBS[Publisher/Listener]
-    CtrlBS --> SvcBS --> RepoBS
-    SvcBS --> MapperBS
-    SvcBS --> FeignBS
-    SvcBS --> MsgBS
-  end
+package "Edge" {
+  component "API Gateway\n(Spring Cloud Gateway)" as GW
+  component "Filtro Auth Firebase" as GW_AUTH
+  component "Injetor de Headers\nX-User-*" as GW_HEADERS
 
-  subgraph SS[schedule-service]
-    CtrlSS[Controller DTO]
-    SvcSS[Service]
-    RepoSS[Repository JPA]
-    MapperSS[Mapper]
-    FeignSS[Feign Client]
-    MsgSS[Publisher/Listener]
-    CtrlSS --> SvcSS --> RepoSS
-    SvcSS --> MapperSS
-    SvcSS --> FeignSS
-    SvcSS --> MsgSS
-  end
+  GW --> GW_AUTH : aplica filtro
+  GW_AUTH --> GW_HEADERS : contexto autenticado
+}
 
-  subgraph PS[payment-service]
-    CtrlPS[Controller DTO]
-    SvcPS[Service]
-    RepoPS[Repository JPA]
-    MapperPS[Mapper]
-    FeignPS[Feign Client]
-    MsgPS[Publisher/Listener]
-    CtrlPS --> SvcPS --> RepoPS
-    SvcPS --> MapperPS
-    SvcPS --> FeignPS
-    SvcPS --> MsgPS
-  end
+package "Descoberta" {
+  component "Discovery Service\n(Eureka)" as EUREKA
+}
 
-  subgraph PRS[product-service]
-    CtrlPRS[Controller DTO]
-    SvcPRS[Service]
-    RepoPRS[Repository JPA]
-    MapperPRS[Mapper]
-    FeignPRS[Feign Client]
-    MsgPRS[Publisher/Listener]
-    CtrlPRS --> SvcPRS --> RepoPRS
-    SvcPRS --> MapperPRS
-    SvcPRS --> FeignPRS
-    SvcPRS --> MsgPRS
-  end
+package "Microsserviços de Domínio" {
+  component "User Service" as USER
+  component "Barbershop Service" as BARBERSHOP
+  component "Schedule Service" as SCHEDULE
+  component "Payment Service" as PAYMENT
+  component "Product Service" as PRODUCT
+  component "Notification Service" as NOTIFICATION
+}
 
-  subgraph NS[notification-service]
-    ListenerNS[Rabbit Listeners]
-    SvcNS[Notification Service]
-    DedupNS[Deduplicação Redis]
-    ProviderNS[Provider Email/Push]
-    ListenerNS --> SvcNS --> DedupNS
-    SvcNS --> ProviderNS
-  end
+package "Infraestrutura" {
+  database "MySQL" as MYSQL
+  component "RabbitMQ" as RABBIT
+  component "Redis" as REDIS
+}
 
-  subgraph INFRA[Infra Compartilhada]
-    Rabbit[RabbitMQ]
-    Redis[Redis]
-    MySQL[(MySQL)]
-    Firebase[Firebase Auth]
-    MercadoPago[Mercado Pago]
-    Cloudinary[Cloudinary]
-  end
+package "Sistemas Externos" {
+  component "Firebase Auth" as FIREBASE
+  component "Mercado Pago" as MP
+  component "Cloudinary" as CLOUDINARY
+}
 
-  %% =========================
-  %% CONTRATOS ENTRE BLOCOS
-  %% =========================
-  ApiWrapper -->|REST| Routes
-  AuthFilter -->|valida token| Firebase
+FE_API --> GW : REST
+GW_AUTH --> FIREBASE : valida token
 
-  HeaderInjector -->|REST interno| CtrlUS
-  HeaderInjector -->|REST interno| CtrlBS
-  HeaderInjector -->|REST interno| CtrlSS
-  HeaderInjector -->|REST interno| CtrlPS
-  HeaderInjector -->|REST interno| CtrlPRS
+GW_HEADERS --> USER : REST interno
+GW_HEADERS --> BARBERSHOP : REST interno
+GW_HEADERS --> SCHEDULE : REST interno
+GW_HEADERS --> PAYMENT : REST interno
+GW_HEADERS --> PRODUCT : REST interno
+GW_HEADERS --> NOTIFICATION : REST interno
 
-  SvcBS -->|consulta| FeignBS
-  SvcSS -->|consulta| FeignSS
-  SvcPS -->|consulta| FeignPS
-  SvcPRS -->|consulta| FeignPRS
+GW --> EUREKA : discovery
+USER --> EUREKA : registry/discovery
+BARBERSHOP --> EUREKA : registry/discovery
+SCHEDULE --> EUREKA : registry/discovery
+PAYMENT --> EUREKA : registry/discovery
+PRODUCT --> EUREKA : registry/discovery
+NOTIFICATION --> EUREKA : registry/discovery
 
-  MsgUS <--> |eventos| Rabbit
-  MsgBS <--> |eventos| Rabbit
-  MsgSS <--> |eventos| Rabbit
-  MsgPS <--> |eventos| Rabbit
-  MsgPRS <--> |eventos| Rabbit
-  ListenerNS <--> |eventos| Rabbit
+USER --> MYSQL : persistência própria
+BARBERSHOP --> MYSQL : persistência própria
+SCHEDULE --> MYSQL : persistência própria
+PAYMENT --> MYSQL : persistência própria
+PRODUCT --> MYSQL : persistência própria
 
-  RepoUS -->|persistência| MySQL
-  RepoBS -->|persistência| MySQL
-  RepoSS -->|persistência| MySQL
-  RepoPS -->|persistência| MySQL
-  RepoPRS -->|persistência| MySQL
+USER --> RABBIT : publish/consume eventos
+BARBERSHOP --> RABBIT : publish/consume eventos
+SCHEDULE --> RABBIT : publish/consume eventos
+PAYMENT --> RABBIT : publish/consume eventos
+PRODUCT --> RABBIT : publish/consume eventos
+NOTIFICATION --> RABBIT : consume eventos
 
-  SvcSS -->|cache| Redis
-  DedupNS -->|idempotência| Redis
+SCHEDULE --> REDIS : cache operacional
+NOTIFICATION --> REDIS : deduplicação/idempotência
 
-  SvcPS -->|pagamentos| MercadoPago
-  SvcUS -->|mídia| Cloudinary
-  SvcBS -->|mídia| Cloudinary
-
+PAYMENT --> MP : transações/webhooks
+USER --> CLOUDINARY : upload mídia
+BARBERSHOP --> CLOUDINARY : upload portfólio
+@enduml
 ```
-
----
-
-## Diagrama visual da arquitetura (alto nível)
-
-```mermaid
-flowchart TB
-  Client[Cliente\nWeb/Mobile] --> Frontend[Frontend React]
-  Frontend --> Gateway[API Gateway]
-
-  Gateway --> USvc[user-service]
-  Gateway --> BSvc[barbershop-service]
-  Gateway --> SSvc[schedule-service]
-  Gateway --> PSvc[payment-service]
-  Gateway --> PrSvc[product-service]
-  Gateway --> NSvc[notification-service]
-
-  USvc -. registro .-> Eureka[Eureka]
-  BSvc -. registro .-> Eureka
-  SSvc -. registro .-> Eureka
-  PSvc -. registro .-> Eureka
-  PrSvc -. registro .-> Eureka
-  NSvc -. registro .-> Eureka
-  Gateway -. descoberta .-> Eureka
-
-  USvc --> DB[(MySQL)]
-  BSvc --> DB
-  SSvc --> DB
-  PSvc --> DB
-  PrSvc --> DB
-
-  SSvc --> Redis[(Redis)]
-  NSvc --> Redis
-
-  USvc <--> Rabbit[(RabbitMQ)]
-  BSvc <--> Rabbit
-  SSvc <--> Rabbit
-  PSvc <--> Rabbit
-  PrSvc <--> Rabbit
-  NSvc <--> Rabbit
-
-  Gateway --> Firebase[Firebase Auth]
-  PSvc --> MP[Mercado Pago]
-  USvc --> Cloud[Cloudinary]
-  BSvc --> Cloud
-```
-
----
 
 ## Regras arquiteturais representadas
 
-- Controllers expõem apenas DTOs (sem exposição direta de entidades JPA).
-- Escritas entre serviços são orientadas a eventos via RabbitMQ.
-- Leitura cross-service ocorre via Feign em serviços que precisam de consulta externa.
-- `api-gateway` é o ponto de validação Firebase e propagação de contexto do usuário.
+- Controllers expõem apenas DTOs.
+- Mutações cross-service devem ser orientadas a eventos no RabbitMQ.
+- Consultas cross-service devem ocorrer via Feign nos serviços consumidores.
+- `api-gateway` é o ponto central de validação Firebase e propagação de contexto do usuário.
 
-## Legenda de leitura do diagrama
+## O que é cada coisa (visão lógica)
 
-- **Seta contínua (`-->`)**: chamada síncrona (REST/Feign) ou fluxo interno do serviço.
-- **Seta bidirecional (`<-->`)**: comunicação assíncrona por eventos no RabbitMQ.
-- **Rótulos de aresta** explicam o contrato (`REST`, `consulta`, `persistência`, `eventos`, `cache`).
+### Frontend e borda
+
+- **Páginas e Componentes (React 18):** camada de interface que renderiza telas e orquestra ações do usuário.
+- **Camada de Serviços (`frontend/src/services/*Service.js`):** encapsula chamadas HTTP por domínio; evita requisição direta em componente.
+- **API Wrapper (`frontend/src/services/api.js`):** cliente HTTP base (axios) com interceptação e configuração comum.
+- **API Gateway:** ponto único de entrada; roteia endpoints e aplica políticas transversais.
+- **Filtro Auth Firebase (gateway):** valida o ID token recebido do cliente.
+- **Injetor `X-User-*` (gateway):** propaga identidade confiável para os microsserviços internos.
+
+### Descoberta e comunicação
+
+- **Discovery Service (Eureka):** registro e descoberta de instâncias para roteamento dinâmico entre serviços.
+- **RabbitMQ:** barramento de eventos de domínio para comunicação assíncrona e desacoplada.
+
+### Microsserviços de domínio
+
+- **`user-service`:** gestão de usuários (cliente/barbeiro), perfis e dados de conta.
+- **`barbershop-service`:** gestão de barbearias, catálogo e informações da operação.
+- **`schedule-service`:** agenda, horários, confirmações e fluxo de agendamentos.
+- **`payment-service`:** orquestração de pagamentos e ciclo financeiro da transação.
+- **`product-service`:** estoque, produtos e movimentações relacionadas.
+- **`notification-service`:** envio de notificações e tratamento idempotente de eventos.
+
+### Infra de suporte e integrações externas
+
+- **MySQL:** persistência relacional dos serviços (com isolamento lógico por serviço).
+- **Redis:** cache operacional e deduplicação/idempotência.
+- **Firebase Auth:** identidade/autenticação externa validada no gateway.
+- **Mercado Pago:** processamento externo de pagamentos.
+- **Cloudinary:** armazenamento e entrega de mídia (imagens/portfólio).
+
+## Organização entre os documentos
+
+- **Este arquivo (`DIAGRAMA_COMPONENTES.md`)** foca em **visão lógica** (quem depende de quem e qual responsabilidade de cada bloco).
+- **`DIAGRAMA_IMPLANTACAO.md`** foca em **visão operacional** (containers, portas, execução e inventário do `docker compose ps`).
+
+## Legenda UML utilizada
+
+- **Dependência (`-->`)**: consumo de contrato/componente.
+- **Componente (`component`)**: unidade implantável/lógica da solução.
+- **Pacote (`package`)**: fronteira arquitetural.

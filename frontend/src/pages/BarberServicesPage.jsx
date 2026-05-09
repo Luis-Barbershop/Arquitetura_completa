@@ -107,16 +107,30 @@ function BarberServicesPage() {
     navigate('/');
   };
 
-  const loadServices = useCallback(async () => {
+  const loadServices = useCallback(async ({ silent = false } = {}) => {
     try {
-      setLoadingServices(true);
+      if (!silent) {
+        setLoadingServices(true);
+      }
+
       const data = await getMyServices();
-      setServices(data);
+      setServices((prev) => {
+        const next = Array.isArray(data) ? data : [];
+        if (JSON.stringify(prev) === JSON.stringify(next)) {
+          return prev;
+        }
+
+        return next;
+      });
     } catch (error) {
       console.error('Erro ao carregar serviços:', error);
-      setServices([]);
+      if (!silent) {
+        setServices([]);
+      }
     } finally {
-      setLoadingServices(false);
+      if (!silent) {
+        setLoadingServices(false);
+      }
     }
   }, []);
 
@@ -162,7 +176,7 @@ function BarberServicesPage() {
 
     // Mantém o painel atualizado automaticamente, sem ação manual.
     const intervalId = window.setInterval(() => {
-      loadServices();
+      loadServices({ silent: true });
     }, 15000);
 
     return () => window.clearInterval(intervalId);
@@ -316,7 +330,7 @@ function BarberServicesPage() {
               <article className={`${styles.panelCard} ${styles.servicesPanel}`}>
                 <div className={styles.panelHeader}>
                   <h2>Serviços Cadastrados</h2>
-                  <span className={styles.autoUpdateBadge}>Atualização automática</span>
+                  <span className={styles.autoUpdateBadge}>Atualiza em segundo plano (15s)</span>
                 </div>
 
                 {loadingServices ? (

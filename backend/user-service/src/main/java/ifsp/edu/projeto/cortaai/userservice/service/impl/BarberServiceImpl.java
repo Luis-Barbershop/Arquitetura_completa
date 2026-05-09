@@ -19,7 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -154,13 +156,19 @@ public class BarberServiceImpl implements BarberService {
 
     @Override
     public Set<UUID> assignActivities(String firebaseUid, AssignActivitiesDTO dto) {
-        Barber barber = barberRepository.findByFirebaseUid(firebaseUid)
+        Barber barber = barberRepository.findByFirebaseUidForUpdate(firebaseUid)
                 .orElseThrow(() -> new EntityNotFoundException("Barbeiro não encontrado."));
-        // Substitui completamente a seleção anterior
-        barber.getAssignedActivityIds().clear();
-        if (dto.activityIds() != null) {
-            barber.getAssignedActivityIds().addAll(dto.activityIds());
+
+    Set<UUID> requestedActivities = dto.activityIds().stream()
+        .filter(Objects::nonNull)
+        .collect(Collectors.toCollection(HashSet::new));
+
+        Set<UUID> currentActivities = new HashSet<>(barber.getAssignedActivityIds());
+        if (currentActivities.equals(requestedActivities)) {
+            return currentActivities;
         }
+
+        barber.setAssignedActivityIds(new HashSet<>(requestedActivities));
         barberRepository.save(barber);
         return barber.getAssignedActivityIds();
     }

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { getShopServices, getMyAssignedActivities, assignActivities } from '../../services/barbershopService';
 import styles from './CSS/ManageMySkills.module.css';
 
+const normalizeServiceId = (id) => String(id || '').trim().toLowerCase();
+
 const ManageMySkills = ({ shopId, refreshKey = 0 }) => {
     const [shopServices, setShopServices] = useState([]);
     const [myServicesIds, setMyServicesIds] = useState([]);
@@ -23,7 +25,7 @@ const ManageMySkills = ({ shopId, refreshKey = 0 }) => {
 
                 setShopServices(allServices);
                 // O backend retorna Set<UUID> (array de strings), não objetos ActivityDTO
-                setMyServicesIds((myActivities || []).map(id => String(id)));
+                setMyServicesIds((myActivities || []).map((id) => normalizeServiceId(id)).filter(Boolean));
             } catch (error) {
                 console.error("Erro ao carregar habilidades:", error);
                 setErrorMessage('Nao foi possivel carregar os servicos do perfil.');
@@ -36,7 +38,9 @@ const ManageMySkills = ({ shopId, refreshKey = 0 }) => {
     }, [shopId, refreshKey]);
 
     const handleToggle = (serviceId) => {
-        const normalizedId = String(serviceId);
+        const normalizedId = normalizeServiceId(serviceId);
+        if (!normalizedId) return;
+
         setMyServicesIds(prev =>
             prev.includes(normalizedId)
                 ? prev.filter(id => id !== normalizedId)
@@ -75,12 +79,13 @@ const ManageMySkills = ({ shopId, refreshKey = 0 }) => {
 
                     <div className={styles.grid}>
                         {shopServices.map(service => {
-                            const isSelected = myServicesIds.includes(String(service.id));
+                            const normalizedServiceId = normalizeServiceId(service.id);
+                            const isSelected = myServicesIds.includes(normalizedServiceId);
                             return (
                                 <button
                                     key={service.id}
                                     type="button"
-                                    onClick={() => handleToggle(service.id)}
+                                    onClick={() => handleToggle(normalizedServiceId)}
                                     className={isSelected ? styles.serviceCardSelected : styles.serviceCard}
                                 >
                                     <div className={styles.cardContent}>
