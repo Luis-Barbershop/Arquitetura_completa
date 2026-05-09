@@ -50,7 +50,7 @@ const MeusAgendamentosPage = () => {
     const [offlineTransactionalNotice, setOfflineTransactionalNotice] = useState('');
     const [viewMode, setViewMode] = useState('list'); // 'list' | 'timeline'
     const [dateFilter, setDateFilter] = useState(new Date().toLocaleDateString('en-CA'));
-    const [mineRangeMode, setMineRangeMode] = useState('day'); // 'day' | 'week' | 'month'
+    const [rangeMode, setRangeMode] = useState('day'); // 'day' | 'week' | 'month' — compartilhado entre mine e team
     const [reviewHover, setReviewHover] = useState(0);
 
     // Determina o papel com base na chave correta do localStorage ('userRole')
@@ -151,6 +151,8 @@ const MeusAgendamentosPage = () => {
         active: appointments.filter(a => ['SCHEDULED', 'WALK_IN', 'CONFIRMED'].includes(a.status)).length,
         completed: appointments.filter(a => a.status === 'COMPLETED').length,
         cancelled: appointments.filter(a => a.status === 'CANCELLED').length,
+        walkIn: appointments.filter(a => a.status === 'WALK_IN').length,
+        pending: appointments.filter(a => ['PAYMENT_PENDING', 'EXPIRED'].includes(a.status)).length,
     }), [appointments, todayStr]);
 
     const getDurationLabel = (app) => {
@@ -342,6 +344,7 @@ const MeusAgendamentosPage = () => {
         const map = {
             'SCHEDULED': 'Agendado',
             'PAYMENT_PENDING': 'Pagamento pendente',
+            'EXPIRED': 'Expirado',
             'CONFIRMED': 'Confirmado',
             'WALK_IN': 'Encaixe',
             'CANCELLED': 'Cancelado',
@@ -399,10 +402,10 @@ const MeusAgendamentosPage = () => {
         if (!isCustomer && agendaView === 'mine') {
             const appDate = app.startTime?.slice(0, 10);
             if (!appDate) return false;
-            if (mineRangeMode === 'day') {
+            if (rangeMode === 'day') {
                 return appDate === dateFilter;
             }
-            if (mineRangeMode === 'week') {
+            if (rangeMode === 'week') {
                 const anchor = new Date(dateFilter + 'T00:00:00');
                 const weekStart = new Date(anchor);
                 weekStart.setDate(anchor.getDate() - anchor.getDay() + 1);
@@ -412,8 +415,30 @@ const MeusAgendamentosPage = () => {
                 const we = weekEnd.toLocaleDateString('en-CA');
                 return appDate >= ws && appDate <= we;
             }
-            if (mineRangeMode === 'month') {
+            if (rangeMode === 'month') {
                 return appDate.slice(0, 7) === dateFilter.slice(0, 7);
+            }
+        }
+
+        // Filtro de data para team view (mesma lógica usando teamDate como âncora)
+        if (!isCustomer && agendaView === 'team') {
+            const appDate = app.startTime?.slice(0, 10);
+            if (!appDate) return false;
+            if (rangeMode === 'day') {
+                return appDate === teamDate;
+            }
+            if (rangeMode === 'week') {
+                const anchor = new Date(teamDate + 'T00:00:00');
+                const weekStart = new Date(anchor);
+                weekStart.setDate(anchor.getDate() - anchor.getDay() + 1);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+                const ws = weekStart.toLocaleDateString('en-CA');
+                const we = weekEnd.toLocaleDateString('en-CA');
+                return appDate >= ws && appDate <= we;
+            }
+            if (rangeMode === 'month') {
+                return appDate.slice(0, 7) === teamDate.slice(0, 7);
             }
         }
         return true;
@@ -430,19 +455,11 @@ const MeusAgendamentosPage = () => {
     const getStatusClass = (status) => {
         if (status === 'SCHEDULED') return Styles.statusScheduled;
         if (status === 'PAYMENT_PENDING') return Styles.statusPending;
+        if (status === 'EXPIRED') return Styles.statusExpired;
         if (status === 'CANCELLED') return Styles.statusCancelled;
         if (status === 'COMPLETED') return Styles.statusCompleted;
         return '';
     };
-
-    const filterItems = [
-        { key: 'ALL', label: 'Todos' },
-        { key: 'SCHEDULED', label: 'Agendados' },
-        { key: 'PAYMENT_PENDING', label: 'Pendentes' },
-        { key: 'WALK_IN', label: 'Encaixe' },
-        { key: 'COMPLETED', label: 'Concluidos' },
-        { key: 'CANCELLED', label: 'Cancelados' },
-    ];
 
     const canInteractWithAppointment = (status) => {
         return ['SCHEDULED', 'CONFIRMED', 'WALK_IN', 'IN_PROGRESS'].includes(status);
@@ -518,9 +535,9 @@ const MeusAgendamentosPage = () => {
 
     const shiftDateFilter = (days) => {
         const d = new Date(dateFilter + 'T00:00:00');
-        if (mineRangeMode === 'week') {
+        if (rangeMode === 'week') {
             d.setDate(d.getDate() + days * 7);
-        } else if (mineRangeMode === 'month') {
+        } else if (rangeMode === 'month') {
             d.setMonth(d.getMonth() + days);
         } else {
             d.setDate(d.getDate() + days);
@@ -528,18 +545,24 @@ const MeusAgendamentosPage = () => {
         setDateFilter(d.toLocaleDateString('en-CA'));
     };
 
-    const shiftTeamDate = (days) => {
+    const shiftTeamDate = (direction) => {
         const d = new Date(teamDate + 'T00:00:00');
-        d.setDate(d.getDate() + days);
+        if (rangeMode === 'week') {
+            d.setDate(d.getDate() + direction * 7);
+        } else if (rangeMode === 'month') {
+            d.setMonth(d.getMonth() + direction);
+        } else {
+            d.setDate(d.getDate() + direction);
+        }
         setTeamDate(d.toLocaleDateString('en-CA'));
     };
 
     const formatDateDisplay = (dateStr) => {
         const d = new Date(dateStr + 'T00:00:00');
-        if (mineRangeMode === 'month') {
+        if (rangeMode === 'month') {
             return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
         }
-        if (mineRangeMode === 'week') {
+        if (rangeMode === 'week') {
             const start = new Date(d);
             start.setDate(d.getDate() - d.getDay() + 1); // segunda
             const end = new Date(start);
@@ -728,6 +751,8 @@ const MeusAgendamentosPage = () => {
                         {[
                             { label: 'Hoje', value: stats.today, filter: null, icon: <FiCalendar size={16} />, accent: '#c19006' },
                             { label: 'Ativos', value: stats.active, filter: 'SCHEDULED', icon: <FiClock size={16} />, accent: '#3b82f6' },
+                            { label: 'Encaixe', value: stats.walkIn, filter: 'WALK_IN', icon: <FiScissors size={16} />, accent: '#7c3aed' },
+                            { label: 'Pendentes', value: stats.pending, filter: 'PAYMENT_PENDING', icon: <FiClock size={16} />, accent: '#f97316' },
                             { label: 'Concluídos', value: stats.completed, filter: 'COMPLETED', icon: <FiCheckCircle size={16} />, accent: '#10b981' },
                             { label: 'Cancelados', value: stats.cancelled, filter: 'CANCELLED', icon: <FiXCircle size={16} />, accent: '#ef4444' },
                         ].map(item => (
@@ -735,7 +760,9 @@ const MeusAgendamentosPage = () => {
                                 key={item.label}
                                 className={Styles.statCard}
                                 style={{ '--accent': item.accent }}
-                                onClick={() => item.filter && setActiveFilter(item.filter)}
+                                onClick={() => item.filter && setActiveFilter(
+                                    activeFilter === item.filter ? 'ALL' : item.filter
+                                )}
                                 type="button"
                             >
                                 <span className={Styles.statIcon}>{item.icon}</span>
@@ -770,21 +797,19 @@ const MeusAgendamentosPage = () => {
 
                         {/* Navegação de data */}
                         <div className={Styles.dateNavRow}>
-                            {/* Tabs de range — só na view mine */}
-                            {agendaView === 'mine' && (
-                                <div className={Styles.viewToggle} style={{ marginRight: '0.5rem' }}>
-                                    {[{ key: 'day', label: 'Dia' }, { key: 'week', label: 'Semana' }, { key: 'month', label: 'Mês' }].map(r => (
-                                        <button
-                                            key={r.key}
-                                            className={mineRangeMode === r.key ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
-                                            onClick={() => setMineRangeMode(r.key)}
-                                            type="button"
-                                        >
-                                            {r.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
+                            {/* Tabs de range — mine e team */}
+                            <div className={Styles.viewToggle} style={{ marginRight: '0.5rem' }}>
+                                {[{ key: 'day', label: 'Dia' }, { key: 'week', label: 'Semana' }, { key: 'month', label: 'Mês' }].map(r => (
+                                    <button
+                                        key={r.key}
+                                        className={rangeMode === r.key ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
+                                        onClick={() => setRangeMode(r.key)}
+                                        type="button"
+                                    >
+                                        {r.label}
+                                    </button>
+                                ))}
+                            </div>
                             <button
                                 className={Styles.dateNavBtn}
                                 onClick={() => agendaView === 'team' ? shiftTeamDate(-1) : shiftDateFilter(-1)}
@@ -796,14 +821,14 @@ const MeusAgendamentosPage = () => {
                             <label className={Styles.dateNavLabel} title="Clique para escolher data">
                                 {formatDateDisplay(agendaView === 'team' ? teamDate : dateFilter)}
                                 <input
-                                    type={agendaView === 'mine' && mineRangeMode === 'month' ? 'month' : 'date'}
-                                    value={agendaView === 'mine' && mineRangeMode === 'month'
-                                        ? dateFilter.slice(0, 7)
+                                    type={rangeMode === 'month' ? 'month' : 'date'}
+                                    value={rangeMode === 'month'
+                                        ? (agendaView === 'team' ? teamDate : dateFilter).slice(0, 7)
                                         : (agendaView === 'team' ? teamDate : dateFilter)}
                                     onChange={(e) => {
                                         if (agendaView === 'team') {
-                                            setTeamDate(e.target.value);
-                                        } else if (mineRangeMode === 'month') {
+                                            setTeamDate(rangeMode === 'month' ? e.target.value + '-01' : e.target.value);
+                                        } else if (rangeMode === 'month') {
                                             setDateFilter(e.target.value + '-01');
                                         } else {
                                             setDateFilter(e.target.value);
@@ -860,21 +885,6 @@ const MeusAgendamentosPage = () => {
                     </div>
                 )}
 
-                {/* ── Filtros de status (apenas no modo lista) ── */}
-                {(isCustomer || viewMode === 'list') && (
-                <div className={Styles.filtersRow}>
-                    {filterItems.map((filter) => (
-                        <button
-                            key={filter.key}
-                            className={activeFilter === filter.key ? Styles.filterButtonActive : Styles.filterButton}
-                            onClick={() => setActiveFilter(filter.key)}
-                        >
-                            {filter.label}
-                        </button>
-                    ))}
-                </div>
-                )}
-
                 {/* ── Timeline view ── */}
                 {!isCustomer && viewMode === 'timeline' && !loading && renderTimeline()}
 
@@ -919,7 +929,7 @@ const MeusAgendamentosPage = () => {
 
                                         <span className={`${Styles.statusChip} ${getStatusClass(app.status)}`}>
                                             {(app.status === 'SCHEDULED' || app.status === 'CONFIRMED') && <FiCalendar />}
-                                            {app.status === 'PAYMENT_PENDING' && <FiClock />}
+                                            {(app.status === 'PAYMENT_PENDING' || app.status === 'EXPIRED') && <FiClock />}
                                             {app.status === 'COMPLETED' && <FiCheckCircle />}
                                             {app.status === 'CANCELLED' && <FiXCircle />}
                                             {app.status === 'WALK_IN' && <FiScissors />}
@@ -929,13 +939,27 @@ const MeusAgendamentosPage = () => {
 
                                     {canInteractWithAppointment(app.status) && (
                                         <div className={Styles.cardActions}>
-                                            <button
-                                                className={Styles.rescheduleButton}
-                                                onClick={() => handleOpenRescheduleModal(app)}
-                                                disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule}
-                                            >
-                                                Reagendar
-                                            </button>
+                                            {isCustomer
+                                                ? (['SCHEDULED', 'CONFIRMED'].includes(app.status)
+                                                    && (new Date(app.startTime) - new Date()) / 3600000 > 3) && (
+                                                    <button
+                                                        className={Styles.rescheduleButton}
+                                                        onClick={() => handleOpenRescheduleModal(app)}
+                                                        disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule}
+                                                    >
+                                                        Reagendar
+                                                    </button>
+                                                )
+                                                : (
+                                                    <button
+                                                        className={Styles.rescheduleButton}
+                                                        onClick={() => handleOpenRescheduleModal(app)}
+                                                        disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule}
+                                                    >
+                                                        Reagendar
+                                                    </button>
+                                                )
+                                            }
                                             <button
                                                 className={Styles.concludeButton}
                                                 onClick={() => handleOpenConcludeModal(app.id)}

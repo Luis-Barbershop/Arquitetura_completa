@@ -323,6 +323,11 @@ public class AppointmentService {
             throw new ConflictException("Novo horário deve ser diferente do horário atual.");
         }
 
+        // Mínimo de 3h de antecedência para reagendamento
+        if (Duration.between(LocalDateTime.now(), newStartTime).toHours() < 3) {
+            throw new ConflictException("O reagendamento exige ao menos 3 horas de antecedência.");
+        }
+
         long durationMinutes = Duration.between(appointment.getStartTime(), appointment.getEndTime()).toMinutes();
         if (durationMinutes <= 0) {
             throw new ConflictException("Não foi possível identificar a duração do agendamento para reagendamento.");
@@ -343,6 +348,19 @@ public class AppointmentService {
         LocalDateTime previousStartTime = appointment.getStartTime();
         appointment.setStartTime(newStartTime);
         appointment.setEndTime(newEndTime);
+
+        // Troca de barbeiro (barberId fornecido e diferente do atual)
+        if (dto.barberId() != null && !dto.barberId().equals(appointment.getBarberId())) {
+            UserInfoDTO newBarber = userServiceClient.getUserById(dto.barberId());
+            if (newBarber == null || !"BARBER".equalsIgnoreCase(newBarber.getUserType())) {
+                throw new NotFoundException("Barbeiro informado não encontrado ou inválido.");
+            }
+            if (!appointment.getBarbershopId().equals(newBarber.getBarbershopId())) {
+                throw new ConflictException("O barbeiro informado não pertence a esta barbearia.");
+            }
+            appointment.setBarberId(dto.barberId());
+            appointment.setBarberName(newBarber.getName());
+        }
 
         if (appointment.getStatus() == AppointmentStatus.CONFIRMED
                 || appointment.getStatus() == AppointmentStatus.IN_PROGRESS) {

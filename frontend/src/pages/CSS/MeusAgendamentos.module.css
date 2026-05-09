@@ -365,6 +365,12 @@
     background-color: rgb(138 111 36 / 16%);
 }
 
+.statusExpired {
+    border-color: #92400e;
+    color: #fbbf24;
+    background-color: rgb(146 64 14 / 16%);
+}
+
 .statusCancelled {
     border-color: #8f2a2a;
     color: #ffb0b0;

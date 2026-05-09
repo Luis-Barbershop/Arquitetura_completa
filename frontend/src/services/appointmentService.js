@@ -111,10 +111,10 @@ export const concludeAppointment = async (id) => {
     return response.data;
 };
 
-export const rescheduleAppointment = async (id, newStartTime) => {
-    const response = await api.put(`/appointments/${id}/reschedule`, {
-        newStartTime,
-    });
+export const rescheduleAppointment = async (id, newStartTime, barberId = null) => {
+    const body = { newStartTime };
+    if (barberId) body.barberId = barberId;
+    const response = await api.put(`/appointments/${id}/reschedule`, body);
     return response.data;
 };
 
