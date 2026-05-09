@@ -46,6 +46,9 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
     const activeBarbershopName = localStorage.getItem('barbershopName') || barber?.barbershopName || '';
     const canChangePassword = (localStorage.getItem('authProvider') || 'EMAIL').toUpperCase() === 'EMAIL';
 
+    // Foto de perfil: usa o prop (mais recente) ou cai para o localStorage como fallback
+    const profileImageUrl = barber?.imageUrl || localStorage.getItem('userProfileImage') || null;
+
     const [agendaOpen, setAgendaOpen] = useState(false);
     const [gestaoOpen, setGestaoOpen] = useState(false);
     const [avatarOpen, setAvatarOpen] = useState(false);
@@ -241,8 +244,8 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
                         onClick={() => setAvatarOpen(o => !o)}
                         aria-label="Menu do usuário"
                     >
-                        {barber?.imageUrl ? (
-                            <img src={barber.imageUrl} alt="Foto de perfil" className={styles.avatarImage} />
+                        {profileImageUrl ? (
+                            <img src={profileImageUrl} alt="Foto de perfil" className={styles.avatarImage} />
                         ) : (
                             <span className={styles.avatarCircle}>{initials}</span>
                         )}

@@ -59,6 +59,9 @@ function BarberHomePage() {
         if (response.data?.barbershopId) {
           localStorage.setItem('barbershopId', String(response.data.barbershopId));
         }
+        if (response.data?.imageUrl) {
+          localStorage.setItem('userProfileImage', response.data.imageUrl);
+        }
         setLoading(false);
       })
       .catch(err => {

@@ -121,6 +121,7 @@ function BarberProfilePage() {
                 setActAsBarber(data?.actAsBarber ?? true);
                 if (data?.barbershopName) localStorage.setItem('barbershopName', data.barbershopName);
                 if (data?.barbershopId) localStorage.setItem('barbershopId', String(data.barbershopId));
+                if (data?.imageUrl) localStorage.setItem('userProfileImage', data.imageUrl);
                 setLoading(false);
             })
             .catch(() => { setLoading(false); navigate('/'); });
