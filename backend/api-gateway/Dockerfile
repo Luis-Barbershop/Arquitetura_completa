@@ -15,13 +15,14 @@ COPY schedule-service/pom.xml schedule-service/pom.xml
 COPY payment-service/pom.xml payment-service/pom.xml
 COPY notification-service/pom.xml notification-service/pom.xml
 COPY product-service/pom.xml product-service/pom.xml
+COPY maven-settings.xml maven-settings.xml
 
-RUN chmod +x mvnw && mvn dependency:go-offline -pl api-gateway -am -q -B
+RUN chmod +x mvnw && mvn -s maven-settings.xml dependency:go-offline -pl api-gateway -am -q -B
 
 COPY api-gateway/src api-gateway/src
 COPY discovery-service/src discovery-service/src
 
-RUN mvn package -pl api-gateway -am -DskipTests -q -B
+RUN mvn -s maven-settings.xml package -pl api-gateway -am -DskipTests -q -B
 
 # ===== STAGE 2: Runtime =====
 FROM eclipse-temurin:17-jre-alpine

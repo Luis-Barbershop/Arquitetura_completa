@@ -17,14 +17,15 @@ COPY schedule-service/pom.xml schedule-service/pom.xml
 COPY payment-service/pom.xml payment-service/pom.xml
 COPY notification-service/pom.xml notification-service/pom.xml
 COPY product-service/pom.xml product-service/pom.xml
+COPY maven-settings.xml maven-settings.xml
 
-RUN chmod +x mvnw && mvn dependency:go-offline -pl discovery-service -am -q -B
+RUN chmod +x mvnw && mvn -s maven-settings.xml dependency:go-offline -pl discovery-service -am -q -B
 
 # Copia o código fonte do módulo
 COPY discovery-service/src discovery-service/src
 
 # Build do JAR (sem testes)
-RUN mvn package -pl discovery-service -am -DskipTests -q -B
+RUN mvn -s maven-settings.xml package -pl discovery-service -am -DskipTests -q -B
 
 # ===== STAGE 2: Runtime (JRE apenas ~60% menor que JDK) =====
 FROM eclipse-temurin:17-jre-alpine

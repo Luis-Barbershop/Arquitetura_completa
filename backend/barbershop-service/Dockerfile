@@ -17,16 +17,17 @@ COPY schedule-service/pom.xml schedule-service/pom.xml
 COPY payment-service/pom.xml payment-service/pom.xml
 COPY notification-service/pom.xml notification-service/pom.xml
 COPY product-service/pom.xml product-service/pom.xml
+COPY maven-settings.xml maven-settings.xml
 
 RUN chmod +x mvnw \
- && mvn dependency:go-offline -pl barbershop-service -am -B
+ && mvn -s maven-settings.xml dependency:go-offline -pl barbershop-service -am -B
 
 # Copia o código fonte
 COPY barbershop-service/src barbershop-service/src
 
 # BUILD: Força o clean e o package. 
 # O segredo aqui é o filtro no find para garantir que pegamos o JAR executável (maior que 1MB)
-RUN mvn clean package -pl barbershop-service -am -DskipTests -B \
+RUN mvn -s maven-settings.xml clean package -pl barbershop-service -am -DskipTests -B \
  && JAR_PATH=$(find barbershop-service/target -maxdepth 1 -name "barbershop-service-*.jar" ! -name "*plain.jar" | head -n 1) \
  && cp "$JAR_PATH" /build/app.jar \
  && echo "JAR selecionado: $JAR_PATH" \
