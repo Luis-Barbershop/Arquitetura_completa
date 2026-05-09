@@ -920,30 +920,6 @@ function BarberProfilePage() {
                                                         {uploadingLogo ? 'Enviando...' : 'Trocar logo'}
                                                     </button>
                                                 </div>
-
-                                                <div className={styles.shopMediaCard}>
-                                                    <span className={styles.shopMediaLabel}>Banner</span>
-                                                    {barbershopMedia.bannerUrl ? (
-                                                        <img src={barbershopMedia.bannerUrl} alt="Banner da barbearia" className={styles.shopMediaImageBanner} />
-                                                    ) : (
-                                                        <div className={styles.shopMediaPlaceholder}>Sem banner</div>
-                                                    )}
-                                                    <input
-                                                        ref={bannerInputRef}
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={handleUploadBanner}
-                                                        className={styles.hiddenFileInput}
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => bannerInputRef.current?.click()}
-                                                        disabled={uploadingBanner}
-                                                        className={styles.shopMediaButton}
-                                                    >
-                                                        {uploadingBanner ? 'Enviando...' : 'Trocar banner'}
-                                                    </button>
-                                                </div>
                                             </div>
 
                                             <button

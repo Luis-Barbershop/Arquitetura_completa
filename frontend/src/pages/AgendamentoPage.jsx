@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiRefreshCw, FiChevronUp, FiChevronDown } from "react-icons/fi";
 import { toast } from "react-toastify";
@@ -14,8 +14,9 @@ import {
 } from "../services/offlineTransactionalService";
 
 import api from "../services/api";
-import { getShopBarbers, getShopServices, getBarbershopById } from "../services/barbershopService";
+import { getShopBarbers, getShopServices, getBarbershopById, uploadMyBarbershopBanner } from "../services/barbershopService";
 import BarbershopMap from "../components/BarbershopMap/BarbershopMap";
+import CropImageModal from "../components/CropImageModal/CropImageModal";
 import {
   createDateOptionsBase,
   formatDateToApi,
@@ -31,6 +32,18 @@ const AgendamentoPage = () => {
   const [servicesList, setServicesList] = useState([]);
   const [barbersList, setBarbersList] = useState([]);
   const [shopInfo, setShopInfo] = useState(null);
+
+  const isOwnerOfThisShop = (() => {
+    const role = localStorage.getItem('userRole');
+    const isOwner = localStorage.getItem('isOwner') === 'true';
+    const internalId = localStorage.getItem('internalUserId');
+    return role === 'ROLE_BARBER' && isOwner && shopInfo && String(shopInfo.ownerId) === String(internalId);
+  })();
+
+  const [editingBanner, setEditingBanner] = useState(false);
+  const [selectedBannerSrc, setSelectedBannerSrc] = useState(null);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const bannerFileInputRef = useRef(null);
   const [barberActivitiesById, setBarberActivitiesById] = useState({});
   const [isLoadingBarberActivities, setIsLoadingBarberActivities] = useState(false);
 
@@ -427,11 +440,75 @@ const AgendamentoPage = () => {
     }
   };
 
+  const handleBannerFileChange = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setSelectedBannerSrc(reader.result);
+    reader.readAsDataURL(file);
+    setEditingBanner(true);
+  };
+
+  const handleBannerCropConfirm = async (blob) => {
+    setEditingBanner(false);
+    setSelectedBannerSrc(null);
+    setUploadingBanner(true);
+    try {
+      const file = new File([blob], 'banner.jpg', { type: blob.type || 'image/jpeg' });
+      const url = await uploadMyBarbershopBanner(file);
+      const bannerUrl = typeof url === 'string' ? url : url?.bannerUrl;
+      if (bannerUrl) setShopInfo(prev => ({ ...prev, bannerUrl }));
+      toast.success('Banner atualizado com sucesso!');
+    } catch {
+      toast.error('Erro ao atualizar o banner.');
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
   return (
     <div className={`ca-page ${Styles.page_container}`}>
       <div className={`ca-container ${Styles.content_container}`}>
         <CustomerHeader activeTab="agendamentos" onLogout={handleLogout} />
         <CustomerNavbar activeTab="agendamentos" onLogout={handleLogout} />
+
+        {shopInfo && (
+          <div className={Styles.bannerHero}>
+            {shopInfo.bannerUrl ? (
+              <img src={shopInfo.bannerUrl} alt={`Banner de ${shopInfo.name}`} className={Styles.bannerHeroImg} />
+            ) : (
+              <div className={Styles.bannerHeroPlaceholder}>{shopInfo.name}</div>
+            )}
+            {isOwnerOfThisShop && (
+              <>
+                <button
+                  className={Styles.editBannerBtn}
+                  onClick={() => bannerFileInputRef.current?.click()}
+                  disabled={uploadingBanner}
+                >
+                  {uploadingBanner ? 'Enviando...' : '✏️ Editar banner'}
+                </button>
+                <input
+                  ref={bannerFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className={Styles.hiddenInput}
+                  onChange={handleBannerFileChange}
+                />
+              </>
+            )}
+          </div>
+        )}
+
+        {editingBanner && selectedBannerSrc && (
+          <CropImageModal
+            imageSrc={selectedBannerSrc}
+            aspect={16 / 9}
+            onConfirm={handleBannerCropConfirm}
+            onCancel={() => { setEditingBanner(false); setSelectedBannerSrc(null); }}
+          />
+        )}
 
         <section className={Styles.heroBlock}>
           <p className={Styles.kicker}>AGENDAMENTO ONLINE</p>
