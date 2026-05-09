@@ -34,9 +34,15 @@ public class BarbershopController {
 
     // ========== LEITURA PÚBLICA ==========
 
-    @Operation(summary = "Lista todas as barbearias", description = "Retorna uma lista pública de todas as barbearias cadastradas.")
+    @Operation(summary = "Lista todas as barbearias", description = "Retorna barbearias ordenadas por distância quando lat/lng informados, ou todas sem filtro.")
     @GetMapping
-    public ResponseEntity<List<BarbershopDTO>> listAllBarbershops() {
+    public ResponseEntity<?> listAllBarbershops(
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            @RequestParam(defaultValue = "10") Double radiusKm) {
+        if (lat != null && lng != null) {
+            return ResponseEntity.ok(barbershopService.listBarbershopsByProximity(lat, lng, radiusKm));
+        }
         return ResponseEntity.ok(barbershopService.listBarbershops());
     }
 

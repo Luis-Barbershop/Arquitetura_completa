@@ -2,7 +2,7 @@ import Styles from "./CSS/ContainerBarberIcons.module.css"
 import { useNavigate } from "react-router-dom";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 
-function Container_Barbericons({ name, address, image, id, isFavorite = false, onToggleFavorite, rating, reviewsCount = 0, services = [] }) {
+function Container_Barbericons({ name, address, image, id, isFavorite = false, onToggleFavorite, rating, reviewsCount = 0, services = [], distanceKm = null }) {
 
   const navigate = useNavigate();
 
@@ -52,6 +52,9 @@ function Container_Barbericons({ name, address, image, id, isFavorite = false, o
 
       <div className={Styles.text_icon_barbershop_container}>
         <h4>{name}</h4>
+        {distanceKm !== null && (
+          <span className={Styles.distance_badge}>📍 {distanceKm} km</span>
+        )}
         <div className={Styles.rating_container}>
           <div className={Styles.stars}>{renderStars(safeRating)}</div>
           <span className={Styles.rating_text}>

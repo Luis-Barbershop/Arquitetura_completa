@@ -13,6 +13,7 @@ import {
     updateMyBarbershop,
     uploadMyBarbershopLogo,
     uploadMyBarbershopBanner,
+    geocodeAddress,
 } from '../services/barbershopService';
 import { logoutUser } from '../services/authService';
 import { isCustomer } from '../services/userContext';
@@ -426,12 +427,25 @@ function BarberProfilePage() {
         setSavingBarbershopInfo(true);
 
         try {
+            const trimmedAddress = barbershopForm.address.trim();
+            let lat = barbershopForm.latitude;
+            let lng = barbershopForm.longitude;
+
+            if (trimmedAddress) {
+                const coords = await geocodeAddress(trimmedAddress);
+                if (coords) {
+                    lat = coords.lat;
+                    lng = coords.lng;
+                }
+            }
+
             await updateMyBarbershop({
                 name: barbershopForm.name.trim(),
-                address: barbershopForm.address.trim(),
-                latitude: barbershopForm.latitude,
-                longitude: barbershopForm.longitude,
+                address: trimmedAddress,
+                latitude: lat,
+                longitude: lng,
             });
+            setBarbershopForm(prev => ({ ...prev, latitude: lat, longitude: lng }));
             localStorage.setItem('barbershopName', barbershopForm.name.trim());
             toast.success('Dados da barbearia atualizados com sucesso!');
         } catch (error) {

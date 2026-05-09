@@ -36,4 +36,19 @@ public interface BarbershopRepository extends JpaRepository<Barbershop, UUID> {
 
     @Query("SELECT b FROM Barbershop b WHERE b.cnpj IS NOT NULL AND b.cnpj <> '' AND b.cnpj NOT LIKE 'enc:v1:%'")
     List<Barbershop> findWithLegacyPlainCnpj();
+
+    @Query(value = """
+            SELECT *, (6371 * acos(
+                cos(radians(:lat)) * cos(radians(latitude)) *
+                cos(radians(longitude) - radians(:lng)) +
+                sin(radians(:lat)) * sin(radians(latitude))
+            )) AS distance_km
+            FROM barbershops
+            WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+            HAVING distance_km <= :radiusKm
+            ORDER BY distance_km
+            """, nativeQuery = true)
+    List<Barbershop> findByProximity(@Param("lat") Double lat,
+                                     @Param("lng") Double lng,
+                                     @Param("radiusKm") Double radiusKm);
 }

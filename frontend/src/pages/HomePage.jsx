@@ -18,6 +18,9 @@ import Styles from "./CSS/HomePage.module.css"
 function HomePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [favoriteIds, setFavoriteIds] = useState([]);
+  const [userLocation, setUserLocation] = useState(
+    JSON.parse(sessionStorage.getItem('userLocation') || 'null')
+  );
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,6 +54,18 @@ function HomePage() {
     } catch {
       toast.error("Nao foi possivel atualizar suas favoritas agora.");
     }
+  };
+
+  const requestLocation = () => {
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const loc = { lat: coords.latitude, lng: coords.longitude };
+        sessionStorage.setItem('userLocation', JSON.stringify(loc));
+        setUserLocation(loc);
+        toast.success('Localização obtida! Exibindo barbearias próximas.');
+      },
+      () => toast.info('Localização não disponível. Exibindo todas as barbearias.')
+    );
   };
 
   return (
@@ -87,11 +102,17 @@ function HomePage() {
           <div className={Styles.section_header}>
             <h3>Descobrir Barbearias</h3>
             <span className={Styles.section_subtitle}>Perto de você</span>
+            {!userLocation && (
+              <button className={Styles.location_button} onClick={requestLocation}>
+                📍 Usar minha localização
+              </button>
+            )}
           </div>
           <Barbershops
             searchTerm={searchTerm}
             favoriteIds={favoriteIds}
             onToggleFavorite={handleToggleFavorite}
+            userLocation={userLocation}
           />
         </section>
       </div>

@@ -168,6 +168,31 @@ public class BarbershopService {
     }
 
     @Transactional(readOnly = true)
+    public List<BarbershopSummaryDTO> listBarbershopsByProximity(Double lat, Double lng, Double radiusKm) {
+        return barbershopRepository.findByProximity(lat, lng, radiusKm).stream()
+                .map(shop -> {
+                    double distance = calcHaversine(lat, lng, shop.getLatitude(), shop.getLongitude());
+                    return new BarbershopSummaryDTO(
+                            shop.getId(), shop.getName(), shop.getAddress(),
+                            shop.getLogoUrl(), shop.getAverageRating(), shop.getReviewsCount(),
+                            shop.getLatitude(), shop.getLongitude(),
+                            Math.round(distance * 10.0) / 10.0
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+    private double calcHaversine(double lat1, double lng1, double lat2, double lng2) {
+        final int R = 6371;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    @Transactional(readOnly = true)
     public List<ActivityDTO> listActivities(UUID shopId) {
         return activityRepository.findByBarbershopId(shopId).stream()
                 .map(activityMapper::toDTO)

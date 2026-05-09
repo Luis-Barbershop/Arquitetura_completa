@@ -1,16 +1,17 @@
 import Container_Barbericons from "./Container_Barbericons"
 import Styles from "./CSS/Barbershops.module.css"
-import { getAllBarbershops, getShopServices } from "../../../services/barbershopService"
+import { getBarbershops, getShopServices } from "../../../services/barbershopService"
 import { useEffect, useState, useMemo } from "react"
 
 
-function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite }) {
+function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite, userLocation }) {
   const [barbershops, setBarbershops] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAllBarbershops = async () => {
-      const shops = await getAllBarbershops();
+      setLoading(true);
+      const shops = await getBarbershops(userLocation || {});
 
       const shopsWithServices = await Promise.all(
         shops.map(async (shop) => {
@@ -24,7 +25,7 @@ function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite }) {
     }
 
     fetchAllBarbershops()
-  }, []);
+  }, [userLocation]);
 
   const filtered = useMemo(() => {
     if (!searchTerm) return barbershops;
@@ -62,7 +63,8 @@ function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite }) {
           onToggleFavorite={onToggleFavorite}
           rating={shop.averageRating}
           reviewsCount={shop.reviewsCount}
-          services={shop.services || []} />
+          services={shop.services || []}
+          distanceKm={shop.distanceKm ?? null} />
         ))
       ) : (
         <p>Nenhuma barbearia encontrada.</p>

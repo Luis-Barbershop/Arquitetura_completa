@@ -186,3 +186,20 @@
         font-size: 1.08rem;
     }
 }
+
+.location_button {
+    align-self: flex-start;
+    margin-top: 8px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--ca-color-brand, #c19006);
+    background: transparent;
+    color: var(--ca-color-brand, #c19006);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.location_button:hover {
+    background: rgba(193, 144, 6, 0.12);
+}
