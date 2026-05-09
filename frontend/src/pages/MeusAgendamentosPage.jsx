@@ -141,6 +141,13 @@ const MeusAgendamentosPage = () => {
         carregarAgendamentos();
     }, [carregarAgendamentos]);
 
+    // Ao entrar na timeline, garante modo 'dia' para o filtro de data ser preciso
+    useEffect(() => {
+        if (viewMode === 'timeline') {
+            setRangeMode('day');
+        }
+    }, [viewMode]);
+
     useEffect(() => {
         setCurrentPage(1);
     }, [activeFilter]);
@@ -550,7 +557,14 @@ const MeusAgendamentosPage = () => {
 
     const renderTimeline = () => {
         const activeDate = agendaView === 'team' ? teamDate : dateFilter;
-        const dayAppointments = appointments.filter(a => a.startTime?.slice(0, 10) === activeDate);
+
+        // Filtra por data E por status (igual à lista)
+        const dayAppointments = appointments.filter((a) => {
+            if (a.startTime?.slice(0, 10) !== activeDate) return false;
+            if (activeFilter === 'SCHEDULED') return ['SCHEDULED', 'CONFIRMED'].includes(a.status);
+            if (activeFilter !== 'ALL') return a.status === activeFilter;
+            return true;
+        });
 
         const PX_PER_MIN = 80 / 60;
         const START_HOUR = 7;
@@ -609,8 +623,8 @@ const MeusAgendamentosPage = () => {
         if (dayAppointments.length === 0) {
             return (
                 <div className={`${Styles.empty} ca-state ca-state--empty`} style={{ marginTop: '2rem' }}>
-                    <h3>Nenhum atendimento neste dia.</h3>
-                    <p>Navegue para outro dia ou ajuste os filtros.</p>
+                    <h3>Nenhum atendimento em {new Date(activeDate + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}.</h3>
+                    <p>Navegue para outro dia usando as setas de data acima.</p>
                 </div>
             );
         }
