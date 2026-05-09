@@ -412,6 +412,18 @@
     transform: translateY(-1px);
 }
 
+.rescheduleLockedHint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    color: #666;
+    font-style: italic;
+    padding: 0.3rem 0;
+    cursor: default;
+    user-select: none;
+}
+
 .concludeButton {
     border: 1px solid #2e5f99;
     color: #a8ceff;

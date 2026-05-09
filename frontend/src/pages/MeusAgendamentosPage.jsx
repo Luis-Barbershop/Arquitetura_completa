@@ -958,19 +958,28 @@ const MeusAgendamentosPage = () => {
 
                                     {canInteractWithAppointment(app.status) && (
                                         <div className={Styles.cardActions}>
-                                            {isCustomer
-                                                && ['SCHEDULED', 'CONFIRMED'].includes(app.status)
-                                                && (new Date(app.startTime) - new Date()) / 3600000 > 3
-                                                && (
-                                                    <button
-                                                        className={Styles.rescheduleButton}
-                                                        onClick={() => handleOpenRescheduleModal(app)}
-                                                        disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule}
-                                                    >
-                                                        Reagendar
-                                                    </button>
-                                                )
-                                            }
+                                            {isCustomer && ['SCHEDULED', 'CONFIRMED'].includes(app.status) && (() => {
+                                                const horasRestantes = (new Date(app.startTime) - new Date()) / 3600000;
+                                                if (horasRestantes > 3) {
+                                                    return (
+                                                        <button
+                                                            className={Styles.rescheduleButton}
+                                                            onClick={() => handleOpenRescheduleModal(app)}
+                                                            disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule}
+                                                        >
+                                                            Reagendar
+                                                        </button>
+                                                    );
+                                                }
+                                                if (horasRestantes > 0) {
+                                                    return (
+                                                        <span className={Styles.rescheduleLockedHint} title="Reagendamento não permitido dentro de 3 horas do horário">
+                                                            <FiClock size={12} /> Reagendamento indisponível
+                                                        </span>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
                                             <button
                                                 className={Styles.concludeButton}
                                                 onClick={() => handleOpenConcludeModal(app.id)}
