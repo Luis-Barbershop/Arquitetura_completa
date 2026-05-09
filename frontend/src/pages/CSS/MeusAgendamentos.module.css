@@ -774,9 +774,11 @@
 ──────────────────────────────────────────────── */
 .controlsWrapper {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6rem;
     margin-bottom: 1rem;
+    flex-wrap: wrap;
 }
 
 .controlsRow {
@@ -843,7 +845,8 @@
     border: 1px solid #2a2a2a;
     border-radius: 999px;
     padding: 0.3rem 0.7rem;
-    width: 100%;
+    margin-left: auto;
+    flex-shrink: 0;
     transition: opacity 0.2s;
 }
 
