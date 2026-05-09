@@ -21,6 +21,7 @@ import {
     isOfflineTransactionalError,
     getOfflineTransactionalMessage,
 } from '../services/offlineTransactionalService';
+import RescheduleModal from '../components/RescheduleModal/RescheduleModal';
 
 const MeusAgendamentosPage = () => {
     const navigate = useNavigate();
@@ -39,9 +40,9 @@ const MeusAgendamentosPage = () => {
     const [isConcludeModalOpen, setIsConcludeModalOpen] = useState(false);
     const [isSubmittingConclude, setIsSubmittingConclude] = useState(false);
     const [reschedulingAppointmentId, setReschedulingAppointmentId] = useState(null);
+    const [reschedulingAppointment, setReschedulingAppointment] = useState(null);
     const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
     const [isSubmittingReschedule, setIsSubmittingReschedule] = useState(false);
-    const [rescheduleDateTime, setRescheduleDateTime] = useState('');
     const [reviewingAppointment, setReviewingAppointment] = useState(null);
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -193,27 +194,6 @@ const MeusAgendamentosPage = () => {
         }
     };
 
-    const toDateTimeLocalValue = (isoString) => {
-        const date = new Date(isoString);
-        if (Number.isNaN(date.getTime())) return '';
-
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
-
-    const toApiLocalDateTime = (dateTimeLocal) => {
-        if (!dateTimeLocal) return '';
-        if (dateTimeLocal.length === 16) {
-            return `${dateTimeLocal}:00`;
-        }
-        return dateTimeLocal;
-    };
-
     const handleOpenConcludeModal = (id) => {
         setConcludingAppointmentId(id);
         setIsConcludeModalOpen(true);
@@ -245,7 +225,7 @@ const MeusAgendamentosPage = () => {
 
     const handleOpenRescheduleModal = (appointment) => {
         setReschedulingAppointmentId(appointment.id);
-        setRescheduleDateTime(toDateTimeLocalValue(appointment.startTime));
+        setReschedulingAppointment(appointment);
         setIsRescheduleModalOpen(true);
     };
 
@@ -253,24 +233,18 @@ const MeusAgendamentosPage = () => {
         if (isSubmittingReschedule) return;
         setIsRescheduleModalOpen(false);
         setReschedulingAppointmentId(null);
-        setRescheduleDateTime('');
+        setReschedulingAppointment(null);
     };
 
-    const handleConfirmReschedule = async () => {
+    const handleConfirmReschedule = async (newStartTime, newBarberId) => {
         if (!reschedulingAppointmentId) return;
-
-        const normalizedDateTime = toApiLocalDateTime(rescheduleDateTime);
-        if (!normalizedDateTime) {
-            toast.warn('Informe o novo horario do agendamento.');
-            return;
-        }
 
         try {
             setIsSubmittingReschedule(true);
-            await rescheduleAppointment(reschedulingAppointmentId, normalizedDateTime);
+            await rescheduleAppointment(reschedulingAppointmentId, newStartTime, newBarberId);
             setIsRescheduleModalOpen(false);
             setReschedulingAppointmentId(null);
-            setRescheduleDateTime('');
+            setReschedulingAppointment(null);
             await carregarAgendamentos();
             toast.success('Agendamento reagendado com sucesso.');
         } catch (error) {
@@ -1153,44 +1127,13 @@ const MeusAgendamentosPage = () => {
                     </div>
                 )}
 
-                {isRescheduleModalOpen && (
-                    <div className={Styles.modalBackdrop} onClick={handleCloseRescheduleModal}>
-                        <div className={Styles.modalCard} onClick={(e) => e.stopPropagation()}>
-                            <p className={Styles.modalKicker}>REAGENDAR ATENDIMENTO</p>
-                            <h3 className={Styles.modalTitle}>Escolha o novo horario</h3>
-                            <p className={Styles.modalSubtitle}>Atualize data e hora para reagendar o atendimento.</p>
-
-                            <div className={Styles.reviewFormGroup}>
-                                <label className={Styles.reviewLabel} htmlFor="reschedule-date-time">Novo horario</label>
-                                <input
-                                    id="reschedule-date-time"
-                                    type="datetime-local"
-                                    className={Styles.reviewSelect}
-                                    value={rescheduleDateTime}
-                                    onChange={(e) => setRescheduleDateTime(e.target.value)}
-                                />
-                            </div>
-
-                            <div className={Styles.modalActions}>
-                                <button
-                                    type="button"
-                                    className={Styles.modalSecondaryButton}
-                                    onClick={handleCloseRescheduleModal}
-                                    disabled={isSubmittingReschedule}
-                                >
-                                    Voltar
-                                </button>
-                                <button
-                                    type="button"
-                                    className={Styles.modalPrimaryButton}
-                                    onClick={handleConfirmReschedule}
-                                    disabled={isSubmittingReschedule}
-                                >
-                                    {isSubmittingReschedule ? 'Salvando...' : 'Confirmar reagendamento'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                {isRescheduleModalOpen && reschedulingAppointment && (
+                    <RescheduleModal
+                        appointment={reschedulingAppointment}
+                        onClose={handleCloseRescheduleModal}
+                        onConfirm={handleConfirmReschedule}
+                        isSubmitting={isSubmittingReschedule}
+                    />
                 )}
             </div>
 
