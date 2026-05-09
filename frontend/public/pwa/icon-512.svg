@@ -1,10 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="CortaAi">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a1a"/>
+      <stop offset="100%" stop-color="#0f0f0f"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#d4af37"/>
       <stop offset="100%" stop-color="#8d6308"/>
     </linearGradient>
   </defs>
-  <rect x="0" y="0" width="512" height="512" rx="108" fill="url(#bg)"/>
-  <text x="256" y="292" text-anchor="middle" fill="#141414" font-family="Arial, Helvetica, sans-serif" font-size="184" font-weight="700">CA</text>
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="8" y="8" width="496" height="496" rx="106" fill="none" stroke="url(#gold)" stroke-width="5" opacity="0.6"/>
+  <g transform="translate(256,256)" fill="url(#gold)">
+    <circle cx="0" cy="0" r="18"/>
+    <path d="M-10,-16 L-85,-160 Q-96,-187 -75,-182 L-5,5 Z" opacity="0.95"/>
+    <path d="M10,-16 L85,-160 Q96,-187 75,-182 L5,5 Z" opacity="0.95"/>
+    <ellipse cx="-75" cy="138" rx="37" ry="53" fill="none" stroke="url(#gold)" stroke-width="16"/>
+    <ellipse cx="75" cy="138" rx="37" ry="53" fill="none" stroke="url(#gold)" stroke-width="16"/>
+    <rect x="-85" y="10" width="16" height="80" rx="8"/>
+    <rect x="69" y="10" width="16" height="80" rx="8"/>
+  </g>
+  <text x="256" y="480" text-anchor="middle" fill="#c19006" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="700" letter-spacing="5">CortaAi</text>
 </svg>

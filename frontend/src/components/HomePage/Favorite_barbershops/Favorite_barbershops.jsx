@@ -57,7 +57,7 @@ function Favorite_barbershops({ favoriteIds = [] }) {
                         <button
                             key={shop.id}
                             className={Styles.story_item}
-                            onClick={() => navigate(`/agendamentoPage/${shop.id}`)}
+                            onClick={() => navigate(`/barbearia/${shop.id}`)}
                         >
                             <div className={Styles.story_avatar}>
                                 <img

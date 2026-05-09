@@ -8,6 +8,7 @@ import BarberHomePage from './pages/BarberHomePage';
 import BarberServicesPage from './pages/BarberServicesPage';
 import BarberStockPage from './pages/BarberStockPage';
 import AgendamentoPage from './pages/AgendamentoPage';
+import BarbershopDetailPage from './pages/BarbershopDetailPage';
 import CreateBarbershopPage from './pages/CreateBarbershopPage';
 import MeusAgendamentosPage from './pages/MeusAgendamentosPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -33,6 +34,7 @@ function AppRoutes() {
       <Route path="/signin" element={<SignInPage/>}/>
       <Route path="/homepage" element={<HomePage/>}/>
       <Route path='/agendamentoPage/:barbershopId' element={<AgendamentoPage/>}/>
+      <Route path='/barbearia/:barbershopId' element={<BarbershopDetailPage/>}/>
       <Route path='/barberHome' element={<BarberHomePage/>}/>
       <Route path='/barberHome/servicos' element={<BarberServicesPage/>}/>
       <Route path='/barberHome/estoque' element={<BarberStockPage/>}/>

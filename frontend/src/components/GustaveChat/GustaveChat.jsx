@@ -10,7 +10,18 @@ const MODES = [
 const AVATAR = '✂️';
 
 function GustaveChat() {
-    const userRole = localStorage.getItem('userRole');
+    const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole'));
+
+    // Re-sincroniza quando o login ocorre (evento cortaai:login-success)
+    useEffect(() => {
+        const sync = () => setUserRole(localStorage.getItem('userRole'));
+        window.addEventListener('cortaai:login-success', sync);
+        window.addEventListener('storage', sync);
+        return () => {
+            window.removeEventListener('cortaai:login-success', sync);
+            window.removeEventListener('storage', sync);
+        };
+    }, []);
 
     const [open, setOpen]     = useState(false);
     const [mode, setMode]     = useState('PREVIEW');
