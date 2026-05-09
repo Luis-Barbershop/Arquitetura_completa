@@ -6,4 +6,28 @@
       <url>https://maven-central.storage.googleapis.com/maven2/</url>
     </mirror>
   </mirrors>
+  <profiles>
+    <profile>
+      <id>fallback-repos</id>
+      <repositories>
+        <repository>
+          <id>central-fallback</id>
+          <url>https://repo1.maven.org/maven2/</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>central-fallback-plugins</id>
+          <url>https://repo1.maven.org/maven2/</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>fallback-repos</activeProfile>
+  </activeProfiles>
 </settings>
