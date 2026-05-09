@@ -104,10 +104,10 @@ const BarbershopDetailPage = () => {
                 )}
               </div>
             </div>
-            {(shopInfo.rating || shopInfo.reviewsCount > 0) && (
+            {(shopInfo.averageRating || shopInfo.reviewsCount > 0) && (
               <div className={Styles.ratingBadge}>
-                <div className={Styles.stars}>{renderStars(shopInfo.rating ?? 0)}</div>
-                <span>{(shopInfo.rating ?? 0).toFixed(1)}</span>
+                <div className={Styles.stars}>{renderStars(shopInfo.averageRating ?? 0)}</div>
+                <span>{(shopInfo.averageRating ?? 0).toFixed(1)}</span>
                 {shopInfo.reviewsCount > 0 && (
                   <span className={Styles.reviewCount}>({shopInfo.reviewsCount} avaliações)</span>
                 )}
@@ -165,17 +165,26 @@ const BarbershopDetailPage = () => {
           </section>
         )}
 
-        {/* Mapa */}
-        {shopInfo.latitude && shopInfo.longitude && (
-          <section className={Styles.section}>
-            <h2 className={Styles.sectionTitle}><FiMapPin size={16} /> Localização</h2>
+        {/* Mapa / Localização */}
+        <section className={Styles.section}>
+          <h2 className={Styles.sectionTitle}><FiMapPin size={16} /> Localização</h2>
+          {shopInfo.latitude && shopInfo.longitude ? (
             <BarbershopMap
               latitude={shopInfo.latitude}
               longitude={shopInfo.longitude}
               barbershopName={shopInfo.name}
             />
-          </section>
-        )}
+          ) : shopInfo.address ? (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shopInfo.address)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={Styles.mapsLink}
+            >
+              📍 {shopInfo.address} — Abrir no Google Maps
+            </a>
+          ) : null}
+        </section>
 
         {/* CTA Agendar */}
         <div className={Styles.ctaBar}>

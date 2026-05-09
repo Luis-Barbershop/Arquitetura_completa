@@ -254,3 +254,17 @@
 }
 
 .ctaBtn:hover { opacity: 0.9; }
+
+.mapsLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: #f5c518;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0.5rem 0;
+    transition: opacity 0.2s;
+}
+
+.mapsLink:hover { opacity: 0.8; }
