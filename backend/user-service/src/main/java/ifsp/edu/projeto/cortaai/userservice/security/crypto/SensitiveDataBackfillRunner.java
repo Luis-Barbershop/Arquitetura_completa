@@ -23,19 +23,25 @@ public class SensitiveDataBackfillRunner implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        List<Customer> customers = customerRepository.findWithLegacyPlainSensitiveData();
-        if (!customers.isEmpty()) {
-            customerRepository.saveAll(customers);
-        }
+        try {
+            List<Customer> customers = customerRepository.findWithLegacyPlainSensitiveData();
+            if (!customers.isEmpty()) {
+                customerRepository.saveAll(customers);
+            }
 
-        List<Barber> barbers = barberRepository.findWithLegacyPlainSensitiveData();
-        if (!barbers.isEmpty()) {
-            barberRepository.saveAll(barbers);
-        }
+            List<Barber> barbers = barberRepository.findWithLegacyPlainSensitiveData();
+            if (!barbers.isEmpty()) {
+                barberRepository.saveAll(barbers);
+            }
 
-        int migrated = customers.size() + barbers.size();
-        if (migrated > 0) {
-            log.info("event=sensitive-data-backfill status=completed migratedRecords={}", migrated);
+            int migrated = customers.size() + barbers.size();
+            if (migrated > 0) {
+                log.info("event=sensitive-data-backfill status=completed migratedRecords={}", migrated);
+            }
+        } catch (Exception e) {
+            log.warn("event=sensitive-data-backfill status=skipped reason=\"{}\" — " +
+                    "provável dado binário legado em barber_assigned_activities; truncate a tabela para resolver.",
+                    e.getMessage());
         }
     }
 }
