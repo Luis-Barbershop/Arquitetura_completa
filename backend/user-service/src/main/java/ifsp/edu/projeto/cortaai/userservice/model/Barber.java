@@ -38,7 +38,7 @@ public class Barber implements UserDetails {
     @GeneratedValue
     @UuidGenerator
     @JdbcTypeCode(Types.VARCHAR)
-    @Column(nullable = false, updatable = false, length = 36)
+    @Column(nullable = false, updatable = false, columnDefinition = "VARCHAR(36)")
     private UUID id;
 
     @Column(nullable = false, length = 70)
@@ -91,7 +91,7 @@ public class Barber implements UserDetails {
     private String role = "ROLE_BARBER";
 
     // DESACOPLAMENTO: Apenas o ID da barbearia (que vive noutro banco)
-    @Column(name = "barbershop_id", length = 36)
+    @Column(name = "barbershop_id", columnDefinition = "VARCHAR(36)")
     @JdbcTypeCode(Types.VARCHAR)
     private UUID barbershopId;
 
@@ -147,7 +147,7 @@ public class Barber implements UserDetails {
             name = "barber_assigned_activities",
             joinColumns = @JoinColumn(name = "barber_id")
     )
-    @Column(name = "activity_id", length = 36)
+    @Column(name = "activity_id", columnDefinition = "VARCHAR(36)")
     @JdbcTypeCode(Types.VARCHAR)
     @Builder.Default
     private Set<UUID> assignedActivityIds = new HashSet<>();

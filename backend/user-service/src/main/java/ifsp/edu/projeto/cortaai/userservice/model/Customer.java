@@ -28,7 +28,7 @@ import java.util.UUID;
 public class Customer {
 
     @Id
-    @Column(nullable = false, updatable = false, length = 36)
+    @Column(nullable = false, updatable = false, columnDefinition = "VARCHAR(36)")
     @GeneratedValue
     @JdbcTypeCode(Types.VARCHAR)
     @UuidGenerator
@@ -102,7 +102,7 @@ public class Customer {
                     @UniqueConstraint(name = "uk_customer_favorite_shop", columnNames = {"customer_id", "barbershop_id"})
             }
     )
-    @Column(name = "barbershop_id", nullable = false, length = 36)
+    @Column(name = "barbershop_id", nullable = false, columnDefinition = "VARCHAR(36)")
     @JdbcTypeCode(Types.VARCHAR)
     private Set<UUID> favoriteBarbershopIds = new HashSet<>();
 }
