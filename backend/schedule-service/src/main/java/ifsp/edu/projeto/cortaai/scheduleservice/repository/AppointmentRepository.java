@@ -56,4 +56,40 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
 
     @Query(value = "SELECT * FROM appointments WHERE customer_name IS NOT NULL AND customer_name <> '' AND customer_name NOT LIKE 'enc:v1:%'", nativeQuery = true)
     List<Appointment> findWithLegacyPlainCustomerName();
+
+    // ── Queries para o chat IA (gustave) ───────────────────────────────────
+
+    @Query("SELECT a FROM Appointment a WHERE a.barbershopId = :barbershopId " +
+           "AND a.startTime >= :from " +
+           "AND a.status NOT IN ('CANCELLED', 'NO_SHOW') " +
+           "ORDER BY a.startTime ASC")
+    List<Appointment> findUpcomingByBarbershop(
+            @Param("barbershopId") UUID barbershopId,
+            @Param("from") LocalDateTime from);
+
+    @Query("SELECT a FROM Appointment a WHERE a.barberId = :barberId " +
+           "AND a.startTime >= :from " +
+           "AND a.status NOT IN ('CANCELLED', 'NO_SHOW') " +
+           "ORDER BY a.startTime ASC")
+    List<Appointment> findUpcomingByBarberId(
+            @Param("barberId") UUID barberId,
+            @Param("from") LocalDateTime from);
+
+    @Query("SELECT a FROM Appointment a WHERE a.barbershopId = :barbershopId " +
+           "AND a.status IN ('COMPLETED', 'CONCLUDED') " +
+           "AND a.startTime BETWEEN :from AND :to " +
+           "ORDER BY a.startTime DESC")
+    List<Appointment> findCompletedByBarbershop(
+            @Param("barbershopId") UUID barbershopId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    @Query("SELECT a FROM Appointment a WHERE a.barberId = :barberId " +
+           "AND a.status IN ('COMPLETED', 'CONCLUDED') " +
+           "AND a.startTime BETWEEN :from AND :to " +
+           "ORDER BY a.startTime DESC")
+    List<Appointment> findCompletedByBarberId(
+            @Param("barberId") UUID barberId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 }

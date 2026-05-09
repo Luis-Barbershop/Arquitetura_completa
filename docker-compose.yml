@@ -151,6 +151,8 @@ services:
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - CORTAAI_DATA_CRYPTO_KEY=${CORTAAI_DATA_CRYPTO_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
       - JAVA_TOOL_OPTIONS=-Xms64m -Xmx192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m
     depends_on:
       db:

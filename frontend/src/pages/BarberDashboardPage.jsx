@@ -13,6 +13,7 @@ import { AgendaThermometerPanel, AgendaThermometerTable } from '../components/Da
 import { BarberSkillMatrixPanel, BarberSkillMatrixTable } from '../components/Dashboard/panels/BarberSkillMatrixPanel';
 import { CustomerAcquisitionPanel, CustomerAcquisitionTable } from '../components/Dashboard/panels/CustomerAcquisitionPanel';
 import { CustomerRetentionPanel, CustomerRetentionTable } from '../components/Dashboard/panels/CustomerRetentionPanel';
+import { ExportPDFModal } from '../components/Dashboard/ExportPDFModal';
 import {
     getBarberPerformance,
     getStockHealthAlert,
@@ -27,6 +28,7 @@ function BarberDashboardPage() {
     const navigate = useNavigate();
     const [barber, setBarber] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showExportModal, setShowExportModal] = useState(false);
 
     const [barberPerf, setBarberPerf] = useState([]);
     const [stockHealth, setStockHealth] = useState([]);
@@ -84,6 +86,14 @@ function BarberDashboardPage() {
                 <section className={styles.heroSection}>
                     <p className={styles.heroKicker}>DASHBOARD & RELATÓRIOS</p>
                     <h1>Análise da sua barbearia</h1>
+                    <button
+                        onClick={() => setShowExportModal(true)}
+                        className={styles.dashboardCtaButton}
+                        style={{ marginTop: '0.75rem', fontSize: '0.9rem', padding: '0.55rem 1.2rem' }}
+                        type="button"
+                    >
+                        📄 Exportar PDF
+                    </button>
                 </section>
 
                 <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay2}`}>
@@ -137,6 +147,14 @@ function BarberDashboardPage() {
                         <p className={styles.dashboardCtaHint}>Registre um atendimento presencial sem app.</p>
                     </div>
                 </section>
+
+                {showExportModal && (
+                    <ExportPDFModal
+                        barbershopName={barber?.barbershopName ?? 'Barbearia'}
+                        analyticsData={{ barberPerf, stockHealth, agendaThermo, skillMatrix, customerAcq, customerRet }}
+                        onClose={() => setShowExportModal(false)}
+                    />
+                )}
             </div>
             <BarberNavbar activeTab="dashboards" onTabChange={handleTabChange} isOwner={true} barbershopId={barbershopId} />
         </div>

@@ -122,3 +122,15 @@ app:
   security:
     crypto:
       key: ${CORTAAI_DATA_CRYPTO_KEY:}
+
+# ==================================================
+# IA — gustave (Gemini + Groq fallback)
+# ==================================================
+ai:
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
+  groq:
+    api-key: ${GROQ_API_KEY:}
+    url: https://api.groq.com/openai/v1/chat/completions
+    model: llama-3.3-70b-versatile

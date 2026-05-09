@@ -5,6 +5,7 @@ import AppRoutes from './AppRoutes';
 import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import UpdateAvailableBanner from './components/UpdateAvailableBanner';
+import GustaveChat from './components/GustaveChat/GustaveChat';
 import {
   applyServiceWorkerUpdate,
   requestPwaInstall,
@@ -87,6 +88,7 @@ function AppShell() {
         pauseOnHover
         theme="dark"
       />
+      <GustaveChat />
     </main>
   )
 }

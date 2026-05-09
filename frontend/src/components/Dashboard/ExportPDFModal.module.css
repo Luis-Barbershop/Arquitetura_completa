@@ -1,0 +1,115 @@
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgb(0 0 0 / 65%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal {
+    background: #1a1a2e;
+    border: 1px solid #2a2a4e;
+    border-radius: 16px;
+    padding: 2rem;
+    width: min(92vw, 420px);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.hint {
+    font-size: 0.85rem;
+    color: #a0a0b0;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.fields {
+    display: flex;
+    gap: 1rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    color: #a0a0b0;
+}
+
+.field input {
+    background: #0f0f1e;
+    border: 1px solid #2a2a4e;
+    border-radius: 8px;
+    padding: 0.5rem 0.7rem;
+    color: #fff;
+    font-size: 0.88rem;
+    color-scheme: dark;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.field input:focus {
+    border-color: #c19006;
+}
+
+.downloadBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #c19006;
+    color: #0f0f1e;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 10px;
+    padding: 0.7rem 1.2rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.downloadBtn:hover {
+    background: #e8b923;
+}
+
+.downloadBtnDisabled {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #2a2a4e;
+    color: #555;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 10px;
+    padding: 0.7rem 1.2rem;
+    cursor: not-allowed;
+}
+
+.closeBtn {
+    background: transparent;
+    border: 1px solid #2a2a4e;
+    border-radius: 10px;
+    color: #a0a0b0;
+    font-size: 0.85rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.closeBtn:hover {
+    border-color: #c19006;
+    color: #fff;
+}
