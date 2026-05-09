@@ -31,7 +31,12 @@ function CustomerProfilePage() {
     const loadProfile = async () => {
       try {
         const data = await getMyProfile();
-        setProfile(data);
+
+        // Se o backend não retornar imageUrl, usa o cache do localStorage
+        const cachedImage = localStorage.getItem('userProfileImage');
+        const resolvedImageUrl = data?.imageUrl || cachedImage || null;
+
+        setProfile({ ...data, imageUrl: resolvedImageUrl });
         setForm({
           name: data?.name || '',
           tell: maskPhone(onlyDigits(data?.tell || data?.phone || '')),
@@ -41,8 +46,8 @@ function CustomerProfilePage() {
           localStorage.setItem('userName', data.name);
         }
 
-        if (data?.imageUrl) {
-          localStorage.setItem('userProfileImage', data.imageUrl);
+        if (resolvedImageUrl) {
+          localStorage.setItem('userProfileImage', resolvedImageUrl);
         }
       } catch {
         toast.error('Não foi possível carregar seu perfil.');

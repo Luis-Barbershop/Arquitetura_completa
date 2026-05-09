@@ -117,6 +117,11 @@ function BarberProfilePage() {
         api.get('/auth/me')
             .then(res => {
                 const data = res.data;
+                // Se o backend não retornar imageUrl, usa o cache do localStorage
+                if (!data.imageUrl) {
+                    const cached = localStorage.getItem('userProfileImage');
+                    if (cached) data.imageUrl = cached;
+                }
                 setBarber(data);
                 setActAsBarber(data?.actAsBarber ?? true);
                 if (data?.barbershopName) localStorage.setItem('barbershopName', data.barbershopName);
