@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FiBarChart2, FiCalendar, FiCheckCircle, FiChevronLeft, FiChevronRight, FiClock, FiList, FiRefreshCw, FiScissors, FiStar, FiUsers, FiXCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
@@ -27,6 +27,7 @@ const MeusAgendamentosPage = () => {
     const location = useLocation();
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [initialized, setInitialized] = useState(false);
     const [activeFilter, setActiveFilter] = useState('ALL');
     const [agendaView, setAgendaView] = useState('mine');
     const [teamDate, setTeamDate] = useState(new Date().toLocaleDateString('en-CA'));
@@ -77,6 +78,8 @@ const MeusAgendamentosPage = () => {
 
     const carregarAgendamentos = useCallback(async () => {
         setOfflineTransactionalNotice('');
+        // Mostrar spinner apenas na primeira carga (anti-flicker)
+        if (!initialized) setLoading(true);
         try {
             let data = [];
 
@@ -106,14 +109,20 @@ const MeusAgendamentosPage = () => {
                 );
                 const reviewedByShop = Object.fromEntries(reviewEntries);
 
-                setAppointments(sorted.map((item) => ({
-                    ...item,
-                    hasReviewed: Boolean(reviewedByShop[item.barbershopId]),
-                })));
+                startTransition(() => {
+                    setAppointments(sorted.map((item) => ({
+                        ...item,
+                        hasReviewed: Boolean(reviewedByShop[item.barbershopId]),
+                    })));
+                    if (!initialized) setInitialized(true);
+                });
                 return;
             }
 
-            setAppointments(sorted);
+            startTransition(() => {
+                setAppointments(sorted);
+                if (!initialized) setInitialized(true);
+            });
         } catch (error) {
             console.error("Erro ao buscar agendamentos:", error);
             if (isOfflineTransactionalError(error)) {
@@ -121,11 +130,11 @@ const MeusAgendamentosPage = () => {
             } else {
                 toast.error('Nao foi possivel carregar seus agendamentos.');
             }
-            setAppointments([]);
+            startTransition(() => setAppointments([]));
         } finally {
             setLoading(false);
         }
-    }, [agendaView, barbershopId, isCustomer, isOwner, teamDate]);
+    }, [agendaView, barbershopId, isCustomer, isOwner, teamDate, initialized]);
 
     useEffect(() => {
         carregarAgendamentos();
@@ -533,13 +542,8 @@ const MeusAgendamentosPage = () => {
             const fmt = (x) => x.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
             return `${fmt(start)} – ${fmt(end)}`;
         }
-        const isToday = dateStr === todayStr;
-        const isTomorrow = dateStr === (() => { const t = new Date(); t.setDate(t.getDate() + 1); return t.toLocaleDateString('en-CA'); })();
-        const isYesterday = dateStr === (() => { const t = new Date(); t.setDate(t.getDate() - 1); return t.toLocaleDateString('en-CA'); })();
-        if (isToday) return 'Hoje';
-        if (isTomorrow) return 'Amanhã';
-        if (isYesterday) return 'Ontem';
-        return d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+        // Sempre retornar data formatada por extenso (sem 'Hoje/Amanhã/ontem') conforme SDD
+        return d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
     };
 
     const renderTimeline = () => {

@@ -282,6 +282,15 @@
     font-weight: 700;
 }
 
+.barberAvatarImg {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 2px solid rgba(193,144,6,0.08);
+    display: inline-block;
+}
+
 .barberName {
     color: #ececec;
     font-family: 'Roboto', sans-serif;
@@ -465,6 +474,18 @@
     font-size: 0.9rem;
     font-style: italic;
 }
+
+.dateSpinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(224,224,224,0.4);
+    border-top-color: var(--ca-color-brand, #c19006);
+    border-radius: 50%;
+    animation: ca-spin 0.8s linear infinite;
+    margin: 8px auto;
+}
+
+@keyframes ca-spin { to { transform: rotate(360deg); } }
 
 .footer {
     margin: 0.1rem 1.2rem 0;

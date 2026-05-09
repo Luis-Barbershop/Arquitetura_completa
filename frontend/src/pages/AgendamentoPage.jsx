@@ -495,7 +495,7 @@ const AgendamentoPage = () => {
                     selectedServices.every(s => barberActivityIds.has(String(s.id)));
 
                   // Barbeiros que não atendem os serviços ficam desabilitados (não somem)
-                  const isDisabled = selectedServices.length > 0 && hasActivityData && !canDoAllServices;
+                  const isDisabled = activitiesLoadedButEmpty || (selectedServices.length > 0 && hasActivityData && !canDoAllServices);
                   const isSelected = String(selectedBarber) === String(barber.id);
 
                   return (
@@ -518,15 +518,18 @@ const AgendamentoPage = () => {
                       title={isDisabled ? 'Este profissional não realiza todos os serviços selecionados' : barber.name}
                       disabled={isDisabled}
                     >
-                      <span className={Styles.barberAvatar}>{getInitials(barber.name)}</span>
+                      {barber.imageUrl ? (
+                        <>
+                          <img src={barber.imageUrl} alt={barber.name} className={Styles.barberAvatarImg}
+                               onError={e => { e.currentTarget.style.display = 'none'; const next = e.currentTarget.nextElementSibling; if (next) next.style.display = 'inline-flex'; }} />
+                          <span className={Styles.barberAvatar} style={{ display: 'none' }}>{getInitials(barber.name)}</span>
+                        </>
+                      ) : (
+                        <span className={Styles.barberAvatar}>{getInitials(barber.name)}</span>
+                      )}
                       <span className={Styles.barberName}>{barber.name}</span>
                       {isDisabled && (
                         <span className={Styles.barberUnavailableTag}>Não realiza</span>
-                      )}
-                      {!isDisabled && activitiesLoadedButEmpty && (
-                        <span className={Styles.barberNoActivitiesTag} title="Este profissional ainda não tem serviços configurados">
-                          ⚠️ Sem serviços
-                        </span>
                       )}
                     </button>
                   );
@@ -558,7 +561,7 @@ const AgendamentoPage = () => {
             <div className={Styles.dateRail}>
               {selectedBarber && selectedServices.length > 0 ? (
                 isLoadingDateOptions ? (
-                  <p className={Styles.info_text}>Carregando datas inteligentes...</p>
+                  <div className={Styles.dateSpinner} aria-label="Carregando datas" />
                 ) : dateOptions.length > 0 ? (
                   dateOptions.map((option) => (
                     <button

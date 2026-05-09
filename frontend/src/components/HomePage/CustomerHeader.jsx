@@ -59,10 +59,6 @@ function CustomerHeader({ activeTab = 'home', onLogout }) {
                     aria-label="Ir para a página inicial"
                 >
                     <img src={cortaAiLogo} alt="CortaAI" className={styles.brandLogo} />
-                    <div className={styles.brandText}>
-                        <span className={styles.brandName}>CortaAI</span>
-                        <span className={styles.brandSub}>Painel do cliente</span>
-                    </div>
                 </button>
             </div>
 

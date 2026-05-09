@@ -135,10 +135,6 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
                     aria-label="Ir para a página inicial"
                 >
                     <img src={cortaAiLogo} alt="CortaAI" className={styles.brandLogo} />
-                    <div className={styles.brandText}>
-                        <span className={styles.brandName}>CortaAI</span>
-                        <span className={styles.brandSub}>Painel profissional</span>
-                    </div>
                 </button>
             </div>
 
