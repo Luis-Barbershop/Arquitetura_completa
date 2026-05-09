@@ -41,12 +41,13 @@ function BarberNavbar({ activeTab, onTabChange, onLogout }) {
         ? [
             { id: 'home',     label: 'Home',    Icon: House },
             { id: 'agenda',   label: 'Agenda',  Icon: CalendarBlank },
-            ...(hasShop ? [{ id: 'servicos', label: isOwner ? 'Serviços' : 'Habilidades', Icon: Scissors }] : []),
+            { id: 'servicos', label: isOwner ? 'Serviços' : 'Habilidades', Icon: Scissors },
             ...(isOwner ? [{ id: 'time', label: 'Time', Icon: Users }] : []),
         ]
         : [
-            { id: 'home',   label: 'Home',   Icon: House },
-            { id: 'perfil', label: 'Perfil', Icon: UserCircle },
+            { id: 'home',     label: 'Home',    Icon: House },
+            { id: 'servicos', label: 'Habilidades', Icon: Scissors },
+            { id: 'perfil',   label: 'Perfil',  Icon: UserCircle },
         ];
 
     // Itens do drawer "Mais"
