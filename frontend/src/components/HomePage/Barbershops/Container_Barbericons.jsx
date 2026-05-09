@@ -7,7 +7,7 @@ function Container_Barbericons({ name, address, image, id, isFavorite = false, o
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/agendamentoPage/${id}`);
+    navigate(`/barbearia/${id}`);
   };
 
   const handleFavorite = (e) => {
