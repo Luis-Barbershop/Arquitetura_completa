@@ -2,17 +2,24 @@ import React, { useEffect, useRef, useState } from 'react';
 import { sendMessage } from '../../services/gustaveService';
 import styles from './GustaveChat.module.css';
 
-const MODES = [
-    { key: 'PREVIEW',      label: 'Previsão' },
-    { key: 'CONSOLIDATED', label: 'Consolidado' },
-];
-
 const AVATAR = '✂️';
+
+// Detecta o modo pelo conteúdo da mensagem:
+// CONSOLIDATED → perguntas sobre histórico, relatórios, desempenho passado
+// PREVIEW      → padrão (agenda futura, próximos clientes, previsões)
+function detectMode(text) {
+    const lower = text.toLowerCase();
+    const consolidatedKeywords = [
+        'semana passada', 'mês passado', 'ontem', 'histórico', 'relatório',
+        'faturamento', 'receita', 'atendimentos realizados', 'concluídos',
+        'desempenho', 'balanço', 'resumo do mês', 'últimos dias',
+    ];
+    return consolidatedKeywords.some(k => lower.includes(k)) ? 'CONSOLIDATED' : 'PREVIEW';
+}
 
 function GustaveChat() {
     const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole'));
 
-    // Re-sincroniza quando o login ocorre (evento cortaai:login-success)
     useEffect(() => {
         const sync = () => setUserRole(localStorage.getItem('userRole'));
         window.addEventListener('cortaai:login-success', sync);
@@ -23,10 +30,9 @@ function GustaveChat() {
         };
     }, []);
 
-    const [open, setOpen]     = useState(false);
-    const [mode, setMode]     = useState('PREVIEW');
+    const [open, setOpen]         = useState(false);
     const [messages, setMessages] = useState([
-        { role: 'assistant', text: 'Olá! Sou o **gustave**, seu assistente de agenda. Escolha o modo e me pergunte o que quiser.' },
+        { role: 'assistant', text: 'Olá! Sou o gustave, seu assistente de agenda. Como posso ajudar?' },
     ]);
     const [input, setInput]   = useState('');
     const [typing, setTyping] = useState(false);
@@ -42,6 +48,8 @@ function GustaveChat() {
     const handleSend = async () => {
         const text = input.trim();
         if (!text || typing) return;
+
+        const mode = detectMode(text);
 
         setMessages(prev => [...prev, { role: 'user', text }]);
         setInput('');
@@ -84,20 +92,6 @@ function GustaveChat() {
                             </span>
                         </div>
                         <button className={styles.closeBtn} onClick={() => setOpen(false)} aria-label="Fechar chat" type="button">✕</button>
-                    </div>
-
-                    {/* Toggle de modo */}
-                    <div className={styles.modeBar}>
-                        {MODES.map(m => (
-                            <button
-                                key={m.key}
-                                className={mode === m.key ? styles.modeActive : styles.modeBtn}
-                                onClick={() => setMode(m.key)}
-                                type="button"
-                            >
-                                {m.label}
-                            </button>
-                        ))}
                     </div>
 
                     {/* Histórico */}
