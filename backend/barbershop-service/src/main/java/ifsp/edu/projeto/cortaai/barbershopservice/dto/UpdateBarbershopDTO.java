@@ -14,7 +14,7 @@ public class UpdateBarbershopDTO {
     private String name;
 
     @Size(max = 255)
-    @Pattern(regexp = "^[\\p{L}\\p{M}\\p{N}\\s,.°ºª\\-/]*$", message = "Endereço contém caracteres inválidos")
+    @Pattern(regexp = "^[\\p{L}\\p{M}\\p{N}\\s,.°ºª\\-/:()'\"+#&]*$", message = "Endereço contém caracteres inválidos")
     private String address;
 
     private Double latitude;
