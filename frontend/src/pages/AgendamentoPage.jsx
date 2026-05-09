@@ -53,7 +53,7 @@ const AgendamentoPage = () => {
   const [dateOptions, setDateOptions] = useState([]);
   const [isLoadingDateOptions, setIsLoadingDateOptions] = useState(false);
   const [selectedTime, setSelectedTime] = useState("");
-  const [expandedPeriods, setExpandedPeriods] = useState({ morning: true, afternoon: true });
+  const [datePage, setDatePage] = useState(0); // 0 = dias 1-15, 1 = dias 16-30
   const [offlineTransactionalNotice, setOfflineTransactionalNotice] = useState("");
 
   const getDateKey = (dateObj) => formatDateToApi(dateObj);
@@ -94,13 +94,14 @@ const AgendamentoPage = () => {
         setDateOptions([]);
         setSelectedDate(null);
         setSelectedTime("");
+        setDatePage(0);
         return;
       }
 
       setIsLoadingDateOptions(true);
 
       try {
-        const baseOptions = createDateOptionsBase(14).map((option, i) => ({
+        const baseOptions = createDateOptionsBase(30).map((option, i) => ({
           ...option,
           label: getRelativeDateLabel(option.date, i),
           compact: formatCompactDate(option.date),
@@ -655,32 +656,55 @@ const AgendamentoPage = () => {
                 isLoadingDateOptions ? (
                   <div className={Styles.dateSpinner} aria-label="Carregando datas" />
                 ) : dateOptions.length > 0 ? (
-                  dateOptions.map((option) => (
-                    <button
-                      key={option.key}
-                      type="button"
-                      className={`${Styles.dateChip} ${selectedDate && option.key === getDateKey(selectedDate) ? Styles.dateChipSelected : ''}`}
-                      onClick={() => {
-                        if (!option.isAvailable) return;
-                        if (selectedDate && option.key === getDateKey(selectedDate)) {
-                          setSelectedDate(null);
-                          setSelectedTime("");
-                          return;
-                        }
-                        setSelectedDate(option.date);
-                        setSelectedTime(option.slots[0] || "");
-                      }}
-                      disabled={!option.isAvailable}
-                    >
-                      <span className={Styles.dateChipLabel}>{option.label}</span>
-                      <strong className={Styles.dateChipValue}>{option.compact}</strong>
-                      <small className={Styles.dateChipMeta}>
-                        {option.isAvailable
-                          ? `${option.slots.length} horários`
-                          : 'Indisponível'}
-                      </small>
-                    </button>
-                  ))
+                  <>
+                    {dateOptions.slice(datePage * 15, datePage * 15 + 15).map((option) => (
+                      <button
+                        key={option.key}
+                        type="button"
+                        className={`${Styles.dateChip} ${selectedDate && option.key === getDateKey(selectedDate) ? Styles.dateChipSelected : ''}`}
+                        onClick={() => {
+                          if (!option.isAvailable) return;
+                          if (selectedDate && option.key === getDateKey(selectedDate)) {
+                            setSelectedDate(null);
+                            setSelectedTime("");
+                            return;
+                          }
+                          setSelectedDate(option.date);
+                          setSelectedTime(option.slots[0] || "");
+                        }}
+                        disabled={!option.isAvailable}
+                      >
+                        <span className={Styles.dateChipLabel}>{option.label}</span>
+                        <strong className={Styles.dateChipValue}>{option.compact}</strong>
+                        <small className={Styles.dateChipMeta}>
+                          {option.isAvailable
+                            ? `${option.slots.length} horários`
+                            : 'Indisponível'}
+                        </small>
+                      </button>
+                    ))}
+                    <div className={Styles.datePagination}>
+                      <button
+                        type="button"
+                        className={Styles.datePaginationBtn}
+                        onClick={() => { setDatePage(0); setSelectedDate(null); setSelectedTime(""); }}
+                        disabled={datePage === 0}
+                      >
+                        ← Dias 1–15
+                      </button>
+                      <span className={Styles.datePaginationLabel}>
+                        Página {datePage + 1} de 2 &nbsp;·&nbsp; dias {datePage * 15 + 1}–{datePage * 15 + 15}
+                      </span>
+                      <button
+                        type="button"
+                        className={Styles.datePaginationBtn}
+                        onClick={() => { setDatePage(1); setSelectedDate(null); setSelectedTime(""); }}
+                        disabled={datePage === 1}
+                      >
+                        Dias 16–30 →
+                      </button>
+                    </div>
+                  </>
                 ) : (
                   <p className={Styles.info_text}>Sem datas disponíveis no momento.</p>
                 )
