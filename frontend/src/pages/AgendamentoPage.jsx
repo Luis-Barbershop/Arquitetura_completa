@@ -53,8 +53,9 @@ const AgendamentoPage = () => {
   const [dateOptions, setDateOptions] = useState([]);
   const [isLoadingDateOptions, setIsLoadingDateOptions] = useState(false);
   const [selectedTime, setSelectedTime] = useState("");
-  const [datePage, setDatePage] = useState(0); // 0 = dias 1-15, 1 = dias 16-30
+  const [datePage, setDatePage] = useState(0);
   const [offlineTransactionalNotice, setOfflineTransactionalNotice] = useState("");
+  const [expandedPeriods, setExpandedPeriods] = useState({ morning: true, afternoon: true });
 
   const getDateKey = (dateObj) => formatDateToApi(dateObj);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -547,8 +548,6 @@ const AgendamentoPage = () => {
                   data={service}
                   isSelected={selectedServices.some((selected) => selected.id === service.id)}
                   disabled={
-                    // Só desabilita se TEMOS dados de habilidade E o barbeiro não executa este serviço.
-                    // Se não temos dados (Set vazio), não bloqueamos — evita travar a UI enquanto carrega.
                     selectedBarber !== null &&
                     selectedBarberActivityIds.size > 0 &&
                     !selectedBarberActivityIds.has(String(service.id))
@@ -562,7 +561,8 @@ const AgendamentoPage = () => {
           </div>
         </section>
 
-        <section className={Styles.section}>
+        {selectedServices.length > 0 && (
+        <section className={`${Styles.section} ${Styles.sectionReveal}`}>
           <h3 className={Styles.section_title}>2. Profissional</h3>
           {barbersList.length > 0 ? (
             <>
@@ -633,8 +633,10 @@ const AgendamentoPage = () => {
             <p className={Styles.info_text}>No momento não há profissionais disponíveis para agendamento nesta barbearia.</p>
           )}
         </section>
+        )}
 
-        <section className={Styles.section}>
+        {selectedBarber && selectedServices.length > 0 && (
+        <section className={`${Styles.section} ${Styles.sectionReveal}`}>
           <h3 className={Styles.section_title}>3. Data</h3>
           <div className={Styles.dateModule}>
             <div className={Styles.dateInfoPanel}>
@@ -714,8 +716,10 @@ const AgendamentoPage = () => {
             </div>
           </div>
         </section>
+        )}
 
-        <section className={Styles.section}>
+        {selectedBarber && selectedDate && selectedServices.length > 0 && (
+        <section className={`${Styles.section} ${Styles.sectionReveal}`}>
           <h3 className={Styles.section_title}>4. Horário</h3>
           {selectedBarber && selectedDate && selectedServices.length > 0 ? (
             currentSlots.length > 0 ? (
@@ -789,6 +793,7 @@ const AgendamentoPage = () => {
             <p className={Styles.info_text}>Selecione serviços, profissional e data para visualizar horários.</p>
           )}
         </section>
+        )}
 
         <div className={Styles.footer}>
           <div className={Styles.totalInfo}>

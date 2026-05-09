@@ -194,6 +194,15 @@
     margin: 0 1.2rem;
 }
 
+@keyframes revealSection {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.sectionReveal {
+    animation: revealSection 0.35s ease both;
+}
+
 .section_title {
     color: var(--ca-color-text-primary);
     font-size: 1.02rem;

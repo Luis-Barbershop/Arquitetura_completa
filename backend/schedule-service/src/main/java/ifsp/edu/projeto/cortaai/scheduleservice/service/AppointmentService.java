@@ -590,7 +590,6 @@ public class AppointmentService {
         if ("BARBER".equals(userType)) {
             return appointmentRepository.findByBarberIdOrderByStartTimeDesc(caller.getId())
                     .stream()
-                    .filter(this::includeInOperationalAgenda)
                     .map(appointmentMapper::toDTO)
                     .collect(Collectors.toList());
         }
