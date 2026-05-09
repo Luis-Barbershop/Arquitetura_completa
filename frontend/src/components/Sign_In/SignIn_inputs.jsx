@@ -199,6 +199,12 @@ function SignIn_inputs() {
                 navigate(getRedirectPath());
             } catch (err) {
                 console.error(err);
+                // 409 = usuário já existe no banco (criado em sessão anterior ou via /verify)
+                // Não remove o token — credencial ainda é válida, apenas orienta o usuário.
+                if (err?.response?.status === 409) {
+                    setError('Esta conta já está cadastrada. Volte e faça login normalmente.');
+                    return;
+                }
                 setError(err.response?.data?.message || "Erro ao completar perfil. Verifique os dados.");
                 localStorage.removeItem('token');
                 localStorage.removeItem('userId');
