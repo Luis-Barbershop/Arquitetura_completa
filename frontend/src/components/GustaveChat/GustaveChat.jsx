@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { sendMessage } from '../../services/gustaveService';
+import { isBarber } from '../../services/userContext';
 import styles from './GustaveChat.module.css';
 
 const AVATAR = '✂️';
@@ -30,8 +31,7 @@ function GustaveChat() {
         };
     }, []);
 
-    const [open, setOpen]         = useState(false);
-    const [messages, setMessages] = useState([
+    const [open, setOpen]         = useState(false);    const [messages, setMessages] = useState([
         { role: 'assistant', text: 'Olá! Sou o gustave, seu assistente de agenda. Como posso ajudar?' },
     ]);
     const [input, setInput]   = useState('');
@@ -43,7 +43,7 @@ function GustaveChat() {
         if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, open]);
 
-    if (userRole !== 'ROLE_BARBER') return null;
+    if (!isBarber()) return null;
 
     const handleSend = async () => {
         const text = input.trim();
