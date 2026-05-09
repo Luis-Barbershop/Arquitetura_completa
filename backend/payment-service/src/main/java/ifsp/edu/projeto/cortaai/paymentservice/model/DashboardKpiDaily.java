@@ -2,8 +2,10 @@ package ifsp.edu.projeto.cortaai.paymentservice.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
 
 import java.math.BigDecimal;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -28,9 +30,12 @@ public class DashboardKpiDaily {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @JdbcTypeCode(Types.VARCHAR)
+    @Column(nullable = false, updatable = false, columnDefinition = "VARCHAR(36)")
     private UUID id;
 
-    @Column(name = "barbershop_id", nullable = false)
+    @JdbcTypeCode(Types.VARCHAR)
+    @Column(name = "barbershop_id", nullable = false, columnDefinition = "VARCHAR(36)")
     private UUID barbershopId;
 
     @Column(name = "reference_date", nullable = false)
