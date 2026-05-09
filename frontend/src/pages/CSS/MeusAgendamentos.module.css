@@ -931,6 +931,38 @@
 
 .dateNavRefreshBtn:hover { color: #c19006; }
 
+/* Cluster fixo de ações à direita da dateNavRow */
+.dateNavActions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* Separador vertical entre Hoje/↻ e Lista/Timeline */
+.dateNavDivider {
+    display: inline-block;
+    width: 1px;
+    height: 18px;
+    background: #333;
+    border-radius: 1px;
+    flex-shrink: 0;
+}
+
+/* dateNavActions nunca aplica opacidade própria — herdado do dateNavRowDisabled */
+.dateNavRowDisabled .dateNavActions {
+    pointer-events: none;
+}
+
+/* viewToggle embutido dentro do dateNavRow (sem borda/fundo próprio) */
+.dateNavActions .viewToggle {
+    background: transparent;
+    border: none;
+    padding: 0;
+    gap: 0.1rem;
+}
+
 /* ────────────────────────────────────────────────
    Duration badge (dentro do card)
 ──────────────────────────────────────────────── */
