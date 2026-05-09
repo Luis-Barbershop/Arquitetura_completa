@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { logoutUser } from '../services/authService';
-import { isCustomer, isOwnerUser } from '../services/userContext';
+import { isCustomer, isOwnerUser, getBarbershopId } from '../services/userContext';
 import { createService, deleteService, getMyServices } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
@@ -160,12 +160,8 @@ function BarberServicesPage() {
   }, [navigate]);
 
   useEffect(() => {
-    if (!isOwner) {
-      setLoadingServices(false);
-      setServices([]);
-      return;
-    }
-
+    // Colaborador também carrega os serviços para exibir no ManageMySkills
+    // Só o formulário de cadastro/exclusão é restrito ao owner (guard no JSX)
     loadServices();
   }, [isOwner, loadServices]);
 
@@ -418,7 +414,7 @@ function BarberServicesPage() {
           </>
         )}
 
-        {barber?.barbershopId && (
+        {(barber?.barbershopId || getBarbershopId()) && (
           <section className={styles.assignSection}>
             <article className={styles.panelCard}>
               <div className={styles.panelHeader}>
@@ -428,7 +424,7 @@ function BarberServicesPage() {
                 Selecione e salve aqui os serviços que voce realmente executa. Esse vinculo
                 e obrigatorio para liberar o agendamento no fluxo do backend.
               </p>
-              <ManageMySkills shopId={barber.barbershopId} refreshKey={skillsRefreshKey} />
+              <ManageMySkills shopId={barber?.barbershopId || getBarbershopId()} refreshKey={skillsRefreshKey} />
             </article>
           </section>
         )}
