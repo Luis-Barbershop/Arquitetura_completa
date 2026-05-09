@@ -1629,3 +1629,34 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+.shopGeoRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.geoBtn {
+    height: 36px;
+    padding: 0 14px;
+    background: #1e3a2f;
+    border: 1px solid #2e7d52;
+    color: #4caf82;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.geoBtn:hover {
+    background: #2a4d3e;
+}
+
+.geoCoords {
+    font-size: 11px;
+    color: #888;
+    font-family: monospace;
+}

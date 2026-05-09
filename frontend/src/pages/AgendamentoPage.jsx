@@ -14,7 +14,8 @@ import {
 } from "../services/offlineTransactionalService";
 
 import api from "../services/api";
-import { getShopBarbers, getShopServices } from "../services/barbershopService";
+import { getShopBarbers, getShopServices, getBarbershopById } from "../services/barbershopService";
+import BarbershopMap from "../components/BarbershopMap/BarbershopMap";
 import {
   createDateOptionsBase,
   formatDateToApi,
@@ -29,6 +30,7 @@ const AgendamentoPage = () => {
 
   const [servicesList, setServicesList] = useState([]);
   const [barbersList, setBarbersList] = useState([]);
+  const [shopInfo, setShopInfo] = useState(null);
   const [barberActivitiesById, setBarberActivitiesById] = useState({});
   const [isLoadingBarberActivities, setIsLoadingBarberActivities] = useState(false);
 
@@ -258,13 +260,15 @@ const AgendamentoPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [servicesData, barbersData] = await Promise.all([
+        const [servicesData, barbersData, shopData] = await Promise.all([
           getShopServices(barbershopId),
           getShopBarbers(barbershopId),
+          getBarbershopById(barbershopId),
         ]);
 
         setServicesList(servicesData);
         setBarbersList(barbersData);
+        setShopInfo(shopData);
 
         if (Array.isArray(barbersData) && barbersData.length === 0) {
           toast.info("No momento não há profissionais disponíveis para esta barbearia.");
@@ -434,6 +438,17 @@ const AgendamentoPage = () => {
           <h1 className={Styles.title}>Monte seu horário em poucos passos</h1>
           <p className={Styles.subtitle}>Selecione serviços, profissional, data e horário. Antes de confirmar, você verá um resumo completo.</p>
         </section>
+
+        {shopInfo?.latitude && shopInfo?.longitude && (
+          <section className={Styles.section}>
+            <h3 className={Styles.section_title}>📍 Localização</h3>
+            <BarbershopMap
+              latitude={shopInfo.latitude}
+              longitude={shopInfo.longitude}
+              barbershopName={shopInfo.name}
+            />
+          </section>
+        )}
 
         {offlineTransactionalNotice && (
           <p className={`${Styles.warning} ca-state ca-state--error`}>

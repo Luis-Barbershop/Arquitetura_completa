@@ -1,0 +1,30 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.map {
+    width: 100%;
+    height: 220px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.googleMapsLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #f5c518;
+    text-decoration: none;
+    font-weight: 600;
+    transition: opacity 0.2s;
+    align-self: flex-start;
+}
+
+.googleMapsLink:hover {
+    opacity: 0.8;
+}

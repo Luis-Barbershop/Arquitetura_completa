@@ -105,7 +105,7 @@ function BarberProfilePage() {
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [uploadingBanner, setUploadingBanner] = useState(false);
     const [cropModal, setCropModal] = useState(null);
-    const [barbershopForm, setBarbershopForm] = useState({ name: '', address: '' });
+    const [barbershopForm, setBarbershopForm] = useState({ name: '', address: '', latitude: null, longitude: null });
     const [barbershopMedia, setBarbershopMedia] = useState({ logoUrl: '', bannerUrl: '' });
 
     useEffect(() => {
@@ -178,6 +178,8 @@ function BarberProfilePage() {
                 setBarbershopForm({
                     name: shop.name || '',
                     address: shop.address || '',
+                    latitude: shop.latitude ?? null,
+                    longitude: shop.longitude ?? null,
                 });
 
                 setBarbershopMedia({
@@ -427,6 +429,8 @@ function BarberProfilePage() {
             await updateMyBarbershop({
                 name: barbershopForm.name.trim(),
                 address: barbershopForm.address.trim(),
+                latitude: barbershopForm.latitude,
+                longitude: barbershopForm.longitude,
             });
             localStorage.setItem('barbershopName', barbershopForm.name.trim());
             toast.success('Dados da barbearia atualizados com sucesso!');
@@ -859,6 +863,38 @@ function BarberProfilePage() {
                                                     required
                                                 />
                                             </label>
+
+                                            <div className={styles.shopGeoRow}>
+                                                <button
+                                                    type="button"
+                                                    className={styles.geoBtn}
+                                                    onClick={() => {
+                                                        if (!navigator.geolocation) {
+                                                            toast.error('Geolocalização não suportada pelo navegador.');
+                                                            return;
+                                                        }
+                                                        navigator.geolocation.getCurrentPosition(
+                                                            ({ coords }) => {
+                                                                setBarbershopForm(prev => ({
+                                                                    ...prev,
+                                                                    latitude: coords.latitude,
+                                                                    longitude: coords.longitude,
+                                                                }));
+                                                                toast.success('Localização capturada! Salve para confirmar.');
+                                                            },
+                                                            () => toast.error('Não foi possível obter a localização. Verifique as permissões.')
+                                                        );
+                                                    }}
+                                                >
+                                                    📍 Usar minha localização atual
+                                                </button>
+
+                                                {barbershopForm.latitude && barbershopForm.longitude && (
+                                                    <span className={styles.geoCoords}>
+                                                        {barbershopForm.latitude.toFixed(5)}, {barbershopForm.longitude.toFixed(5)}
+                                                    </span>
+                                                )}
+                                            </div>
 
                                             <div className={styles.shopMediaGrid}>
                                                 <div className={styles.shopMediaCard}>

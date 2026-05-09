@@ -284,6 +284,8 @@ public class BarbershopService {
 
         if (dto.getName() != null) shop.setName(dto.getName());
         if (dto.getAddress() != null) shop.setAddress(dto.getAddress());
+        if (dto.getLatitude() != null) shop.setLatitude(dto.getLatitude());
+        if (dto.getLongitude() != null) shop.setLongitude(dto.getLongitude());
 
         return barbershopMapper.toDTO(barbershopRepository.save(shop));
     }

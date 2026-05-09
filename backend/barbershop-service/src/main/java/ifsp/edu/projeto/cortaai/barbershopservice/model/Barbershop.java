@@ -57,6 +57,12 @@ public class Barbershop {
     @Column(name = "banner_url_public_id", length = 255)
     private String bannerUrlPublicId;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     @Formula("(select avg(br.rating) from barbershop_reviews br where br.barbershop_id = id)")
     private Double averageRating;
 

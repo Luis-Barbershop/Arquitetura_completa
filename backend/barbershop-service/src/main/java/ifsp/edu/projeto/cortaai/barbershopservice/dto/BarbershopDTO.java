@@ -17,6 +17,8 @@ public class BarbershopDTO {
     private String bannerUrl;
     private Double averageRating;
     private Long reviewsCount;
+    private Double latitude;
+    private Double longitude;
     private List<String> highlightUrls;
 }
 
