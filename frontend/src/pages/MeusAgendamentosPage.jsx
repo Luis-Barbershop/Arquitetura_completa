@@ -744,26 +744,35 @@ const MeusAgendamentosPage = () => {
                 {!isCustomer && (
                     <div className={Styles.statsBar}>
                         {[
-                            { label: 'Hoje', value: stats.today, filter: null, icon: <FiCalendar size={16} />, accent: '#c19006' },
-                            { label: 'Ativos', value: stats.active, filter: 'SCHEDULED', icon: <FiClock size={16} />, accent: '#3b82f6' },
-                            { label: 'Encaixe', value: stats.walkIn, filter: 'WALK_IN', icon: <FiScissors size={16} />, accent: '#7c3aed' },
-                            { label: 'Pendentes', value: stats.pending, filter: 'PAYMENT_PENDING', icon: <FiClock size={16} />, accent: '#f97316' },
-                            { label: 'Concluídos', value: stats.completed, filter: 'COMPLETED', icon: <FiCheckCircle size={16} />, accent: '#10b981' },
-                            { label: 'Cancelados', value: stats.cancelled, filter: 'CANCELLED', icon: <FiXCircle size={16} />, accent: '#ef4444' },
+                            { label: 'Hoje', value: stats.today, filter: 'TODAY', icon: <FiCalendar size={13} />, accent: '#c19006' },
+                            { label: 'Ativos', value: stats.active, filter: 'SCHEDULED', icon: <FiClock size={13} />, accent: '#3b82f6' },
+                            { label: 'Encaixe', value: stats.walkIn, filter: 'WALK_IN', icon: <FiScissors size={13} />, accent: '#7c3aed' },
+                            { label: 'Pendentes', value: stats.pending, filter: 'PAYMENT_PENDING', icon: <FiClock size={13} />, accent: '#f97316' },
+                            { label: 'Concluídos', value: stats.completed, filter: 'COMPLETED', icon: <FiCheckCircle size={13} />, accent: '#10b981' },
+                            { label: 'Cancelados', value: stats.cancelled, filter: 'CANCELLED', icon: <FiXCircle size={13} />, accent: '#ef4444' },
                         ].map(item => {
-                            const isActive = item.filter && activeFilter === item.filter;
+                            const isToday = item.filter === 'TODAY';
+                            const isActive = isToday
+                                ? activeFilter === 'ALL' && (agendaView === 'team' ? teamDate : dateFilter) === todayStr
+                                : activeFilter === item.filter;
                             return (
                                 <button
                                     key={item.label}
                                     className={`${Styles.statCard} ${isActive ? Styles.statCardActive : ''}`}
                                     style={{ '--accent': item.accent }}
-                                    onClick={() => item.filter && setActiveFilter(
-                                        activeFilter === item.filter ? 'ALL' : item.filter
-                                    )}
+                                    onClick={() => {
+                                        if (isToday) {
+                                            setActiveFilter('ALL');
+                                            setDateFilter(todayStr);
+                                            setTeamDate(todayStr);
+                                        } else {
+                                            setActiveFilter(activeFilter === item.filter ? 'ALL' : item.filter);
+                                        }
+                                    }}
                                     type="button"
-                                    title={item.filter
-                                        ? (isActive ? `Clique para remover filtro "${item.label}"` : `Filtrar por: ${item.label}`)
-                                        : undefined}
+                                    title={isToday
+                                        ? 'Ver agendamentos de hoje'
+                                        : (isActive ? `Remover filtro "${item.label}"` : `Filtrar: ${item.label}`)}
                                 >
                                     <span className={Styles.statIcon}>{item.icon}</span>
                                     <span className={Styles.statValue}>{item.value}</span>
@@ -890,18 +899,6 @@ const MeusAgendamentosPage = () => {
 
                             {/* Ações fixas — sempre na extrema direita, não encolhem */}
                             <div className={Styles.dateNavActions}>
-                                <button
-                                    className={Styles.dateNavTodayBtn}
-                                    onClick={() => {
-                                        if (activeFilter !== 'ALL') setActiveFilter('ALL');
-                                        if (agendaView === 'team') setTeamDate(todayStr);
-                                        else setDateFilter(todayStr);
-                                    }}
-                                    type="button"
-                                    title={activeFilter !== 'ALL' ? 'Voltar para hoje e remover filtro de status' : 'Ir para hoje'}
-                                >
-                                    Hoje
-                                </button>
                                 <button
                                     className={Styles.dateNavRefreshBtn}
                                     onClick={carregarAgendamentos}
