@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.service;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.CustomerDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.UpdateCustomerDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -14,7 +15,7 @@ public interface CustomerService {
     CustomerDTO get(UUID id);
 
     /** Atualiza perfil identificando o customer pelo firebaseUid. */
-    void updateByFirebaseUid(String firebaseUid, CustomerDTO customerDTO);
+    void updateByFirebaseUid(String firebaseUid, UpdateCustomerDTO dto);
 
     /** Exclui a conta do customer identificado pelo firebaseUid. */
     void deleteByFirebaseUid(String firebaseUid);

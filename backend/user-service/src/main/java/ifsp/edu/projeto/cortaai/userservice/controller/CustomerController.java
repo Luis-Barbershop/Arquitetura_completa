@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.controller;
 
 import ifsp.edu.projeto.cortaai.userservice.dto.CustomerDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.UpdateCustomerDTO;
 import ifsp.edu.projeto.cortaai.userservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.userservice.service.CustomerService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -64,8 +65,8 @@ public class CustomerController {
     @PutMapping("/me")
     public ResponseEntity<Void> updateCustomer(
             @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
-            @RequestBody @Valid CustomerDTO customerDTO) {
-        customerService.updateByFirebaseUid(firebaseUid, customerDTO);
+            @RequestBody @Valid UpdateCustomerDTO dto) {
+        customerService.updateByFirebaseUid(firebaseUid, dto);
         return ResponseEntity.ok().build();
     }
 

@@ -4,6 +4,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import ifsp.edu.projeto.cortaai.userservice.dto.CustomerDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.UpdateCustomerDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.UploadResultDTO;
 import ifsp.edu.projeto.cortaai.userservice.event.BeforeDeleteCustomer;
 import ifsp.edu.projeto.cortaai.userservice.exception.NotFoundException;
@@ -12,7 +13,6 @@ import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository;
 import ifsp.edu.projeto.cortaai.userservice.security.crypto.PrivacyHash;
 import ifsp.edu.projeto.cortaai.userservice.service.CustomerService;
-import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import ifsp.edu.projeto.cortaai.userservice.service.storage.StorageService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
@@ -32,21 +32,18 @@ public class CustomerServiceImpl implements CustomerService {
     private final ApplicationEventPublisher publisher;
     private final CustomerMapper customerMapper;
     private final StorageService storageService;
-    private final FirebaseAuthService firebaseAuthService;
     private final FirebaseAuth firebaseAuth;
 
     public CustomerServiceImpl(final CustomerRepository customerRepository,
                                final ApplicationEventPublisher publisher,
                                final CustomerMapper customerMapper,
                                final StorageService storageService,
-                               final FirebaseAuthService firebaseAuthService,
                                final FirebaseAuth firebaseAuth
                                ) {
         this.customerRepository = customerRepository;
         this.publisher = publisher;
         this.customerMapper = customerMapper;
         this.storageService = storageService;
-        this.firebaseAuthService = firebaseAuthService;
         this.firebaseAuth = firebaseAuth;
     }
 
@@ -102,23 +99,20 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     @Transactional
-    public void updateByFirebaseUid(final String firebaseUid, final CustomerDTO customerDTO) {
+    public void updateByFirebaseUid(final String firebaseUid, final UpdateCustomerDTO dto) {
         final Customer customer = findByFirebaseUid(firebaseUid);
 
-        customer.setName(customerDTO.getName());
-        customer.setTell(customerDTO.getTell());
-        customer.setEmail(PrivacyHash.normalizeEmail(customerDTO.getEmail()));
-        customer.setDocumentCPF(onlyDigits(customerDTO.getDocumentCPF()));
-        if (customerDTO.getBirthDate() != null) {
-            customer.setBirthDate(customerDTO.getBirthDate());
+        if (dto.getName() != null) {
+            customer.setName(dto.getName());
         }
-
-        if (customerDTO.getImageUrl() != null) {
-            customer.setImageUrl(customerDTO.getImageUrl());
+        if (dto.getTell() != null) {
+            customer.setTell(dto.getTell());
+        }
+        if (dto.getBirthDate() != null) {
+            customer.setBirthDate(dto.getBirthDate());
         }
 
         customerRepository.save(customer);
-        firebaseAuthService.setCustomUserClaims(customer.getFirebaseUid(), "CUSTOMER", false);
     }
 
     @Override
