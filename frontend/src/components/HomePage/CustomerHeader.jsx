@@ -27,8 +27,23 @@ import styles from './CSS/CustomerHeader.module.css';
 function CustomerHeader({ activeTab = 'home', onLogout }) {
     const navigate = useNavigate();
     const canChangePassword = (localStorage.getItem('authProvider') || 'EMAIL').toUpperCase() === 'EMAIL';
-    const userName = localStorage.getItem('userName') || 'Cliente';
-    const userProfileImage = localStorage.getItem('userProfileImage') || '';
+
+    // Reativo ao login (cortaai:login-success) e storage — mesmo padrão do GustaveChat
+    const [userName, setUserName] = useState(() => localStorage.getItem('userName') || 'Cliente');
+    const [userProfileImage, setUserProfileImage] = useState(() => localStorage.getItem('userProfileImage') || '');
+
+    useEffect(() => {
+        const sync = () => {
+            setUserName(localStorage.getItem('userName') || 'Cliente');
+            setUserProfileImage(localStorage.getItem('userProfileImage') || '');
+        };
+        window.addEventListener('cortaai:login-success', sync);
+        window.addEventListener('storage', sync);
+        return () => {
+            window.removeEventListener('cortaai:login-success', sync);
+            window.removeEventListener('storage', sync);
+        };
+    }, []);
 
     const [avatarOpen, setAvatarOpen] = useState(false);
     const avatarRef = useRef(null);

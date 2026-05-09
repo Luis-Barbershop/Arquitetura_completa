@@ -8,6 +8,7 @@ import CustomerHeader from "../components/HomePage/CustomerHeader";
 import CustomerNavbar from "../components/HomePage/CustomerNavbar";
 import { logoutUser } from "../services/authService";
 import { isBarber } from "../services/userContext";
+import { getMyProfile } from "../services/userProfileService";
 import {
   addFavoriteBarbershop,
   getMyFavoriteBarbershopsIds,
@@ -28,6 +29,17 @@ function HomePage() {
       navigate('/barberHome', { replace: true });
     }
   }, [navigate]);
+
+  // Sincroniza perfil do cliente com o servidor (equivalente ao BarberHomePage)
+  useEffect(() => {
+    if (isBarber()) return;
+    getMyProfile()
+      .then((data) => {
+        if (data?.name) localStorage.setItem('userName', data.name);
+        if (data?.imageUrl) localStorage.setItem('userProfileImage', data.imageUrl);
+      })
+      .catch(() => { /* silencia — não crítico para renderização */ });
+  }, []);
 
   useEffect(() => {
     const loadFavorites = async () => {
