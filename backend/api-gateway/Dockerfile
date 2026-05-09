@@ -1,5 +1,6 @@
 # ===== STAGE 1: Build =====
 FROM eclipse-temurin:17-jdk-alpine AS builder
+RUN apk add --no-cache maven
 WORKDIR /build
 
 COPY mvnw mvnw
@@ -15,12 +16,12 @@ COPY payment-service/pom.xml payment-service/pom.xml
 COPY notification-service/pom.xml notification-service/pom.xml
 COPY product-service/pom.xml product-service/pom.xml
 
-RUN chmod +x mvnw && ./mvnw dependency:go-offline -pl api-gateway -am -q -B
+RUN chmod +x mvnw && mvn dependency:go-offline -pl api-gateway -am -q -B
 
 COPY api-gateway/src api-gateway/src
 COPY discovery-service/src discovery-service/src
 
-RUN ./mvnw package -pl api-gateway -am -DskipTests -q -B
+RUN mvn package -pl api-gateway -am -DskipTests -q -B
 
 # ===== STAGE 2: Runtime =====
 FROM eclipse-temurin:17-jre-alpine

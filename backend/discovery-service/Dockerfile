@@ -1,5 +1,6 @@
 # ===== STAGE 1: Build =====
 FROM eclipse-temurin:17-jdk-alpine AS builder
+RUN apk add --no-cache maven
 WORKDIR /build
 
 # Copia o wrapper e POM pai primeiro (cache de dependências)
@@ -17,13 +18,13 @@ COPY payment-service/pom.xml payment-service/pom.xml
 COPY notification-service/pom.xml notification-service/pom.xml
 COPY product-service/pom.xml product-service/pom.xml
 
-RUN chmod +x mvnw && ./mvnw dependency:go-offline -pl discovery-service -am -q -B
+RUN chmod +x mvnw && mvn dependency:go-offline -pl discovery-service -am -q -B
 
 # Copia o código fonte do módulo
 COPY discovery-service/src discovery-service/src
 
 # Build do JAR (sem testes)
-RUN ./mvnw package -pl discovery-service -am -DskipTests -q -B
+RUN mvn package -pl discovery-service -am -DskipTests -q -B
 
 # ===== STAGE 2: Runtime (JRE apenas ~60% menor que JDK) =====
 FROM eclipse-temurin:17-jre-alpine

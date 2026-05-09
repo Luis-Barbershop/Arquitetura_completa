@@ -1,5 +1,6 @@
 # ===== STAGE 1: Build =====
 FROM eclipse-temurin:17-jdk-alpine AS builder
+RUN apk add --no-cache maven
 WORKDIR /build
 
 # Copia os wrappers e o pom raiz
@@ -18,14 +19,14 @@ COPY notification-service/pom.xml notification-service/pom.xml
 COPY product-service/pom.xml product-service/pom.xml
 
 RUN chmod +x mvnw \
- && ./mvnw dependency:go-offline -pl barbershop-service -am -B
+ && mvn dependency:go-offline -pl barbershop-service -am -B
 
 # Copia o código fonte
 COPY barbershop-service/src barbershop-service/src
 
 # BUILD: Força o clean e o package. 
 # O segredo aqui é o filtro no find para garantir que pegamos o JAR executável (maior que 1MB)
-RUN ./mvnw clean package -pl barbershop-service -am -DskipTests -B \
+RUN mvn clean package -pl barbershop-service -am -DskipTests -B \
  && JAR_PATH=$(find barbershop-service/target -maxdepth 1 -name "barbershop-service-*.jar" ! -name "*plain.jar" | head -n 1) \
  && cp "$JAR_PATH" /build/app.jar \
  && echo "JAR selecionado: $JAR_PATH" \
