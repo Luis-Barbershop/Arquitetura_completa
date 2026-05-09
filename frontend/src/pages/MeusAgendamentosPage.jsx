@@ -380,7 +380,9 @@ const MeusAgendamentosPage = () => {
         }
 
         // Filtro de data para barbeiro na visão "mine"
-        if (!isCustomer && agendaView === 'mine') {
+        // Quando filtrando por status específico (ex: CANCELLED, COMPLETED), ignora filtro de data
+        // para mostrar todo o histórico daquele status, não só o do dia atual.
+        if (!isCustomer && agendaView === 'mine' && activeFilter === 'ALL') {
             const appDate = app.startTime?.slice(0, 10);
             if (!appDate) return false;
             if (rangeMode === 'day') {
@@ -402,7 +404,7 @@ const MeusAgendamentosPage = () => {
         }
 
         // Filtro de data para team view (mesma lógica usando teamDate como âncora)
-        if (!isCustomer && agendaView === 'team') {
+        if (!isCustomer && agendaView === 'team' && activeFilter === 'ALL') {
             const appDate = app.startTime?.slice(0, 10);
             if (!appDate) return false;
             if (rangeMode === 'day') {
@@ -763,81 +765,125 @@ const MeusAgendamentosPage = () => {
 
                 {/* ── Seletor mine/team + navegação de data ── */}
                 {!isCustomer && (
-                    <div className={Styles.controlsRow}>
-                        {isOwner && (
-                            <div className={Styles.viewToggle}>
-                                <button
-                                    className={agendaView === 'mine' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
-                                    onClick={() => { setAgendaView('mine'); navigate('/meus-agendamentos'); }}
-                                    type="button"
-                                >
-                                    <FiScissors size={14} /> Minha Agenda
-                                </button>
-                                <button
-                                    className={agendaView === 'team' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
-                                    onClick={() => { setAgendaView('team'); navigate('/meus-agendamentos?view=team'); }}
-                                    type="button"
-                                >
-                                    <FiUsers size={14} /> Equipe
-                                </button>
-                            </div>
-                        )}
+                    <div className={Styles.controlsWrapper}>
+                        {/* ── Linha 1: mine/equipe · Dia/Semana/Mês · Lista/Timeline ── */}
+                        <div className={Styles.controlsRow}>
+                            {isOwner && (
+                                <div className={Styles.viewToggle}>
+                                    <button
+                                        className={agendaView === 'mine' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
+                                        onClick={() => { setAgendaView('mine'); navigate('/meus-agendamentos'); }}
+                                        type="button"
+                                    >
+                                        <FiScissors size={14} /> Minha Agenda
+                                    </button>
+                                    <button
+                                        className={agendaView === 'team' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
+                                        onClick={() => { setAgendaView('team'); navigate('/meus-agendamentos?view=team'); }}
+                                        type="button"
+                                    >
+                                        <FiUsers size={14} /> Equipe
+                                    </button>
+                                </div>
+                            )}
 
-                        {/* Navegação de data */}
-                        <div className={Styles.dateNavRow}>
-                            {/* Tabs de range — mine e team */}
-                            <div className={Styles.viewToggle} style={{ marginRight: '0.5rem' }}>
+                            {/* Seletor de período — desabilitado quando status específico ativo */}
+                            <div
+                                className={`${Styles.viewToggle} ${activeFilter !== 'ALL' ? Styles.viewToggleDisabled : ''}`}
+                                title={activeFilter !== 'ALL' ? 'Filtro de data desativado: exibindo todo o histórico do status selecionado' : undefined}
+                            >
                                 {[{ key: 'day', label: 'Dia' }, { key: 'week', label: 'Semana' }, { key: 'month', label: 'Mês' }].map(r => (
                                     <button
                                         key={r.key}
                                         className={rangeMode === r.key ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
-                                        onClick={() => setRangeMode(r.key)}
+                                        onClick={() => { setRangeMode(r.key); if (activeFilter !== 'ALL') setActiveFilter('ALL'); }}
                                         type="button"
+                                        disabled={activeFilter !== 'ALL'}
                                     >
                                         {r.label}
                                     </button>
                                 ))}
                             </div>
+
+                            {/* Toggle lista / timeline */}
+                            <div className={Styles.viewToggle} style={{ marginLeft: 'auto' }}>
+                                <button
+                                    className={viewMode === 'list' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
+                                    onClick={() => setViewMode('list')}
+                                    type="button"
+                                    title="Visão lista"
+                                >
+                                    <FiList size={14} /> Lista
+                                </button>
+                                <button
+                                    className={viewMode === 'timeline' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
+                                    onClick={() => setViewMode('timeline')}
+                                    type="button"
+                                    title="Visão timeline"
+                                >
+                                    <FiBarChart2 size={14} /> Timeline
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* ── Linha 2: navegação de data (só ativa em modo ALL) ── */}
+                        <div className={`${Styles.dateNavRow} ${activeFilter !== 'ALL' ? Styles.dateNavRowDisabled : ''}`}>
                             <button
                                 className={Styles.dateNavBtn}
                                 onClick={() => agendaView === 'team' ? shiftTeamDate(-1) : shiftDateFilter(-1)}
-                                aria-label="Dia anterior"
+                                aria-label="Período anterior"
                                 type="button"
+                                disabled={activeFilter !== 'ALL'}
                             >
                                 <FiChevronLeft size={18} />
                             </button>
-                            <label className={Styles.dateNavLabel} title="Clique para escolher data">
-                                {formatDateDisplay(agendaView === 'team' ? teamDate : dateFilter)}
-                                <input
-                                    type={rangeMode === 'month' ? 'month' : 'date'}
-                                    value={rangeMode === 'month'
-                                        ? (agendaView === 'team' ? teamDate : dateFilter).slice(0, 7)
-                                        : (agendaView === 'team' ? teamDate : dateFilter)}
-                                    onChange={(e) => {
-                                        if (agendaView === 'team') {
-                                            setTeamDate(rangeMode === 'month' ? e.target.value + '-01' : e.target.value);
-                                        } else if (rangeMode === 'month') {
-                                            setDateFilter(e.target.value + '-01');
-                                        } else {
-                                            setDateFilter(e.target.value);
-                                        }
-                                    }}
-                                    className={Styles.dateNavInputHidden}
-                                    aria-label="Selecionar data"
-                                />
+                            <label
+                                className={Styles.dateNavLabel}
+                                title={activeFilter !== 'ALL'
+                                    ? 'Filtro de data inativo — selecione "Todos" no filtro acima para navegar por data'
+                                    : 'Clique para escolher data'}
+                            >
+                                {activeFilter !== 'ALL'
+                                    ? 'Todo o histórico'
+                                    : formatDateDisplay(agendaView === 'team' ? teamDate : dateFilter)}
+                                {activeFilter === 'ALL' && (
+                                    <input
+                                        type={rangeMode === 'month' ? 'month' : 'date'}
+                                        value={rangeMode === 'month'
+                                            ? (agendaView === 'team' ? teamDate : dateFilter).slice(0, 7)
+                                            : (agendaView === 'team' ? teamDate : dateFilter)}
+                                        onChange={(e) => {
+                                            if (agendaView === 'team') {
+                                                setTeamDate(rangeMode === 'month' ? e.target.value + '-01' : e.target.value);
+                                            } else if (rangeMode === 'month') {
+                                                setDateFilter(e.target.value + '-01');
+                                            } else {
+                                                setDateFilter(e.target.value);
+                                            }
+                                        }}
+                                        className={Styles.dateNavInputHidden}
+                                        aria-label="Selecionar data"
+                                    />
+                                )}
                             </label>
                             <button
                                 className={Styles.dateNavBtn}
                                 onClick={() => agendaView === 'team' ? shiftTeamDate(1) : shiftDateFilter(1)}
-                                aria-label="Próximo dia"
+                                aria-label="Próximo período"
                                 type="button"
+                                disabled={activeFilter !== 'ALL'}
                             >
                                 <FiChevronRight size={18} />
                             </button>
                             <button
                                 className={Styles.dateNavTodayBtn}
-                                onClick={() => agendaView === 'team' ? setTeamDate(todayStr) : setDateFilter(todayStr)}
+                                onClick={() => {
+                                    if (activeFilter !== 'ALL') setActiveFilter('ALL');
+                                    if (agendaView === 'team') setTeamDate(todayStr);
+                                    else setDateFilter(todayStr);
+                                }}
                                 type="button"
+                                title={activeFilter !== 'ALL' ? 'Clique para voltar à visão de hoje (remove filtro de status)' : 'Ir para hoje'}
                             >
                                 Hoje
                             </button>
@@ -848,26 +894,6 @@ const MeusAgendamentosPage = () => {
                                 type="button"
                             >
                                 <FiRefreshCw size={14} />
-                            </button>
-                        </div>
-
-                        {/* Toggle lista / timeline */}
-                        <div className={Styles.viewToggle}>
-                            <button
-                                className={viewMode === 'list' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
-                                onClick={() => setViewMode('list')}
-                                type="button"
-                                title="Visão lista"
-                            >
-                                <FiList size={14} /> Lista
-                            </button>
-                            <button
-                                className={viewMode === 'timeline' ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
-                                onClick={() => setViewMode('timeline')}
-                                type="button"
-                                title="Visão timeline"
-                            >
-                                <FiBarChart2 size={14} /> Timeline
                             </button>
                         </div>
                     </div>

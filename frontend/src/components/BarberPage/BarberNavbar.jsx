@@ -41,7 +41,7 @@ function BarberNavbar({ activeTab, onTabChange, onLogout }) {
         ? [
             { id: 'home',     label: 'Home',    Icon: House },
             { id: 'agenda',   label: 'Agenda',  Icon: CalendarBlank },
-            ...(isOwner ? [{ id: 'servicos', label: 'Serviços', Icon: Scissors }] : []),
+            ...(hasShop ? [{ id: 'servicos', label: isOwner ? 'Serviços' : 'Habilidades', Icon: Scissors }] : []),
             ...(isOwner ? [{ id: 'time', label: 'Time', Icon: Users }] : []),
         ]
         : [

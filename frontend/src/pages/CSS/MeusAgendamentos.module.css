@@ -702,14 +702,20 @@
 }
 
 /* ────────────────────────────────────────────────
-   Controls row (mine/team toggle + date nav + view toggle)
+   Controls wrapper (duas linhas: toggles acima, navegação de data abaixo)
 ──────────────────────────────────────────────── */
+.controlsWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
 .controlsRow {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.6rem;
     flex-wrap: wrap;
-    margin-bottom: 1rem;
 }
 
 .viewToggle {
@@ -720,6 +726,12 @@
     border-radius: 999px;
     padding: 0.25rem;
     gap: 0.15rem;
+    flex-shrink: 0;
+}
+
+.viewToggleDisabled {
+    opacity: 0.4;
+    pointer-events: none;
 }
 
 .viewToggleBtn {
@@ -753,7 +765,7 @@
 }
 
 /* ────────────────────────────────────────────────
-   Date Navigation
+   Date Navigation (linha própria, largura total)
 ──────────────────────────────────────────────── */
 .dateNavRow {
     display: flex;
@@ -762,10 +774,24 @@
     background: rgba(0,0,0,0.3);
     border: 1px solid #2a2a2a;
     border-radius: 999px;
-    padding: 0.3rem 0.6rem;
-    flex: 1;
-    min-width: 220px;
-    max-width: 440px;
+    padding: 0.3rem 0.7rem;
+    width: 100%;
+    transition: opacity 0.2s;
+}
+
+.dateNavRowDisabled {
+    opacity: 0.45;
+}
+
+.dateNavRowDisabled .dateNavLabel {
+    color: #666;
+    font-style: italic;
+    cursor: default;
+}
+
+.dateNavRowDisabled .dateNavBtn,
+.dateNavRowDisabled .dateNavTodayBtn {
+    pointer-events: none;
 }
 
 .dateNavBtn {
