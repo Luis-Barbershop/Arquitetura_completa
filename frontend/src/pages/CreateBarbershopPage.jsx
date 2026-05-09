@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { createBarbershop } from '../services/barbershopService';
 import { refreshSession } from '../services/authService';
+import CropImageModal from '../components/CropImageModal/CropImageModal';
 
 function CreateBarbershopPage() {
     const navigate = useNavigate();
@@ -10,7 +11,10 @@ function CreateBarbershopPage() {
     const [name, setName] = useState("");
     const [cnpj, setCnpj] = useState("");
     const [file, setFile] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [cropSrc, setCropSrc] = useState(null);
+    const logoInputRef = useRef(null);
+    const [submitting, setSubmitting] = useState(false);
 
     // ── Campos de endereço via ViaCEP ────────────────────────────────────────
     const [cep, setCep] = useState("");
@@ -59,6 +63,26 @@ function CreateBarbershopPage() {
         setCepError("");
     };
 
+    // ── Logo: abre o crop ao selecionar arquivo ──────────────────────────────
+    const handleLogoChange = (e) => {
+        const selected = e.target.files?.[0];
+        e.target.value = '';
+        if (!selected) return;
+        const objectUrl = URL.createObjectURL(selected);
+        setCropSrc(objectUrl);
+    };
+
+    const handleCropConfirm = (blob) => {
+        const croppedFile = new File([blob], 'logo-barbearia.jpg', { type: blob.type || 'image/jpeg' });
+        setFile(croppedFile);
+        setPreviewUrl(URL.createObjectURL(croppedFile));
+        setCropSrc(null);
+    };
+
+    const handleCropCancel = () => {
+        setCropSrc(null);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -81,7 +105,7 @@ function CreateBarbershopPage() {
         ].filter(Boolean);
         const address = addressParts.join(", ");
 
-        setLoading(true);
+        setSubmitting(true);
         try {
             await createBarbershop({ name, cnpj, address }, file);
 
@@ -94,11 +118,12 @@ function CreateBarbershopPage() {
             console.error(error);
             toast.error("Erro ao criar barbearia. Verifique os dados.");
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
     return (
+        <>
         <div style={{ backgroundColor: '#1E1E1E', minHeight: '100vh', color: 'white', padding: '20px', display:'flex', justifyContent:'center', alignItems:'center' }}>
             <div style={{ width: '100%', maxWidth: '500px', background: '#2A2A2A', padding: '30px', borderRadius: '10px' }}>
                 
@@ -249,18 +274,44 @@ function CreateBarbershopPage() {
                     </div>
 
                     <div>
-                        <label style={{ display: 'block', marginBottom: '5px' }}>Logo / Banner (Opcional)</label>
-                        <input 
-                            type="file" 
+                        <label style={{ display: 'block', marginBottom: '5px' }}>Logo da Barbearia (Opcional)</label>
+                        <input
+                            ref={logoInputRef}
+                            type="file"
                             accept="image/*"
-                            onChange={e => setFile(e.target.files[0])}
-                            style={{ color: 'white' }}
+                            onChange={handleLogoChange}
+                            style={{ display: 'none' }}
                         />
+                        <button
+                            type="button"
+                            onClick={() => logoInputRef.current?.click()}
+                            style={{
+                                padding: '10px 16px',
+                                background: '#333',
+                                border: '1px dashed #D4AF37',
+                                borderRadius: '5px',
+                                color: '#D4AF37',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                width: '100%',
+                            }}
+                        >
+                            {file ? '✔ Trocar imagem' : '📷 Selecionar logo'}
+                        </button>
+                        {previewUrl && (
+                            <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                                <img
+                                    src={previewUrl}
+                                    alt="Preview da logo"
+                                    style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #D4AF37' }}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <button 
                         type="submit" 
-                        disabled={loading}
+                        disabled={submitting}
                         style={{ 
                             marginTop: '20px', 
                             padding: '15px', 
@@ -269,10 +320,10 @@ function CreateBarbershopPage() {
                             borderRadius: '5px', 
                             fontWeight: 'bold', 
                             cursor: 'pointer',
-                            opacity: loading ? 0.7 : 1
+                            opacity: submitting ? 0.7 : 1
                         }}
                     >
-                        {loading ? "Criando..." : "Confirmar Criação"}
+                        {submitting ? "Criando..." : "Confirmar Criação"}
                     </button>
 
                     <button 
@@ -285,6 +336,18 @@ function CreateBarbershopPage() {
                 </form>
             </div>
         </div>
+
+            {cropSrc && (
+                <CropImageModal
+                    src={cropSrc}
+                    title="Ajustar logo da barbearia"
+                    aspect={1}
+                    outputSize={{ width: 600, height: 600 }}
+                    onConfirm={handleCropConfirm}
+                    onCancel={handleCropCancel}
+                />
+            )}
+        </>
     );
 }
 
