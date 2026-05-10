@@ -75,6 +75,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
             @Param("barberId") UUID barberId,
             @Param("from") LocalDateTime from);
 
+    @Query("SELECT a FROM Appointment a WHERE a.customerId = :customerId " +
+           "AND a.startTime >= :from " +
+           "AND a.status NOT IN ('CANCELLED', 'NO_SHOW') " +
+           "ORDER BY a.startTime ASC")
+    List<Appointment> findUpcomingByCustomerId(
+            @Param("customerId") UUID customerId,
+            @Param("from") LocalDateTime from);
+
     @Query("SELECT a FROM Appointment a WHERE a.barbershopId = :barbershopId " +
            "AND a.status IN ('COMPLETED', 'CONCLUDED') " +
            "AND a.startTime BETWEEN :from AND :to " +
@@ -90,6 +98,33 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
            "ORDER BY a.startTime DESC")
     List<Appointment> findCompletedByBarberId(
             @Param("barberId") UUID barberId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    @Query("SELECT a FROM Appointment a WHERE a.customerId = :customerId " +
+           "AND a.status IN ('COMPLETED', 'CONCLUDED') " +
+           "AND a.startTime BETWEEN :from AND :to " +
+           "ORDER BY a.startTime DESC")
+    List<Appointment> findCompletedByCustomerId(
+            @Param("customerId") UUID customerId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    @Query("SELECT a FROM Appointment a WHERE a.customerId = :customerId " +
+           "AND a.status IN ('CANCELLED', 'NO_SHOW') " +
+           "AND a.startTime BETWEEN :from AND :to " +
+           "ORDER BY a.startTime DESC")
+    List<Appointment> findCancelledByCustomerId(
+            @Param("customerId") UUID customerId,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    @Query("SELECT a FROM Appointment a WHERE a.barbershopId = :barbershopId " +
+           "AND a.status IN ('CANCELLED', 'NO_SHOW') " +
+           "AND a.startTime BETWEEN :from AND :to " +
+           "ORDER BY a.startTime DESC")
+    List<Appointment> findCancelledByBarbershop(
+            @Param("barbershopId") UUID barbershopId,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to);
 }

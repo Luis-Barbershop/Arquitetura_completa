@@ -137,27 +137,48 @@ public class AiChatServiceImpl implements AiChatService {
 
         UUID internalId   = user != null ? user.getId() : null;
         UUID barbershopId = user != null ? user.getBarbershopId() : null;
-        boolean isOwner   = barbershopId != null
-                && user != null
-                && "BARBER".equalsIgnoreCase(user.getUserType());
-        LocalDateTime now = LocalDateTime.now();
+        boolean isCustomer = user != null && "CUSTOMER".equalsIgnoreCase(user.getUserType());
+        boolean isOwner    = !isCustomer && barbershopId != null;
+        LocalDateTime now  = LocalDateTime.now();
 
         StringBuilder ctx = new StringBuilder();
 
         // 1. Agenda (sempre incluída — requer internalId válido)
         if (internalId != null) {
             List<Appointment> appointments;
-            if (mode == AiChatMode.PREVIEW) {
+            if (isCustomer) {
+                // Cliente: busca pelos seus próprios agendamentos via customer_id
+                if (mode == AiChatMode.PREVIEW) {
+                    appointments = appointmentRepository.findUpcomingByCustomerId(internalId, now);
+                    ctx.append(formatPreviewContextCustomer(appointments));
+                } else {
+                    LocalDateTime from = now.minusDays(90);
+                    appointments = appointmentRepository.findCompletedByCustomerId(internalId, from, now);
+                    ctx.append(formatConsolidatedContextCustomer(appointments));
+                    // Cancelados do cliente (últimos 90 dias)
+                    List<Appointment> cancelados = appointmentRepository.findCancelledByCustomerId(internalId, from, now);
+                    if (!cancelados.isEmpty()) {
+                        ctx.append('\n').append(formatCancelledContext(cancelados));
+                    }
+                }
+            } else if (mode == AiChatMode.PREVIEW) {
                 appointments = isOwner
                         ? appointmentRepository.findUpcomingByBarbershop(barbershopId, now)
                         : appointmentRepository.findUpcomingByBarberId(internalId, now);
                 ctx.append(formatPreviewContext(appointments));
             } else {
-                LocalDateTime from = now.minusDays(30);
+                LocalDateTime from = now.minusDays(90);
                 appointments = isOwner
                         ? appointmentRepository.findCompletedByBarbershop(barbershopId, from, now)
                         : appointmentRepository.findCompletedByBarberId(internalId, from, now);
                 ctx.append(formatConsolidatedContext(appointments));
+                // Cancelados da barbearia (últimos 90 dias) — ajuda o dono a entender evasão
+                if (isOwner) {
+                    List<Appointment> cancelados = appointmentRepository.findCancelledByBarbershop(barbershopId, from, now);
+                    if (!cancelados.isEmpty()) {
+                        ctx.append('\n').append(formatCancelledContext(cancelados));
+                    }
+                }
             }
         } else {
             ctx.append("Dados de agenda não disponíveis no momento.");
@@ -189,9 +210,25 @@ public class AiChatServiceImpl implements AiChatService {
         return sb.toString();
     }
 
+    private String formatPreviewContextCustomer(List<Appointment> list) {
+        if (list.isEmpty()) return "Você não possui agendamentos futuros.";
+        StringBuilder sb = new StringBuilder("Seus próximos agendamentos:\n");
+        list.stream().limit(MAX_APPOINTMENTS_CONTEXT).forEach(a -> {
+            String servicos = a.getActivities() == null || a.getActivities().isEmpty() ? "—"
+                    : a.getActivities().stream().map(act -> act.getActivityName()).collect(java.util.stream.Collectors.joining(", "));
+            sb.append("- ")
+              .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
+              .append(" | barbeiro: ").append(firstNameOnly(a.getBarberName()))
+              .append(" | serviço: ").append(servicos)
+              .append(" | status: ").append(a.getStatus())
+              .append('\n');
+        });
+        return sb.toString();
+    }
+
     private String formatConsolidatedContext(List<Appointment> list) {
-        if (list.isEmpty()) return "Nenhum atendimento concluído nos últimos 30 dias.";
-        StringBuilder sb = new StringBuilder("Atendimentos concluídos nos últimos 30 dias (até " + MAX_APPOINTMENTS_CONTEXT + " itens):\n");
+        if (list.isEmpty()) return "Nenhum atendimento concluído nos últimos 90 dias.";
+        StringBuilder sb = new StringBuilder("Atendimentos concluídos nos últimos 90 dias (até " + MAX_APPOINTMENTS_CONTEXT + " itens):\n");
         list.stream().limit(MAX_APPOINTMENTS_CONTEXT).forEach(a -> sb
                 .append("- ")
                 .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
@@ -201,6 +238,33 @@ public class AiChatServiceImpl implements AiChatService {
                 .append(firstNameOnly(a.getBarberName()))
                 .append(" | valor: R$ ")
                 .append(a.getTotalPrice() != null ? a.getTotalPrice().toPlainString() : "0,00")
+                .append('\n'));
+        return sb.toString();
+    }
+
+    private String formatConsolidatedContextCustomer(List<Appointment> list) {
+        if (list.isEmpty()) return "Nenhum atendimento concluído nos últimos 90 dias.";
+        StringBuilder sb = new StringBuilder("Seus atendimentos concluídos nos últimos 90 dias:\n");
+        list.stream().limit(MAX_APPOINTMENTS_CONTEXT).forEach(a -> {
+            String servicos = a.getActivities() == null || a.getActivities().isEmpty() ? "—"
+                    : a.getActivities().stream().map(act -> act.getActivityName()).collect(java.util.stream.Collectors.joining(", "));
+            sb.append("- ")
+              .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
+              .append(" | barbeiro: ").append(firstNameOnly(a.getBarberName()))
+              .append(" | serviço: ").append(servicos)
+              .append(" | valor: R$ ")
+              .append(a.getTotalPrice() != null ? a.getTotalPrice().toPlainString() : "0,00")
+              .append('\n');
+        });
+        return sb.toString();
+    }
+
+    private String formatCancelledContext(List<Appointment> list) {
+        StringBuilder sb = new StringBuilder("Agendamentos cancelados / não compareceu:\n");
+        list.stream().limit(20).forEach(a -> sb
+                .append("- ")
+                .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
+                .append(" | status: ").append(a.getStatus())
                 .append('\n'));
         return sb.toString();
     }
