@@ -17,15 +17,20 @@
 -- =======================================================================
 CREATE OR REPLACE VIEW payment_db.v_barber_financial_performance AS
 SELECT
-    a.barber_id                          AS barber_id,
-    a.barber_name                        AS barber_name,
-    SUM(t.amount)                        AS generated_revenue,
-    COUNT(t.id)                          AS total_appointments
+    a.barber_id                                                          AS barber_id,
+    a.barber_name                                                        AS barber_name,
+    t.barbershop_id                                                      AS barbershop_id,
+    SUM(t.amount)                                                        AS generated_revenue,
+    COUNT(t.id)                                                          AS total_appointments,
+    ROUND(
+        100.0 * SUM(t.amount) /
+        NULLIF(SUM(SUM(t.amount)) OVER (PARTITION BY t.barbershop_id), 0),
+    2)                                                                   AS contribution_percentage
 FROM payment_db.transactions t
 JOIN schedule_db.appointments a
     ON a.id = BIN_TO_UUID(t.appointment_id)
 WHERE t.status = 'APPROVED'
-GROUP BY a.barber_id, a.barber_name;
+GROUP BY a.barber_id, a.barber_name, t.barbershop_id;
 
 
 -- =======================================================================

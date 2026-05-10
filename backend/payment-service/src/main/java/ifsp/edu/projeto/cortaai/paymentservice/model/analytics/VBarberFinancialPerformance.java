@@ -8,6 +8,7 @@ import lombok.Getter;
 import org.hibernate.annotations.Immutable;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Entity
 @Immutable
@@ -21,6 +22,9 @@ public class VBarberFinancialPerformance {
 
     @Column(name = "barber_name")
     private String barberName;
+
+    @Column(name = "barbershop_id")
+    private UUID barbershopId;
 
     @Column(name = "total_appointments")
     private Long totalAppointments;

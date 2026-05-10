@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -17,9 +18,9 @@ public class PaymentAnalyticsService {
 
     private final VBarberFinancialPerformanceRepository vBarberFinancialPerformanceRepository;
 
-    public List<BarberFinancialPerformanceResponseDTO> getBarberFinancialPerformance() {
-        log.info("Consultando performance financeira dos barbeiros via view");
-        return vBarberFinancialPerformanceRepository.findAll()
+    public List<BarberFinancialPerformanceResponseDTO> getBarberFinancialPerformance(UUID barbershopId) {
+        log.info("Consultando performance financeira dos barbeiros via view para barbearia: {}", barbershopId);
+        return vBarberFinancialPerformanceRepository.findByBarbershopId(barbershopId)
                 .stream()
                 .map(v -> new BarberFinancialPerformanceResponseDTO(
                         v.getBarberId(),
