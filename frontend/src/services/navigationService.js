@@ -11,7 +11,7 @@ const BARBER_TAB_ROUTES = {
   'novo-agendamento': '/barberHome/novo-agendamento',
 };
 
-const OWNER_ONLY_TABS = new Set(['estoque', 'time', 'dashboards', 'agenda-equipe', 'servicos']);
+const OWNER_ONLY_TABS = new Set(['estoque', 'time', 'dashboards', 'agenda-equipe']);
 
 export const resolveBarberRoute = (tab, options = {}) => {
   const { isOwner = false, currentPath = null } = options;
