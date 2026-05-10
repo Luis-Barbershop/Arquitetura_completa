@@ -4,9 +4,12 @@ import ifsp.edu.projeto.cortaai.scheduleservice.dto.AiChatRequestDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.AiChatResponseDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.UserInfoDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.UserServiceClient;
+import ifsp.edu.projeto.cortaai.scheduleservice.feign.ProductServiceClient;
+import ifsp.edu.projeto.cortaai.scheduleservice.feign.PaymentServiceClient;
 import ifsp.edu.projeto.cortaai.scheduleservice.model.Appointment;
 import ifsp.edu.projeto.cortaai.scheduleservice.model.enums.AiChatMode;
 import ifsp.edu.projeto.cortaai.scheduleservice.repository.AppointmentRepository;
+import ifsp.edu.projeto.cortaai.scheduleservice.repository.analytics.VBarberSkillMatrixRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +35,10 @@ public class AiChatServiceImpl implements AiChatService {
     private static final int MAX_APPOINTMENTS_CONTEXT = 50;
 
     private final AppointmentRepository appointmentRepository;
+    private final VBarberSkillMatrixRepository vBarberSkillMatrixRepository;
     private final UserServiceClient userServiceClient;
+    private final ProductServiceClient productServiceClient;
+    private final PaymentServiceClient paymentServiceClient;
     private final RestTemplate restTemplate;
 
     @Value("${ai.gemini.api-key:}")
@@ -118,22 +124,42 @@ public class AiChatServiceImpl implements AiChatService {
     private String buildContext(String userUid, String userRole, AiChatMode mode) {
         UUID uid = UUID.fromString(userUid);
         boolean isOwner = isOwner(uid, userRole);
+        UUID barbershopId = getBarbershopId(uid);
         LocalDateTime now = LocalDateTime.now();
 
-        List<Appointment> appointments;
+        StringBuilder ctx = new StringBuilder();
 
+        // 1. Agenda (sempre incluída)
+        List<Appointment> appointments;
         if (mode == AiChatMode.PREVIEW) {
             appointments = isOwner
-                    ? appointmentRepository.findUpcomingByBarbershop(getBarbershopId(uid), now)
+                    ? appointmentRepository.findUpcomingByBarbershop(barbershopId, now)
                     : appointmentRepository.findUpcomingByBarberId(uid, now);
-            return formatPreviewContext(appointments);
+            ctx.append(formatPreviewContext(appointments));
         } else {
             LocalDateTime from = now.minusDays(30);
             appointments = isOwner
-                    ? appointmentRepository.findCompletedByBarbershop(getBarbershopId(uid), from, now)
+                    ? appointmentRepository.findCompletedByBarbershop(barbershopId, from, now)
                     : appointmentRepository.findCompletedByBarberId(uid, from, now);
-            return formatConsolidatedContext(appointments);
+            ctx.append(formatConsolidatedContext(appointments));
         }
+
+        // 2. Habilidades dos barbeiros (skill matrix — disponível localmente)
+        if (isOwner) {
+            ctx.append("\n\n").append(formatSkillMatrix(barbershopId));
+        }
+
+        // 3. Estoque (via product-service)
+        if (isOwner) {
+            ctx.append("\n\n").append(formatStockContext(barbershopId));
+        }
+
+        // 4. Performance financeira (via payment-service)
+        if (isOwner) {
+            ctx.append("\n\n").append(formatFinancialContext(barbershopId));
+        }
+
+        return ctx.toString();
     }
 
     private boolean isOwner(UUID uid, String userRole) {
@@ -195,20 +221,86 @@ public class AiChatServiceImpl implements AiChatService {
         return fullName.trim().split("\\s+")[0];
     }
 
+    private String formatSkillMatrix(UUID barbershopId) {
+        try {
+            var rows = vBarberSkillMatrixRepository.findByBarbershopId(barbershopId.toString());
+            if (rows.isEmpty()) return "Habilidades dos barbeiros: sem dados disponíveis.";
+            StringBuilder sb = new StringBuilder("Habilidades e serviços executados por barbeiro:\n");
+            rows.forEach(r -> sb
+                    .append("- ")
+                    .append(firstNameOnly(r.getBarberName()))
+                    .append(" | serviço: ").append(r.getActivityName())
+                    .append(" | vezes executado: ").append(r.getTimesExecuted())
+                    .append('\n'));
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustave: não foi possível obter skill matrix — {}", e.getMessage());
+            return "Habilidades dos barbeiros: dados temporariamente indisponíveis.";
+        }
+    }
+
+    private String formatStockContext(UUID barbershopId) {
+        try {
+            List<Map<String, Object>> items = productServiceClient.getStockHealth(barbershopId);
+            if (items == null || items.isEmpty()) return "Estoque: sem alertas de reposição no momento.";
+            StringBuilder sb = new StringBuilder("Situação do estoque:\n");
+            items.forEach(item -> sb
+                    .append("- ").append(item.getOrDefault("productName", "?"))
+                    .append(" | categoria: ").append(item.getOrDefault("category", "?"))
+                    .append(" | qtd atual: ").append(item.getOrDefault("currentStock", "?"))
+                    .append(" | mínimo: ").append(item.getOrDefault("predictedMinimum", "?"))
+                    .append(" | repor: ").append(Boolean.TRUE.equals(item.get("requiresRestock")) ? "SIM" : "não")
+                    .append('\n'));
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustave: não foi possível obter estoque — {}", e.getMessage());
+            return "Estoque: dados temporariamente indisponíveis.";
+        }
+    }
+
+    private String formatFinancialContext(UUID barbershopId) {
+        try {
+            List<Map<String, Object>> perfs = paymentServiceClient.getBarberPerformance(barbershopId);
+            if (perfs == null || perfs.isEmpty()) return "Financeiro: sem dados de performance disponíveis.";
+            StringBuilder sb = new StringBuilder("Performance financeira dos barbeiros:\n");
+            perfs.forEach(p -> sb
+                    .append("- ").append(p.getOrDefault("barberName", "?"))
+                    .append(" | atendimentos: ").append(p.getOrDefault("totalAppointments", "?"))
+                    .append(" | receita gerada: R$ ").append(p.getOrDefault("generatedRevenue", "0"))
+                    .append(" | participação: ").append(p.getOrDefault("contributionPercentage", "0")).append("%")
+                    .append('\n'));
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustave: não foi possível obter financeiro — {}", e.getMessage());
+            return "Financeiro: dados temporariamente indisponíveis.";
+        }
+    }
+
     // ── Prompt ───────────────────────────────────────────────────────────────
 
     private String buildPrompt(String context, String message) {
         return """
-                Você é o gustave, assistente de inteligência artificial do CortaAi.
-                Seja direto, útil e use linguagem informal mas profissional.
-                Responda sempre em português brasileiro.
-                Nunca informe dados pessoais de clientes além do primeiro nome.
-                Não invente dados que não estejam no contexto fornecido.
+                Você é o gustave, assistente de inteligência artificial do CortaAi focado em apoiar donos e barbeiros.
+                Seu objetivo é analisar os dados dos painéis do sistema e entregar informações de forma simples e rápida.
+                Responda sempre em português brasileiro com linguagem informal mas profissional.
 
-                Dados disponíveis:
+                ⚠️ REGRAS ESTRITAS DE ESCOPO (O QUE VOCÊ PODE FAZER):
+                Você SÓ TEM PERMISSÃO para responder perguntas sobre as seguintes categorias:
+                1. 📅 Agendamentos e Operacional (agenda futura, encaixes, disponibilidade).
+                2. 💰 Gestão Financeira e Estratégica (lucro por funcionário, defasagem, análise de receita).
+                3. ✂️ Gestão de Equipe e Serviços (demanda vs. profissionais, habilidades, serviços executados).
+                4. 📦 Controle de Estoque e Insumos (alertas de reposição, análise de gastos, saída de produtos).
+
+                ⛔ REGRAS DE SEGURANÇA E LIMITAÇÕES:
+                - PROIBIDO INVENTAR: NUNCA crie, invente ou deduza dados que não estejam no contexto fornecido abaixo. Baseie-se 100%% nas informações repassadas.
+                - FORA DE ESCOPO: Se o usuário perguntar qualquer coisa fora das 4 categorias acima (ex: futebol, dicas de viagem, programação), recuse gentilmente: "Desculpe, sou o gustave e meu foco é apenas ajudar na gestão da sua barbearia."
+                - PRIVACIDADE: Nunca informe dados pessoais de clientes além do primeiro nome.
+                - DADOS FALTANTES: Se o contexto abaixo não tiver a informação necessária, responda: "Ainda não tenho esses dados no meu painel para te responder."
+
+                Dados disponíveis extraídos do sistema:
                 %s
 
-                Pergunta: %s
+                Pergunta do usuário: %s
                 """.formatted(context, message);
     }
 
