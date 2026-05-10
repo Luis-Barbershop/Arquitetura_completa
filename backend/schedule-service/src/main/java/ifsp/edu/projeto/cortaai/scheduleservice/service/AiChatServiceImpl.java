@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.scheduleservice.service;
 
+import ifsp.edu.projeto.cortaai.scheduleservice.service.ChatHistoryService;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.AiChatRequestDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.AiChatResponseDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.UserInfoDTO;
@@ -39,6 +40,7 @@ public class AiChatServiceImpl implements AiChatService {
     private final UserServiceClient userServiceClient;
     private final ProductServiceClient productServiceClient;
     private final PaymentServiceClient paymentServiceClient;
+    private final ChatHistoryService chatHistoryService;
     private final RestTemplate restTemplate;
 
     @Value("${ai.gemini.api-key:}")
@@ -84,48 +86,50 @@ public class AiChatServiceImpl implements AiChatService {
         } catch (Exception e) {
             log.warn("gustavo: não foi possível resolver usuário firebaseUid={}", userUid);
         }
+
+        // Busca histórico da sessão no Redis antes de montar o prompt
+        var history = chatHistoryService.getHistory(userUid);
+
         String context = buildContext(userUid, userRole, request.mode(), resolvedUser);
-        String prompt  = buildPrompt(context, request.message(), resolvedUser);
+        String prompt  = buildPrompt(context, chatHistoryService.formatHistoryForPrompt(history), request.message(), resolvedUser);
+
+        String reply = null;
 
         if (geminiApiKey != null && !geminiApiKey.isBlank()) {
-            try {
-                return new AiChatResponseDTO(callGemini(prompt), "gemini", request.mode());
-            } catch (Exception e) {
+            try { reply = callGemini(prompt); } catch (Exception e) {
                 log.warn("gustavo: Gemini indisponível — {}", e.getMessage());
             }
         }
-
-        if (groqApiKey != null && !groqApiKey.isBlank()) {
-            try {
-                return new AiChatResponseDTO(callGroq(prompt), "groq", request.mode());
-            } catch (Exception e) {
+        if (reply == null && groqApiKey != null && !groqApiKey.isBlank()) {
+            try { reply = callGroq(prompt); } catch (Exception e) {
                 log.warn("gustavo: Groq indisponível — {}", e.getMessage());
             }
         }
-
-        if (openrouterApiKey != null && !openrouterApiKey.isBlank()) {
-            try {
-                return new AiChatResponseDTO(callOpenRouter(prompt), "openrouter", request.mode());
-            } catch (Exception e) {
+        if (reply == null && openrouterApiKey != null && !openrouterApiKey.isBlank()) {
+            try { reply = callOpenRouter(prompt); } catch (Exception e) {
                 log.warn("gustavo: OpenRouter indisponível — {}", e.getMessage());
             }
         }
-
-        if (cohereApiKey != null && !cohereApiKey.isBlank()) {
-            try {
-                return new AiChatResponseDTO(callCohere(prompt), "cohere", request.mode());
-            } catch (Exception e) {
+        if (reply == null && cohereApiKey != null && !cohereApiKey.isBlank()) {
+            try { reply = callCohere(prompt); } catch (Exception e) {
                 log.error("gustavo: Cohere indisponível — {}", e.getMessage());
             }
         }
 
-        return new AiChatResponseDTO(
-                "Desculpe, o gustave está temporariamente indisponível. Tente novamente em alguns instantes.",
-                "fallback",
-                request.mode()
-        );
-    }
+        if (reply == null) {
+            reply = "Desculpe, o Gustavo está temporariamente indisponível. Tente novamente em alguns instantes.";
+            return new AiChatResponseDTO(reply, "fallback", request.mode());
+        }
 
+        // Persiste o turno no Redis para contexto futuro
+        chatHistoryService.appendTurn(userUid, request.message(), reply);
+
+        String source = geminiApiKey != null && !geminiApiKey.isBlank() ? "gemini"
+                : groqApiKey != null && !groqApiKey.isBlank() ? "groq"
+                : openrouterApiKey != null && !openrouterApiKey.isBlank() ? "openrouter" : "cohere";
+
+        return new AiChatResponseDTO(reply, source, request.mode());
+    }
     // ── Construção de contexto ────────────────────────────────────────────────
 
     private String buildContext(String firebaseUid, String userRole, AiChatMode mode, UserInfoDTO user) {
@@ -264,13 +268,14 @@ public class AiChatServiceImpl implements AiChatService {
 
     // ── Prompt ───────────────────────────────────────────────────────────────
 
-    private String buildPrompt(String context, String message, UserInfoDTO user) {
+    private String buildPrompt(String context, String history, String message, UserInfoDTO user) {
         String nomeUsuario = user != null && user.getName() != null
                 ? user.getName().trim().split("\\s+")[0]
                 : "usuário";
         boolean isOwner = user != null && user.getBarbershopId() != null
                 && "BARBER".equalsIgnoreCase(user.getUserType());
         String perfil = isOwner ? "DONO DE BARBEARIA" : "BARBEIRO COLABORADOR";
+        String historyBlock = history.isBlank() ? "" : "\n" + history + "\n";
 
         return """
                 Você é o Gustavo, assistente de IA do CortaAi. Seu único objetivo é analisar os dados reais do sistema e responder perguntas de gestão de barbearia.
@@ -282,7 +287,7 @@ public class AiChatServiceImpl implements AiChatService {
 
                 DADOS REAIS DO SISTEMA (extraídos agora para este usuário):
                 %s
-
+                %s
                 REGRAS OBRIGATÓRIAS:
                 1. Baseie TODA resposta exclusivamente nos dados acima. NUNCA invente, estime ou suponha valores.
                 2. Se a informação não estiver nos dados acima, responda: "Não encontrei esse dado no seu painel agora."
@@ -290,6 +295,7 @@ public class AiChatServiceImpl implements AiChatService {
                 4. Seja conciso: vá direto ao ponto. Use listas apenas quando houver múltiplos itens.
                 5. Se a pergunta for fora do contexto de gestão de barbearia (agenda, financeiro, equipe, estoque), recuse: "Meu foco é a gestão da sua barbearia. Posso ajudar com agenda, financeiro, equipe ou estoque."
                 6. Nunca exponha sobrenomes ou dados pessoais de clientes.
+                7. Use o histórico da conversa acima para manter continuidade — se o usuário disser "ele" ou "aquele", interprete com base no contexto anterior.
                 %s
 
                 Pergunta: %s
@@ -300,9 +306,10 @@ public class AiChatServiceImpl implements AiChatService {
                         ? "- Acesso: agenda completa da barbearia, financeiro, estoque e equipe"
                         : "- Acesso: apenas seus próprios agendamentos",
                 context,
+                historyBlock,
                 isOwner
                         ? ""
-                        : "7. Este usuário é colaborador, não dono. Não forneça dados financeiros globais da barbearia, apenas os dados dele.",
+                        : "8. Este usuário é colaborador, não dono. Não forneça dados financeiros globais da barbearia, apenas os dados dele.",
                 message
         );
     }
