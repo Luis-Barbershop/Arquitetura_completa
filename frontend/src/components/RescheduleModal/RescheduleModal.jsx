@@ -169,22 +169,26 @@ const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
                       onClick={() => setSelectedBarberId(String(barber.id))}
                     >
                       {barber.imageUrl ? (
-                        <img
-                          src={barber.imageUrl}
-                          alt={barber.name}
-                          className={Styles.barberAvatar}
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.nextElementSibling?.removeAttribute('hidden');
-                          }}
-                        />
-                      ) : null}
-                      <span
-                        className={Styles.barberInitials}
-                        hidden={!!barber.imageUrl}
-                      >
-                        {getInitials(barber.name)}
-                      </span>
+                        <>
+                          <img
+                            src={barber.imageUrl}
+                            alt={barber.name}
+                            className={Styles.barberAvatar}
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const sibling = e.currentTarget.nextElementSibling;
+                              if (sibling) sibling.style.display = 'inline-flex';
+                            }}
+                          />
+                          <span className={Styles.barberInitials} style={{ display: 'none' }}>
+                            {getInitials(barber.name)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className={Styles.barberInitials}>
+                          {getInitials(barber.name)}
+                        </span>
+                      )}
                       <span className={Styles.barberName}>{barber.name}</span>
                       {isCurrent && (
                         <span className={Styles.currentTag}>atual</span>
