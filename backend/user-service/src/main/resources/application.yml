@@ -30,6 +30,12 @@ spring:
   main:
     lazy-initialization: false
 
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/user_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false}
     username: ${SPRING_DATASOURCE_USERNAME:root}
@@ -88,16 +94,6 @@ cloudinary:
   cloud_name: ${CLOUDINARY_CLOUD_NAME:}
   api_key: ${CLOUDINARY_API_KEY:}
   api_secret: ${CLOUDINARY_API_SECRET:}
-
-# ==================================================
-# RABBITMQ
-# ==================================================
-spring:
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
 
 # ==================================================
 # SPRINGDOC / SWAGGER UI
