@@ -37,4 +37,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             Pageable pageable);
 
     boolean existsByDynamicCategoryIdAndActiveTrue(UUID categoryId);
+
+    @Query("SELECT p FROM Product p WHERE p.barbershopId = :barbershopId AND p.active = true " +
+            "ORDER BY (CASE WHEN p.stockQuantity <= p.minStockQuantity THEN 0 ELSE 1 END), p.stockQuantity ASC")
+    List<Product> findStockHealthByBarbershopId(@Param("barbershopId") UUID barbershopId);
 }
