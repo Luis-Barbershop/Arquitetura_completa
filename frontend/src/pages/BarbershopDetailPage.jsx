@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import { FiScissors, FiMapPin, FiClock, FiArrowRight } from "react-icons/fi";
 import { toast } from "react-toastify";
-import { getBarbershopById, getShopServices, getShopBarbers } from "../services/barbershopService";
+import { getBarbershopById, getShopServices, getShopBarbers, geocodeAddress } from "../services/barbershopService";
 import BarbershopMap from "../components/BarbershopMap/BarbershopMap";
 import CustomerHeader from "../components/HomePage/CustomerHeader";
 import CustomerNavbar from "../components/HomePage/CustomerNavbar";
@@ -32,7 +32,17 @@ const BarbershopDetailPage = () => {
           getShopServices(barbershopId),
           getShopBarbers(barbershopId),
         ]);
-        setShopInfo(shopData);
+
+        // Geocodifica o endereço se lat/lng não vieram do backend
+        let enrichedShop = shopData;
+        if (shopData && !shopData.latitude && !shopData.longitude && shopData.address) {
+          const coords = await geocodeAddress(shopData.address).catch(() => null);
+          if (coords) {
+            enrichedShop = { ...shopData, latitude: coords.lat, longitude: coords.lng };
+          }
+        }
+
+        setShopInfo(enrichedShop);
         setServices(servicesData || []);
         setBarbers(barbersData || []);
       } catch {
@@ -168,13 +178,14 @@ const BarbershopDetailPage = () => {
         {/* Mapa / Localização */}
         <section className={Styles.section}>
           <h2 className={Styles.sectionTitle}><FiMapPin size={16} /> Localização</h2>
-          {shopInfo.latitude && shopInfo.longitude ? (
+          {shopInfo.latitude && shopInfo.longitude && (
             <BarbershopMap
               latitude={shopInfo.latitude}
               longitude={shopInfo.longitude}
               barbershopName={shopInfo.name}
             />
-          ) : shopInfo.address ? (
+          )}
+          {shopInfo.address && (
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shopInfo.address)}`}
               target="_blank"
@@ -183,7 +194,8 @@ const BarbershopDetailPage = () => {
             >
               📍 {shopInfo.address} — Abrir no Google Maps
             </a>
-          ) : null}
+          )}
+          {!shopInfo.latitude && !shopInfo.longitude && !shopInfo.address && null}
         </section>
 
         {/* CTA Agendar */}
