@@ -282,14 +282,16 @@ public class InternalUserController {
 
     /** Busca barbeiro por CPF (usado pelo barbershop-service para convites). */
     @Operation(summary = "Busca barbeiro por CPF (interno)",
-               description = "Retorna o UserInfoDTO de um Barber pelo CPF. Usado pelo barbershop-service no fluxo de convite.")
+               description = "Retorna o UserInfoDTO de um Barber pelo CPF. CPF enviado no corpo para não vazar em logs de acesso.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Barbeiro encontrado"),
             @ApiResponse(responseCode = "404", description = "Barbeiro não encontrado")
     })
-    @GetMapping("/barbers/by-cpf/{cpf}")
+    @PostMapping("/barbers/by-cpf")
     public ResponseEntity<UserInfoDTO> getBarberByCpf(
-            @Parameter(description = "CPF do barbeiro (somente dígitos)") @PathVariable String cpf) {
+            @RequestBody Map<String, String> body) {
+        String cpf = body != null ? body.get("cpf") : null;
+        if (cpf == null || cpf.isBlank()) return ResponseEntity.badRequest().build();
         String cleanCpf = cpf.replaceAll("\\D", "");
         Optional<Barber> barber = barberRepository.findByDocumentCPF(cleanCpf);
         if (barber.isPresent()) return ResponseEntity.ok(toUserInfoDTO(barber.get()));

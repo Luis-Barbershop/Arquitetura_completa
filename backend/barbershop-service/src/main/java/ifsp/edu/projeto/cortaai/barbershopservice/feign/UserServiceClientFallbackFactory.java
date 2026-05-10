@@ -42,7 +42,7 @@ public class UserServiceClientFallbackFactory implements FallbackFactory<UserSer
             }
 
             @Override
-            public UserInfoDTO getBarberByCpf(String cpf) {
+            public UserInfoDTO getBarberByCpf(Map<String, String> body) {
                 throw unavailable(cause);
             }
 

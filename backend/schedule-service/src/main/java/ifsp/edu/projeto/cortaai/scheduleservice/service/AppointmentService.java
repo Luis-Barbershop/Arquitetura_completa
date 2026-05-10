@@ -253,8 +253,8 @@ public class AppointmentService {
         appointment.setActivities(appointmentActivities);
 
         Appointment saved = appointmentRepository.saveAndFlush(appointment);
-        log.info("Agendamento manual (WALK_IN) criado: id={}, barbeiro={}, cliente='{}', telefone='{}'",
-                saved.getId(), barber.getId(), dto.getClientName(), dto.getClientPhone());
+        log.info("Agendamento manual (WALK_IN) criado: id={}, barbeiro={}, cliente='{}'",
+                saved.getId(), barber.getId(), dto.getClientName());
 
         // 9. Sem evento de pagamento — WALK_IN não passa por gateway de pagamento
         return appointmentMapper.toDTO(saved);

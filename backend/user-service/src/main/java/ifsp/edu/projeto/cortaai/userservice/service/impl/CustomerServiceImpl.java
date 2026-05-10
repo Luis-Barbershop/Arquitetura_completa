@@ -9,6 +9,7 @@ import ifsp.edu.projeto.cortaai.userservice.dto.UploadResultDTO;
 import ifsp.edu.projeto.cortaai.userservice.event.BeforeDeleteCustomer;
 import ifsp.edu.projeto.cortaai.userservice.exception.NotFoundException;
 import ifsp.edu.projeto.cortaai.userservice.mapper.CustomerMapper;
+import ifsp.edu.projeto.cortaai.userservice.messaging.CustomerDeletedPublisher;
 import ifsp.edu.projeto.cortaai.userservice.model.Customer;
 import ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository;
 import ifsp.edu.projeto.cortaai.userservice.security.crypto.PrivacyHash;
@@ -33,18 +34,21 @@ public class CustomerServiceImpl implements CustomerService {
     private final CustomerMapper customerMapper;
     private final StorageService storageService;
     private final FirebaseAuth firebaseAuth;
+    private final CustomerDeletedPublisher customerDeletedPublisher;
 
     public CustomerServiceImpl(final CustomerRepository customerRepository,
                                final ApplicationEventPublisher publisher,
                                final CustomerMapper customerMapper,
                                final StorageService storageService,
-                               final FirebaseAuth firebaseAuth
+                               final FirebaseAuth firebaseAuth,
+                               final CustomerDeletedPublisher customerDeletedPublisher
                                ) {
         this.customerRepository = customerRepository;
         this.publisher = publisher;
         this.customerMapper = customerMapper;
         this.storageService = storageService;
         this.firebaseAuth = firebaseAuth;
+        this.customerDeletedPublisher = customerDeletedPublisher;
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
@@ -121,6 +125,7 @@ public class CustomerServiceImpl implements CustomerService {
         final Customer customer = findByFirebaseUid(firebaseUid);
         publisher.publishEvent(new BeforeDeleteCustomer(customer.getId()));
         customerRepository.delete(customer);
+        customerDeletedPublisher.publish(customer.getId());
     }
 
     @Override

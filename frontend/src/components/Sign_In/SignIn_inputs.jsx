@@ -54,6 +54,7 @@ function SignIn_inputs() {
     const [tell, setTell]           = useState("");
     const [cpf, setCpf]             = useState("");
     const [birthDate, setBirthDate] = useState("");
+    const [consentChecked, setConsentChecked] = useState(false);
 
     // Quando o navigate() é chamado dentro da própria rota /signin (ex: USER_NOT_FOUND
     // ou PROFILE_INCOMPLETE do Google), o componente NÃO re-monta — só o location muda.
@@ -152,6 +153,11 @@ function SignIn_inputs() {
 
         if (!name || !cpf || !tell || !birthDate) {
             setError("Preencha todos os campos obrigatórios.");
+            return;
+        }
+
+        if (!consentChecked) {
+            setError("Aceite os Termos de Uso e Política de Privacidade para continuar.");
             return;
         }
 
@@ -400,6 +406,21 @@ function SignIn_inputs() {
                         </label>
 
                         {error && <p className={Styles.error_message}>{error}</p>}
+
+                        <label className={Styles.consentLabel}>
+                            <input
+                                type="checkbox"
+                                checked={consentChecked}
+                                onChange={e => setConsentChecked(e.target.checked)}
+                            />
+                            <span>
+                                Li e aceito os{" "}
+                                <a href="https://cortaai.shop/termos" target="_blank" rel="noreferrer">
+                                    Termos de Uso e Política de Privacidade
+                                </a>{" "}
+                                do CortaAI.
+                            </span>
+                        </label>
 
                         <div className={Styles.actionsRow}>
                             {/* Fluxo Google não tem senha no step 1 — não faz sentido voltar */}

@@ -4,6 +4,7 @@ import ifsp.edu.projeto.cortaai.barbershopservice.dto.UserInfoDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,8 +39,8 @@ public interface UserServiceClient {
     @GetMapping("/barbers/by-barbershop/{barbershopId}")
     List<UserInfoDTO> getBarbersByBarbershop(@PathVariable("barbershopId") UUID barbershopId);
 
-    @GetMapping("/barbers/by-cpf/{cpf}")
-    UserInfoDTO getBarberByCpf(@PathVariable("cpf") String cpf);
+    @PostMapping("/barbers/by-cpf")
+    UserInfoDTO getBarberByCpf(@RequestBody Map<String, String> body);
     
     @PutMapping("/make-owner/{uid}")
     ResponseEntity<Void> makeBarberOwner(@PathVariable("uid") String uid);

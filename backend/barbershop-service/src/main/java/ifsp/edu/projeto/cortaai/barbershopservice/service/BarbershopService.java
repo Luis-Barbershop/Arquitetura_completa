@@ -648,7 +648,7 @@ public class BarbershopService {
         // Busca o barbeiro pelo CPF no user-service
         UserInfoDTO barber;
         try {
-            barber = userServiceClient.getBarberByCpf(cleanCpf);
+            barber = userServiceClient.getBarberByCpf(Map.of("cpf", cleanCpf));
         } catch (FeignException.NotFound ex) {
             throw new NotFoundException("Nenhum barbeiro cadastrado com este CPF.");
         } catch (Exception ex) {
