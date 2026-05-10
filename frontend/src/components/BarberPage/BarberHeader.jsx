@@ -181,12 +181,12 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
                     </div>
                 )}
 
-                {isOwner && hasShop && (
+                {hasShop && (
                     <button
                         className={activeTab === 'servicos' ? styles.navItemActive : styles.navItem}
                         onClick={() => onTabChange('servicos')}
                     >
-                        <Scissors size={16} weight="duotone" /> Serviços
+                        <Scissors size={16} weight="duotone" /> {isOwner ? 'Serviços' : 'Habilidades'}
                     </button>
                 )}
 
