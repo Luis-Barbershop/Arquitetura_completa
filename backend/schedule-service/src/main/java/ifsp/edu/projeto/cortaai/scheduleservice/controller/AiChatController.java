@@ -25,8 +25,8 @@ public class AiChatController {
      */
     @PostMapping("/chat")
     public ResponseEntity<AiChatResponseDTO> chat(
-            @RequestHeader("X-User-Id")   String userUid,
-            @RequestHeader("X-User-Role") String userRole,
+            @RequestHeader("X-User-UID")   String userUid,
+            @RequestHeader("X-User-Type") String userRole,
             @Valid @RequestBody AiChatRequestDTO request) {
 
         AiChatResponseDTO response = aiChatService.chat(userUid, userRole, request);

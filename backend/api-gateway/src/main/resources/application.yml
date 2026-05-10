@@ -108,7 +108,7 @@ spring:
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/customers, /api/customers/**, /api/barbers, /api/barbers/**, /api/auth, /api/auth/**
+            - Path=/api/customers, /api/customers/**, /api/barbers, /api/barbers/**, /api/auth, /api/auth/**, /api/users, /api/users/**
 
         # Barbershop Service
         - id: barbershop-service
