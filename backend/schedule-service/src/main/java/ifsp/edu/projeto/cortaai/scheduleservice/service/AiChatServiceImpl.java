@@ -77,14 +77,21 @@ public class AiChatServiceImpl implements AiChatService {
     @Override
     @Transactional(readOnly = true)
     public AiChatResponseDTO chat(String userUid, String userRole, AiChatRequestDTO request) {
-        String context = buildContext(userUid, userRole, request.mode());
-        String prompt  = buildPrompt(context, request.message());
+        // Resolve dados do usuário uma vez e repassa para contexto e prompt
+        UserInfoDTO resolvedUser = null;
+        try {
+            resolvedUser = userServiceClient.getUserByFirebaseUid(userUid);
+        } catch (Exception e) {
+            log.warn("gustavo: não foi possível resolver usuário firebaseUid={}", userUid);
+        }
+        String context = buildContext(userUid, userRole, request.mode(), resolvedUser);
+        String prompt  = buildPrompt(context, request.message(), resolvedUser);
 
         if (geminiApiKey != null && !geminiApiKey.isBlank()) {
             try {
                 return new AiChatResponseDTO(callGemini(prompt), "gemini", request.mode());
             } catch (Exception e) {
-                log.warn("gustave: Gemini indisponível — {}", e.getMessage());
+                log.warn("gustavo: Gemini indisponível — {}", e.getMessage());
             }
         }
 
@@ -92,7 +99,7 @@ public class AiChatServiceImpl implements AiChatService {
             try {
                 return new AiChatResponseDTO(callGroq(prompt), "groq", request.mode());
             } catch (Exception e) {
-                log.warn("gustave: Groq indisponível — {}", e.getMessage());
+                log.warn("gustavo: Groq indisponível — {}", e.getMessage());
             }
         }
 
@@ -100,7 +107,7 @@ public class AiChatServiceImpl implements AiChatService {
             try {
                 return new AiChatResponseDTO(callOpenRouter(prompt), "openrouter", request.mode());
             } catch (Exception e) {
-                log.warn("gustave: OpenRouter indisponível — {}", e.getMessage());
+                log.warn("gustavo: OpenRouter indisponível — {}", e.getMessage());
             }
         }
 
@@ -108,7 +115,7 @@ public class AiChatServiceImpl implements AiChatService {
             try {
                 return new AiChatResponseDTO(callCohere(prompt), "cohere", request.mode());
             } catch (Exception e) {
-                log.error("gustave: Cohere indisponível — {}", e.getMessage());
+                log.error("gustavo: Cohere indisponível — {}", e.getMessage());
             }
         }
 
@@ -121,14 +128,8 @@ public class AiChatServiceImpl implements AiChatService {
 
     // ── Construção de contexto ────────────────────────────────────────────────
 
-    private String buildContext(String firebaseUid, String userRole, AiChatMode mode) {
-        // Firebase UID não é UUID — buscar dados internos via Feign usando o UID do Firebase
-        UserInfoDTO user = null;
-        try {
-            user = userServiceClient.getUserByFirebaseUid(firebaseUid);
-        } catch (Exception e) {
-            log.warn("gustave: não foi possível obter dados do barbeiro firebaseUid={}", firebaseUid);
-        }
+    private String buildContext(String firebaseUid, String userRole, AiChatMode mode, UserInfoDTO user) {
+        // user já resolvido pelo chamador via getUserByFirebaseUid
 
         UUID internalId   = user != null ? user.getId() : null;
         UUID barbershopId = user != null ? user.getBarbershopId() : null;
@@ -219,7 +220,7 @@ public class AiChatServiceImpl implements AiChatService {
                     .append('\n'));
             return sb.toString();
         } catch (Exception e) {
-            log.warn("gustave: não foi possível obter skill matrix — {}", e.getMessage());
+            log.warn("gustavo: não foi possível obter skill matrix — {}", e.getMessage());
             return "Habilidades dos barbeiros: dados temporariamente indisponíveis.";
         }
     }
@@ -238,7 +239,7 @@ public class AiChatServiceImpl implements AiChatService {
                     .append('\n'));
             return sb.toString();
         } catch (Exception e) {
-            log.warn("gustave: não foi possível obter estoque — {}", e.getMessage());
+            log.warn("gustavo: não foi possível obter estoque — {}", e.getMessage());
             return "Estoque: dados temporariamente indisponíveis.";
         }
     }
@@ -256,37 +257,54 @@ public class AiChatServiceImpl implements AiChatService {
                     .append('\n'));
             return sb.toString();
         } catch (Exception e) {
-            log.warn("gustave: não foi possível obter financeiro — {}", e.getMessage());
+            log.warn("gustavo: não foi possível obter financeiro — {}", e.getMessage());
             return "Financeiro: dados temporariamente indisponíveis.";
         }
     }
 
     // ── Prompt ───────────────────────────────────────────────────────────────
 
-    private String buildPrompt(String context, String message) {
+    private String buildPrompt(String context, String message, UserInfoDTO user) {
+        String nomeUsuario = user != null && user.getName() != null
+                ? user.getName().trim().split("\\s+")[0]
+                : "usuário";
+        boolean isOwner = user != null && user.getBarbershopId() != null
+                && "BARBER".equalsIgnoreCase(user.getUserType());
+        String perfil = isOwner ? "DONO DE BARBEARIA" : "BARBEIRO COLABORADOR";
+
         return """
-                Você é o gustave, assistente de inteligência artificial do CortaAi focado em apoiar donos e barbeiros.
-                Seu objetivo é analisar os dados dos painéis do sistema e entregar informações de forma simples e rápida.
-                Responda sempre em português brasileiro com linguagem informal mas profissional.
+                Você é o Gustavo, assistente de IA do CortaAi. Seu único objetivo é analisar os dados reais do sistema e responder perguntas de gestão de barbearia.
 
-                ⚠️ REGRAS ESTRITAS DE ESCOPO (O QUE VOCÊ PODE FAZER):
-                Você SÓ TEM PERMISSÃO para responder perguntas sobre as seguintes categorias:
-                1. 📅 Agendamentos e Operacional (agenda futura, encaixes, disponibilidade).
-                2. 💰 Gestão Financeira e Estratégica (lucro por funcionário, defasagem, análise de receita).
-                3. ✂️ Gestão de Equipe e Serviços (demanda vs. profissionais, habilidades, serviços executados).
-                4. 📦 Controle de Estoque e Insumos (alertas de reposição, análise de gastos, saída de produtos).
-
-                ⛔ REGRAS DE SEGURANÇA E LIMITAÇÕES:
-                - PROIBIDO INVENTAR: NUNCA crie, invente ou deduza dados que não estejam no contexto fornecido abaixo. Baseie-se 100%% nas informações repassadas.
-                - FORA DE ESCOPO: Se o usuário perguntar qualquer coisa fora das 4 categorias acima (ex: futebol, dicas de viagem, programação), recuse gentilmente: "Desculpe, sou o gustave e meu foco é apenas ajudar na gestão da sua barbearia."
-                - PRIVACIDADE: Nunca informe dados pessoais de clientes além do primeiro nome.
-                - DADOS FALTANTES: Se o contexto abaixo não tiver a informação necessária, responda: "Ainda não tenho esses dados no meu painel para te responder."
-
-                Dados disponíveis extraídos do sistema:
+                PERFIL DO USUÁRIO LOGADO:
+                - Nome: %s
+                - Tipo: %s
                 %s
 
-                Pergunta do usuário: %s
-                """.formatted(context, message);
+                DADOS REAIS DO SISTEMA (extraídos agora para este usuário):
+                %s
+
+                REGRAS OBRIGATÓRIAS:
+                1. Baseie TODA resposta exclusivamente nos dados acima. NUNCA invente, estime ou suponha valores.
+                2. Se a informação não estiver nos dados acima, responda: "Não encontrei esse dado no seu painel agora."
+                3. Responda em português brasileiro, de forma direta e sem introduções desnecessárias (não comece com "Claro!", "Olá!", "Com certeza!" etc.).
+                4. Seja conciso: vá direto ao ponto. Use listas apenas quando houver múltiplos itens.
+                5. Se a pergunta for fora do contexto de gestão de barbearia (agenda, financeiro, equipe, estoque), recuse: "Meu foco é a gestão da sua barbearia. Posso ajudar com agenda, financeiro, equipe ou estoque."
+                6. Nunca exponha sobrenomes ou dados pessoais de clientes.
+                %s
+
+                Pergunta: %s
+                """.formatted(
+                nomeUsuario,
+                perfil,
+                isOwner
+                        ? "- Acesso: agenda completa da barbearia, financeiro, estoque e equipe"
+                        : "- Acesso: apenas seus próprios agendamentos",
+                context,
+                isOwner
+                        ? ""
+                        : "7. Este usuário é colaborador, não dono. Não forneça dados financeiros globais da barbearia, apenas os dados dele.",
+                message
+        );
     }
 
     // ── Chamadas às APIs externas ─────────────────────────────────────────────

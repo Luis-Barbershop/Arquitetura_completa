@@ -32,7 +32,7 @@ function GustaveChat() {
     }, []);
 
     const [open, setOpen]         = useState(false);    const [messages, setMessages] = useState([
-        { role: 'assistant', text: 'Olá! Sou o gustave, seu assistente de agenda. Como posso ajudar?' },
+        { role: 'assistant', text: 'Olá! Sou o Gustavo, assistente de gestão do CortaAi. Como posso ajudar?' },
     ]);
     const [input, setInput]   = useState('');
     const [typing, setTyping] = useState(false);
@@ -86,7 +86,7 @@ function GustaveChat() {
                     <div className={styles.header}>
                         <span className={styles.avatar}>{AVATAR}</span>
                         <div className={styles.headerInfo}>
-                            <span className={styles.name}>gustave</span>
+                            <span className={styles.name}>Gustavo</span>
                             <span className={`${styles.status} ${offline ? styles.offline : styles.online}`}>
                                 {offline ? 'offline' : 'online'}
                             </span>
@@ -117,7 +117,7 @@ function GustaveChat() {
                     <div className={styles.inputRow}>
                         <textarea
                             className={styles.input}
-                            placeholder="Pergunte ao gustave..."
+                            placeholder="Pergunte ao Gustavo..."
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={handleKeyDown}
@@ -141,7 +141,7 @@ function GustaveChat() {
             <button
                 className={`${styles.fab} ${open ? styles.fabOpen : ''}`}
                 onClick={() => setOpen(v => !v)}
-                aria-label={open ? 'Fechar gustave' : 'Abrir gustave'}
+                aria-label={open ? 'Fechar Gustavo' : 'Abrir Gustavo'}
                 type="button"
             >
                 {open ? '✕' : '✂️'}
