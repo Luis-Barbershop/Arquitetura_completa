@@ -79,6 +79,7 @@ const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
       barberId: selectedBarberId,
       durationMinutes,
       dateOptions: base,
+      minAdvanceHours: 3,
     })
       .then((hydrated) => {
         setDateOptions(hydrated);

@@ -138,6 +138,7 @@ export const hydrateDateOptionsWithAvailability = async ({
   barberId,
   durationMinutes,
   dateOptions,
+  minAdvanceHours = 0,
 }) => {
   const results = await Promise.allSettled(
     dateOptions.map((option) => fetchAvailabilitySlots({
@@ -147,8 +148,20 @@ export const hydrateDateOptionsWithAvailability = async ({
     })),
   );
 
+  const now = new Date();
+
   return dateOptions.map((option, idx) => {
-    const slots = results[idx].status === 'fulfilled' ? results[idx].value : [];
+    let slots = results[idx].status === 'fulfilled' ? results[idx].value : [];
+
+    if (minAdvanceHours > 0) {
+      const dateStr = formatDateToApi(option.date);
+      slots = slots.filter((slot) => {
+        const slotDate = new Date(`${dateStr}T${slot}:00`);
+        const diffMs = slotDate.getTime() - now.getTime();
+        return diffMs >= minAdvanceHours * 60 * 60 * 1000;
+      });
+    }
+
     return {
       ...option,
       slots,
