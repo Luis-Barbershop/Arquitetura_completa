@@ -121,66 +121,51 @@ public class AiChatServiceImpl implements AiChatService {
 
     // ── Construção de contexto ────────────────────────────────────────────────
 
-    private String buildContext(String userUid, String userRole, AiChatMode mode) {
-        UUID uid = UUID.fromString(userUid);
-        boolean isOwner = isOwner(uid, userRole);
-        UUID barbershopId = getBarbershopId(uid);
+    private String buildContext(String firebaseUid, String userRole, AiChatMode mode) {
+        // Firebase UID não é UUID — buscar dados internos via Feign usando o UID do Firebase
+        UserInfoDTO user = null;
+        try {
+            user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        } catch (Exception e) {
+            log.warn("gustave: não foi possível obter dados do barbeiro firebaseUid={}", firebaseUid);
+        }
+
+        UUID internalId   = user != null ? user.getId() : null;
+        UUID barbershopId = user != null ? user.getBarbershopId() : null;
+        boolean isOwner   = barbershopId != null
+                && user != null
+                && "BARBER".equalsIgnoreCase(user.getUserType());
         LocalDateTime now = LocalDateTime.now();
 
         StringBuilder ctx = new StringBuilder();
 
-        // 1. Agenda (sempre incluída)
-        List<Appointment> appointments;
-        if (mode == AiChatMode.PREVIEW) {
-            appointments = isOwner
-                    ? appointmentRepository.findUpcomingByBarbershop(barbershopId, now)
-                    : appointmentRepository.findUpcomingByBarberId(uid, now);
-            ctx.append(formatPreviewContext(appointments));
+        // 1. Agenda (sempre incluída — requer internalId válido)
+        if (internalId != null) {
+            List<Appointment> appointments;
+            if (mode == AiChatMode.PREVIEW) {
+                appointments = isOwner
+                        ? appointmentRepository.findUpcomingByBarbershop(barbershopId, now)
+                        : appointmentRepository.findUpcomingByBarberId(internalId, now);
+                ctx.append(formatPreviewContext(appointments));
+            } else {
+                LocalDateTime from = now.minusDays(30);
+                appointments = isOwner
+                        ? appointmentRepository.findCompletedByBarbershop(barbershopId, from, now)
+                        : appointmentRepository.findCompletedByBarberId(internalId, from, now);
+                ctx.append(formatConsolidatedContext(appointments));
+            }
         } else {
-            LocalDateTime from = now.minusDays(30);
-            appointments = isOwner
-                    ? appointmentRepository.findCompletedByBarbershop(barbershopId, from, now)
-                    : appointmentRepository.findCompletedByBarberId(uid, from, now);
-            ctx.append(formatConsolidatedContext(appointments));
+            ctx.append("Dados de agenda não disponíveis no momento.");
         }
 
-        // 2. Habilidades dos barbeiros (skill matrix — disponível localmente)
+        // 2–4. Contexto adicional exclusivo para owners
         if (isOwner) {
             ctx.append("\n\n").append(formatSkillMatrix(barbershopId));
-        }
-
-        // 3. Estoque (via product-service)
-        if (isOwner) {
             ctx.append("\n\n").append(formatStockContext(barbershopId));
-        }
-
-        // 4. Performance financeira (via payment-service)
-        if (isOwner) {
             ctx.append("\n\n").append(formatFinancialContext(barbershopId));
         }
 
         return ctx.toString();
-    }
-
-    private boolean isOwner(UUID uid, String userRole) {
-        try {
-            UserInfoDTO user = userServiceClient.getUserById(uid);
-            return user != null && user.getBarbershopId() != null
-                    && "BARBER".equalsIgnoreCase(user.getUserType());
-        } catch (Exception e) {
-            log.warn("gustave: não foi possível verificar ownership para uid={}", uid);
-            return false;
-        }
-    }
-
-    private UUID getBarbershopId(UUID uid) {
-        try {
-            UserInfoDTO user = userServiceClient.getUserById(uid);
-            if (user != null && user.getBarbershopId() != null) return user.getBarbershopId();
-        } catch (Exception e) {
-            log.warn("gustave: não foi possível obter barbershopId para uid={}", uid);
-        }
-        return uid; // fallback — não retorna nulo para evitar NPE
     }
 
     private String formatPreviewContext(List<Appointment> list) {
