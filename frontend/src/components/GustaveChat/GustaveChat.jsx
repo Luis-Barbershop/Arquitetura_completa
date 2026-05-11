@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { sendMessage } from '../../services/gustaveService';
-import { isBarber } from '../../services/userContext';
 import styles from './GustaveChat.module.css';
 
 const AVATAR = '✂️';
@@ -24,14 +23,19 @@ function GustaveChat() {
     useEffect(() => {
         const sync = () => setUserRole(localStorage.getItem('userRole'));
         window.addEventListener('cortaai:login-success', sync);
+        window.addEventListener('cortaai:logout', sync);
         window.addEventListener('storage', sync);
         return () => {
             window.removeEventListener('cortaai:login-success', sync);
+            window.removeEventListener('cortaai:logout', sync);
             window.removeEventListener('storage', sync);
         };
     }, []);
 
-    const [open, setOpen]         = useState(false);    const [messages, setMessages] = useState([
+    const isBarberRole = userRole === 'ROLE_BARBER' || userRole === 'ROLE_OWNER';
+
+    const [open, setOpen]         = useState(false);
+    const [messages, setMessages] = useState([
         { role: 'assistant', text: 'Olá! Sou o Gustavo, assistente de gestão do CortaAi. Como posso ajudar?' },
     ]);
     const [input, setInput]   = useState('');
@@ -43,7 +47,12 @@ function GustaveChat() {
         if (open) bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, open]);
 
-    if (!isBarber()) return null;
+    // Fecha o chat automaticamente se o usuário sair ou mudar de role
+    useEffect(() => {
+        if (!isBarberRole) setOpen(false);
+    }, [isBarberRole]);
+
+    if (!isBarberRole) return null;
 
     const handleSend = async () => {
         const text = input.trim();
