@@ -47,21 +47,27 @@ SELECT
 FROM schedule_db.appointments a
 JOIN schedule_db.appointment_activities aa
     ON a.id = aa.appointment_id
-WHERE a.status IN ('COMPLETED', 'CONCLUDED')
+WHERE a.status IN ('COMPLETED', 'CONCLUDED', 'WALK_IN')
 GROUP BY a.barber_id, a.barber_name, aa.activity_name;
 
 
 -- =======================================================================
 -- 3. SCHEDULE SERVICE: Termômetro da Agenda
---    Conta agendamentos ativos vs perdidos por dia/barbearia
+--    Conta agendamentos por categoria de status por dia/barbearia
+--    Cobre todos os status: SCHEDULED, PAYMENT_PENDING, EXPIRED,
+--    CONFIRMED, IN_PROGRESS, WALK_IN, COMPLETED, CONCLUDED,
+--    CANCELLED, NO_SHOW
 -- =======================================================================
 CREATE OR REPLACE VIEW schedule_db.v_agenda_thermometer AS
 SELECT
-    DATE(start_time)                                                                          AS agenda_date,
+    DATE(start_time)                                                                                              AS agenda_date,
     barbershop_id,
-    COUNT(id)                                                                                 AS total_appointments,
-    SUM(CASE WHEN status IN ('CONFIRMED', 'IN_PROGRESS', 'SCHEDULED') THEN 1 ELSE 0 END)    AS active_appointments,
-    SUM(CASE WHEN status IN ('CANCELLED', 'NO_SHOW')                  THEN 1 ELSE 0 END)    AS lost_appointments
+    COUNT(id)                                                                                                     AS total_appointments,
+    SUM(CASE WHEN status IN ('CONFIRMED', 'IN_PROGRESS')                   THEN 1 ELSE 0 END)                    AS active_appointments,
+    SUM(CASE WHEN status = 'WALK_IN'                                       THEN 1 ELSE 0 END)                    AS walkin_appointments,
+    SUM(CASE WHEN status IN ('SCHEDULED', 'PAYMENT_PENDING', 'EXPIRED')    THEN 1 ELSE 0 END)                    AS pending_appointments,
+    SUM(CASE WHEN status IN ('COMPLETED', 'CONCLUDED')                     THEN 1 ELSE 0 END)                    AS completed_appointments,
+    SUM(CASE WHEN status IN ('CANCELLED', 'NO_SHOW')                       THEN 1 ELSE 0 END)                    AS lost_appointments
 FROM schedule_db.appointments
 GROUP BY DATE(start_time), barbershop_id;
 
