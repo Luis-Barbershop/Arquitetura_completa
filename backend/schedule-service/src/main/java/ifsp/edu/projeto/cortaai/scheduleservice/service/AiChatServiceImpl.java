@@ -94,24 +94,25 @@ public class AiChatServiceImpl implements AiChatService {
         String prompt  = buildPrompt(context, chatHistoryService.formatHistoryForPrompt(history), request.message(), resolvedUser);
 
         String reply = null;
+        String source = "fallback";
 
         if (geminiApiKey != null && !geminiApiKey.isBlank()) {
-            try { reply = callGemini(prompt); } catch (Exception e) {
+            try { reply = callGemini(prompt); source = "gemini"; } catch (Exception e) {
                 log.warn("gustavo: Gemini indisponível — {}", e.getMessage());
             }
         }
         if (reply == null && groqApiKey != null && !groqApiKey.isBlank()) {
-            try { reply = callGroq(prompt); } catch (Exception e) {
+            try { reply = callGroq(prompt); source = "groq"; } catch (Exception e) {
                 log.warn("gustavo: Groq indisponível — {}", e.getMessage());
             }
         }
         if (reply == null && openrouterApiKey != null && !openrouterApiKey.isBlank()) {
-            try { reply = callOpenRouter(prompt); } catch (Exception e) {
+            try { reply = callOpenRouter(prompt); source = "openrouter"; } catch (Exception e) {
                 log.warn("gustavo: OpenRouter indisponível — {}", e.getMessage());
             }
         }
         if (reply == null && cohereApiKey != null && !cohereApiKey.isBlank()) {
-            try { reply = callCohere(prompt); } catch (Exception e) {
+            try { reply = callCohere(prompt); source = "cohere"; } catch (Exception e) {
                 log.error("gustavo: Cohere indisponível — {}", e.getMessage());
             }
         }
@@ -123,10 +124,6 @@ public class AiChatServiceImpl implements AiChatService {
 
         // Persiste o turno no Redis para contexto futuro
         chatHistoryService.appendTurn(userUid, request.message(), reply);
-
-        String source = geminiApiKey != null && !geminiApiKey.isBlank() ? "gemini"
-                : groqApiKey != null && !groqApiKey.isBlank() ? "groq"
-                : openrouterApiKey != null && !openrouterApiKey.isBlank() ? "openrouter" : "cohere";
 
         return new AiChatResponseDTO(reply, source, request.mode());
     }
