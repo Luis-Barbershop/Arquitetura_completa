@@ -32,7 +32,8 @@ function GustaveChat() {
         };
     }, []);
 
-    const isBarberRole = userRole === 'ROLE_BARBER' || userRole === 'ROLE_OWNER';
+    const isBarberRole = (userRole === 'ROLE_BARBER' || userRole === 'ROLE_OWNER')
+        && !!localStorage.getItem('token');
 
     const [open, setOpen]         = useState(false);
     const [messages, setMessages] = useState([

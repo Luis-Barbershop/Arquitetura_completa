@@ -225,6 +225,7 @@ export const registerBarber = async (barberData) => {
 export const logoutUser = () => {
     void unregisterPushNotificationsIfPossible();
     localStorage.clear();
+    window.dispatchEvent(new Event('cortaai:logout'));
 };
 
 // ─── RECUPERAR SENHA ─────────────────────────────────────────────────────────
