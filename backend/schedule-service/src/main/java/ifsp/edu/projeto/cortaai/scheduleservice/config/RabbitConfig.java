@@ -12,6 +12,7 @@ public class RabbitConfig {
     public static final String EXCHANGE = "cortaai.events";
     public static final String RK_CUSTOMER_DELETED = "customer.deleted";
     public static final String QUEUE_CUSTOMER_DELETED = "schedule.customer.deleted";
+    public static final String RK_APPOINTMENT_REMINDER = "appointment.reminder";
 
     @Bean
     public TopicExchange cortaaiExchange() {

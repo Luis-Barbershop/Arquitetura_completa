@@ -1,6 +1,9 @@
 package ifsp.edu.projeto.cortaai.notificationservice.service;
 
 import ifsp.edu.projeto.cortaai.notificationservice.dto.NotificationDTO;
+import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentReminderEvent;
+import ifsp.edu.projeto.cortaai.notificationservice.feign.AppointmentInfoDTO;
+import ifsp.edu.projeto.cortaai.notificationservice.feign.ScheduleServiceClient;
 import ifsp.edu.projeto.cortaai.notificationservice.model.Notification;
 import ifsp.edu.projeto.cortaai.notificationservice.model.NotificationChannel;
 import ifsp.edu.projeto.cortaai.notificationservice.model.NotificationType;
@@ -28,7 +31,8 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final EmailService emailService;
-        private final PushNotificationService pushNotificationService;
+    private final PushNotificationService pushNotificationService;
+    private final ScheduleServiceClient scheduleServiceClient;
 
     // ─── Agendamento criado ──────────────────────────────────────────────────────
 
@@ -192,7 +196,7 @@ public class NotificationService {
 
     @Transactional
     public void notifyPaymentApproved(
-            UUID customerId, String customerEmail, BigDecimal amount) {
+            UUID customerId, String customerEmail, BigDecimal amount, UUID appointmentId) {
 
         // IN_APP — cliente
         createNotification(customerId, NotificationType.PAYMENT_APPROVED,
@@ -206,6 +210,44 @@ public class NotificationService {
         // E-mail — cliente
         if (customerEmail != null && !customerEmail.isBlank()) {
             emailService.sendPaymentApprovedToCustomer(customerEmail, "Cliente", amount);
+        }
+
+        // IN_APP + Push — barbeiro (via feign ao schedule-service)
+        if (appointmentId != null) {
+            try {
+                AppointmentInfoDTO appt = scheduleServiceClient.getAppointmentById(appointmentId);
+                if (appt != null && appt.getBarberId() != null) {
+                    createNotification(appt.getBarberId(), NotificationType.PAYMENT_APPROVED,
+                            "Pagamento recebido!",
+                            String.format("O pagamento de R$ %.2f referente ao agendamento foi confirmado.", amount));
+                    pushNotificationService.sendToUser(appt.getBarberId(),
+                            "Pagamento recebido!",
+                            String.format("R$ %.2f confirmado para %s", amount, appt.getBarbershopName()),
+                            pushData(NotificationType.PAYMENT_APPROVED, "/barberHome"));
+                }
+            } catch (Exception e) {
+                log.warn("Não foi possível notificar barbeiro do pagamento: appointmentId={} — {}", appointmentId, e.getMessage());
+            }
+        }
+    }
+
+    // ─── Lembrete de agendamento ─────────────────────────────────────────────────
+
+    @Transactional
+    public void notifyAppointmentReminder(AppointmentReminderEvent event) {
+        createNotification(event.getCustomerId(), NotificationType.APPOINTMENT_REMINDER,
+                "Seu horário está chegando!",
+                String.format("Lembrete: você tem um agendamento em %s com %s às %s.",
+                        event.getBarbershopName(), event.getBarberName(),
+                        event.getStartTime().toLocalTime().toString()));
+        pushNotificationService.sendToUser(event.getCustomerId(),
+                "Seu horário está chegando!",
+                String.format("%s — %s", event.getBarbershopName(),
+                        event.getStartTime().toLocalTime().toString()),
+                pushData(NotificationType.APPOINTMENT_REMINDER, "/meus-agendamentos"));
+        if (event.getCustomerEmail() != null && !event.getCustomerEmail().isBlank()) {
+            emailService.sendReminderToCustomer(event.getCustomerEmail(), event.getCustomerName(),
+                    event.getBarbershopName(), event.getBarberName(), event.getStartTime());
         }
     }
 

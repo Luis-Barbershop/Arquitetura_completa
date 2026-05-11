@@ -21,6 +21,7 @@ public class RabbitConfig {
     public static final String QUEUE_PAYMENT_APPROVED = "notification.payment.approved";
     public static final String QUEUE_JOIN_REQUEST_CREATED = "notification.barbershop.join-request.created";
     public static final String QUEUE_CUSTOMER_DELETED = "notification.customer.deleted";
+    public static final String QUEUE_APPOINTMENT_REMINDER = "notification.appointment.reminder";
 
     // Routing keys
     public static final String RK_APPOINTMENT_CREATED = "appointment.created";
@@ -30,6 +31,7 @@ public class RabbitConfig {
     public static final String RK_PAYMENT_APPROVED = "payment.approved";
     public static final String RK_JOIN_REQUEST_CREATED = "barbershop.join-request.created";
     public static final String RK_CUSTOMER_DELETED = "customer.deleted";
+    public static final String RK_APPOINTMENT_REMINDER = "appointment.reminder";
 
     @Bean
     public TopicExchange exchange() {
@@ -99,8 +101,18 @@ public class RabbitConfig {
     }
 
     @Bean
+    public Queue appointmentReminderQueue() {
+        return QueueBuilder.durable(QUEUE_APPOINTMENT_REMINDER).build();
+    }
+
+    @Bean
     public Queue customerDeletedQueue() {
         return QueueBuilder.durable(QUEUE_CUSTOMER_DELETED).build();
+    }
+
+    @Bean
+    public Binding bindAppointmentReminder() {
+        return BindingBuilder.bind(appointmentReminderQueue()).to(exchange()).with(RK_APPOINTMENT_REMINDER);
     }
 
     @Bean

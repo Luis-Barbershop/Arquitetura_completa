@@ -127,4 +127,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
             @Param("barbershopId") UUID barbershopId,
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to);
+
+    @Query("SELECT a FROM Appointment a WHERE " +
+           "a.startTime BETWEEN :from AND :to " +
+           "AND a.status NOT IN ('CANCELLED', 'NO_SHOW', 'COMPLETED', 'CONCLUDED', 'EXPIRED')")
+    List<Appointment> findActiveInTimeWindow(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 }

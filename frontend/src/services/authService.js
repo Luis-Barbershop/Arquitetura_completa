@@ -224,6 +224,8 @@ export const registerBarber = async (barberData) => {
 // ─── LOGOUT ───────────────────────────────────────────────────────────────────
 export const logoutUser = () => {
     void unregisterPushNotificationsIfPossible();
+    // Limpa histórico do Gustavo no Redis antes de destruir o token
+    api.delete('/schedule/ai/chat/history').catch(() => {});
     localStorage.clear();
     window.dispatchEvent(new Event('cortaai:logout'));
 };

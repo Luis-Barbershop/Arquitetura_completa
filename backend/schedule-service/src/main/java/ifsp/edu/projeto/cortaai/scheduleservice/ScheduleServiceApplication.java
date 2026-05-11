@@ -7,10 +7,13 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
+import org.springframework.scheduling.annotation.EnableScheduling;
+
 @SpringBootApplication(exclude = {UserDetailsServiceAutoConfiguration.class})
 @EnableFeignClients
 @EnableJpaAuditing
 @EnableCaching
+@EnableScheduling
 public class ScheduleServiceApplication {
     public static void main(String[] args) {
         SpringApplication.run(ScheduleServiceApplication.class, args);

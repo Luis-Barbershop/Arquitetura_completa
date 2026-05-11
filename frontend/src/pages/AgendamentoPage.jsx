@@ -103,6 +103,9 @@ const AgendamentoPage = () => {
 
       setIsLoadingDateOptions(true);
 
+      // Garante dados frescos do backend sempre que barbeiro/serviços mudam
+      clearAvailabilitySlotsCache();
+
       try {
         const baseOptions = createDateOptionsBase(30).map((option, i) => ({
           ...option,
@@ -114,6 +117,7 @@ const AgendamentoPage = () => {
           barberId: selectedBarber,
           durationMinutes: totalDuration,
           dateOptions: baseOptions,
+          forceRefresh: true,
         });
 
         setDateOptions(hydrated);
@@ -142,7 +146,9 @@ const AgendamentoPage = () => {
     initializeDateOptions();
   }, [
     selectedBarber,
-    selectedServices.length,
+    // Usar join dos IDs garante re-execução ao desselecionar/reselecionar o mesmo serviço
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    selectedServices.map((s) => s.id).join(","),
     totalDuration,
   ]);
 

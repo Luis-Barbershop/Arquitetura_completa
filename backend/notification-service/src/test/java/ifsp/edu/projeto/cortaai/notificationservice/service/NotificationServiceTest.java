@@ -38,7 +38,7 @@ class NotificationServiceTest {
     @Test
     void shouldSendPushForPaymentApproved() {
         UUID customerId = UUID.randomUUID();
-        notificationService.notifyPaymentApproved(customerId, "cliente@cortaai.com", new BigDecimal("49.90"));
+        notificationService.notifyPaymentApproved(customerId, "cliente@cortaai.com", new BigDecimal("49.90"), null);
 
         verify(pushNotificationService, times(1))
                 .sendToUser(eq(customerId), eq("Pagamento aprovado!"),

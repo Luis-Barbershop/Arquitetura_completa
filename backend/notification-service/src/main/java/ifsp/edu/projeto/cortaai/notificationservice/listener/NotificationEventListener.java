@@ -5,6 +5,7 @@ import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentCancelledEv
 import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentConcludedEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentCreatedEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentRescheduledEvent;
+import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentReminderEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.event.JoinRequestCreatedEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.event.PaymentApprovedEvent;
 import ifsp.edu.projeto.cortaai.notificationservice.service.DeduplicationService;
@@ -76,7 +77,7 @@ public class NotificationEventListener {
         if (deduplicationService.isDuplicate("PAYMENT_APPROVED", event.getTransactionId().toString())) return;
 
         notificationService.notifyPaymentApproved(
-                event.getCustomerId(), event.getCustomerEmail(), event.getAmount());
+                event.getCustomerId(), event.getCustomerEmail(), event.getAmount(), event.getAppointmentId());
     }
 
     @RabbitListener(queues = RabbitConfig.QUEUE_JOIN_REQUEST_CREATED)
@@ -93,5 +94,12 @@ public class NotificationEventListener {
             notificationService.notifyJoinRequestReceived(
                     event.getOwnerId(), event.getBarbershopName(), event.getBarberName());
         }
+    }
+
+    @RabbitListener(queues = RabbitConfig.QUEUE_APPOINTMENT_REMINDER)
+    public void onAppointmentReminder(AppointmentReminderEvent event) {
+        log.info("Evento recebido: appointment.reminder appointmentId={}", event.getAppointmentId());
+        if (deduplicationService.isDuplicate("APPOINTMENT_REMINDER", event.getAppointmentId().toString())) return;
+        notificationService.notifyAppointmentReminder(event);
     }
 }
