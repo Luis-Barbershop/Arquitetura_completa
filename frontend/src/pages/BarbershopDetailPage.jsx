@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import { FiScissors, FiMapPin, FiClock, FiArrowRight } from "react-icons/fi";
 import { toast } from "react-toastify";
-import { getBarbershopById, getShopServices, getShopBarbers, geocodeAddress } from "../services/barbershopService";
+import { getBarbershopById, getShopServices, getShopBarbers, geocodeAddress, updateMyBarbershop } from "../services/barbershopService";
 import BarbershopMap from "../components/BarbershopMap/BarbershopMap";
 import CustomerHeader from "../components/HomePage/CustomerHeader";
 import CustomerNavbar from "../components/HomePage/CustomerNavbar";
@@ -39,6 +39,17 @@ const BarbershopDetailPage = () => {
           const coords = await geocodeAddress(shopData.address).catch(() => null);
           if (coords) {
             enrichedShop = { ...shopData, latitude: coords.lat, longitude: coords.lng };
+
+            // Persiste as coordenadas no banco se o usuário logado for o dono desta barbearia,
+            // evitando que futuros visitantes precisem refazer o geocoding.
+            const isOwnerOfThisShop =
+              localStorage.getItem('userRole') === 'ROLE_BARBER' &&
+              localStorage.getItem('isOwner') === 'true' &&
+              String(localStorage.getItem('barbershopId')) === String(barbershopId);
+
+            if (isOwnerOfThisShop) {
+              updateMyBarbershop({ latitude: coords.lat, longitude: coords.lng }).catch(() => {});
+            }
           }
         }
 
