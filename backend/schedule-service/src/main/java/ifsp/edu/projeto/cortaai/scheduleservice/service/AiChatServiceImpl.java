@@ -185,6 +185,9 @@ public class AiChatServiceImpl implements AiChatService {
         if (isOwner) {
             ctx.append("\n\n").append(formatSkillMatrix(barbershopId));
             ctx.append("\n\n").append(formatStockContext(barbershopId));
+            // Resumo financeiro calculado a partir dos appointments concluídos (fonte primária)
+            ctx.append("\n\n").append(formatFinancialSummaryFromAppointments(barbershopId, now));
+            // Performance por barbeiro via payment-service (complementar — pode estar vazia)
             ctx.append("\n\n").append(formatFinancialContext(barbershopId));
         }
 
@@ -256,8 +259,7 @@ public class AiChatServiceImpl implements AiChatService {
         return sb.toString();
     }
 
-    private String formatCancelledContext(List<Appointment> list) {
-        StringBuilder sb = new StringBuilder("Agendamentos cancelados / não compareceu:\n");
+    private String formatCancelledContext(List<Appointment> list) {        StringBuilder sb = new StringBuilder("Agendamentos cancelados / não compareceu:\n");
         list.stream().limit(20).forEach(a -> sb
                 .append("- ")
                 .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
@@ -306,6 +308,60 @@ public class AiChatServiceImpl implements AiChatService {
         } catch (Exception e) {
             log.warn("gustavo: não foi possível obter estoque — {}", e.getMessage());
             return "Estoque: dados temporariamente indisponíveis.";
+        }
+    }
+
+    /**
+     * Calcula resumo financeiro diretamente dos appointments concluídos no schedule_db.
+     * Não depende do payment-service — fonte primária enquanto transactions estiver vazia.
+     */
+    private String formatFinancialSummaryFromAppointments(UUID barbershopId, LocalDateTime now) {
+        try {
+            LocalDateTime from30 = now.minusDays(30);
+            LocalDateTime from90 = now.minusDays(90);
+
+            List<Appointment> ultimos30 = appointmentRepository.findCompletedByBarbershop(barbershopId, from30, now);
+            List<Appointment> ultimos90 = appointmentRepository.findCompletedByBarbershop(barbershopId, from90, now);
+
+            if (ultimos90.isEmpty()) return "Receita calculada: nenhum atendimento concluído nos últimos 90 dias.";
+
+            java.math.BigDecimal total30 = ultimos30.stream()
+                    .filter(a -> a.getTotalPrice() != null)
+                    .map(Appointment::getTotalPrice)
+                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+            java.math.BigDecimal total90 = ultimos90.stream()
+                    .filter(a -> a.getTotalPrice() != null)
+                    .map(Appointment::getTotalPrice)
+                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+            java.math.BigDecimal mediaDiaria = total30.compareTo(java.math.BigDecimal.ZERO) > 0
+                    ? total30.divide(java.math.BigDecimal.valueOf(30), 2, java.math.RoundingMode.HALF_UP)
+                    : java.math.BigDecimal.ZERO;
+            java.math.BigDecimal previsaoMes = mediaDiaria.multiply(java.math.BigDecimal.valueOf(30));
+
+            Map<String, java.math.BigDecimal> porBarbeiro = new java.util.LinkedHashMap<>();
+            ultimos90.forEach(a -> {
+                String nome = firstNameOnly(a.getBarberName());
+                porBarbeiro.merge(nome,
+                        a.getTotalPrice() != null ? a.getTotalPrice() : java.math.BigDecimal.ZERO,
+                        java.math.BigDecimal::add);
+            });
+
+            StringBuilder sb = new StringBuilder("Resumo financeiro (baseado em atendimentos concluídos):\n");
+            sb.append("- Receita últimos 30 dias: R$ ").append(total30.toPlainString()).append('\n');
+            sb.append("- Receita últimos 90 dias: R$ ").append(total90.toPlainString()).append('\n');
+            sb.append("- Atendimentos concluídos últimos 30 dias: ").append(ultimos30.size()).append('\n');
+            sb.append("- Projeção mensal (média × 30 dias): R$ ").append(previsaoMes.toPlainString()).append('\n');
+            if (!porBarbeiro.isEmpty()) {
+                sb.append("- Receita por barbeiro (90 dias):\n");
+                porBarbeiro.forEach((nome, valor) ->
+                        sb.append("  · ").append(nome).append(": R$ ").append(valor.toPlainString()).append('\n'));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustavo: não foi possível calcular resumo financeiro local — {}", e.getMessage());
+            return "Resumo financeiro: dados temporariamente indisponíveis.";
         }
     }
 
