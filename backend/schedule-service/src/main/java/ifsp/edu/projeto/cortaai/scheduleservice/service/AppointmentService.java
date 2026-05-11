@@ -26,6 +26,8 @@ import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -152,7 +154,7 @@ public class AppointmentService {
         rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.created", event);
         log.info("Evento AppointmentCreatedEvent publicado para appointment {}", saved.getId());
 
-        evictAvailabilityCache(saved.getBarberId(), saved.getStartTime().toLocalDate());
+        evictAvailabilityCacheAfterCommit(saved.getBarberId(), saved.getStartTime().toLocalDate());
 
         // 11. Retornar
         return appointmentMapper.toDTO(saved);
@@ -261,7 +263,7 @@ public class AppointmentService {
         log.info("Agendamento manual (WALK_IN) criado: id={}, barbeiro={}, cliente='{}'",
                 saved.getId(), barber.getId(), dto.getClientName());
 
-        evictAvailabilityCache(saved.getBarberId(), saved.getStartTime().toLocalDate());
+        evictAvailabilityCacheAfterCommit(saved.getBarberId(), saved.getStartTime().toLocalDate());
 
         // 9. Sem evento de pagamento — WALK_IN não passa por gateway de pagamento
         return appointmentMapper.toDTO(saved);
@@ -309,7 +311,7 @@ public class AppointmentService {
         rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.cancelled", event);
         log.info("Evento AppointmentCancelledEvent publicado para appointment {}", appointment.getId());
 
-        evictAvailabilityCache(appointment.getBarberId(), appointment.getStartTime().toLocalDate());
+        evictAvailabilityCacheAfterCommit(appointment.getBarberId(), appointment.getStartTime().toLocalDate());
     }
 
     // ========== REAGENDAMENTO ==========
@@ -405,9 +407,9 @@ public class AppointmentService {
         log.info("Evento AppointmentRescheduledEvent publicado para appointment {}", appointment.getId());
 
         // Evicta cache da data anterior e da nova data (podem ser dias diferentes)
-        evictAvailabilityCache(appointment.getBarberId(), previousStartTime.toLocalDate());
+        evictAvailabilityCacheAfterCommit(appointment.getBarberId(), previousStartTime.toLocalDate());
         if (!newStartTime.toLocalDate().equals(previousStartTime.toLocalDate())) {
-            evictAvailabilityCache(appointment.getBarberId(), newStartTime.toLocalDate());
+            evictAvailabilityCacheAfterCommit(appointment.getBarberId(), newStartTime.toLocalDate());
         }
     }
 
@@ -847,6 +849,10 @@ public class AppointmentService {
     /**
      * Evicta todas as entradas de cache de disponibilidade para um barbeiro/data,
      * cobrindo todos os passos de duração usados pelo frontend (15 a 180 min).
+     * <p>
+     * Deve ser chamado via {@link #evictAvailabilityCacheAfterCommit} dentro de transações,
+     * para garantir que a evicção ocorra APÓS o commit e evitar race conditions entre
+     * a evicção e a re-população do cache por leitores concorrentes com dados obsoletos.
      */
     private void evictAvailabilityCache(UUID barberId, LocalDate date) {
         Cache cache = cacheManager.getCache("appointmentAvailability");
@@ -855,5 +861,23 @@ public class AppointmentService {
             cache.evict(barberId + ":" + date + ":" + dur);
         }
         log.debug("Cache appointmentAvailability evictado para barbeiro {} na data {}", barberId, date);
+    }
+
+    /**
+     * Registra a evicção de cache para ser executada APÓS o commit da transação atual.
+     * Isso evita race conditions onde leitores concorrentes re-populam o cache com dados
+     * obsoletos entre a evicção e o commit da transação que criou/alterou o agendamento.
+     */
+    private void evictAvailabilityCacheAfterCommit(UUID barberId, LocalDate date) {
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    evictAvailabilityCache(barberId, date);
+                }
+            });
+        } else {
+            evictAvailabilityCache(barberId, date);
+        }
     }
 }

@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.scheduleservice.service;
 
 import ifsp.edu.projeto.cortaai.scheduleservice.service.ChatHistoryService;
+import ifsp.edu.projeto.cortaai.scheduleservice.dto.ActivityInfoDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.AiChatRequestDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.AiChatResponseDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.CommissionRuleInfoDTO;
@@ -191,6 +192,8 @@ public class AiChatServiceImpl implements AiChatService {
         // 2–4. Contexto adicional exclusivo para owners
         if (isOwner) {
             ctx.append("\n\n").append(formatSkillMatrix(barbershopId));
+            ctx.append("\n\n").append(formatServiceRevenueContext(barbershopId));
+            ctx.append("\n\n").append(formatUncoveredServicesContext(barbershopId));
             ctx.append("\n\n").append(formatStockContext(barbershopId));
             // Resumo financeiro calculado a partir dos appointments concluídos (fonte primária)
             ctx.append("\n\n").append(formatFinancialSummaryFromAppointments(barbershopId, now));
@@ -285,12 +288,16 @@ public class AiChatServiceImpl implements AiChatService {
         try {
             var rows = vBarberSkillMatrixRepository.findByBarbershopId(barbershopId.toString());
             if (rows.isEmpty()) return "Habilidades dos barbeiros: sem dados disponíveis.";
-            StringBuilder sb = new StringBuilder("Habilidades e serviços executados por barbeiro:\n");
+            StringBuilder sb = new StringBuilder("Habilidades e serviços executados por barbeiro (últimos 90 dias):\n");
             rows.forEach(r -> sb
                     .append("- ")
                     .append(firstNameOnly(r.getBarberName()))
                     .append(" | serviço: ").append(r.getActivityName())
                     .append(" | vezes executado: ").append(r.getTimesExecuted())
+                    .append(" | receita gerada: R$ ").append(
+                            r.getTotalGeneratedByActivity() != null
+                                    ? r.getTotalGeneratedByActivity().toPlainString()
+                                    : "0.00")
                     .append('\n'));
             return sb.toString();
         } catch (Exception e) {
@@ -299,18 +306,139 @@ public class AiChatServiceImpl implements AiChatService {
         }
     }
 
+    /**
+     * Agrega receita por serviço (globalmente na barbearia), somando totalGeneratedByActivity
+     * de todos os barbeiros por nome de serviço.
+     * Responde: "Qual serviço gerou mais receita?" e "Qual o serviço mais executado?"
+     */
+    private String formatServiceRevenueContext(UUID barbershopId) {
+        try {
+            var rows = vBarberSkillMatrixRepository.findByBarbershopId(barbershopId.toString());
+            if (rows.isEmpty()) return "Receita por serviço: sem dados disponíveis.";
+
+            // Agrega por nome de serviço
+            Map<String, long[]> byService = new java.util.LinkedHashMap<>();
+            rows.forEach(r -> {
+                String svc = r.getActivityName() != null ? r.getActivityName() : "Desconhecido";
+                long times = r.getTimesExecuted() != null ? r.getTimesExecuted() : 0;
+                long cents = r.getTotalGeneratedByActivity() != null
+                        ? r.getTotalGeneratedByActivity().multiply(java.math.BigDecimal.valueOf(100)).longValue()
+                        : 0;
+                byService.merge(svc, new long[]{times, cents}, (a, b) -> new long[]{a[0] + b[0], a[1] + b[1]});
+            });
+
+            // Ordena por receita desc
+            var sorted = byService.entrySet().stream()
+                    .sorted((a, b) -> Long.compare(b.getValue()[1], a.getValue()[1]))
+                    .toList();
+
+            StringBuilder sb = new StringBuilder("Receita e execuções por serviço (90 dias, barbearia toda):\n");
+            sorted.forEach(e -> sb
+                    .append("- ").append(e.getKey())
+                    .append(" | vezes: ").append(e.getValue()[0])
+                    .append(" | receita total: R$ ")
+                    .append(java.math.BigDecimal.valueOf(e.getValue()[1])
+                            .divide(java.math.BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP).toPlainString())
+                    .append('\n'));
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustavo: não foi possível calcular receita por serviço — {}", e.getMessage());
+            return "Receita por serviço: dados temporariamente indisponíveis.";
+        }
+    }
+
+    /**
+     * Cruza o catálogo de atividades da barbearia com a skill matrix para identificar
+     * quais barbeiros NÃO executaram determinado serviço nos últimos 90 dias.
+     * Responde: "Algum barbeiro nunca executou algum serviço?"
+     */
+    private String formatUncoveredServicesContext(UUID barbershopId) {
+        try {
+            List<ActivityInfoDTO> allActivities = barbershopServiceClient.getAllActivities(barbershopId);
+            if (allActivities == null || allActivities.isEmpty()) {
+                return "Cobertura de serviços: nenhum serviço cadastrado na barbearia.";
+            }
+
+            var rows = vBarberSkillMatrixRepository.findByBarbershopId(barbershopId.toString());
+            if (rows.isEmpty()) {
+                return "Cobertura de serviços: nenhum dado de execução disponível nos últimos 90 dias.";
+            }
+
+            // Conjunto de pares "barbeiro:serviço" que foram executados
+            java.util.Set<String> executed = new java.util.HashSet<>();
+            java.util.Set<String> barberNames = new java.util.LinkedHashSet<>();
+            rows.forEach(r -> {
+                executed.add(firstNameOnly(r.getBarberName()) + ":" + r.getActivityName());
+                barberNames.add(firstNameOnly(r.getBarberName()));
+            });
+
+            // Para cada barbeiro, lista serviços NÃO executados
+            StringBuilder sb = new StringBuilder("Serviços não executados por barbeiro (90 dias):\n");
+            boolean algumaSemCobertura = false;
+            for (String barberName : barberNames) {
+                List<String> naoExecutados = allActivities.stream()
+                        .map(ActivityInfoDTO::getActivityName)
+                        .filter(svc -> !executed.contains(barberName + ":" + svc))
+                        .toList();
+                if (!naoExecutados.isEmpty()) {
+                    sb.append("- ").append(barberName).append(" não executou: ")
+                            .append(String.join(", ", naoExecutados)).append('\n');
+                    algumaSemCobertura = true;
+                }
+            }
+
+            if (!algumaSemCobertura) {
+                sb.append("Todos os barbeiros executaram todos os serviços cadastrados no período.\n");
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustavo: não foi possível calcular cobertura de serviços — {}", e.getMessage());
+            return "Cobertura de serviços: dados temporariamente indisponíveis.";
+        }
+    }
+
     private String formatStockContext(UUID barbershopId) {
         try {
             List<Map<String, Object>> items = productServiceClient.getStockHealth(barbershopId);
-            if (items == null || items.isEmpty()) return "Estoque: sem alertas de reposição no momento.";
+            if (items == null || items.isEmpty()) return "Estoque: sem produtos cadastrados ou sem alertas no momento.";
+
             StringBuilder sb = new StringBuilder("Situação do estoque:\n");
-            items.forEach(item -> sb
-                    .append("- ").append(item.getOrDefault("productName", "?"))
-                    .append(" | categoria: ").append(item.getOrDefault("category", "?"))
-                    .append(" | qtd atual: ").append(item.getOrDefault("currentStock", "?"))
-                    .append(" | mínimo: ").append(item.getOrDefault("predictedMinimum", "?"))
-                    .append(" | repor: ").append(Boolean.TRUE.equals(item.get("requiresRestock")) ? "SIM" : "não")
-                    .append('\n'));
+            List<Map<String, Object>> zerados = items.stream()
+                    .filter(i -> {
+                        Object qty = i.get("currentStock");
+                        return qty != null && ((Number) qty).intValue() == 0;
+                    }).toList();
+            List<Map<String, Object>> criticos = items.stream()
+                    .filter(i -> Boolean.TRUE.equals(i.get("requiresRestock"))
+                            && (i.get("currentStock") == null || ((Number) i.get("currentStock")).intValue() > 0))
+                    .toList();
+            List<Map<String, Object>> ok = items.stream()
+                    .filter(i -> !Boolean.TRUE.equals(i.get("requiresRestock"))).toList();
+
+            if (!zerados.isEmpty()) {
+                sb.append("  [ZERADO — estoque 0]:\n");
+                zerados.forEach(item -> sb
+                        .append("    - ").append(item.getOrDefault("productName", "?"))
+                        .append(" | categoria: ").append(item.getOrDefault("category", "?"))
+                        .append(" | mínimo: ").append(item.getOrDefault("predictedMinimum", "?"))
+                        .append('\n'));
+            }
+            if (!criticos.isEmpty()) {
+                sb.append("  [CRÍTICO — abaixo do mínimo]:\n");
+                criticos.forEach(item -> sb
+                        .append("    - ").append(item.getOrDefault("productName", "?"))
+                        .append(" | categoria: ").append(item.getOrDefault("category", "?"))
+                        .append(" | qtd atual: ").append(item.getOrDefault("currentStock", "?"))
+                        .append(" | mínimo: ").append(item.getOrDefault("predictedMinimum", "?"))
+                        .append('\n'));
+            }
+            if (!ok.isEmpty()) {
+                sb.append("  [OK — estoque suficiente]:\n");
+                ok.forEach(item -> sb
+                        .append("    - ").append(item.getOrDefault("productName", "?"))
+                        .append(" | qtd: ").append(item.getOrDefault("currentStock", "?"))
+                        .append('\n'));
+            }
             return sb.toString();
         } catch (Exception e) {
             log.warn("gustavo: não foi possível obter estoque — {}", e.getMessage());
@@ -405,6 +533,20 @@ public class AiChatServiceImpl implements AiChatService {
             sb.append("- Receita últimos 30 dias: R$ ").append(total30.toPlainString()).append('\n');
             sb.append("- Receita últimos 90 dias: R$ ").append(total90.toPlainString()).append('\n');
             sb.append("- Atendimentos concluídos últimos 30 dias: ").append(ultimos30.size()).append('\n');
+            sb.append("- Atendimentos concluídos últimos 90 dias: ").append(ultimos90.size()).append('\n');
+
+            // Ticket médio explícito — resolve a lacuna de inferência do modelo
+            if (!ultimos30.isEmpty() && total30.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                java.math.BigDecimal ticketMedio30 = total30.divide(
+                        java.math.BigDecimal.valueOf(ultimos30.size()), 2, java.math.RoundingMode.HALF_UP);
+                sb.append("- Ticket médio por atendimento (30 dias): R$ ").append(ticketMedio30.toPlainString()).append('\n');
+            }
+            if (!ultimos90.isEmpty() && total90.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                java.math.BigDecimal ticketMedio90 = total90.divide(
+                        java.math.BigDecimal.valueOf(ultimos90.size()), 2, java.math.RoundingMode.HALF_UP);
+                sb.append("- Ticket médio por atendimento (90 dias): R$ ").append(ticketMedio90.toPlainString()).append('\n');
+            }
+
             sb.append("- Projeção mensal (média × 30 dias): R$ ").append(previsaoMes.toPlainString()).append('\n');
             if (!porBarbeiro.isEmpty()) {
                 sb.append("- Receita por barbeiro (90 dias):\n");

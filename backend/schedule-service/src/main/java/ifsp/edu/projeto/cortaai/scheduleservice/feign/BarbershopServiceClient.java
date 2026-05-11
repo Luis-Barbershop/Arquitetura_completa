@@ -21,6 +21,9 @@ public interface BarbershopServiceClient {
     List<ActivityInfoDTO> getActivitiesByIds(@PathVariable("shopId") UUID shopId,
                                              @RequestParam("ids") List<UUID> ids);
 
+    @GetMapping("/{shopId}/activities/all")
+    List<ActivityInfoDTO> getAllActivities(@PathVariable("shopId") UUID shopId);
+
     @GetMapping("/{shopId}/barbers/{barberId}/commissions")
     List<CommissionRuleInfoDTO> getBarberCommissions(@PathVariable("shopId") UUID shopId,
                                                      @PathVariable("barberId") UUID barberId);

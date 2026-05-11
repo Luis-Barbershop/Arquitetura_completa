@@ -24,6 +24,7 @@ import {
   getRelativeDateLabel,
   hydrateDateOptionsWithAvailability,
   fetchAvailabilitySlots,
+  clearAvailabilitySlotsCache,
 } from "../services/appointmentAvailabilityService";
 
 const AgendamentoPage = () => {
@@ -398,6 +399,7 @@ const AgendamentoPage = () => {
       };
 
       await api.post("/appointments", appointmentData);
+      clearAvailabilitySlotsCache();
       setIsSummaryModalOpen(false);
       toast.success("Agendamento realizado com sucesso!");
       navigate("/meus-agendamentos");
@@ -442,6 +444,7 @@ const AgendamentoPage = () => {
       };
 
       const appointmentResponse = await api.post("/appointments", appointmentData);
+      clearAvailabilitySlotsCache();
       const appointmentId = appointmentResponse.data?.id;
 
       if (!appointmentId) {

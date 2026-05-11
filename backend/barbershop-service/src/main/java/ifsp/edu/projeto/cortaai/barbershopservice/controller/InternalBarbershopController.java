@@ -81,6 +81,22 @@ public class InternalBarbershopController {
         return ResponseEntity.ok(filtered);
     }
 
+    @Operation(summary = "Lista todas as atividades da barbearia", description = "Retorna todas as atividades ativas da barbearia. Usado pelo schedule-service para cruzar com a skill matrix.")
+    @GetMapping("/{shopId}/activities/all")
+    public ResponseEntity<List<ActivityInfoDTO>> getAllActivities(
+            @Parameter(description = "UUID da barbearia") @PathVariable UUID shopId) {
+
+        List<ActivityInfoDTO> activities = activityRepository.findByBarbershopId(shopId)
+                .stream()
+                .map(a -> new ActivityInfoDTO(
+                        a.getId(), a.getActivityName(), a.getPrice(),
+                        a.getDurationMinutes(), shopId
+                ))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(activities);
+    }
+
     @Operation(summary = "Regras de comissão de um barbeiro (interno)", description = "Retorna as regras de comissão por atividade de um barbeiro em uma barbearia.")
     @GetMapping("/{shopId}/barbers/{barberId}/commissions")
     public ResponseEntity<List<CommissionRuleDTO>> getBarberCommissions(

@@ -6,6 +6,7 @@ import {
   formatDateToApi,
   getRelativeDateLabel,
   hydrateDateOptionsWithAvailability,
+  clearAvailabilitySlotsCache,
 } from '../../services/appointmentAvailabilityService';
 import { getShopBarbers } from '../../services/barbershopService';
 import Styles from './RescheduleModal.module.css';
@@ -75,7 +76,7 @@ const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
       .finally(() => setLoadingBarbers(false));
   }, [barbershopId]);
 
-  /* ── carrega datas ao entrar no step 2 ── */
+  /* ── carrega datas ao entrar no step 2 — sempre forçando dados frescos ── */
   useEffect(() => {
     if (step !== STEP_DATETIME || !selectedBarberId) return;
 
@@ -95,6 +96,7 @@ const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
       durationMinutes,
       dateOptions: base,
       minAdvanceHours: 3,
+      forceRefresh: true,
     })
       .then((hydrated) => {
         setDateOptions(hydrated);
@@ -136,6 +138,7 @@ const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
     let time = selectedTime;
     if (time.length === 5) time = `${time}:00`;
     const startTime = `${formatDateToApi(selectedDate)}T${time}`;
+    clearAvailabilitySlotsCache();
     onConfirm(startTime, selectedBarberId !== String(currentBarberId) ? selectedBarberId : null);
   };
 

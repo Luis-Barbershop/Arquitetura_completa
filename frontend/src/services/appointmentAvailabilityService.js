@@ -139,12 +139,14 @@ export const hydrateDateOptionsWithAvailability = async ({
   durationMinutes,
   dateOptions,
   minAdvanceHours = 0,
+  forceRefresh = false,
 }) => {
   const results = await Promise.allSettled(
     dateOptions.map((option) => fetchAvailabilitySlots({
       barberId,
       dateObj: option.date,
       durationMinutes,
+      forceRefresh,
     })),
   );
 
