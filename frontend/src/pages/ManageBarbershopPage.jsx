@@ -131,7 +131,7 @@ function ManageBarbershopPage() {
         }
     };
 
-    // ── Crop / upload logo ────────────────────────────────────────────────────
+    // ── Crop / upload miniatura ───────────────────────────────────────────────
     const handleLogoChange = (e) => {
         const file = e.target.files?.[0];
         e.target.value = '';
@@ -141,21 +141,14 @@ function ManageBarbershopPage() {
         setCropModal({ target: 'logo', src: cropObjectUrlRef.current, fileName: file.name });
     };
 
-    const handleBannerChange = async (e) => {
+    // ── Crop / upload banner ──────────────────────────────────────────────────
+    const handleBannerChange = (e) => {
         const file = e.target.files?.[0];
         e.target.value = '';
         if (!file) return;
-        setUploadingBanner(true);
-        try {
-            const res = await uploadMyBarbershopBanner(file);
-            const url = typeof res === 'string' ? res : res?.bannerUrl;
-            if (url) setMedia(prev => ({ ...prev, bannerUrl: url }));
-            toast.success('Banner atualizado!');
-        } catch (err) {
-            toast.error(err?.response?.data?.message || 'Erro ao enviar banner.');
-        } finally {
-            setUploadingBanner(false);
-        }
+        if (cropObjectUrlRef.current) URL.revokeObjectURL(cropObjectUrlRef.current);
+        cropObjectUrlRef.current = URL.createObjectURL(file);
+        setCropModal({ target: 'banner', src: cropObjectUrlRef.current, fileName: file.name });
     };
 
     const closeCropModal = useCallback(() => {
@@ -164,16 +157,34 @@ function ManageBarbershopPage() {
     }, []);
 
     const handleConfirmCrop = async (blob) => {
-        const croppedFile = new File([blob], 'logo-barbearia.jpg', { type: blob.type || 'image/jpeg' });
+        if (cropModal?.target === 'banner') {
+            const croppedFile = new File([blob], 'banner-barbearia.jpg', { type: blob.type || 'image/jpeg' });
+            setUploadingBanner(true);
+            try {
+                const res = await uploadMyBarbershopBanner(croppedFile);
+                const url = typeof res === 'string' ? res : res?.bannerUrl;
+                if (url) setMedia(prev => ({ ...prev, bannerUrl: url }));
+                toast.success('Banner atualizado!');
+                closeCropModal();
+            } catch (err) {
+                toast.error(err?.response?.data?.message || 'Erro ao enviar banner.');
+            } finally {
+                setUploadingBanner(false);
+            }
+            return;
+        }
+
+        // miniatura
+        const croppedFile = new File([blob], 'miniatura-barbearia.jpg', { type: blob.type || 'image/jpeg' });
         setUploadingLogo(true);
         try {
             const res = await uploadMyBarbershopLogo(croppedFile);
             const url = typeof res === 'string' ? res : res?.logoUrl;
             if (url) setMedia(prev => ({ ...prev, logoUrl: url }));
-            toast.success('Logo atualizada!');
+            toast.success('Miniatura atualizada!');
             closeCropModal();
         } catch (err) {
-            toast.error(err?.response?.data?.message || 'Erro ao enviar logo.');
+            toast.error(err?.response?.data?.message || 'Erro ao enviar miniatura.');
         } finally {
             setUploadingLogo(false);
         }
@@ -210,7 +221,7 @@ function ManageBarbershopPage() {
                         <p className={styles.profileMutedText}>Carregando dados...</p>
                     ) : (
                         <div className={styles.profileCard}>
-                            {/* ── Preview banner + logo ── */}
+                            {/* ── Banner ── */}
                             <div className={styles.shopBannerPreview} style={{ position: 'relative', marginBottom: '1.5rem' }}>
                                 {media.bannerUrl ? (
                                     <img
@@ -240,18 +251,18 @@ function ManageBarbershopPage() {
                                         padding: '0.35rem 0.75rem', fontSize: '0.8rem', cursor: 'pointer',
                                     }}
                                 >
-                                    {uploadingBanner ? 'Enviando...' : '📷 Trocar banner'}
+                                    {uploadingBanner ? 'Ajustando...' : '📷 Trocar banner'}
                                 </button>
                             </div>
 
-                            {/* ── Logo ── */}
+                            {/* ── Miniatura ── */}
                             <div className={styles.shopMediaGrid} style={{ marginBottom: '1.5rem' }}>
                                 <div className={styles.shopMediaCard}>
-                                    <span className={styles.shopMediaLabel}>Logo</span>
+                                    <span className={styles.shopMediaLabel}>Miniatura</span>
                                     {media.logoUrl ? (
-                                        <img src={media.logoUrl} alt="Logo" className={styles.shopMediaImage} />
+                                        <img src={media.logoUrl} alt="Miniatura" className={styles.shopMediaImage} />
                                     ) : (
-                                        <div className={styles.shopMediaPlaceholder}>Sem logo</div>
+                                        <div className={styles.shopMediaPlaceholder}>Sem miniatura</div>
                                     )}
                                     <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoChange} className={styles.hiddenFileInput} />
                                     <button
@@ -260,7 +271,7 @@ function ManageBarbershopPage() {
                                         disabled={uploadingLogo}
                                         className={styles.shopMediaButton}
                                     >
-                                        {uploadingLogo ? 'Enviando...' : 'Trocar logo'}
+                                        {uploadingLogo ? 'Ajustando...' : 'Trocar miniatura'}
                                     </button>
                                 </div>
                             </div>
@@ -331,9 +342,9 @@ function ManageBarbershopPage() {
             {cropModal && (
                 <CropImageModal
                     src={cropModal.src}
-                    title="Ajustar logo da barbearia"
-                    aspect={1}
-                    outputSize={{ width: 600, height: 600 }}
+                    title={cropModal.target === 'banner' ? 'Ajustar banner da barbearia' : 'Ajustar miniatura da barbearia'}
+                    aspect={cropModal.target === 'banner' ? 16 / 9 : 1}
+                    outputSize={cropModal.target === 'banner' ? { width: 1200, height: 675 } : { width: 600, height: 600 }}
                     onCancel={closeCropModal}
                     onConfirm={handleConfirmCrop}
                 />
