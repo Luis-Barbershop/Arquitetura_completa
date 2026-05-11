@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.notificationservice.service;
 
+import ifsp.edu.projeto.cortaai.notificationservice.feign.ScheduleServiceClient;
 import ifsp.edu.projeto.cortaai.notificationservice.model.Notification;
 import ifsp.edu.projeto.cortaai.notificationservice.model.NotificationType;
 import ifsp.edu.projeto.cortaai.notificationservice.repository.NotificationRepository;
@@ -25,12 +26,14 @@ class NotificationServiceTest {
     private EmailService emailService;
     @Mock
     private PushNotificationService pushNotificationService;
+    @Mock
+    private ScheduleServiceClient scheduleServiceClient;
 
     private NotificationService notificationService;
 
     @BeforeEach
     void setUp() {
-        notificationService = new NotificationService(notificationRepository, emailService, pushNotificationService);
+        notificationService = new NotificationService(notificationRepository, emailService, pushNotificationService, scheduleServiceClient);
         when(notificationRepository.save(any(Notification.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
