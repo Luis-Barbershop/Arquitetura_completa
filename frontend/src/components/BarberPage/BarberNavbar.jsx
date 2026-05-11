@@ -10,6 +10,7 @@ import {
     Package,
     PlusCircle,
     UserCircle,
+    Storefront,
     DotsThreeOutline,
     X,
     SignOut,
@@ -56,6 +57,7 @@ function BarberNavbar({ activeTab, onTabChange, onLogout }) {
         ...(hasShop ? [{ id: 'indisponibilidade', label: 'Indisponibilidade', Icon: CalendarX }] : []),
         ...(hasShop && isOwner ? [{ id: 'dashboards', label: 'Dashboard', Icon: ChartBar }] : []),
         ...(hasShop && isOwner ? [{ id: 'estoque', label: 'Estoque', Icon: Package }] : []),
+        ...(hasShop && isOwner ? [{ id: 'gerenciar-barbearia', label: 'Gerenciar Barbearia', Icon: Storefront }] : []),
         ...(!mainItems.some((item) => item.id === 'perfil') ? [{ id: 'perfil', label: 'Meu Perfil', Icon: UserCircle }] : []),
         { id: 'logout', label: 'Sair', Icon: SignOut, danger: true },
     ];

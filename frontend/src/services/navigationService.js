@@ -8,10 +8,11 @@ const BARBER_TAB_ROUTES = {
   perfil: '/barberHome/perfil',
   time: '/barberHome/time',
   dashboards: '/barberHome/dashboard',
+  'gerenciar-barbearia': '/barberHome/gerenciar-barbearia',
   'novo-agendamento': '/barberHome/novo-agendamento',
 };
 
-const OWNER_ONLY_TABS = new Set(['estoque', 'time', 'dashboards', 'agenda-equipe']);
+const OWNER_ONLY_TABS = new Set(['estoque', 'time', 'dashboards', 'agenda-equipe', 'gerenciar-barbearia']);
 
 export const resolveBarberRoute = (tab, options = {}) => {
   const { isOwner = false, currentPath = null } = options;

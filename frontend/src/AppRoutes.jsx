@@ -17,6 +17,7 @@ import VerifyEmailPage from './pages/VerifyEmailPage';
 import BarberProfilePage from './pages/BarberProfilePage';
 import BarberTeamPage from './pages/BarberTeamPage';
 import BarberDashboardPage from './pages/BarberDashboardPage';
+import ManageBarbershopPage from './pages/ManageBarbershopPage';
 import BarberManualBookingPage from './pages/BarberManualBookingPage';
 import AgendaBarbeariaPage from './pages/AgendaBarbeariaPage';
 import BarberBlockPage from './pages/BarberBlockPage';
@@ -47,6 +48,7 @@ function AppRoutes() {
       <Route path='/barberHome/perfil' element={<BarberProfilePage />} />
       <Route path='/barberHome/time' element={<BarberTeamPage />} />
       <Route path='/barberHome/dashboard' element={<BarberDashboardPage />} />
+      <Route path='/barberHome/gerenciar-barbearia' element={<ManageBarbershopPage />} />
       <Route path='/barberHome/novo-agendamento' element={<BarberManualBookingPage />} />
       <Route path='/barberHome/agenda-barbearia' element={<AgendaBarbeariaPage />} />
       <Route path='/barberHome/agenda-equipe' element={<AgendaBarbeariaPage />} />

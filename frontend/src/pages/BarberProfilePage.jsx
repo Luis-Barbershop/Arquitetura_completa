@@ -9,11 +9,6 @@ import {
     leaveShop,
     getMyWorkSchedule,
     saveMyWorkSchedule,
-    getBarbershopById,
-    updateMyBarbershop,
-    uploadMyBarbershopLogo,
-    uploadMyBarbershopBanner,
-    geocodeAddress,
 } from '../services/barbershopService';
 import { logoutUser } from '../services/authService';
 import { isCustomer } from '../services/userContext';
@@ -74,8 +69,6 @@ function BarberProfilePage() {
     const [barber, setBarber] = useState(null);
     const [loading, setLoading] = useState(true);
     const profilePhotoInputRef = useRef(null);
-    const logoInputRef = useRef(null);
-    const bannerInputRef = useRef(null);
     const cropObjectUrlRef = useRef(null);
 
     // ── actAsBarber toggle ─────────────────────────────────────────────────────
@@ -101,13 +94,7 @@ function BarberProfilePage() {
     const [leavingShop, setLeavingShop] = useState(false);
     const [uploadingProfilePhoto, setUploadingProfilePhoto] = useState(false);
 
-    const [loadingBarbershopInfo, setLoadingBarbershopInfo] = useState(false);
-    const [savingBarbershopInfo, setSavingBarbershopInfo] = useState(false);
-    const [uploadingLogo, setUploadingLogo] = useState(false);
-    const [uploadingBanner, setUploadingBanner] = useState(false);
     const [cropModal, setCropModal] = useState(null);
-    const [barbershopForm, setBarbershopForm] = useState({ name: '', address: '', latitude: null, longitude: null });
-    const [barbershopMedia, setBarbershopMedia] = useState({ logoUrl: '', bannerUrl: '' });
 
     useEffect(() => {
         if (isCustomer()) { navigate('/homepage', { replace: true }); return; }
@@ -170,38 +157,6 @@ function BarberProfilePage() {
             })
             .finally(() => setLoadingSchedule(false));
     }, [barber]);
-
-    useEffect(() => {
-        if (!barber?.isOwner || !barber?.barbershopId) {
-            return;
-        }
-
-        const loadBarbershopInfo = async () => {
-            setLoadingBarbershopInfo(true);
-            try {
-                const shop = await getBarbershopById(barber.barbershopId);
-                if (!shop) return;
-
-                setBarbershopForm({
-                    name: shop.name || '',
-                    address: shop.address || '',
-                    latitude: shop.latitude ?? null,
-                    longitude: shop.longitude ?? null,
-                });
-
-                setBarbershopMedia({
-                    logoUrl: shop.logoUrl || '',
-                    bannerUrl: shop.bannerUrl || '',
-                });
-            } catch {
-                toast.error('Não foi possível carregar os dados da barbearia.');
-            } finally {
-                setLoadingBarbershopInfo(false);
-            }
-        };
-
-        loadBarbershopInfo();
-    }, [barber?.barbershopId, barber?.isOwner]);
 
     // ── Funções auxiliares do schedule ──────────────────────────────────────────
     const toggleDay = useCallback((dayKey) => {
@@ -423,115 +378,29 @@ function BarberProfilePage() {
         openCropModal('profile', file);
     };
 
-    const handleBarbershopFormChange = (event) => {
-        const { name, value } = event.target;
-        setBarbershopForm(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSaveBarbershopInfo = async (event) => {
-        event.preventDefault();
-        setSavingBarbershopInfo(true);
-
-        try {
-            const trimmedAddress = barbershopForm.address.trim();
-            let lat = barbershopForm.latitude;
-            let lng = barbershopForm.longitude;
-
-            if (trimmedAddress) {
-                const coords = await geocodeAddress(trimmedAddress);
-                if (coords) {
-                    lat = coords.lat;
-                    lng = coords.lng;
-                }
-            }
-
-            await updateMyBarbershop({
-                name: barbershopForm.name.trim(),
-                address: trimmedAddress,
-                latitude: lat,
-                longitude: lng,
-            });
-            setBarbershopForm(prev => ({ ...prev, latitude: lat, longitude: lng }));
-            localStorage.setItem('barbershopName', barbershopForm.name.trim());
-            toast.success('Dados da barbearia atualizados com sucesso!');
-        } catch (error) {
-            toast.error(error?.response?.data?.message || 'Erro ao atualizar dados da barbearia.');
-        } finally {
-            setSavingBarbershopInfo(false);
-        }
-    };
-
-    const handleUploadLogo = async (event) => {
-        const file = event.target.files?.[0];
-        event.target.value = '';
-        if (!file) return;
-
-        openCropModal('logo', file);
-    };
-
     const handleConfirmCrop = async (blob) => {
         if (!cropModal?.target) return;
 
         const croppedFile = new File(
             [blob],
-            cropModal.target === 'profile' ? 'foto-perfil.jpg' : 'logo-barbearia.jpg',
+            'foto-perfil.jpg',
             { type: blob.type || 'image/jpeg' },
         );
 
-        if (cropModal.target === 'profile') {
-            setUploadingProfilePhoto(true);
-            try {
-                const response = await uploadBarberProfilePhoto(croppedFile);
-                const imageUrl = typeof response === 'string' ? response : response?.imageUrl;
-
-                if (imageUrl) {
-                    setBarber(prev => ({ ...prev, imageUrl }));
-                    localStorage.setItem('userProfileImage', imageUrl);
-                }
-
-                toast.success('Foto de perfil atualizada!');
-                closeCropModal();
-            } catch (error) {
-                toast.error(error?.response?.data?.message || 'Erro ao enviar foto de perfil.');
-            } finally {
-                setUploadingProfilePhoto(false);
-            }
-            return;
-        }
-
-        setUploadingLogo(true);
+        setUploadingProfilePhoto(true);
         try {
-            const response = await uploadMyBarbershopLogo(croppedFile);
-            const logoUrl = typeof response === 'string' ? response : response?.logoUrl;
-            if (logoUrl) {
-                setBarbershopMedia(prev => ({ ...prev, logoUrl }));
+            const response = await uploadBarberProfilePhoto(croppedFile);
+            const imageUrl = typeof response === 'string' ? response : response?.imageUrl;
+            if (imageUrl) {
+                setBarber(prev => ({ ...prev, imageUrl }));
+                localStorage.setItem('userProfileImage', imageUrl);
             }
-            toast.success('Logo da barbearia atualizada!');
+            toast.success('Foto de perfil atualizada!');
             closeCropModal();
         } catch (error) {
-            toast.error(error?.response?.data?.message || 'Erro ao atualizar logo da barbearia.');
+            toast.error(error?.response?.data?.message || 'Erro ao enviar foto de perfil.');
         } finally {
-            setUploadingLogo(false);
-        }
-    };
-
-    const handleUploadBanner = async (event) => {
-        const file = event.target.files?.[0];
-        event.target.value = '';
-        if (!file) return;
-
-        setUploadingBanner(true);
-        try {
-            const response = await uploadMyBarbershopBanner(file);
-            const bannerUrl = typeof response === 'string' ? response : response?.bannerUrl;
-            if (bannerUrl) {
-                setBarbershopMedia(prev => ({ ...prev, bannerUrl }));
-            }
-            toast.success('Banner da barbearia atualizado!');
-        } catch (error) {
-            toast.error(error?.response?.data?.message || 'Erro ao atualizar banner da barbearia.');
-        } finally {
-            setUploadingBanner(false);
+            setUploadingProfilePhoto(false);
         }
     };
 
@@ -858,99 +727,14 @@ function BarberProfilePage() {
                                         </span>
                                     </label>
 
-                                    {loadingBarbershopInfo ? (
-                                        <p className={styles.profileMutedText}>Carregando dados da barbearia...</p>
-                                    ) : (
-                                        <form onSubmit={handleSaveBarbershopInfo} className={styles.shopEditForm}>
-                                            <label className={styles.shopField}>
-                                                <span>Nome da barbearia</span>
-                                                <input
-                                                    name="name"
-                                                    value={barbershopForm.name}
-                                                    onChange={handleBarbershopFormChange}
-                                                    maxLength={80}
-                                                    required
-                                                />
-                                            </label>
-
-                                            <label className={styles.shopField}>
-                                                <span>Endereço</span>
-                                                <input
-                                                    name="address"
-                                                    value={barbershopForm.address}
-                                                    onChange={handleBarbershopFormChange}
-                                                    maxLength={140}
-                                                    required
-                                                />
-                                            </label>
-
-                                            <div className={styles.shopGeoRow}>
-                                                <button
-                                                    type="button"
-                                                    className={styles.geoBtn}
-                                                    onClick={() => {
-                                                        if (!navigator.geolocation) {
-                                                            toast.error('Geolocalização não suportada pelo navegador.');
-                                                            return;
-                                                        }
-                                                        navigator.geolocation.getCurrentPosition(
-                                                            ({ coords }) => {
-                                                                setBarbershopForm(prev => ({
-                                                                    ...prev,
-                                                                    latitude: coords.latitude,
-                                                                    longitude: coords.longitude,
-                                                                }));
-                                                                toast.success('Localização capturada! Salve para confirmar.');
-                                                            },
-                                                            () => toast.error('Não foi possível obter a localização. Verifique as permissões.')
-                                                        );
-                                                    }}
-                                                >
-                                                    📍 Usar minha localização atual
-                                                </button>
-
-                                                {barbershopForm.latitude && barbershopForm.longitude && (
-                                                    <span className={styles.geoCoords}>
-                                                        {barbershopForm.latitude.toFixed(5)}, {barbershopForm.longitude.toFixed(5)}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <div className={styles.shopMediaGrid}>
-                                                <div className={styles.shopMediaCard}>
-                                                    <span className={styles.shopMediaLabel}>Logo</span>
-                                                    {barbershopMedia.logoUrl ? (
-                                                        <img src={barbershopMedia.logoUrl} alt="Logo da barbearia" className={styles.shopMediaImage} />
-                                                    ) : (
-                                                        <div className={styles.shopMediaPlaceholder}>Sem logo</div>
-                                                    )}
-                                                    <input
-                                                        ref={logoInputRef}
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={handleUploadLogo}
-                                                        className={styles.hiddenFileInput}
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => logoInputRef.current?.click()}
-                                                        disabled={uploadingLogo}
-                                                        className={styles.shopMediaButton}
-                                                    >
-                                                        {uploadingLogo ? 'Enviando...' : 'Trocar logo'}
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <button
-                                                type="submit"
-                                                disabled={savingBarbershopInfo}
-                                                className={styles.saveShopButton}
-                                            >
-                                                {savingBarbershopInfo ? 'Salvando dados...' : 'Salvar dados da barbearia'}
-                                            </button>
-                                        </form>
-                                    )}
+                                    <button
+                                        type="button"
+                                        className={styles.saveShopButton}
+                                        style={{ marginTop: '1rem' }}
+                                        onClick={() => navigate('/barberHome/gerenciar-barbearia')}
+                                    >
+                                        🏪 Gerenciar Barbearia
+                                    </button>
                                 </div>
                             )}
 

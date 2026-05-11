@@ -260,6 +260,27 @@ export const getBarbershops = ({ lat, lng, radiusKm = 10 } = {}) => {
     return api.get('/barbershops', { params }).then(r => r.data);
 };
 
+// ── Gastos Fixos ─────────────────────────────────────────────────────────────
+
+export const getMyFixedExpenses = async (month, year) => {
+    const params = {};
+    if (month != null) params.month = month;
+    if (year != null) params.year = year;
+    const response = await api.get('/barbershops/my-shop/fixed-expenses', { params });
+    return response.data;
+};
+
+export const createFixedExpense = async (data) => {
+    const response = await api.post('/barbershops/my-shop/fixed-expenses', data);
+    return response.data;
+};
+
+export const deleteFixedExpense = async (id) => {
+    await api.delete(`/barbershops/my-shop/fixed-expenses/${id}`);
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const geocodeAddress = async (address) => {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
     const res = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
