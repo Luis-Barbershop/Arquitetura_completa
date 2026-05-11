@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -48,6 +50,7 @@ public class AppointmentService {
     private final UserServiceClient userServiceClient;
     private final BarbershopServiceClient barbershopServiceClient;
     private final RabbitTemplate rabbitTemplate;
+    private final CacheManager cacheManager;
 
     @Value("${app.timezone:America/Sao_Paulo}")
     private String appTimezone;
@@ -148,6 +151,8 @@ public class AppointmentService {
         );
         rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.created", event);
         log.info("Evento AppointmentCreatedEvent publicado para appointment {}", saved.getId());
+
+        evictAvailabilityCache(saved.getBarberId(), saved.getStartTime().toLocalDate());
 
         // 11. Retornar
         return appointmentMapper.toDTO(saved);
@@ -256,6 +261,8 @@ public class AppointmentService {
         log.info("Agendamento manual (WALK_IN) criado: id={}, barbeiro={}, cliente='{}'",
                 saved.getId(), barber.getId(), dto.getClientName());
 
+        evictAvailabilityCache(saved.getBarberId(), saved.getStartTime().toLocalDate());
+
         // 9. Sem evento de pagamento — WALK_IN não passa por gateway de pagamento
         return appointmentMapper.toDTO(saved);
     }
@@ -301,6 +308,8 @@ public class AppointmentService {
         );
         rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.cancelled", event);
         log.info("Evento AppointmentCancelledEvent publicado para appointment {}", appointment.getId());
+
+        evictAvailabilityCache(appointment.getBarberId(), appointment.getStartTime().toLocalDate());
     }
 
     // ========== REAGENDAMENTO ==========
@@ -394,6 +403,12 @@ public class AppointmentService {
         );
         rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.rescheduled", event);
         log.info("Evento AppointmentRescheduledEvent publicado para appointment {}", appointment.getId());
+
+        // Evicta cache da data anterior e da nova data (podem ser dias diferentes)
+        evictAvailabilityCache(appointment.getBarberId(), previousStartTime.toLocalDate());
+        if (!newStartTime.toLocalDate().equals(previousStartTime.toLocalDate())) {
+            evictAvailabilityCache(appointment.getBarberId(), newStartTime.toLocalDate());
+        }
     }
 
     // ========== CONCLUSÃO ==========
@@ -825,5 +840,20 @@ public class AppointmentService {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Status inválido: " + status);
         }
+    }
+
+    // ========== CACHE ==========
+
+    /**
+     * Evicta todas as entradas de cache de disponibilidade para um barbeiro/data,
+     * cobrindo todos os passos de duração usados pelo frontend (15 a 180 min).
+     */
+    private void evictAvailabilityCache(UUID barberId, LocalDate date) {
+        Cache cache = cacheManager.getCache("appointmentAvailability");
+        if (cache == null) return;
+        for (int dur = 15; dur <= 180; dur += 15) {
+            cache.evict(barberId + ":" + date + ":" + dur);
+        }
+        log.debug("Cache appointmentAvailability evictado para barbeiro {} na data {}", barberId, date);
     }
 }
