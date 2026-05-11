@@ -2,6 +2,7 @@ package ifsp.edu.projeto.cortaai.scheduleservice.feign;
 
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.ActivityInfoDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.BarbershopInfoDTO;
+import ifsp.edu.projeto.cortaai.scheduleservice.dto.CommissionRuleInfoDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,5 +20,9 @@ public interface BarbershopServiceClient {
     @GetMapping("/{shopId}/activities")
     List<ActivityInfoDTO> getActivitiesByIds(@PathVariable("shopId") UUID shopId,
                                              @RequestParam("ids") List<UUID> ids);
+
+    @GetMapping("/{shopId}/barbers/{barberId}/commissions")
+    List<CommissionRuleInfoDTO> getBarberCommissions(@PathVariable("shopId") UUID shopId,
+                                                     @PathVariable("barberId") UUID barberId);
 }
 

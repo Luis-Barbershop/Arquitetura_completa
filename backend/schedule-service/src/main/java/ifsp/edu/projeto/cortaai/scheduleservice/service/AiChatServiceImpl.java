@@ -3,7 +3,9 @@ package ifsp.edu.projeto.cortaai.scheduleservice.service;
 import ifsp.edu.projeto.cortaai.scheduleservice.service.ChatHistoryService;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.AiChatRequestDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.AiChatResponseDTO;
+import ifsp.edu.projeto.cortaai.scheduleservice.dto.CommissionRuleInfoDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.UserInfoDTO;
+import ifsp.edu.projeto.cortaai.scheduleservice.feign.BarbershopServiceClient;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.UserServiceClient;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.ProductServiceClient;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.PaymentServiceClient;
@@ -38,6 +40,7 @@ public class AiChatServiceImpl implements AiChatService {
     private final AppointmentRepository appointmentRepository;
     private final VBarberSkillMatrixRepository vBarberSkillMatrixRepository;
     private final UserServiceClient userServiceClient;
+    private final BarbershopServiceClient barbershopServiceClient;
     private final ProductServiceClient productServiceClient;
     private final PaymentServiceClient paymentServiceClient;
     private final ChatHistoryService chatHistoryService;
@@ -176,6 +179,10 @@ public class AiChatServiceImpl implements AiChatService {
                         ctx.append('\n').append(formatCancelledContext(cancelados));
                     }
                 }
+                // Colaborador: adiciona resumo financeiro pessoal com comissões
+                if (!isOwner && !isCustomer && barbershopId != null) {
+                    ctx.append("\n\n").append(formatBarberCommissionContext(barbershopId, internalId, appointments));
+                }
             }
         } else {
             ctx.append("Dados de agenda não disponíveis no momento.");
@@ -308,6 +315,52 @@ public class AiChatServiceImpl implements AiChatService {
         } catch (Exception e) {
             log.warn("gustavo: não foi possível obter estoque — {}", e.getMessage());
             return "Estoque: dados temporariamente indisponíveis.";
+        }
+    }
+
+    /**
+     * Para barbeiro colaborador: calcula receita bruta e comissão líquida
+     * cruzando os appointments concluídos com as regras de comissão do barbershop-service.
+     */
+    private String formatBarberCommissionContext(UUID barbershopId, UUID barberId, List<Appointment> appointments) {
+        try {
+            List<CommissionRuleInfoDTO> rules = barbershopServiceClient.getBarberCommissions(barbershopId, barberId);
+
+            java.math.BigDecimal totalBruto = java.math.BigDecimal.ZERO;
+            java.math.BigDecimal totalComissao = java.math.BigDecimal.ZERO;
+
+            // índice rápido activityId → percentual
+            Map<UUID, java.math.BigDecimal> ruleMap = new java.util.HashMap<>();
+            rules.forEach(r -> ruleMap.put(r.activityId(), r.percentage()));
+
+            for (Appointment a : appointments) {
+                if (a.getActivities() == null) continue;
+                for (var act : a.getActivities()) {
+                    java.math.BigDecimal preco = act.getPrice() != null ? act.getPrice() : java.math.BigDecimal.ZERO;
+                    totalBruto = totalBruto.add(preco);
+                    java.math.BigDecimal pct = ruleMap.get(act.getActivityId());
+                    if (pct != null) {
+                        totalComissao = totalComissao.add(
+                                preco.multiply(pct).divide(java.math.BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP)
+                        );
+                    }
+                }
+            }
+
+            StringBuilder sb = new StringBuilder("Resumo financeiro pessoal (últimos 90 dias):\n");
+            sb.append("- Receita bruta gerada: R$ ").append(totalBruto.toPlainString()).append('\n');
+            if (!rules.isEmpty()) {
+                sb.append("- Comissão líquida (conforme regras do dono): R$ ").append(totalComissao.toPlainString()).append('\n');
+                sb.append("- Regras de comissão cadastradas:\n");
+                rules.forEach(r -> sb.append("  · ").append(r.activityName())
+                        .append(": ").append(r.percentage().toPlainString()).append("%\n"));
+            } else {
+                sb.append("- Comissão: nenhuma regra cadastrada pelo dono ainda.\n");
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustavo: não foi possível calcular comissão do colaborador — {}", e.getMessage());
+            return "Resumo financeiro pessoal: dados temporariamente indisponíveis.";
         }
     }
 

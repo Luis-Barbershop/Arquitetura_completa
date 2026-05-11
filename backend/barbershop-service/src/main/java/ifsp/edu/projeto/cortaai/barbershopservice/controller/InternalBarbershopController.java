@@ -2,10 +2,12 @@ package ifsp.edu.projeto.cortaai.barbershopservice.controller;
 
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.ActivityInfoDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.BarbershopInfoDTO;
+import ifsp.edu.projeto.cortaai.barbershopservice.dto.CommissionRuleDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.barbershopservice.model.Activity;
 import ifsp.edu.projeto.cortaai.barbershopservice.model.Barbershop;
 import ifsp.edu.projeto.cortaai.barbershopservice.repository.ActivityRepository;
+import ifsp.edu.projeto.cortaai.barbershopservice.repository.BarberCommissionRuleRepository;
 import ifsp.edu.projeto.cortaai.barbershopservice.repository.BarbershopRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -36,6 +38,7 @@ public class InternalBarbershopController {
 
     private final BarbershopRepository barbershopRepository;
     private final ActivityRepository activityRepository;
+    private final BarberCommissionRuleRepository commissionRuleRepository;
 
     @Operation(summary = "Busca barbearia por ID", description = "Retorna dados resumidos de uma barbearia pelo UUID.")
     @ApiResponses({
@@ -76,6 +79,24 @@ public class InternalBarbershopController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(filtered);
+    }
+
+    @Operation(summary = "Regras de comissão de um barbeiro (interno)", description = "Retorna as regras de comissão por atividade de um barbeiro em uma barbearia.")
+    @GetMapping("/{shopId}/barbers/{barberId}/commissions")
+    public ResponseEntity<List<CommissionRuleDTO>> getBarberCommissions(
+            @PathVariable UUID shopId,
+            @PathVariable UUID barberId) {
+        List<CommissionRuleDTO> rules = commissionRuleRepository
+                .findByBarbershopIdAndBarberId(shopId, barberId)
+                .stream()
+                .map(r -> new CommissionRuleDTO(
+                        r.getId(),
+                        r.getActivity().getId(),
+                        r.getActivity().getActivityName(),
+                        r.getPercentage()
+                ))
+                .toList();
+        return ResponseEntity.ok(rules);
     }
 }
 
