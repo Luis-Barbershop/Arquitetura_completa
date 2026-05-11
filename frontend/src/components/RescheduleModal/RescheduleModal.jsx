@@ -36,7 +36,22 @@ const STEP_DATETIME = 2;
 
 const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
   const { barbershopId, barberId: currentBarberId } = appointment;
-  const durationMinutes = appointment.totalDurationMinutes || appointment.durationMinutes || 30;
+
+  // Calcula duração real a partir do agendamento original.
+  // Prioridade: (1) endTime - startTime, (2) soma das activities, (3) fallback 30min.
+  const durationMinutes = (() => {
+    if (appointment.startTime && appointment.endTime) {
+      const mins = Math.round(
+        (new Date(appointment.endTime) - new Date(appointment.startTime)) / 60000
+      );
+      if (mins > 0) return mins;
+    }
+    if (Array.isArray(appointment.activities) && appointment.activities.length > 0) {
+      const sum = appointment.activities.reduce((acc, a) => acc + (a.durationMinutes || 0), 0);
+      if (sum > 0) return sum;
+    }
+    return 30;
+  })();
 
   /* ── estado ── */
   const [step, setStep] = useState(STEP_BARBER);
