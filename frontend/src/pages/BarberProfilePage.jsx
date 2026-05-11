@@ -726,15 +726,6 @@ function BarberProfilePage() {
                                             <strong>Atuar como barbeiro</strong> — aparecer na lista de profissionais disponíveis para agendamento
                                         </span>
                                     </label>
-
-                                    <button
-                                        type="button"
-                                        className={styles.saveShopButton}
-                                        style={{ marginTop: '1rem' }}
-                                        onClick={() => navigate('/barberHome/gerenciar-barbearia')}
-                                    >
-                                        🏪 Gerenciar Barbearia
-                                    </button>
                                 </div>
                             )}
 
