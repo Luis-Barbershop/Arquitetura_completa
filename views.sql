@@ -104,3 +104,19 @@ SELECT
 FROM schedule_db.appointments a
 WHERE a.status IN ('COMPLETED', 'CONCLUDED')
 GROUP BY DATE_FORMAT(a.start_time, '%Y-%m');
+
+
+-- =======================================================================
+-- 7. PAYMENT SERVICE: Ticket Médio por Barbearia e por Mês
+--    Receita total / número de transações aprovadas — por barbearia e mês
+-- =======================================================================
+CREATE OR REPLACE VIEW payment_db.v_avg_ticket AS
+SELECT
+    t.barbershop_id                                                       AS barbershop_id,
+    DATE_FORMAT(t.created_at, '%Y-%m')                                   AS reference_month,
+    COUNT(t.id)                                                           AS total_transactions,
+    ROUND(SUM(t.amount), 2)                                              AS total_revenue,
+    ROUND(AVG(t.amount), 2)                                              AS avg_ticket
+FROM payment_db.transactions t
+WHERE t.status = 'APPROVED'
+GROUP BY t.barbershop_id, DATE_FORMAT(t.created_at, '%Y-%m');
