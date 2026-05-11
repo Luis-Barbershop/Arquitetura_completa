@@ -336,9 +336,9 @@ public class AiChatServiceImpl implements AiChatService {
         String nomeUsuario = user != null && user.getName() != null
                 ? user.getName().trim().split("\\s+")[0]
                 : "usuário";
-        boolean isOwner = user != null && user.getBarbershopId() != null
-                && "BARBER".equalsIgnoreCase(user.getUserType());
-        String perfil = isOwner ? "DONO DE BARBEARIA" : "BARBEIRO COLABORADOR";
+        boolean isCustomer = user != null && "CUSTOMER".equalsIgnoreCase(user.getUserType());
+        boolean isOwner    = !isCustomer && user != null && user.getBarbershopId() != null;
+        String perfil = isOwner ? "DONO DE BARBEARIA" : isCustomer ? "CLIENTE" : "BARBEIRO COLABORADOR";
         String historyBlock = history.isBlank() ? "" : "\n" + history + "\n";
 
         return """
