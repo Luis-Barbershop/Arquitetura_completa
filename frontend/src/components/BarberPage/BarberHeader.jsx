@@ -15,6 +15,7 @@ import {
     Lock,
     CreditCard,
     SignOut,
+    Storefront,
 } from '@phosphor-icons/react';
 import cortaAiLogo from '/CortaAiLogo.png';
 import api from '../../services/api';
@@ -211,6 +212,12 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
                         </button>
                         {gestaoOpen && (
                             <div className={styles.navDropdown}>
+                                <button
+                                    className={activeTab === 'gerenciar-barbearia' ? styles.navDropdownItemActive : styles.navDropdownItem}
+                                    onClick={() => { onTabChange('gerenciar-barbearia'); setGestaoOpen(false); }}
+                                >
+                                    <Storefront size={15} weight="duotone" /> Gerenciar Barbearia
+                                </button>
                                 <button
                                     className={activeTab === 'dashboards' ? styles.navDropdownItemActive : styles.navDropdownItem}
                                     onClick={() => { onTabChange('dashboards'); setGestaoOpen(false); }}
