@@ -111,6 +111,21 @@ public class GlobalExceptionHandler {
 
     // ─── 415 ──────────────────────────────────────────────────────────────────
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleNotReadable(
+            org.springframework.http.converter.HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
+        String msg = "Corpo da requisição inválido ou campo com valor não reconhecido.";
+        Throwable cause = ex.getCause();
+        if (cause instanceof com.fasterxml.jackson.databind.exc.InvalidFormatException ife
+                && ife.getTargetType() != null && ife.getTargetType().isEnum()) {
+            msg = "Valor inválido para o campo enum. Valores aceitos: "
+                    + java.util.Arrays.toString(ife.getTargetType().getEnumConstants());
+        }
+        log.warn("Mensagem HTTP ilegível: {}", ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, msg, ex, request);
+    }
+
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ApiErrorResponse> handleMediaType(HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
         log.warn("Content-Type não suportado: {}", ex.getMessage());

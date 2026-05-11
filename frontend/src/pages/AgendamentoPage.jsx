@@ -23,6 +23,7 @@ import {
   formatCompactDate,
   getRelativeDateLabel,
   hydrateDateOptionsWithAvailability,
+  fetchAvailabilitySlots,
 } from "../services/appointmentAvailabilityService";
 
 const AgendamentoPage = () => {
@@ -182,6 +183,12 @@ const AgendamentoPage = () => {
     return { morning, afternoon };
   }, [currentSlots]);
 
+  // Apenas datas com pelo menos um horário disponível — indisponíveis ficam ocultas
+  const availableDateOptions = useMemo(
+    () => dateOptions.filter((opt) => opt.isAvailable),
+    [dateOptions],
+  );
+
   const togglePeriod = (period) => {
     setExpandedPeriods((prev) => ({ ...prev, [period]: !prev[period] }));
   };
@@ -322,10 +329,38 @@ const AgendamentoPage = () => {
     setSelectedDate(null);
   };
 
-  const handleOpenSummary = () => {
+  const [isVerifyingSlot, setIsVerifyingSlot] = useState(false);
+
+  const handleOpenSummary = async () => {
     if (!selectedBarber || !selectedDate || !selectedTime || selectedServices.length === 0) {
       toast.warn("Por favor, preencha todos os campos!");
       return;
+    }
+
+    setIsVerifyingSlot(true);
+    try {
+      const freshSlots = await fetchAvailabilitySlots({
+        barberId: selectedBarber,
+        dateObj: selectedDate,
+        durationMinutes: totalDuration,
+        forceRefresh: true,
+      });
+
+      if (!freshSlots.includes(selectedTime)) {
+        // Atualiza os slots do dia no estado local com dados frescos
+        setDateOptions((prev) => prev.map((opt) => {
+          if (opt.key !== getDateKey(selectedDate)) return opt;
+          return { ...opt, slots: freshSlots, isAvailable: freshSlots.length > 0 };
+        }));
+        setSelectedTime("");
+        toast.warn("O horário selecionado foi ocupado. Escolha outro horário disponível.");
+        return;
+      }
+    } catch (err) {
+      // Falha na re-verificação: deixa o backend rejeitar se necessário
+      console.warn("[AgendamentoPage] Falha na re-verificação de slot:", err);
+    } finally {
+      setIsVerifyingSlot(false);
     }
 
     setIsSummaryModalOpen(true);
@@ -657,15 +692,14 @@ const AgendamentoPage = () => {
               {selectedBarber && selectedServices.length > 0 ? (
                 isLoadingDateOptions ? (
                   <div className={Styles.dateSpinner} aria-label="Carregando datas" />
-                ) : dateOptions.length > 0 ? (
+                ) : availableDateOptions.length > 0 ? (
                   <>
-                    {dateOptions.slice(datePage * 15, datePage * 15 + 15).map((option) => (
+                    {availableDateOptions.slice(datePage * 15, datePage * 15 + 15).map((option) => (
                       <button
                         key={option.key}
                         type="button"
                         className={`${Styles.dateChip} ${selectedDate && option.key === getDateKey(selectedDate) ? Styles.dateChipSelected : ''}`}
                         onClick={() => {
-                          if (!option.isAvailable) return;
                           if (selectedDate && option.key === getDateKey(selectedDate)) {
                             setSelectedDate(null);
                             setSelectedTime("");
@@ -674,17 +708,13 @@ const AgendamentoPage = () => {
                           setSelectedDate(option.date);
                           setSelectedTime(option.slots[0] || "");
                         }}
-                        disabled={!option.isAvailable}
                       >
                         <span className={Styles.dateChipLabel}>{option.label}</span>
                         <strong className={Styles.dateChipValue}>{option.compact}</strong>
-                        <small className={Styles.dateChipMeta}>
-                          {option.isAvailable
-                            ? `${option.slots.length} horários`
-                            : 'Indisponível'}
-                        </small>
+                        <small className={Styles.dateChipMeta}>{option.slots.length} horários</small>
                       </button>
                     ))}
+                    {availableDateOptions.length > 15 && (
                     <div className={Styles.datePagination}>
                       <button
                         type="button"
@@ -692,20 +722,21 @@ const AgendamentoPage = () => {
                         onClick={() => { setDatePage(0); setSelectedDate(null); setSelectedTime(""); }}
                         disabled={datePage === 0}
                       >
-                        ← Dias 1–15
+                        ← Dias anteriores
                       </button>
                       <span className={Styles.datePaginationLabel}>
-                        Página {datePage + 1} de 2 &nbsp;·&nbsp; dias {datePage * 15 + 1}–{datePage * 15 + 15}
+                        Página {datePage + 1} · dias {datePage * 15 + 1}–{Math.min(datePage * 15 + 15, availableDateOptions.length)}
                       </span>
                       <button
                         type="button"
                         className={Styles.datePaginationBtn}
                         onClick={() => { setDatePage(1); setSelectedDate(null); setSelectedTime(""); }}
-                        disabled={datePage === 1}
+                        disabled={datePage === 1 || availableDateOptions.length <= 15}
                       >
-                        Dias 16–30 →
+                        Próximos →
                       </button>
                     </div>
+                    )}
                   </>
                 ) : (
                   <p className={Styles.info_text}>Sem datas disponíveis no momento.</p>
@@ -804,9 +835,9 @@ const AgendamentoPage = () => {
           <button
             className={Styles.confirm_button}
             onClick={handleOpenSummary}
-            disabled={!selectedTime || selectedServices.length === 0 || !selectedBarber || !selectedDate}
+            disabled={!selectedTime || selectedServices.length === 0 || !selectedBarber || !selectedDate || isVerifyingSlot}
           >
-            Confirmar Agendamento
+            {isVerifyingSlot ? 'Verificando disponibilidade...' : 'Confirmar Agendamento'}
           </button>
         </div>
       </div>

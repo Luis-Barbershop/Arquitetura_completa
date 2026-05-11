@@ -14,8 +14,8 @@ import org.hibernate.annotations.Immutable;
 public class VStockHealthAlert {
 
     @Id
-    @Column(name = "product_id", columnDefinition = "BINARY(16)")
-    private byte[] productId;
+    @Column(name = "product_id")
+    private String productId;
 
     @Column(name = "product_name")
     private String productName;

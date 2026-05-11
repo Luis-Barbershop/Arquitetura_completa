@@ -8,23 +8,23 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface VStockHealthAlertRepository extends JpaRepository<VStockHealthAlert, byte[]> {
+public interface VStockHealthAlertRepository extends JpaRepository<VStockHealthAlert, String> {
 
     /**
      * Retorna todos os produtos ativos filtrando por barbearia.
-     * A view v_stock_health_alert não inclui barbershop_id; fazemos join com products para filtrar.
+     * A view v_stock_health_alert já é baseada em products (active=1); filtramos por barbershop_id.
      */
     @Query(value = """
             SELECT
-                LOWER(HEX(v.product_id))  AS productId,
-                v.product_name            AS productName,
-                v.category                AS category,
-                v.current_stock           AS currentStock,
-                v.predicted_minimum       AS predictedMinimum,
-                v.requires_restock        AS requiresRestock
+                v.product_id          AS productId,
+                v.product_name        AS productName,
+                v.category            AS category,
+                v.current_stock       AS currentStock,
+                v.predicted_minimum   AS predictedMinimum,
+                v.requires_restock    AS requiresRestock
             FROM v_stock_health_alert v
             INNER JOIN products p ON p.id = v.product_id
-            WHERE p.barbershop_id = UNHEX(REPLACE(:barbershopId, '-', ''))
+            WHERE p.barbershop_id = :barbershopId
             ORDER BY v.requires_restock DESC, v.current_stock ASC
             """, nativeQuery = true)
     List<StockHealthAlertProjection> findByBarbershopId(String barbershopId);
