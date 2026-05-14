@@ -16,7 +16,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "fixed_expenses", indexes = {
-    @Index(name = "idx_fe_barbershop_month_year", columnList = "barbershop_id,month,year")
+    @Index(name = "idx_fe_barbershop_month_year", columnList = "barbershop_id,month,year"),
+    @Index(name = "idx_fe_barbershop_recurring", columnList = "barbershop_id,recurring_monthly,year,month")
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
@@ -49,6 +50,9 @@ public class FixedExpense {
 
     @Column(nullable = false)
     private Integer year;
+
+    @Column(name = "recurring_monthly", nullable = false)
+    private Boolean recurringMonthly = false;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -14,5 +14,6 @@ public record FixedExpenseResponseDTO(
     BigDecimal amount,
     Integer month,
     Integer year,
+    Boolean recurringMonthly,
     LocalDateTime createdAt
 ) {}

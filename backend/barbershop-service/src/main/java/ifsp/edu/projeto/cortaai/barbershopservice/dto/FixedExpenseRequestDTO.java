@@ -13,5 +13,6 @@ public record FixedExpenseRequestDTO(
     String customName,
     @NotNull @DecimalMin("0.01") BigDecimal amount,
     @NotNull @Min(1) @Max(12) Integer month,
-    @NotNull @Min(2000) Integer year
+    @NotNull @Min(2000) Integer year,
+    Boolean recurringMonthly
 ) {}

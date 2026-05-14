@@ -1,0 +1,145 @@
+<mxfile host="app.diagrams.net" agent="Codex">
+  <diagram id="cortaai-componentes-uml" name="UML Componentes">
+    <mxGraphModel dx="1779" dy="1030" grid="0" gridSize="10" guides="0" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="1050" background="light-dark(#FFFFFF,#000000)" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=20;fontStyle=1;" value="UML Component Diagram - CortaAi" vertex="1">
+          <mxGeometry height="40" width="460" x="420" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg_frontend" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=42;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=1;collapsible=0;" value="&amp;lt;&amp;lt;package&amp;gt;&amp;gt;&lt;br&gt;Frontend" vertex="1">
+          <mxGeometry height="180" width="370" x="70" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ui" parent="pkg_frontend" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;Paginas React&lt;br&gt;Componentes" vertex="1">
+          <mxGeometry height="70" width="130" x="25" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="services_js" parent="pkg_frontend" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;Services JS&lt;br&gt;por dominio" vertex="1">
+          <mxGeometry height="70" width="130" x="215" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="axios" parent="pkg_frontend" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;Axios API&lt;br&gt;Wrapper" vertex="1">
+          <mxGeometry height="70" width="130" x="120" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ui_services" edge="1" parent="pkg_frontend" source="ui" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="services_js" value="uses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_services_axios" edge="1" parent="pkg_frontend" source="services_js" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="axios" value="uses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg_edge" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=42;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=1;collapsible=0;" value="&amp;lt;&amp;lt;package&amp;gt;&amp;gt;&lt;br&gt;Edge" vertex="1">
+          <mxGeometry height="230" width="350" x="520" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="gateway" parent="pkg_edge" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;api-gateway&lt;br&gt;Spring Gateway :8080" vertex="1">
+          <mxGeometry height="80" width="140" x="25" y="75" as="geometry" />
+        </mxCell>
+        <mxCell id="token_filter" parent="pkg_edge" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;Firebase Token&lt;br&gt;Gateway Filter" vertex="1">
+          <mxGeometry height="70" width="135" x="190" y="55" as="geometry" />
+        </mxCell>
+        <mxCell id="context_filter" parent="pkg_edge" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;Contexto confiavel&lt;br&gt;X-User-* / X-Correlation-Id" vertex="1">
+          <mxGeometry height="70" width="135" x="190" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="e_gateway_token" edge="1" parent="pkg_edge" source="gateway" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="token_filter" value="uses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_token_context" edge="1" parent="pkg_edge" source="token_filter" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="context_filter" value="creates">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg_discovery" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=42;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=1;collapsible=0;" value="&amp;lt;&amp;lt;package&amp;gt;&amp;gt;&lt;br&gt;Descoberta" vertex="1">
+          <mxGeometry height="150" width="290" x="930" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="eureka" parent="pkg_discovery" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;discovery-service&lt;br&gt;Eureka :8761" vertex="1">
+          <mxGeometry height="70" width="180" x="55" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg_domain" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=42;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=1;collapsible=0;" value="&amp;lt;&amp;lt;package&amp;gt;&amp;gt;&lt;br&gt;Microsservicos de Dominio" vertex="1">
+          <mxGeometry height="300" width="800" x="70" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="user" parent="pkg_domain" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;user-service&lt;br&gt;:8081" vertex="1">
+          <mxGeometry height="70" width="160" x="40" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="barbershop" parent="pkg_domain" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;barbershop-service&lt;br&gt;:8082" vertex="1">
+          <mxGeometry height="70" width="160" x="320" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="schedule" parent="pkg_domain" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;schedule-service&lt;br&gt;:8083" vertex="1">
+          <mxGeometry height="70" width="160" x="600" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="payment" parent="pkg_domain" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;payment-service&lt;br&gt;:8084" vertex="1">
+          <mxGeometry height="70" width="160" x="40" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="notification" parent="pkg_domain" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;notification-svc&lt;br&gt;:8085" vertex="1">
+          <mxGeometry height="70" width="160" x="320" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="product" parent="pkg_domain" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;product-service&lt;br&gt;:8086" vertex="1">
+          <mxGeometry height="70" width="160" x="600" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="e_user_schedule" edge="1" parent="pkg_domain" source="user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="schedule" value="Feign">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_barber_payment" edge="1" parent="pkg_domain" source="barbershop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="payment" value="Feign">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_schedule_notification" edge="1" parent="pkg_domain" source="schedule" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="notification" value="event">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_payment_product" edge="1" parent="pkg_domain" source="payment" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="product" value="event">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg_infra" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=42;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=1;collapsible=0;" value="&amp;lt;&amp;lt;package&amp;gt;&amp;gt;&lt;br&gt;Infraestrutura" vertex="1">
+          <mxGeometry height="300" width="290" x="930" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="mysql" parent="pkg_infra" style="shape=cylinder3d;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" value="&amp;lt;&amp;lt;database&amp;gt;&amp;gt;&lt;br&gt;MySQL 8&lt;br&gt;schemas por servico" vertex="1">
+          <mxGeometry height="70" width="180" x="55" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="rabbit" parent="pkg_infra" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;RabbitMQ&lt;br&gt;eventos assincronos" vertex="1">
+          <mxGeometry height="65" width="180" x="55" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="redis" parent="pkg_infra" style="shape=component;jettyWidth=8;jettyHeight=4;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" value="&amp;lt;&amp;lt;component&amp;gt;&amp;gt;&lt;br&gt;Redis&lt;br&gt;cache / dedup" vertex="1">
+          <mxGeometry height="55" width="180" x="55" y="225" as="geometry" />
+        </mxCell>
+        <mxCell id="pkg_external" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=42;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=1;collapsible=0;" value="&amp;lt;&amp;lt;package&amp;gt;&amp;gt;&lt;br&gt;Sistemas Externos" vertex="1">
+          <mxGeometry height="145" width="1150" x="70" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="firebase" parent="pkg_external" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="&amp;lt;&amp;lt;external system&amp;gt;&amp;gt;&lt;br&gt;Firebase&lt;br&gt;Auth / FCM" vertex="1">
+          <mxGeometry height="60" width="180" x="35" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="cloudinary" parent="pkg_external" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="&amp;lt;&amp;lt;external system&amp;gt;&amp;gt;&lt;br&gt;Cloudinary" vertex="1">
+          <mxGeometry height="60" width="180" x="255" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="mercado_pago" parent="pkg_external" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="&amp;lt;&amp;lt;external system&amp;gt;&amp;gt;&lt;br&gt;Mercado Pago" vertex="1">
+          <mxGeometry height="60" width="180" x="475" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="smtp" parent="pkg_external" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="&amp;lt;&amp;lt;external system&amp;gt;&amp;gt;&lt;br&gt;SMTP / email" vertex="1">
+          <mxGeometry height="60" width="180" x="695" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="ai" parent="pkg_external" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" value="&amp;lt;&amp;lt;external system&amp;gt;&amp;gt;&lt;br&gt;Provedores IA" vertex="1">
+          <mxGeometry height="60" width="180" x="915" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="e_axios_gateway" edge="1" parent="1" source="axios" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="gateway" value="REST /api/*">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_token_firebase" edge="1" parent="1" source="token_filter" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="firebase" value="validates token">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="990" y="195" />
+              <mxPoint x="195" y="720" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_context_domain" edge="1" parent="1" source="context_filter" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="pkg_domain" value="routes /api/*">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_domain_discovery" edge="1" parent="1" source="pkg_domain" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="eureka" value="registers / looks up">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_domain_infra" edge="1" parent="1" source="pkg_domain" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="pkg_infra" value="persists / publishes / caches">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_domain_external" edge="1" parent="1" source="pkg_domain" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" target="pkg_external" value="uses adapters">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="650" y="710" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

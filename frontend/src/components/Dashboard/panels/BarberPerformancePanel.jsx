@@ -26,7 +26,7 @@ function BarberPerformancePanel({ data }) {
                     <Tooltip
                         contentStyle={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 8 }}
                         labelStyle={{ color: '#fff' }}
-                        formatter={v => [BRL(v), 'Receita']}
+                        formatter={v => [BRL(v), 'Valor']}
                     />
                     <Bar dataKey="receita" radius={[4, 4, 0, 0]}>
                         {chartData.map((_, i) => (
@@ -65,7 +65,7 @@ function BarberPerformanceTable({ data }) {
             </div>
             <div className={styles.tableWrapper}>
                 <table className={styles.table}>
-                    <thead><tr><th>Barbeiro</th><th>Atend.</th><th>Receita</th><th>%</th></tr></thead>
+                    <thead><tr><th>Barbeiro</th><th>Atend.</th><th>Valor</th><th>%</th></tr></thead>
                     <tbody>
                         {data.map(d => (
                             <tr key={d.barberId}>

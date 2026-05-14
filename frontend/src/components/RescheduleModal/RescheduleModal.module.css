@@ -24,8 +24,8 @@
   border: 1px solid rgb(255 255 255 / 8%);
   border-radius: 24px 24px 0 0;
   width: 100%;
-  max-width: 560px;
-  max-height: 92dvh;
+  max-width: 760px;
+  max-height: min(92dvh, 820px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -35,7 +35,7 @@
 @media (min-width: 600px) {
   .card {
     border-radius: 24px;
-    max-height: 88dvh;
+    max-height: min(90dvh, 820px);
   }
 }
 
@@ -75,11 +75,12 @@
 /* ── body ── */
 .body {
   flex: 1;
-  overflow-y: auto;
+  overflow: auto;
   padding: 1.2rem 1.4rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  min-height: 0;
 }
 
 /* ── spinner ── */
@@ -210,19 +211,20 @@
   margin: 0;
 }
 
-/* ── trilho de datas ── */
-.dateRail {
-  display: flex;
+/* ── datas ── */
+.dateGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
   gap: 0.5rem;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: thin;
-  scrollbar-color: rgb(196 154 42 / 30%) transparent;
+}
+
+.dateGrid .spinner {
+  grid-column: 1 / -1;
 }
 
 .dateChip {
-  flex-shrink: 0;
-  width: 72px;
+  width: 100%;
+  min-height: 78px;
   background: rgb(255 255 255 / 4%);
   border: 1px solid rgb(255 255 255 / 8%);
   border-radius: 14px;
@@ -266,6 +268,8 @@
 .dateChipMeta {
   font-size: 0.58rem;
   color: rgb(255 255 255 / 40%);
+  line-height: 1.2;
+  text-align: center;
 }
 
 /* ── períodos e slots ── */
@@ -379,4 +383,54 @@
 .btnPrimary:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+@media (min-width: 760px) {
+  .bodyDatetime {
+    display: grid;
+    grid-template-columns: minmax(250px, 0.9fr) minmax(300px, 1.1fr);
+    align-items: start;
+  }
+
+  .dateInfoPanel {
+    grid-column: 1 / -1;
+  }
+
+  .dateGrid {
+    align-self: start;
+    max-height: 360px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(196 154 42 / 30%) transparent;
+  }
+
+  .slotPeriods,
+  .empty {
+    align-self: start;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 1rem 1rem 0.8rem;
+  }
+
+  .body {
+    padding: 1rem;
+  }
+
+  .footer {
+    padding: 0.85rem 1rem;
+    padding-bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .dateGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .btnSecondary,
+  .btnPrimary {
+    padding-inline: 0.6rem;
+  }
 }

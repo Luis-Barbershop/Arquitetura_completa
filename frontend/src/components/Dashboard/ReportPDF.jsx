@@ -100,7 +100,7 @@ export function buildPDFSections({ barberPerf, stockHealth, agendaThermo, skillM
     return [
         {
             title: 'Performance dos Barbeiros',
-            headers: ['Barbeiro', 'Agendamentos', 'Receita Gerada', 'Contribuição (%)'],
+            headers: ['Barbeiro', 'Agendamentos', 'Valor Gerado', 'Contribuição (%)'],
             rows: (barberPerf ?? []).map(d => [
                 d.barberName ?? '—',
                 String(d.totalAppointments ?? 0),

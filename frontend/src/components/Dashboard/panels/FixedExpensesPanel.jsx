@@ -60,6 +60,7 @@ export function FixedExpensesTable({ data, onDelete }) {
                         <th>Categoria</th>
                         <th>Nome</th>
                         <th>Valor</th>
+                        <th>Tipo</th>
                         {onDelete && <th></th>}
                     </tr>
                 </thead>
@@ -69,6 +70,7 @@ export function FixedExpensesTable({ data, onDelete }) {
                             <td>{e.categoryLabel}</td>
                             <td>{e.customName || '—'}</td>
                             <td>{BRL(e.amount)}</td>
+                            <td>{e.recurringMonthly ? 'Fixo mensal' : `${String(e.month).padStart(2, '0')}/${e.year}`}</td>
                             {onDelete && (
                                 <td>
                                     <button
@@ -88,6 +90,7 @@ export function FixedExpensesTable({ data, onDelete }) {
                     <tr>
                         <td colSpan={2}><strong>Total</strong></td>
                         <td><strong style={{ color: '#e8b923' }}>{BRL(total)}</strong></td>
+                        <td />
                         {onDelete && <td />}
                     </tr>
                 </tfoot>

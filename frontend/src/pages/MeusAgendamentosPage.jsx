@@ -23,6 +23,35 @@ import {
 } from '../services/offlineTransactionalService';
 import RescheduleModal from '../components/RescheduleModal/RescheduleModal';
 
+const toDateKey = (date) => date.toLocaleDateString('en-CA');
+
+const getWeekStart = (date) => {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    return d;
+};
+
+const getPeriodBounds = (dateStr, rangeMode) => {
+    const anchor = new Date(`${dateStr}T00:00:00`);
+
+    if (rangeMode === 'month') {
+        const start = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+        const end = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
+        return { start: toDateKey(start), end: toDateKey(end) };
+    }
+
+    if (rangeMode === 'week') {
+        const start = getWeekStart(anchor);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        return { start: toDateKey(start), end: toDateKey(end) };
+    }
+
+    return { start: dateStr, end: dateStr };
+};
+
 const MeusAgendamentosPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -51,7 +80,7 @@ const MeusAgendamentosPage = () => {
     const [offlineTransactionalNotice, setOfflineTransactionalNotice] = useState('');
     const [viewMode, setViewMode] = useState('list'); // 'list' | 'timeline'
     const [dateFilter, setDateFilter] = useState(new Date().toLocaleDateString('en-CA'));
-    const [rangeMode, setRangeMode] = useState('week'); // 'week' | 'month' — compartilhado entre mine e team
+    const [rangeMode, setRangeMode] = useState('week'); // 'day' | 'week' | 'month' — compartilhado entre mine e team
     const [reviewHover, setReviewHover] = useState(0);
 
     // Determina o papel com base na chave correta do localStorage ('userRole')
@@ -85,7 +114,11 @@ const MeusAgendamentosPage = () => {
             let data = [];
 
             if (!isCustomer && isOwner && agendaView === 'team') {
-                data = await getBarbershopSchedule(barbershopId, teamDate);
+                const bounds = getPeriodBounds(teamDate, rangeMode);
+                data = await getBarbershopSchedule(barbershopId, {
+                    from: bounds.start,
+                    to: bounds.end,
+                });
             } else {
                 data = await getMyAppointments();
             }
@@ -135,18 +168,11 @@ const MeusAgendamentosPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [agendaView, barbershopId, isCustomer, isOwner, teamDate, initialized]);
+    }, [agendaView, barbershopId, isCustomer, isOwner, teamDate, rangeMode, initialized]);
 
     useEffect(() => {
         carregarAgendamentos();
     }, [carregarAgendamentos]);
-
-    // Ao entrar na timeline, garante modo 'semana' para o filtro de data
-    useEffect(() => {
-        if (viewMode === 'timeline') {
-            setRangeMode('week');
-        }
-    }, [viewMode]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -390,44 +416,16 @@ const MeusAgendamentosPage = () => {
         if (!isCustomer && agendaView === 'mine' && activeFilter === 'ALL') {
             const appDate = app.startTime?.slice(0, 10);
             if (!appDate) return false;
-            if (rangeMode === 'day') {
-                return appDate === dateFilter;
-            }
-            if (rangeMode === 'week') {
-                const anchor = new Date(dateFilter + 'T00:00:00');
-                const weekStart = new Date(anchor);
-                weekStart.setDate(anchor.getDate() - anchor.getDay() + 1);
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekStart.getDate() + 6);
-                const ws = weekStart.toLocaleDateString('en-CA');
-                const we = weekEnd.toLocaleDateString('en-CA');
-                return appDate >= ws && appDate <= we;
-            }
-            if (rangeMode === 'month') {
-                return appDate.slice(0, 7) === dateFilter.slice(0, 7);
-            }
+            const bounds = getPeriodBounds(dateFilter, rangeMode);
+            return appDate >= bounds.start && appDate <= bounds.end;
         }
 
         // Filtro de data para team view (mesma lógica usando teamDate como âncora)
         if (!isCustomer && agendaView === 'team' && activeFilter === 'ALL') {
             const appDate = app.startTime?.slice(0, 10);
             if (!appDate) return false;
-            if (rangeMode === 'day') {
-                return appDate === teamDate;
-            }
-            if (rangeMode === 'week') {
-                const anchor = new Date(teamDate + 'T00:00:00');
-                const weekStart = new Date(anchor);
-                weekStart.setDate(anchor.getDate() - anchor.getDay() + 1);
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekStart.getDate() + 6);
-                const ws = weekStart.toLocaleDateString('en-CA');
-                const we = weekEnd.toLocaleDateString('en-CA');
-                return appDate >= ws && appDate <= we;
-            }
-            if (rangeMode === 'month') {
-                return appDate.slice(0, 7) === teamDate.slice(0, 7);
-            }
+            const bounds = getPeriodBounds(teamDate, rangeMode);
+            return appDate >= bounds.start && appDate <= bounds.end;
         }
         return true;
     });
@@ -551,8 +549,7 @@ const MeusAgendamentosPage = () => {
             return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
         }
         if (rangeMode === 'week') {
-            const start = new Date(d);
-            start.setDate(d.getDate() - d.getDay() + 1); // segunda
+            const start = getWeekStart(d);
             const end = new Date(start);
             end.setDate(start.getDate() + 6); // domingo
             const fmt = (x) => x.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -564,14 +561,9 @@ const MeusAgendamentosPage = () => {
 
     const renderTimeline = () => {
         const activeDate = agendaView === 'team' ? teamDate : dateFilter;
-
-        // Filtra por data E por status (igual à lista)
-        const dayAppointments = appointments.filter((a) => {
-            if (a.startTime?.slice(0, 10) !== activeDate) return false;
-            if (activeFilter === 'SCHEDULED') return ['SCHEDULED', 'CONFIRMED'].includes(a.status);
-            if (activeFilter !== 'ALL') return a.status === activeFilter;
-            return true;
-        });
+        const timelineAppointments = filteredAppointments
+            .filter((a) => Boolean(a.startTime))
+            .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 
         const PX_PER_MIN = 80 / 60;
         const START_HOUR = 7;
@@ -596,12 +588,12 @@ const MeusAgendamentosPage = () => {
             COMPLETED: 'rgba(16,185,129,0.09)', CANCELLED: 'rgba(80,80,80,0.1)',
         };
 
-        const nowTop = (() => {
-            if (activeDate !== todayStr) return null;
+        const getNowTop = (dateStr) => {
+            if (dateStr !== todayStr) return null;
             const now = new Date();
             const t = ((now.getHours() - START_HOUR) * 60 + now.getMinutes()) * PX_PER_MIN;
             return t >= 0 && t <= totalHeight ? t : null;
-        })();
+        };
 
         const hourLabels = Array.from({ length: END_HOUR - START_HOUR + 1 }, (_, i) => ({
             label: `${String(START_HOUR + i).padStart(2, '0')}:00`,
@@ -627,73 +619,102 @@ const MeusAgendamentosPage = () => {
             </div>
         );
 
-        if (dayAppointments.length === 0) {
-            return (
-                <div className={`${Styles.empty} ca-state ca-state--empty`} style={{ marginTop: '2rem' }}>
-                    <h3>Nenhum atendimento em {new Date(activeDate + 'T00:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}.</h3>
-                    <p>Navegue para outro dia usando as setas de data acima.</p>
-                </div>
-            );
-        }
+        const renderDayTimeline = (dateStr, dayAppointments) => {
+            const nowTop = getNowTop(dateStr);
 
-        if (agendaView === 'mine') {
+            if (agendaView === 'mine') {
+                return (
+                    <div className={Styles.timelineWrapper}>
+                        <div className={Styles.timelineScroll}>
+                            <div className={Styles.timeLabels}>
+                                {hourLabels.map(h => (
+                                    <div key={h.label} className={Styles.timeLabel} style={{ top: h.top }}>{h.label}</div>
+                                ))}
+                            </div>
+                            <div className={Styles.timelineGrid} style={{ height: totalHeight }}>
+                                {hourLabels.map(h => (
+                                    <div key={h.label} className={Styles.hourLine} style={{ top: h.top }} />
+                                ))}
+                                {dayAppointments.map(app => renderAppBlock(app))}
+                                {nowTop !== null && <div className={Styles.nowLine} style={{ top: nowTop }} />}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const barberMap = new Map();
+            dayAppointments.forEach(a => {
+                const key = a.barberId || a.barberName || 'unknown';
+                if (!barberMap.has(key)) barberMap.set(key, { key, name: a.barberName || 'Barbeiro', appointments: [] });
+                barberMap.get(key).appointments.push(a);
+            });
+            const barbers = [...barberMap.values()];
+
             return (
                 <div className={Styles.timelineWrapper}>
-                    <div className={Styles.timelineScroll}>
+                    <div className={Styles.timelineTeamScroll}>
                         <div className={Styles.timeLabels}>
                             {hourLabels.map(h => (
                                 <div key={h.label} className={Styles.timeLabel} style={{ top: h.top }}>{h.label}</div>
                             ))}
                         </div>
-                        <div className={Styles.timelineGrid} style={{ height: totalHeight }}>
-                            {hourLabels.map(h => (
-                                <div key={h.label} className={Styles.hourLine} style={{ top: h.top }} />
+                        <div className={Styles.timelineTeamColumns}>
+                            {barbers.map(barber => (
+                                <div key={barber.key} className={Styles.timelineColumn}>
+                                    <div className={Styles.tlColHeader}>
+                                        <span className={Styles.tlColAvatar}>
+                                            {(barber.name || 'B').charAt(0).toUpperCase()}
+                                        </span>
+                                        {barber.name}
+                                    </div>
+                                    <div className={Styles.timelineGrid} style={{ height: totalHeight }}>
+                                        {hourLabels.map(h => (
+                                            <div key={h.label} className={Styles.hourLine} style={{ top: h.top }} />
+                                        ))}
+                                        {barber.appointments.map(app => renderAppBlock(app))}
+                                        {nowTop !== null && <div className={Styles.nowLine} style={{ top: nowTop }} />}
+                                    </div>
+                                </div>
                             ))}
-                            {dayAppointments.map(app => renderAppBlock(app))}
-                            {nowTop !== null && <div className={Styles.nowLine} style={{ top: nowTop }} />}
                         </div>
                     </div>
                 </div>
             );
+        };
+
+        if (timelineAppointments.length === 0) {
+            return (
+                <div className={`${Styles.empty} ca-state ca-state--empty`} style={{ marginTop: '2rem' }}>
+                    <h3>Nenhum atendimento em {formatDateDisplay(activeDate)}.</h3>
+                    <p>Navegue para outro período usando as setas acima.</p>
+                </div>
+            );
         }
 
-        // Team view: coluna por barbeiro
-        const barberMap = new Map();
-        dayAppointments.forEach(a => {
-            const key = a.barberId || a.barberName || 'unknown';
-            if (!barberMap.has(key)) barberMap.set(key, { key, name: a.barberName || 'Barbeiro', appointments: [] });
-            barberMap.get(key).appointments.push(a);
-        });
-        const barbers = [...barberMap.values()];
+        const groupedByDate = timelineAppointments.reduce((acc, app) => {
+            const dateKey = app.startTime.slice(0, 10);
+            if (!acc.has(dateKey)) acc.set(dateKey, []);
+            acc.get(dateKey).push(app);
+            return acc;
+        }, new Map());
 
         return (
-            <div className={Styles.timelineWrapper}>
-                <div className={Styles.timelineTeamScroll}>
-                    <div className={Styles.timeLabels}>
-                        {hourLabels.map(h => (
-                            <div key={h.label} className={Styles.timeLabel} style={{ top: h.top }}>{h.label}</div>
-                        ))}
-                    </div>
-                    <div className={Styles.timelineTeamColumns}>
-                        {barbers.map(barber => (
-                            <div key={barber.key} className={Styles.timelineColumn}>
-                                <div className={Styles.tlColHeader}>
-                                    <span className={Styles.tlColAvatar}>
-                                        {(barber.name || 'B').charAt(0).toUpperCase()}
-                                    </span>
-                                    {barber.name}
-                                </div>
-                                <div className={Styles.timelineGrid} style={{ height: totalHeight }}>
-                                    {hourLabels.map(h => (
-                                        <div key={h.label} className={Styles.hourLine} style={{ top: h.top }} />
-                                    ))}
-                                    {barber.appointments.map(app => renderAppBlock(app))}
-                                    {nowTop !== null && <div className={Styles.nowLine} style={{ top: nowTop }} />}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+            <div className={Styles.timelineDaysStack}>
+                {[...groupedByDate.entries()].map(([dateKey, dayAppointments]) => (
+                    <section key={dateKey} className={Styles.timelineDaySection}>
+                        {rangeMode !== 'day' && (
+                            <h2 className={Styles.timelineDayTitle}>
+                                {new Date(`${dateKey}T00:00:00`).toLocaleDateString('pt-BR', {
+                                    weekday: 'long',
+                                    day: '2-digit',
+                                    month: 'long',
+                                })}
+                            </h2>
+                        )}
+                        {renderDayTimeline(dateKey, dayAppointments)}
+                    </section>
+                ))}
             </div>
         );
     };
@@ -763,6 +784,7 @@ const MeusAgendamentosPage = () => {
                                     onClick={() => {
                                         if (isToday) {
                                             setActiveFilter('ALL');
+                                            setRangeMode('day');
                                             setDateFilter(todayStr);
                                             setTeamDate(todayStr);
                                         } else {
@@ -826,16 +848,23 @@ const MeusAgendamentosPage = () => {
                             </div>
                         )}
 
-                        {/* Seletor de período — Semana e Mês */}
+                        {/* Seletor de período — Hoje, Semana e Mês */}
                         <div
                             className={`${Styles.viewToggle} ${activeFilter !== 'ALL' ? Styles.viewToggleDisabled : ''}`}
                             title={activeFilter !== 'ALL' ? 'Filtro de data desativado: exibindo todo o histórico do status selecionado' : undefined}
                         >
-                            {[{ key: 'week', label: 'Semana' }, { key: 'month', label: 'Mês' }].map(r => (
+                            {[{ key: 'day', label: 'Hoje' }, { key: 'week', label: 'Semana' }, { key: 'month', label: 'Mês' }].map(r => (
                                 <button
                                     key={r.key}
                                     className={rangeMode === r.key ? Styles.viewToggleBtnActive : Styles.viewToggleBtn}
-                                    onClick={() => { setRangeMode(r.key); if (activeFilter !== 'ALL') setActiveFilter('ALL'); }}
+                                    onClick={() => {
+                                        setRangeMode(r.key);
+                                        if (r.key === 'day') {
+                                            setDateFilter(todayStr);
+                                            setTeamDate(todayStr);
+                                        }
+                                        if (activeFilter !== 'ALL') setActiveFilter('ALL');
+                                    }}
                                     type="button"
                                     disabled={activeFilter !== 'ALL'}
                                 >

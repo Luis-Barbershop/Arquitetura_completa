@@ -1,6 +1,8 @@
 package ifsp.edu.projeto.cortaai.paymentservice.service;
 
+import ifsp.edu.projeto.cortaai.paymentservice.dto.AppointmentActivityInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.AppointmentInfoDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.CommissionRuleInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialOverviewDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.InventoryFinancialSummaryDTO;
@@ -8,6 +10,7 @@ import ifsp.edu.projeto.cortaai.paymentservice.dto.MpConnectionStatusDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.SaveMpCredentialsDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.TransactionDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.UserInfoDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.feign.BarbershopServiceClient;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.ProductServiceClient;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.ScheduleServiceClient;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.UserServiceClient;
@@ -54,6 +57,8 @@ class PaymentServiceFinancialsTest {
     private DashboardKpiDailyRepository dashboardKpiDailyRepository;
     @Mock
     private ScheduleServiceClient scheduleServiceClient;
+    @Mock
+    private BarbershopServiceClient barbershopServiceClient;
     @Mock
     private UserServiceClient userServiceClient;
     @Mock
@@ -180,6 +185,86 @@ class PaymentServiceFinancialsTest {
     }
 
     @Test
+    void shouldReturnCommissionOverviewForStaffBarber() {
+        UUID shopId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        UUID haircutId = UUID.randomUUID();
+        UUID beardId = UUID.randomUUID();
+        LocalDate day = LocalDate.of(2026, 5, 4);
+        UserInfoDTO staff = user(barberId, "BARBER", "STAFF", shopId);
+
+        Transaction approved = transactionWithAppointment(UUID.randomUUID(), shopId, PaymentStatus.APPROVED,
+                new BigDecimal("100.00"), day.atTime(9, 0), UUID.randomUUID());
+        Transaction pending = transactionWithAppointment(UUID.randomUUID(), shopId, PaymentStatus.PENDING,
+                new BigDecimal("80.00"), day.atTime(10, 0), UUID.randomUUID());
+        Transaction otherBarberApproved = transactionWithAppointment(UUID.randomUUID(), shopId, PaymentStatus.APPROVED,
+                new BigDecimal("90.00"), day.atTime(11, 0), UUID.randomUUID());
+
+        AppointmentInfoDTO approvedAppointment = appointment(
+                approved.getAppointmentId(),
+                shopId,
+                UUID.randomUUID(),
+                barberId,
+                day.atTime(12, 0),
+                new BigDecimal("100.00"),
+                "CONCLUDED",
+                List.of(
+                        activity(haircutId, new BigDecimal("80.00")),
+                        activity(beardId, new BigDecimal("20.00"))
+                ));
+        AppointmentInfoDTO pendingAppointment = appointment(
+                pending.getAppointmentId(),
+                shopId,
+                UUID.randomUUID(),
+                barberId,
+                day.atTime(13, 0),
+                new BigDecimal("80.00"),
+                "CONFIRMED",
+                List.of(activity(haircutId, new BigDecimal("80.00"))));
+        AppointmentInfoDTO otherBarberAppointment = appointment(
+                otherBarberApproved.getAppointmentId(),
+                shopId,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                day.atTime(14, 0),
+                new BigDecimal("90.00"),
+                "CONCLUDED",
+                List.of(activity(haircutId, new BigDecimal("90.00"))));
+        AppointmentInfoDTO walkIn = appointment(
+                UUID.randomUUID(),
+                shopId,
+                WALK_IN_CUSTOMER_ID,
+                barberId,
+                day.atTime(15, 0),
+                new BigDecimal("50.00"),
+                "CONCLUDED",
+                List.of(activity(haircutId, new BigDecimal("50.00"))));
+
+        when(userServiceClient.getUserByFirebaseUid("staff-firebase")).thenReturn(staff);
+        when(transactionRepository.findByBarbershopIdAndCreatedAtBetween(eq(shopId), any(), any()))
+                .thenReturn(List.of(approved, pending, otherBarberApproved));
+        when(scheduleServiceClient.getAppointmentById(approved.getAppointmentId())).thenReturn(approvedAppointment);
+        when(scheduleServiceClient.getAppointmentById(pending.getAppointmentId())).thenReturn(pendingAppointment);
+        when(scheduleServiceClient.getAppointmentById(otherBarberApproved.getAppointmentId())).thenReturn(otherBarberAppointment);
+        when(scheduleServiceClient.getBarbershopAppointmentsByPeriod(eq(shopId), any(), any())).thenReturn(List.of(walkIn));
+        when(barbershopServiceClient.getBarberCommissions(shopId, barberId)).thenReturn(List.of(
+                new CommissionRuleInfoDTO(UUID.randomUUID(), haircutId, "Corte", new BigDecimal("50.00")),
+                new CommissionRuleInfoDTO(UUID.randomUUID(), beardId, "Barba", new BigDecimal("30.00"))
+        ));
+
+        FinancialOverviewDTO overview = paymentService.getBarbershopOverviewByFirebaseUid(
+                "staff-firebase", shopId, day, day);
+
+        assertThat(overview.serviceRevenue()).isEqualByComparingTo("46.00");
+        assertThat(overview.walkInRevenue()).isEqualByComparingTo("25.00");
+        assertThat(overview.totalServiceRevenue()).isEqualByComparingTo("71.00");
+        assertThat(overview.productExpenses()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(overview.approvedCount()).isEqualTo(1);
+        assertThat(overview.pendingCount()).isEqualTo(1);
+        assertThat(overview.walkInAppointmentsCount()).isEqualTo(1);
+    }
+
+    @Test
     void shouldCalculateWeeklySeriesWithApprovedTransactionsAndWalkIns() {
         UUID shopId = UUID.randomUUID();
         LocalDate monday = LocalDate.of(2026, 5, 4);
@@ -227,9 +312,14 @@ class PaymentServiceFinancialsTest {
     }
 
     private Transaction transaction(UUID customerId, UUID shopId, PaymentStatus status, BigDecimal amount, LocalDateTime createdAt) {
+        return transactionWithAppointment(customerId, shopId, status, amount, createdAt, UUID.randomUUID());
+    }
+
+    private Transaction transactionWithAppointment(UUID customerId, UUID shopId, PaymentStatus status, BigDecimal amount,
+                                                   LocalDateTime createdAt, UUID appointmentId) {
         return Transaction.builder()
                 .id(UUID.randomUUID())
-                .appointmentId(UUID.randomUUID())
+                .appointmentId(appointmentId)
                 .customerId(customerId)
                 .barbershopId(shopId)
                 .amount(amount)
@@ -243,17 +333,27 @@ class PaymentServiceFinancialsTest {
     }
 
     private AppointmentInfoDTO appointment(UUID shopId, UUID customerId, LocalDateTime startTime, BigDecimal total, String status) {
+        return appointment(UUID.randomUUID(), shopId, customerId, UUID.randomUUID(), startTime, total, status, List.of());
+    }
+
+    private AppointmentInfoDTO appointment(UUID id, UUID shopId, UUID customerId, UUID barberId, LocalDateTime startTime,
+                                           BigDecimal total, String status, List<AppointmentActivityInfoDTO> activities) {
         return new AppointmentInfoDTO(
-                UUID.randomUUID(),
+                id,
                 customerId,
-                UUID.randomUUID(),
+                barberId,
                 shopId,
                 "Cliente",
                 "Barbeiro",
                 "Barbearia",
                 startTime,
                 total,
-                status
+                status,
+                activities
         );
+    }
+
+    private AppointmentActivityInfoDTO activity(UUID activityId, BigDecimal price) {
+        return new AppointmentActivityInfoDTO(UUID.randomUUID(), activityId, "Servico", price, 30);
     }
 }

@@ -1035,6 +1035,24 @@
     overflow: hidden;
 }
 
+.timelineDaysStack {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 1rem;
+}
+
+.timelineDaySection {
+    min-width: 0;
+}
+
+.timelineDayTitle {
+    margin: 0 0 0.65rem;
+    color: #e7e1d5;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    text-transform: capitalize;
+}
+
 .timelineScroll {
     display: flex;
     gap: 0;

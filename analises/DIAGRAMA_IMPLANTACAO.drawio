@@ -1,0 +1,129 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" version="28.2.8">
+  <diagram id="cortaai-implantacao-uml" name="UML Implantacao">
+    <mxGraphModel dx="1257" dy="689" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1160" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="UML Deployment Diagram - CortaAi" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=20;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="470" y="20" width="460" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="user_device" value="&amp;lt;&amp;lt;device&amp;gt;&amp;gt;&lt;br&gt;Usuario / Browser" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="590" y="80" width="220" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="frontend_node" value="&amp;lt;&amp;lt;executionEnvironment&amp;gt;&amp;gt;&lt;br&gt;Frontend Runtime" style="swimlane;whiteSpace=wrap;html=1;startSize=48;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=1;collapsible=0;" parent="1" vertex="1">
+          <mxGeometry x="510" y="210" width="380" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="web_artifact" value="&amp;lt;&amp;lt;artifact&amp;gt;&amp;gt;&lt;br&gt;cortaai-web :5173&lt;br&gt;React 19 + Vite" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" parent="frontend_node" vertex="1">
+          <mxGeometry x="85" y="70" width="210" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="docker_host" value="&amp;lt;&amp;lt;node&amp;gt;&amp;gt;&lt;br&gt;Docker Compose Host" style="swimlane;whiteSpace=wrap;html=1;startSize=48;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=1;collapsible=0;" parent="1" vertex="1">
+          <mxGeometry x="80" y="430" width="1240" height="470" as="geometry" />
+        </mxCell>
+        <mxCell id="gateway_container" value="&amp;lt;&amp;lt;container&amp;gt;&amp;gt;&lt;br&gt;api-gateway :8080&lt;br&gt;auth + rotas" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" parent="docker_host" vertex="1">
+          <mxGeometry x="505" y="70" width="230" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="discovery_container" value="&amp;lt;&amp;lt;container&amp;gt;&amp;gt;&lt;br&gt;discovery-service :8761&lt;br&gt;Eureka" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" parent="docker_host" vertex="1">
+          <mxGeometry x="830" y="70" width="230" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="domain_env" value="&amp;lt;&amp;lt;executionEnvironment&amp;gt;&amp;gt;&lt;br&gt;Microsservicos Spring Boot" style="swimlane;whiteSpace=wrap;html=1;startSize=42;rounded=0;fillColor=#ffffff;strokeColor=#666666;fontStyle=1;container=1;collapsible=0;" parent="docker_host" vertex="1">
+          <mxGeometry x="120" y="190" width="760" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="user" value="&amp;lt;&amp;lt;container&amp;gt;&amp;gt;&lt;br&gt;user-service&lt;br&gt;:8081" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" parent="domain_env" vertex="1">
+          <mxGeometry x="35" y="60" width="150" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="barbershop" value="&amp;lt;&amp;lt;container&amp;gt;&amp;gt;&lt;br&gt;barbershop-service&lt;br&gt;:8082" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" parent="domain_env" vertex="1">
+          <mxGeometry x="305" y="60" width="150" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="schedule" value="&amp;lt;&amp;lt;container&amp;gt;&amp;gt;&lt;br&gt;schedule-service&lt;br&gt;:8083" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" parent="domain_env" vertex="1">
+          <mxGeometry x="575" y="60" width="150" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="payment" value="&amp;lt;&amp;lt;container&amp;gt;&amp;gt;&lt;br&gt;payment-service&lt;br&gt;:8084" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" parent="domain_env" vertex="1">
+          <mxGeometry x="35" y="130" width="150" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="notification" value="&amp;lt;&amp;lt;container&amp;gt;&amp;gt;&lt;br&gt;notification-svc&lt;br&gt;:8085" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" parent="domain_env" vertex="1">
+          <mxGeometry x="305" y="130" width="150" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="product" value="&amp;lt;&amp;lt;container&amp;gt;&amp;gt;&lt;br&gt;product-service&lt;br&gt;:8086" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;" parent="domain_env" vertex="1">
+          <mxGeometry x="575" y="130" width="150" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="infra_env" value="&amp;lt;&amp;lt;executionEnvironment&amp;gt;&amp;gt;&lt;br&gt;Infraestrutura" style="swimlane;whiteSpace=wrap;html=1;startSize=42;rounded=0;fillColor=#ffffff;strokeColor=#666666;fontStyle=1;container=1;collapsible=0;" parent="docker_host" vertex="1">
+          <mxGeometry x="920" y="190" width="270" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="mysql" value="&amp;lt;&amp;lt;database&amp;gt;&amp;gt;&lt;br&gt;cortaai-mysql :3306&lt;br&gt;schemas por servico" style="shape=cylinder3d;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" parent="infra_env" vertex="1">
+          <mxGeometry x="45" y="55" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="rabbitmq" value="&amp;lt;&amp;lt;container&amp;gt;&amp;gt;&lt;br&gt;cortaai-rabbitmq&lt;br&gt;AMQP :5672 / 15672" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" parent="infra_env" vertex="1">
+          <mxGeometry x="45" y="135" width="180" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="redis" value="&amp;lt;&amp;lt;container&amp;gt;&amp;gt;&lt;br&gt;cortaai-redis :6379&lt;br&gt;cache / dedup" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;" parent="infra_env" vertex="1">
+          <mxGeometry x="45" y="200" width="180" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="e_gateway_discovery" value="Eureka registro / lookup" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;startArrow=none;strokeWidth=2;" parent="docker_host" source="gateway_container" target="discovery_container" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_gateway_domain" value="rotas internas / HTTP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeWidth=2;" parent="docker_host" source="gateway_container" target="domain_env" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_domain_mysql" value="JDBC" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeWidth=2;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="docker_host" target="mysql" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="880" y="280" />
+            </Array>
+            <mxPoint x="880" y="280" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_domain_rabbit" value="AMQP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeWidth=2;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="docker_host" source="domain_env" target="rabbitmq" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="865" y="290" />
+              <mxPoint x="865" y="350" />
+              <mxPoint x="1035" y="350" />
+              <mxPoint x="1035" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_domain_redis" value="Redis" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeWidth=2;exitX=1;exitY=0.75;exitDx=0;exitDy=0;" parent="docker_host" source="domain_env" target="redis" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="885" y="340" />
+              <mxPoint x="885" y="460" />
+              <mxPoint x="1035" y="460" />
+            </Array>
+            <mxPoint x="870" y="290" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="external_node" value="&amp;lt;&amp;lt;node&amp;gt;&amp;gt;&lt;br&gt;Dependencias Externas" style="swimlane;whiteSpace=wrap;html=1;startSize=48;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=1;collapsible=0;" parent="1" vertex="1">
+          <mxGeometry x="80" y="970" width="1240" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="firebase" value="&amp;lt;&amp;lt;external system&amp;gt;&amp;gt;&lt;br&gt;Firebase&lt;br&gt;Auth / FCM" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" parent="external_node" vertex="1">
+          <mxGeometry x="45" y="65" width="190" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cloudinary" value="&amp;lt;&amp;lt;external system&amp;gt;&amp;gt;&lt;br&gt;Cloudinary&lt;br&gt;imagens" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" parent="external_node" vertex="1">
+          <mxGeometry x="285" y="65" width="190" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="mercado_pago" value="&amp;lt;&amp;lt;external system&amp;gt;&amp;gt;&lt;br&gt;Mercado Pago&lt;br&gt;pagamentos / webhooks" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" parent="external_node" vertex="1">
+          <mxGeometry x="525" y="65" width="190" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="smtp" value="&amp;lt;&amp;lt;external system&amp;gt;&amp;gt;&lt;br&gt;SMTP / email&lt;br&gt;provider" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" parent="external_node" vertex="1">
+          <mxGeometry x="765" y="65" width="190" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ai" value="&amp;lt;&amp;lt;external system&amp;gt;&amp;gt;&lt;br&gt;Provedores IA&lt;br&gt;Gemini / Groq / OpenRouter / Cohere" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" parent="external_node" vertex="1">
+          <mxGeometry x="1005" y="65" width="190" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e_user_frontend" value="HTTPS / SPA" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeWidth=2;" parent="1" source="user_device" target="web_artifact" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_front_gateway" value="REST /api/*" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeWidth=2;" parent="1" source="web_artifact" target="gateway_container" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_domain_external" value="HTTPS / APIs externas" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;endArrow=open;endFill=0;strokeWidth=2;" parent="1" source="domain_env" target="external_node" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="930" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

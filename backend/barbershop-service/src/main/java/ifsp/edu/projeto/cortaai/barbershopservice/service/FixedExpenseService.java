@@ -33,8 +33,8 @@ public class FixedExpenseService {
         var shop = findOwnerShop(owner);
 
         List<FixedExpense> expenses = (month != null && year != null)
-            ? fixedExpenseRepository.findByBarbershopIdAndMonthAndYearOrderByCategoryAsc(shop.getId(), month, year)
-            : fixedExpenseRepository.findByBarbershopIdAndYearOrderByMonthAscCategoryAsc(shop.getId(),
+            ? fixedExpenseRepository.findActiveForMonth(shop.getId(), month, year)
+            : fixedExpenseRepository.findActiveForYear(shop.getId(),
                 year != null ? year : java.time.LocalDate.now().getYear());
 
         return expenses.stream().map(this::toDTO).collect(Collectors.toList());
@@ -51,6 +51,7 @@ public class FixedExpenseService {
         expense.setAmount(dto.amount());
         expense.setMonth(dto.month());
         expense.setYear(dto.year());
+        expense.setRecurringMonthly(Boolean.TRUE.equals(dto.recurringMonthly()));
 
         return toDTO(fixedExpenseRepository.save(expense));
     }
@@ -101,6 +102,7 @@ public class FixedExpenseService {
             e.getAmount(),
             e.getMonth(),
             e.getYear(),
+            Boolean.TRUE.equals(e.getRecurringMonthly()),
             e.getCreatedAt()
         );
     }

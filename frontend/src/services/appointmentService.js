@@ -118,10 +118,13 @@ export const rescheduleAppointment = async (id, newStartTime, barberId = null) =
     return response.data;
 };
 
-export const getBarbershopSchedule = async (shopId, date) => {
+export const getBarbershopSchedule = async (shopId, dateOrRange) => {
     try {
+        const params = typeof dateOrRange === 'string'
+            ? { date: dateOrRange }
+            : { ...dateOrRange };
         const response = await api.get(`/appointments/barbershop/${shopId}`, {
-            params: { date }
+            params
         });
         const appointments = Array.isArray(response.data) ? response.data : [];
         return appointments.map((appointment) => ({
@@ -133,4 +136,3 @@ export const getBarbershopSchedule = async (shopId, date) => {
         return [];
     }
 };
-

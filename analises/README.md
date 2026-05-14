@@ -12,6 +12,7 @@ Esta pasta contém a documentação técnica ativa do projeto. Todos os arquivos
 |---------|-----------|----------------|
 | [`DOCUMENTACAO_SISTEMA_CORTAAI.md`](DOCUMENTACAO_SISTEMA_CORTAAI.md) | Documento mestre: visão geral, tecnologias, arquitetura, regras de negócio, casos de uso, infra, deploy | Capítulo principal do TCC / documentação de entrega |
 | [`ARQUITETURA.md`](ARQUITETURA.md) | Diagrama ASCII da arquitetura de microsserviços, fluxo de dados, stack de cada serviço | Apêndice de arquitetura |
+| [`DIAGRAMA_COMPONENTES_E_IMPLANTACAO.md`](DIAGRAMA_COMPONENTES_E_IMPLANTACAO.md) | Diagramas Mermaid consolidados de componentes e implantação | Apêndice visual de arquitetura / implantação |
 | [`COMPONENTES.md`](COMPONENTES.md) | Catálogo de todos os componentes criados: POMs, Docker Compose, schemas, cada microsserviço (controller, service, repository, DTOs, configs) | Apêndice de componentes / rastreabilidade |
 | [`FRF_PRD_TD_BACKEND_COMPLETO.md`](FRF_PRD_TD_BACKEND_COMPLETO.md) | FRF (Requisitos Funcionais) + PRD (Produto) + TD (Técnico) do backend completo | Documento de requisitos e especificação técnica |
 | [`ENV_PRODUCAO.md`](ENV_PRODUCAO.md) | Template completo de `.env` para produção (ZimaOS), com instruções de preenchimento | Guia operacional de deploy |

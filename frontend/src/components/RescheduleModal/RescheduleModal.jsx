@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import {
   createDateOptionsBase,
@@ -65,6 +65,17 @@ const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState('');
   const [expandedPeriods, setExpandedPeriods] = useState({ morning: true, afternoon: true });
+  const availabilityRequestRef = useRef(0);
+
+  useEffect(() => {
+    setStep(STEP_BARBER);
+    setSelectedBarberId(String(currentBarberId || ''));
+    setDateOptions([]);
+    setSelectedDate(null);
+    setSelectedTime('');
+    setExpandedPeriods({ morning: true, afternoon: true });
+    clearAvailabilitySlotsCache();
+  }, [appointment.id, currentBarberId]);
 
   /* ── carrega barbeiros ── */
   useEffect(() => {
@@ -79,6 +90,9 @@ const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
   /* ── carrega datas ao entrar no step 2 — sempre forçando dados frescos ── */
   useEffect(() => {
     if (step !== STEP_DATETIME || !selectedBarberId) return;
+
+    const requestId = availabilityRequestRef.current + 1;
+    availabilityRequestRef.current = requestId;
 
     setLoadingDates(true);
     setDateOptions([]);
@@ -99,6 +113,7 @@ const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
       forceRefresh: true,
     })
       .then((hydrated) => {
+        if (availabilityRequestRef.current !== requestId) return;
         setDateOptions(hydrated);
         const first = hydrated.find((o) => o.isAvailable);
         if (first) {
@@ -106,8 +121,12 @@ const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
           setSelectedTime(first.slots[0] || '');
         }
       })
-      .catch(() => setDateOptions([]))
-      .finally(() => setLoadingDates(false));
+      .catch(() => {
+        if (availabilityRequestRef.current === requestId) setDateOptions([]);
+      })
+      .finally(() => {
+        if (availabilityRequestRef.current === requestId) setLoadingDates(false);
+      });
   }, [step, selectedBarberId, durationMinutes]);
 
   /* ── slots da data selecionada ── */
@@ -144,6 +163,16 @@ const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
 
   const canConfirm = selectedDate && selectedTime && !isSubmitting;
 
+  const handleSelectBarber = (barberId) => {
+    const nextId = String(barberId);
+    if (nextId === selectedBarberId) return;
+    setSelectedBarberId(nextId);
+    setDateOptions([]);
+    setSelectedDate(null);
+    setSelectedTime('');
+    clearAvailabilitySlotsCache();
+  };
+
   return (
     <div className={Styles.backdrop} onClick={onClose}>
       <div className={Styles.card} onClick={(e) => e.stopPropagation()}>
@@ -167,7 +196,7 @@ const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
         </div>
 
         {/* ── conteúdo ── */}
-        <div className={Styles.body}>
+        <div className={`${Styles.body} ${step === STEP_DATETIME ? Styles.bodyDatetime : ''}`}>
 
           {/* STEP 1 — barbeiros */}
           {step === STEP_BARBER && (
@@ -185,7 +214,7 @@ const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
                       key={barber.id}
                       type="button"
                       className={`${Styles.barberCard} ${isSelected ? Styles.barberCardSelected : ''}`}
-                      onClick={() => setSelectedBarberId(String(barber.id))}
+                      onClick={() => handleSelectBarber(barber.id)}
                     >
                       {barber.imageUrl ? (
                         <>
@@ -239,8 +268,8 @@ const RescheduleModal = ({ appointment, onClose, onConfirm, isSubmitting }) => {
                 )}
               </div>
 
-              {/* trilho de datas */}
-              <div className={Styles.dateRail}>
+              {/* datas */}
+              <div className={Styles.dateGrid}>
                 {loadingDates ? (
                   <div className={Styles.spinner} aria-label="Carregando datas" />
                 ) : dateOptions.map((opt) => (

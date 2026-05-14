@@ -48,6 +48,7 @@ function BarberDashboardPage() {
         amount: '',
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear(),
+        recurringMonthly: true,
     });
     const [savingExpense, setSavingExpense] = useState(false);
     const [expenseMonth, setExpenseMonth] = useState(new Date().getMonth() + 1);
@@ -120,6 +121,7 @@ function BarberDashboardPage() {
                 amount: parseFloat(expenseForm.amount),
                 month: expenseForm.month,
                 year: expenseForm.year,
+                recurringMonthly: expenseForm.recurringMonthly,
             });
             setExpenseForm(prev => ({ ...prev, customName: '', amount: '' }));
             setExpenseMonth(expenseForm.month);
@@ -262,8 +264,30 @@ function BarberDashboardPage() {
                     <div className={styles.modalBackdrop} onClick={() => setShowExpenseModal(false)}>
                         <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
                             <p className={styles.modalKicker}>GASTOS FIXOS</p>
-                            <h3 className={styles.modalTitle}>Adicionar Gasto Fixo</h3>
+                            <h3 className={styles.modalTitle}>Adicionar Gasto</h3>
                             <form onSubmit={handleSaveExpense} className={styles.shopEditForm}>
+                                <div className={styles.expenseModeGroup} role="group" aria-label="Tipo de gasto">
+                                    <label className={`${styles.expenseModeOption} ${expenseForm.recurringMonthly ? styles.expenseModeOptionActive : ''}`}>
+                                        <input
+                                            type="radio"
+                                            name="expenseMode"
+                                            checked={expenseForm.recurringMonthly}
+                                            onChange={() => setExpenseForm(p => ({ ...p, recurringMonthly: true }))}
+                                        />
+                                        <span>Fixo mensal</span>
+                                        <small>Repete automaticamente nos próximos meses.</small>
+                                    </label>
+                                    <label className={`${styles.expenseModeOption} ${!expenseForm.recurringMonthly ? styles.expenseModeOptionActive : ''}`}>
+                                        <input
+                                            type="radio"
+                                            name="expenseMode"
+                                            checked={!expenseForm.recurringMonthly}
+                                            onChange={() => setExpenseForm(p => ({ ...p, recurringMonthly: false }))}
+                                        />
+                                        <span>Somente este mês</span>
+                                        <small>Lançamento pontual para o mês escolhido.</small>
+                                    </label>
+                                </div>
                                 <label className={styles.shopField}>
                                     <span>Categoria</span>
                                     <select
@@ -297,7 +321,7 @@ function BarberDashboardPage() {
                                 </label>
                                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                                     <label className={styles.shopField} style={{ flex: 1 }}>
-                                        <span>Mês</span>
+                                        <span>{expenseForm.recurringMonthly ? 'A partir do mês' : 'Mês'}</span>
                                         <select
                                             value={expenseForm.month}
                                             onChange={e => setExpenseForm(p => ({ ...p, month: Number(e.target.value) }))}
@@ -308,7 +332,7 @@ function BarberDashboardPage() {
                                         </select>
                                     </label>
                                     <label className={styles.shopField} style={{ flex: 1 }}>
-                                        <span>Ano</span>
+                                        <span>{expenseForm.recurringMonthly ? 'A partir do ano' : 'Ano'}</span>
                                         <select
                                             value={expenseForm.year}
                                             onChange={e => setExpenseForm(p => ({ ...p, year: Number(e.target.value) }))}

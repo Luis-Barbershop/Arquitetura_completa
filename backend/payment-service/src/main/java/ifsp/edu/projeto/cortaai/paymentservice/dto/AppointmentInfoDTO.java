@@ -2,6 +2,7 @@ package ifsp.edu.projeto.cortaai.paymentservice.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -17,5 +18,6 @@ public record AppointmentInfoDTO(
         String barbershopName,
         LocalDateTime startTime,
         BigDecimal totalPrice,
-        String status
+        String status,
+        List<AppointmentActivityInfoDTO> activities
 ) {}

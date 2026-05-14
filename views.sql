@@ -13,24 +13,69 @@
 
 -- =======================================================================
 -- 1. PAYMENT SERVICE: Performance Financeira dos Barbeiros
---    Cruza as transações aprovadas com a agenda para saber quem gerou a receita
+--    Cruza as transações aprovadas com a agenda e regras de comissão.
+--    Para barbeiro com comissão por serviço, generated_revenue representa
+--    a comissão final. Sem regra de comissão, mantém o valor bruto pago.
 -- =======================================================================
 CREATE OR REPLACE VIEW payment_db.v_barber_financial_performance AS
+WITH gross_by_barber AS (
+    SELECT
+        a.barber_id,
+        a.barber_name,
+        t.barbershop_id,
+        SUM(t.amount) AS gross_revenue,
+        COUNT(t.id) AS total_appointments
+    FROM payment_db.transactions t
+    JOIN schedule_db.appointments a
+        ON a.id = BIN_TO_UUID(t.appointment_id)
+    WHERE t.status = 'APPROVED'
+    GROUP BY a.barber_id, a.barber_name, t.barbershop_id
+),
+commission_by_barber AS (
+    SELECT
+        a.barber_id,
+        t.barbershop_id,
+        SUM(aa.price * COALESCE(bcr.percentage, 0) / 100) AS commission_revenue,
+        COUNT(bcr.id) AS commission_rule_count
+    FROM payment_db.transactions t
+    JOIN schedule_db.appointments a
+        ON a.id = BIN_TO_UUID(t.appointment_id)
+    JOIN schedule_db.appointment_activities aa
+        ON aa.appointment_id = a.id
+    LEFT JOIN barbershop_db.barber_commission_rules bcr
+        ON bcr.barbershop_id = t.barbershop_id
+       AND bcr.barber_id = a.barber_id
+       AND bcr.activity_id = aa.activity_id
+    WHERE t.status = 'APPROVED'
+    GROUP BY a.barber_id, t.barbershop_id
+),
+effective_revenue AS (
+    SELECT
+        g.barber_id,
+        g.barber_name,
+        g.barbershop_id,
+        CASE
+            WHEN COALESCE(c.commission_rule_count, 0) > 0
+                THEN COALESCE(c.commission_revenue, 0)
+            ELSE g.gross_revenue
+        END AS generated_revenue,
+        g.total_appointments
+    FROM gross_by_barber g
+    LEFT JOIN commission_by_barber c
+        ON c.barber_id = g.barber_id
+       AND c.barbershop_id = g.barbershop_id
+)
 SELECT
-    a.barber_id                                                          AS barber_id,
-    a.barber_name                                                        AS barber_name,
-    t.barbershop_id                                                      AS barbershop_id,
-    SUM(t.amount)                                                        AS generated_revenue,
-    COUNT(t.id)                                                          AS total_appointments,
+    e.barber_id                                                          AS barber_id,
+    e.barber_name                                                        AS barber_name,
+    e.barbershop_id                                                      AS barbershop_id,
+    e.generated_revenue                                                  AS generated_revenue,
+    e.total_appointments                                                 AS total_appointments,
     ROUND(
-        100.0 * SUM(t.amount) /
-        NULLIF(SUM(SUM(t.amount)) OVER (PARTITION BY t.barbershop_id), 0),
+        100.0 * e.generated_revenue /
+        NULLIF(SUM(e.generated_revenue) OVER (PARTITION BY e.barbershop_id), 0),
     2)                                                                   AS contribution_percentage
-FROM payment_db.transactions t
-JOIN schedule_db.appointments a
-    ON a.id = BIN_TO_UUID(t.appointment_id)
-WHERE t.status = 'APPROVED'
-GROUP BY a.barber_id, a.barber_name, t.barbershop_id;
+FROM effective_revenue e;
 
 
 -- =======================================================================

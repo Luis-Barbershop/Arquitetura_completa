@@ -630,6 +630,17 @@ public class AppointmentService {
 
     @Transactional(readOnly = true)
     public List<AppointmentDTO> getBarbershopSchedule(UUID shopId, LocalDate date, String callerEmail, String correlationId) {
+        return getBarbershopSchedule(shopId, date, null, null, callerEmail, correlationId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppointmentDTO> getBarbershopSchedule(
+            UUID shopId,
+            LocalDate date,
+            LocalDate from,
+            LocalDate to,
+            String callerEmail,
+            String correlationId) {
         UserInfoDTO caller = userServiceClient.getUserByEmail(callerEmail);
         if (caller == null || caller.getId() == null) {
             throw new NotFoundException("Usuário autenticado não encontrado.");
@@ -650,16 +661,23 @@ public class AppointmentService {
             throw new ForbiddenException("Apenas barbeiros vinculados a esta barbearia podem visualizar a agenda da equipe.");
         }
 
+        LocalDate startDate = date != null ? date : from;
+        LocalDate endDate = date != null ? date : to;
+        if (startDate == null || endDate == null || startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Informe uma data ou um período válido para consultar a agenda da equipe.");
+        }
+
         log.info(
-                "SECURITY_EVENT=MASTER_SCHEDULE_ACCESS_GRANTED userId={} userType={} targetShopId={} date={} correlationId={}",
-                caller.getId(), caller.getUserType(), shopId, date, safeCorrelationId
+                "SECURITY_EVENT=MASTER_SCHEDULE_ACCESS_GRANTED userId={} userType={} targetShopId={} from={} to={} correlationId={}",
+                caller.getId(), caller.getUserType(), shopId, startDate, endDate, safeCorrelationId
         );
 
-        LocalDateTime dayStart = date.atStartOfDay();
-        LocalDateTime dayEnd = date.atTime(23, 59, 59);
-        return appointmentRepository.findByBarbershopIdAndStartTimeBetween(shopId, dayStart, dayEnd)
+        LocalDateTime periodStart = startDate.atStartOfDay();
+        LocalDateTime periodEnd = endDate.atTime(23, 59, 59);
+        return appointmentRepository.findByBarbershopIdAndStartTimeBetween(shopId, periodStart, periodEnd)
                 .stream()
                 .filter(this::includeInOperationalAgenda)
+                .sorted(Comparator.comparing(Appointment::getStartTime))
                 .map(appointmentMapper::toDTO)
                 .collect(Collectors.toList());
     }

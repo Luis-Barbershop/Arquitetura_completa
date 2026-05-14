@@ -85,6 +85,9 @@ function Invoicing({ barber }) {
     loadOverview();
   }, [barbershopId, isOwner]);
 
+  const panelTitle = isOwner ? 'Faturamento Hoje:' : 'Comissão Hoje:';
+  const serviceLabel = isOwner ? 'Receita com transacao' : 'Comissão com transacao';
+  const walkInLabel = isOwner ? 'Receita de walk-in' : 'Comissão de walk-in';
   const operationalResult = useMemo(() => Number(data?.operationalResult || 0), [data]);
   const operationalResultWithWalkIn = useMemo(
     () => Number(data?.operationalResultWithWalkIn ?? data?.operationalResult ?? 0),
@@ -106,14 +109,18 @@ function Invoicing({ barber }) {
 
     <div className={Styles.containerFaturamento}>
         <div className={Styles.containerFaturamentoLeft}>
-        <h2>Faturamento Hoje:</h2>
+        <h2>{panelTitle}</h2>
         <h1>{loading ? 'Carregando...' : asCurrency(totalServiceRevenue)}</h1>
-        <p>Receita com transacao: {loading ? '...' : asCurrency(serviceRevenue)}</p>
-        <p>Receita de walk-in: {loading ? '...' : asCurrency(walkInRevenue)}</p>
-        <p>Gastos de produtos: {loading ? '...' : asCurrency(data?.productExpenses)}</p>
-        <p>Bens em estoque: {loading ? '...' : asCurrency(data?.inventoryAssetValue)}</p>
-        <p>Resultado operacional (transacao): {loading ? '...' : `${operationalResult >= 0 ? '+' : '-'} ${asCurrency(Math.abs(operationalResult))}`}</p>
-        <p>Resultado operacional total: {loading ? '...' : `${operationalResultWithWalkIn >= 0 ? '+' : '-'} ${asCurrency(Math.abs(operationalResultWithWalkIn))}`}</p>
+        <p>{serviceLabel}: {loading ? '...' : asCurrency(serviceRevenue)}</p>
+        <p>{walkInLabel}: {loading ? '...' : asCurrency(walkInRevenue)}</p>
+        {isOwner && (
+          <>
+            <p>Gastos de produtos: {loading ? '...' : asCurrency(data?.productExpenses)}</p>
+            <p>Bens em estoque: {loading ? '...' : asCurrency(data?.inventoryAssetValue)}</p>
+            <p>Resultado operacional (transacao): {loading ? '...' : `${operationalResult >= 0 ? '+' : '-'} ${asCurrency(Math.abs(operationalResult))}`}</p>
+            <p>Resultado operacional total: {loading ? '...' : `${operationalResultWithWalkIn >= 0 ? '+' : '-'} ${asCurrency(Math.abs(operationalResultWithWalkIn))}`}</p>
+          </>
+        )}
 
         {isOwner && !loading && (
           <div className={Styles.seriesWrapper}>

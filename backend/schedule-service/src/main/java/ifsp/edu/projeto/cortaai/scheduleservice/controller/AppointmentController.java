@@ -77,14 +77,16 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getBarberSchedule(barberId, date));
     }
 
-    @Operation(summary = "Consultar agenda da barbearia", description = "Retorna todos os agendamentos de uma barbearia. Exige obrigatoriamente um filtro por data.")
+    @Operation(summary = "Consultar agenda da barbearia", description = "Retorna todos os agendamentos de uma barbearia por dia ou período.")
     @GetMapping("/barbershop/{shopId}")
     public ResponseEntity<List<AppointmentDTO>> getBarbershopSchedule(
                         @Parameter(hidden = true) @RequestHeader("X-User-Email") String userEmail,
                         @Parameter(hidden = true) @RequestHeader(value = "X-Correlation-Id", required = false) String correlationId,
             @Parameter(description = "UUID da barbearia") @PathVariable UUID shopId,
-            @Parameter(description = "Data do filtro (formato ISO: YYYY-MM-DD)") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-                return ResponseEntity.ok(appointmentService.getBarbershopSchedule(shopId, date, userEmail, correlationId));
+            @Parameter(description = "Data do filtro (formato ISO: YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @Parameter(description = "Início do período (formato ISO: YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @Parameter(description = "Fim do período (formato ISO: YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+                return ResponseEntity.ok(appointmentService.getBarbershopSchedule(shopId, date, from, to, userEmail, correlationId));
     }
 
     @Operation(summary = "Cancelar agendamento", description = "Cancela um agendamento existente de forma explícita e segura (substitui o antigo update genérico do monolito).")
