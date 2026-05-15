@@ -2,13 +2,14 @@
 
 > **Data:** 2026-05-15  
 > **Branch:** `feature/migracao-microservicos`  
+> **Commit de fechamento:** `ea47c27`  
 > **Origem:** Análise `ANALISE_BANCO_DADOS.md` — achados críticos levantados em inspeção estática + live do MySQL de produção.  
-> **Status geral pós-sessão anterior:**
+> **Status geral: ✅ TODOS OS ACHADOS RESOLVIDOS**
 
 | # | Severidade | Problema | Status |
 |---|---|---|---|
-| 1 | 🔴 CRÍTICO | `categories.barbershop_id` = `binary(16)` no DB, Java sem `@JdbcTypeCode` | **PENDENTE → resolvido neste SDD** |
-| 2 | 🟡 MÉDIO | Views `v_customer_retention` e `v_barber_financial_performance` — JOIN cross-DB | **PENDENTE → resolvido neste SDD** |
+| 1 | 🔴 CRÍTICO | `categories.barbershop_id` = `binary(16)` no DB, Java sem `@JdbcTypeCode` | ✅ **Resolvido** — `Category.java` + `ALTER TABLE` em produção + migração dos 2 registros existentes (`ea47c27`) |
+| 2 | 🟡 MÉDIO | Views `v_customer_retention` e `v_barber_financial_performance` — JOIN cross-DB | ✅ **Documentado** — views marcadas `[CROSS-DB] ANALYTICS-ONLY` em `views.sql`; decisão ADR registrada neste SDD (`ea47c27`) |
 | 3 | 🟡 MÉDIO | `PushPlatform` Java declarava ANDROID/IOS; DB só tem WEB | ✅ Corrigido (commit anterior) |
 | 4 | 🟢 INFO | `PaymentStatus` sem `IN_PROCESS` | ✅ Corrigido (commit anterior) |
 | 5 | 🟢 INFO | `NotificationChannel` tinha PUSH; DB não tem | ✅ Corrigido (commit anterior) |
@@ -120,11 +121,11 @@ Como o projeto usa MySQL single-container (tanto local quanto produção via `do
 
 ---
 
-## Resumo das Ações
+## Resumo das Ações Executadas
 
-| Ação | Arquivo | Tipo |
-|---|---|---|
-| Adicionar `@JdbcTypeCode` + `columnDefinition` em `Category.barbershopId` | `Category.java` | Código Java |
-| Executar `ALTER TABLE categories MODIFY barbershop_id VARCHAR(36)` | Servidor produção | DDL manual |
-| Adicionar aviso explícito nas views cross-DB | `views.sql` | Documentação SQL |
-| Atualizar `ANALISE_BANCO_DADOS.md` — remover issues já resolvidos | `.github/ANALISE_BANCO_DADOS.md` | Documentação |
+| Ação | Arquivo | Tipo | Status |
+|---|---|---|---|
+| Adicionar `@JdbcTypeCode` + `columnDefinition` em `Category.barbershopId` | `Category.java` | Código Java | ✅ Executado |
+| `ALTER TABLE categories MODIFY barbershop_id VARCHAR(36)` + restauração dos 2 registros com UUID correto | MySQL produção (`ssh Edu@10.147.19.1`) | DDL manual | ✅ Executado |
+| Adicionar aviso `[CROSS-DB] ANALYTICS-ONLY` nas views cross-DB | `views.sql` | Documentação SQL | ✅ Executado |
+| Atualizar `ANALISE_BANCO_DADOS.md` — todos os achados marcados ✅ | `.github/ANALISE_BANCO_DADOS.md` | Documentação | ✅ Executado |
