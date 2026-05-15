@@ -43,7 +43,8 @@ public class Category {
     @Column(nullable = false, length = 80)
     private String name;
 
-    @Column(name = "barbershop_id", nullable = false)
+    @JdbcTypeCode(Types.VARCHAR)
+    @Column(name = "barbershop_id", nullable = false, columnDefinition = "VARCHAR(36)")
     private UUID barbershopId;
 
     @CreatedDate

@@ -9,13 +9,23 @@
 --
 -- Uso no servidor (ZimaOS):
 --   docker exec -i cortaai-mysql mysql -uroot -p<MYSQL_ROOT_PASSWORD> < views.sql
+--
+-- ⚠️  AVISO ARQUITETURAL — Views cross-database:
+--     As views marcadas com [CROSS-DB] realizam JOINs entre bancos distintos
+--     (ex: payment_db × schedule_db × barbershop_db). Isso só funciona porque
+--     todos os bancos rodam na MESMA instância MySQL (single-container).
+--     Essas views são exclusivas para fins analíticos/dashboard — NUNCA devem
+--     ser consultadas por código de microsserviço diretamente.
+--     Em uma migração futura para bancos isolados, estas views devem ser
+--     substituídas por endpoints de analytics com dados materializados.
 -- =======================================================================
 
 -- =======================================================================
--- 1. PAYMENT SERVICE: Performance Financeira dos Barbeiros
---    Cruza as transações aprovadas com a agenda e regras de comissão.
---    Para barbeiro com comissão por serviço, generated_revenue representa
---    a comissão final. Sem regra de comissão, mantém o valor bruto pago.
+-- 1. PAYMENT SERVICE: Performance Financeira dos Barbeiros                [CROSS-DB]
+--    ⚠️  Cruza: payment_db × schedule_db × barbershop_db
+--    Requer MySQL single-instance. NÃO usar em código de microsserviço.
+--    Calcula receita por barbeiro considerando regras de comissão quando
+--    existentes, ou valor bruto do agendamento quando não há regra definida.
 -- =======================================================================
 CREATE OR REPLACE VIEW payment_db.v_barber_financial_performance AS
 WITH gross_by_barber AS (
@@ -145,8 +155,10 @@ GROUP BY DATE_FORMAT(date_created, '%Y-%m');
 
 
 -- =======================================================================
--- 6. USER SERVICE: Retenção de Clientes (Recorrentes por Mês)
---    Lê appointments do schedule_db — cross-db read (somente para analytics)
+-- 6. USER SERVICE: Retenção de Clientes (Recorrentes por Mês)            [CROSS-DB]
+--    ⚠️  Cruza: user_db × schedule_db
+--    Requer MySQL single-instance. NÃO usar em código de microsserviço.
+--    Conta clientes distintos com agendamentos concluídos por mês.
 -- =======================================================================
 CREATE OR REPLACE VIEW user_db.v_customer_retention AS
 SELECT
