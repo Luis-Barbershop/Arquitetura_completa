@@ -22,14 +22,6 @@ function ServicesHomeBarber({ onNavigateToServices }) {
         loadServices();
     }, [loadServices]);
 
-    useEffect(() => {
-        const intervalId = window.setInterval(() => {
-            loadServices();
-        }, 20000);
-
-        return () => window.clearInterval(intervalId);
-    }, [loadServices]);
-
     const highlightedServices = useMemo(() => services.slice(0, 3), [services]);
 
   return (

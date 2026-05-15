@@ -159,56 +159,60 @@ function BarberDashboardPage() {
                 <section className={styles.heroSection}>
                     <p className={styles.heroKicker}>DASHBOARD & RELATÓRIOS</p>
                     <h1>Análise da sua barbearia</h1>
-                    <button
-                        onClick={() => setShowExportModal(true)}
-                        className={styles.dashboardCtaButton}
-                        style={{ marginTop: '0.75rem', fontSize: '0.9rem', padding: '0.55rem 1.2rem' }}
-                        type="button"
-                    >
-                        📄 Exportar PDF
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+                        <button
+                            onClick={() => setShowExportModal(true)}
+                            className={styles.dashboardCtaButton}
+                            style={{ fontSize: '0.9rem', padding: '0.55rem 1.2rem' }}
+                            type="button"
+                        >
+                            📄 Exportar PDF
+                        </button>
+                        <button
+                            onClick={fetchAll}
+                            className={styles.dashboardCtaButton}
+                            style={{ fontSize: '0.9rem', padding: '0.55rem 1.2rem', background: '#333', color: '#fff' }}
+                            type="button"
+                        >
+                            � Atualizar dados
+                        </button>
+                    </div>
                 </section>
 
                 <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay2}`}>
 
                     <DashReportPanel
                         title="Performance dos Barbeiros"
-                        onRefresh={fetchAll}
                         dashContent={<BarberPerformancePanel data={barberPerf} />}
                         reportContent={<BarberPerformanceTable data={barberPerf} />}
                     />
 
                     <DashReportPanel
                         title="Saúde do Estoque"
-                        onRefresh={fetchAll}
                         dashContent={<StockHealthPanel data={stockHealth} />}
                         reportContent={<StockHealthTable data={stockHealth} />}
                     />
 
                     <DashReportPanel
                         title="Termômetro de Agenda"
-                        onRefresh={fetchAll}
                         dashContent={<AgendaThermometerPanel data={agendaThermo} />}
                         reportContent={<AgendaThermometerTable data={agendaThermo} />}
                     />
 
                     <DashReportPanel
                         title="Matriz de Habilidades"
-                        onRefresh={fetchAll}
                         dashContent={<BarberSkillMatrixPanel data={skillMatrix} />}
                         reportContent={<BarberSkillMatrixTable data={skillMatrix} />}
                     />
 
                     <DashReportPanel
                         title="Aquisição de Clientes"
-                        onRefresh={fetchAll}
                         dashContent={<CustomerAcquisitionPanel data={customerAcq} />}
                         reportContent={<CustomerAcquisitionTable data={customerAcq} />}
                     />
 
                     <DashReportPanel
                         title="Retenção de Clientes"
-                        onRefresh={fetchAll}
                         dashContent={<CustomerRetentionPanel data={customerRet} />}
                         reportContent={<CustomerRetentionTable data={customerRet} />}
                     />

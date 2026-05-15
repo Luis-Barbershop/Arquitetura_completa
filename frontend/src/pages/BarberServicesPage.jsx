@@ -165,19 +165,6 @@ function BarberServicesPage() {
     loadServices();
   }, [isOwner, loadServices]);
 
-  useEffect(() => {
-    if (!isOwner) {
-      return undefined;
-    }
-
-    // Mantém o painel atualizado automaticamente, sem ação manual.
-    const intervalId = window.setInterval(() => {
-      loadServices({ silent: true });
-    }, 15000);
-
-    return () => window.clearInterval(intervalId);
-  }, [isOwner, loadServices]);
-
   useEffect(() => () => {
     if (toastTimerRef.current) {
       window.clearTimeout(toastTimerRef.current);
