@@ -28,8 +28,8 @@ public class FixedExpenseService {
     private final UserServiceClient userServiceClient;
 
     @Transactional(readOnly = true)
-    public List<FixedExpenseResponseDTO> list(String principalEmail, Integer month, Integer year) {
-        var owner = resolveOwner(principalEmail);
+    public List<FixedExpenseResponseDTO> list(String firebaseUid, Integer month, Integer year) {
+        var owner = resolveOwner(firebaseUid);
         var shop = findOwnerShop(owner);
 
         List<FixedExpense> expenses = (month != null && year != null)
@@ -40,8 +40,8 @@ public class FixedExpenseService {
         return expenses.stream().map(this::toDTO).collect(Collectors.toList());
     }
 
-    public FixedExpenseResponseDTO create(String principalEmail, FixedExpenseRequestDTO dto) {
-        var owner = resolveOwner(principalEmail);
+    public FixedExpenseResponseDTO create(String firebaseUid, FixedExpenseRequestDTO dto) {
+        var owner = resolveOwner(firebaseUid);
         var shop = findOwnerShop(owner);
 
         FixedExpense expense = new FixedExpense();
@@ -56,8 +56,8 @@ public class FixedExpenseService {
         return toDTO(fixedExpenseRepository.save(expense));
     }
 
-    public void delete(String principalEmail, UUID expenseId) {
-        var owner = resolveOwner(principalEmail);
+    public void delete(String firebaseUid, UUID expenseId) {
+        var owner = resolveOwner(firebaseUid);
         var shop = findOwnerShop(owner);
 
         FixedExpense expense = fixedExpenseRepository.findById(expenseId)
@@ -72,9 +72,9 @@ public class FixedExpenseService {
 
     // ── helpers ──────────────────────────────────────────────────────────────
 
-    private ifsp.edu.projeto.cortaai.barbershopservice.dto.UserInfoDTO resolveOwner(String email) {
+    private ifsp.edu.projeto.cortaai.barbershopservice.dto.UserInfoDTO resolveOwner(String firebaseUid) {
         try {
-            var user = userServiceClient.getUserByEmail(email);
+            var user = userServiceClient.getUserByFirebaseUid(firebaseUid);
             if (user == null) throw new NotFoundException("Usuário não encontrado.");
             if (!"BARBER".equals(user.getUserType())) {
                 throw new ForbiddenException("Apenas barbeiros podem gerenciar gastos fixos.");
