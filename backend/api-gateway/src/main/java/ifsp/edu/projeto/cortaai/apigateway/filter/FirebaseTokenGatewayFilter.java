@@ -225,6 +225,16 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
     }
 
     private TokenResolution resolveToken(ServerWebExchange exchange, String correlationId, String path) {
+        // SSE — EventSource nativo do browser não suporta headers customizados.
+        // Aceita ?token= exclusivamente para a rota de stream de notificações.
+        if (path.startsWith("/api/notifications/stream")) {
+            String queryToken = exchange.getRequest().getQueryParams().getFirst("token");
+            if (queryToken != null && !queryToken.isBlank()) {
+                log.info("event=sse-query-token-used correlationId={} path={}", correlationId, path);
+                return new TokenResolution(queryToken, "QUERY_PARAM", "sse_query_token_present");
+            }
+        }
+
         String cookieToken = extractCookieToken(exchange);
         if (sessionCookieEnabled && cookieToken != null && !cookieToken.isBlank()) {
             log.info("event=session-cookie-token-used correlationId={} path={}", correlationId, path);

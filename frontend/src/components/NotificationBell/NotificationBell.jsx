@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell } from '@phosphor-icons/react';
 import api from '../../services/api';
+import { useNotificationStream } from '../../hooks/useNotificationStream';
 import styles from './NotificationBell.module.css';
 
 /**
@@ -25,20 +26,17 @@ function NotificationBell({ userType = 'barber' }) {
     const [loading, setLoading] = useState(false);
     const dropdownRef = useRef(null);
 
-    // Busca contagem de não lidas periodicamente (a cada 30s)
-    useEffect(() => {
-        const fetchCount = async () => {
-            try {
-                const res = await api.get('/notifications/unread-count');
-                setUnreadCount(res.data?.unreadCount ?? 0);
-            } catch {
-                // silencia erros de rede — não crítico
-            }
-        };
+    // SSE — recebe contagem de não lidas em tempo real (sem polling)
+    const handleUnreadCount = useCallback((count) => {
+        setUnreadCount(count);
+    }, []);
+    useNotificationStream(handleUnreadCount);
 
-        fetchCount();
-        const interval = setInterval(fetchCount, 30_000);
-        return () => clearInterval(interval);
+    // Busca contagem inicial no mount (antes do SSE conectar)
+    useEffect(() => {
+        api.get('/notifications/unread-count')
+            .then((res) => setUnreadCount(res.data?.unreadCount ?? 0))
+            .catch(() => {});
     }, []);
 
     // Fecha dropdown ao clicar fora

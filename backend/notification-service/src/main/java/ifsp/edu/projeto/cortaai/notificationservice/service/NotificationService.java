@@ -33,6 +33,7 @@ public class NotificationService {
     private final EmailService emailService;
     private final PushNotificationService pushNotificationService;
     private final ScheduleServiceClient scheduleServiceClient;
+    private final SseEmitterService sseEmitterService;
 
     // ─── Agendamento criado ──────────────────────────────────────────────────────
 
@@ -268,6 +269,11 @@ public class NotificationService {
                 .build();
         Notification saved = notificationRepository.save(notification);
         log.info("Notificação criada [{}] para userId={}: {}", type, userId, title);
+
+        // Empurra contagem atualizada via SSE (se o usuário tiver conexão ativa)
+        long unreadCount = notificationRepository.countByUserIdAndReadFalse(userId);
+        sseEmitterService.sendUnreadCount(userId, unreadCount);
+
         return saved;
     }
 
