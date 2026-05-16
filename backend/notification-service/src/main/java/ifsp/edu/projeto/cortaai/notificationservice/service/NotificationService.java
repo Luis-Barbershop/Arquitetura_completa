@@ -293,7 +293,10 @@ public class NotificationService {
             throw new RuntimeException("Notificação não pertence ao usuário");
         }
         notification.setRead(true);
-        return toDTO(notificationRepository.save(notification));
+        Notification saved = notificationRepository.save(notification);
+        long unreadCount = notificationRepository.countByUserIdAndReadFalse(userId);
+        sseEmitterService.sendUnreadCount(userId, unreadCount);
+        return toDTO(saved);
     }
 
     @Transactional(readOnly = true)

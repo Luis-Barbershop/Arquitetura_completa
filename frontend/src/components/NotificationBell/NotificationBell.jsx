@@ -11,12 +11,10 @@ import styles from './NotificationBell.module.css';
  * Props:
  *   userType: 'customer' | 'barber'  — determina rota de redirect ao clicar
  *
- * Lógica de redirect por palavras-chave na notificação:
- *   convite      → /barberHome/perfil (barbeiro) | ignorado (cliente)
- *   agendamento / horário / confirmado / cancelado
- *                → /meus-agendamentos (cliente) | /barberHome (barbeiro)
- *   pagamento / pago
- *                → /meus-agendamentos (cliente) | /barberHome (barbeiro)
+ * Lógica de redirect por tipo:
+ *   agendamentos/pagamentos → /meus-agendamentos
+ *   pedido de entrada       → /barberHome/time
+ *   convite                 → /barberHome/perfil
  */
 function NotificationBell({ userType = 'barber' }) {
     const navigate = useNavigate();
@@ -77,25 +75,40 @@ function NotificationBell({ userType = 'barber' }) {
         }
     };
 
-    const getRedirectPath = (n) => {
-        const text = `${n.title || ''} ${n.message || ''}`.toLowerCase();
+    const isOwner = () => (
+        localStorage.getItem('isOwner') === 'true' ||
+        String(localStorage.getItem('userRole') || '').toUpperCase().includes('OWNER')
+    );
 
-        if (text.includes('convite')) {
+    const getAppointmentRoute = () => {
+        if (userType === 'customer') {
+            return '/meus-agendamentos';
+        }
+        return isOwner() ? '/meus-agendamentos?view=team' : '/meus-agendamentos';
+    };
+
+    const getRedirectPath = (n) => {
+        const type = String(n.type || '').toUpperCase();
+
+        if (
+            type === 'APPOINTMENT_CREATED' ||
+            type === 'APPOINTMENT_CANCELLED' ||
+            type === 'APPOINTMENT_CONCLUDED' ||
+            type === 'APPOINTMENT_RESCHEDULED' ||
+            type === 'APPOINTMENT_REMINDER' ||
+            type === 'PAYMENT_APPROVED'
+        ) {
+            return getAppointmentRoute();
+        }
+
+        if (type === 'JOIN_REQUEST_RECEIVED') {
+            return userType === 'barber' ? '/barberHome/time' : null;
+        }
+
+        if (type === 'INVITE_RECEIVED') {
             return userType === 'barber' ? '/barberHome/perfil' : null;
         }
-        if (
-            text.includes('agendamento') ||
-            text.includes('horário') ||
-            text.includes('confirmado') ||
-            text.includes('cancelado') ||
-            text.includes('concluído') ||
-            text.includes('encaixe')
-        ) {
-            return userType === 'customer' ? '/meus-agendamentos' : '/barberHome';
-        }
-        if (text.includes('pagamento') || text.includes('pago')) {
-            return userType === 'customer' ? '/meus-agendamentos' : '/barberHome';
-        }
+
         return null;
     };
 

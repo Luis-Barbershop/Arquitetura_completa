@@ -152,4 +152,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     List<Appointment> findActiveInTimeWindow(
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to);
+
+    @Query("SELECT a FROM Appointment a WHERE " +
+           "a.startTime BETWEEN :from AND :to " +
+           "AND a.status IN ('SCHEDULED', 'CONFIRMED', 'IN_PROGRESS') " +
+           "ORDER BY a.startTime ASC")
+    List<Appointment> findAppointmentsForReminderWindow(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 }

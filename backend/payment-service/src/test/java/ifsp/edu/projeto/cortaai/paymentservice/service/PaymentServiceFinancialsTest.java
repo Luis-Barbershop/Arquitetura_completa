@@ -2,6 +2,7 @@ package ifsp.edu.projeto.cortaai.paymentservice.service;
 
 import ifsp.edu.projeto.cortaai.paymentservice.dto.AppointmentActivityInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.AppointmentInfoDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.BarberFinancialPerformanceResponseDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.BarberFinancialSummaryDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.CommissionRuleInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialOverviewDTO;
@@ -294,6 +295,41 @@ class PaymentServiceFinancialsTest {
         assertThat(series.points().get(0).walkInRevenue()).isEqualByComparingTo("35.00");
         assertThat(series.points().get(0).approvedTransactions()).isEqualTo(1);
         assertThat(series.points().get(0).walkInAppointmentsCount()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldIncludeScheduledAppointmentsInOwnerBarberPerformance() {
+        UUID shopId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        UUID activityId = UUID.randomUUID();
+        LocalDate day = LocalDate.of(2026, 5, 4);
+        UserInfoDTO owner = user(ownerId, "BARBER", "OWNER", shopId);
+        AppointmentInfoDTO scheduled = appointment(
+                UUID.randomUUID(),
+                shopId,
+                UUID.randomUUID(),
+                barberId,
+                day.atTime(9, 0),
+                new BigDecimal("120.00"),
+                "SCHEDULED",
+                List.of(activity(activityId, new BigDecimal("120.00"))));
+
+        when(userServiceClient.getUserByFirebaseUid("owner-firebase")).thenReturn(owner);
+        when(scheduleServiceClient.getBarbershopAppointmentsByPeriod(eq(shopId), any(), any()))
+                .thenReturn(List.of(scheduled));
+        when(barbershopServiceClient.getBarberCommissions(shopId, barberId)).thenReturn(List.of(
+                new CommissionRuleInfoDTO(UUID.randomUUID(), activityId, "Corte", new BigDecimal("50.00"))
+        ));
+
+        List<BarberFinancialPerformanceResponseDTO> performance = paymentService.getBarberFinancialPerformance(
+                "owner-firebase", shopId, day, day);
+
+        assertThat(performance).hasSize(1);
+        assertThat(performance.get(0).totalAppointments()).isEqualTo(1);
+        assertThat(performance.get(0).generatedRevenue()).isEqualByComparingTo("120.00");
+        assertThat(performance.get(0).barberCommission()).isEqualByComparingTo("60.00");
+        assertThat(performance.get(0).barbershopCommission()).isEqualByComparingTo("60.00");
     }
 
     @Test

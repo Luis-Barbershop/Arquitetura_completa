@@ -9,15 +9,19 @@ import ifsp.edu.projeto.cortaai.scheduleservice.repository.AppointmentRepository
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Publica evento de lembrete 1h antes do agendamento.
- * Roda a cada 5 minutos e busca agendamentos na janela [+55min, +65min].
+ * Publica evento de lembrete quando falta 1h ou menos para o agendamento.
+ * Roda a cada 5 minutos e usa Redis para evitar duplicidade.
  */
 @Component
 @RequiredArgsConstructor
@@ -27,17 +31,22 @@ public class ReminderScheduler {
     private final AppointmentRepository appointmentRepository;
     private final RabbitTemplate rabbitTemplate;
     private final UserServiceClient userServiceClient;
+    private final RedisTemplate<String, String> stringRedisTemplate;
+    private final Set<String> localReminderFallback = ConcurrentHashMap.newKeySet();
 
     @Scheduled(fixedDelay = 300_000) // 5 minutos
     public void publishReminders() {
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime from = now.plusMinutes(55);
-        LocalDateTime to = now.plusMinutes(65);
+        LocalDateTime to = now.plusHours(1);
 
-        List<Appointment> appointments = appointmentRepository.findActiveInTimeWindow(from, to);
-        log.info("ReminderScheduler: {} agendamentos na janela [{}, {}]", appointments.size(), from, to);
+        List<Appointment> appointments = appointmentRepository.findAppointmentsForReminderWindow(now, to);
+        log.info("ReminderScheduler: {} agendamentos na janela [{}, {}]", appointments.size(), now, to);
 
         for (Appointment appt : appointments) {
+            if (!claimReminder(appt, now)) {
+                continue;
+            }
+
             String customerEmail = resolveEmail(appt.getCustomerId());
             AppointmentReminderEvent event = new AppointmentReminderEvent(
                     appt.getId(),
@@ -51,6 +60,29 @@ public class ReminderScheduler {
             rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.RK_APPOINTMENT_REMINDER, event);
             log.info("Lembrete publicado: appointmentId={} customerId={}", appt.getId(), appt.getCustomerId());
         }
+    }
+
+    private boolean claimReminder(Appointment appointment, LocalDateTime now) {
+        String key = reminderKey(appointment);
+        Duration ttl = Duration.between(now, appointment.getStartTime().plusHours(2));
+        if (ttl.isNegative() || ttl.isZero()) {
+            ttl = Duration.ofHours(1);
+        }
+
+        try {
+            Boolean claimed = stringRedisTemplate.opsForValue().setIfAbsent(key, "1", ttl);
+            return Boolean.TRUE.equals(claimed);
+        } catch (Exception ex) {
+            log.warn("Redis indisponivel para deduplicar lembrete; usando fallback local. appointmentId={} cause={}",
+                    appointment.getId(), ex.getClass().getSimpleName());
+            return localReminderFallback.add(key);
+        }
+    }
+
+    private String reminderKey(Appointment appointment) {
+        return "schedule:appointment-reminder:%s:%s".formatted(
+                appointment.getId(),
+                appointment.getStartTime());
     }
 
     private String resolveEmail(java.util.UUID userId) {

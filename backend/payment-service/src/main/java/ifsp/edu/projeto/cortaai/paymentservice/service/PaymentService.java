@@ -671,48 +671,16 @@ public class PaymentService {
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.plusDays(1).atStartOfDay().minusNanos(1);
 
-        List<Transaction> approvedTransactions = transactionRepository.findByBarbershopIdAndCreatedAtBetween(
-                        barbershopId, start, end)
-                .stream()
-                .filter(transaction -> transaction.getStatus() == PaymentStatus.APPROVED)
-                .toList();
-
-        Map<UUID, AppointmentInfoDTO> appointmentsById = approvedTransactions.stream()
-                .map(Transaction::getAppointmentId)
-                .filter(Objects::nonNull)
-                .distinct()
-                .map(this::safeGetAppointmentById)
-                .filter(Objects::nonNull)
-                .filter(appointment -> barbershopId.equals(appointment.barbershopId()))
-                .collect(Collectors.toMap(AppointmentInfoDTO::id, appointment -> appointment, (left, right) -> left));
-
         Map<UUID, BarberPerformanceAccumulator> performanceByBarber = new HashMap<>();
         Map<UUID, Map<UUID, BigDecimal>> commissionCache = new HashMap<>();
 
-        for (Transaction transaction : approvedTransactions) {
-            AppointmentInfoDTO appointment = appointmentsById.get(transaction.getAppointmentId());
-            if (appointment == null || appointment.barberId() == null) {
-                continue;
-            }
-            addAppointmentPerformance(
-                    performanceByBarber,
-                    commissionCache,
-                    barbershopId,
-                    appointment,
-                    calculateGrossAmount(appointment, transaction.getAmount()));
-        }
-
-        getWalkInAppointments(barbershopId, start, end).forEach(appointment -> {
-            if (appointment.barberId() == null) {
-                return;
-            }
-            addAppointmentPerformance(
-                    performanceByBarber,
-                    commissionCache,
-                    barbershopId,
-                    appointment,
-                    calculateGrossAmount(appointment, null));
-        });
+        getAppointmentsForBarberPerformance(barbershopId, start, end)
+                .forEach(appointment -> addAppointmentPerformance(
+                        performanceByBarber,
+                        commissionCache,
+                        barbershopId,
+                        appointment,
+                        calculateGrossAmount(appointment, null)));
 
         BigDecimal totalGenerated = performanceByBarber.values().stream()
                 .map(accumulator -> accumulator.generatedRevenue)
@@ -740,6 +708,37 @@ public class PaymentService {
                 appointment.barberId(),
                 barberId -> new BarberPerformanceAccumulator(barberId, appointment.barberName()));
         accumulator.add(grossAmount, barberCommission, barbershopCommission);
+    }
+
+    private List<AppointmentInfoDTO> getAppointmentsForBarberPerformance(UUID barbershopId, LocalDateTime from, LocalDateTime to) {
+        try {
+            return scheduleServiceClient.getBarbershopAppointmentsByPeriod(
+                            barbershopId,
+                            from.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                            to.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                    .stream()
+                    .filter(this::isAppointmentForBarberPerformance)
+                    .toList();
+        } catch (Exception ex) {
+            log.warn("event=barber-performance-appointments-fetch-failed barbershopId={} cause={}",
+                    maskIdentifier(barbershopId),
+                    ex.getClass().getSimpleName());
+            return List.of();
+        }
+    }
+
+    private boolean isAppointmentForBarberPerformance(AppointmentInfoDTO appointment) {
+        if (appointment == null || appointment.barberId() == null || appointment.startTime() == null) {
+            return false;
+        }
+
+        String status = appointment.status() == null ? "" : appointment.status().toUpperCase(Locale.ROOT);
+        return "SCHEDULED".equals(status)
+                || "CONFIRMED".equals(status)
+                || "IN_PROGRESS".equals(status)
+                || "COMPLETED".equals(status)
+                || "CONCLUDED".equals(status)
+                || "WALK_IN".equals(status);
     }
 
     @Transactional(readOnly = true)
