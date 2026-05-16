@@ -5,6 +5,7 @@ import com.mercadopago.resources.preference.Preference;
 import ifsp.edu.projeto.cortaai.paymentservice.config.RabbitConfig;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.AppointmentInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.BarberFinancialPerformanceResponseDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.BarberFinancialSummaryDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.CommissionRuleInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialOverviewDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesDTO;
@@ -15,8 +16,6 @@ import ifsp.edu.projeto.cortaai.paymentservice.dto.SaveMpCredentialsDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.TransactionDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.UserInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.BarbershopServiceClient;
-import ifsp.edu.projeto.cortaai.paymentservice.model.analytics.VBarberFinancialPerformance;
-import ifsp.edu.projeto.cortaai.paymentservice.repository.analytics.VBarberFinancialPerformanceRepository;
 import ifsp.edu.projeto.cortaai.paymentservice.event.PaymentApprovedEvent;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.ProductServiceClient;
 import ifsp.edu.projeto.cortaai.paymentservice.feign.ScheduleServiceClient;
@@ -65,7 +64,6 @@ public class PaymentService {
     private final TransactionRepository transactionRepository;
     private final WebhookLogRepository webhookLogRepository;
     private final DashboardKpiDailyRepository dashboardKpiDailyRepository;
-    private final VBarberFinancialPerformanceRepository vBarberFinancialPerformanceRepository;
     private final ScheduleServiceClient scheduleServiceClient;
     private final BarbershopServiceClient barbershopServiceClient;
     private final UserServiceClient userServiceClient;
@@ -456,7 +454,46 @@ public class PaymentService {
         return getBarbershopOverview(barbershopId, from, to);
     }
 
+    @Transactional(readOnly = true)
+    public BarberFinancialSummaryDTO getBarberFinancialSummaryByFirebaseUid(
+            String firebaseUid,
+            UUID barbershopId,
+            LocalDate from,
+            LocalDate to) {
+        UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        if (!checkBarbershopAccess(user, barbershopId, false)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissao para acessar o financeiro desta barbearia.");
+        }
+
+        return buildBarberFinancialSummary(user, barbershopId, from, to);
+    }
+
     private FinancialOverviewDTO getBarberCommissionOverview(
+            UserInfoDTO barber,
+            UUID barbershopId,
+            LocalDate from,
+            LocalDate to) {
+        BarberFinancialSummaryDTO summary = buildBarberFinancialSummary(barber, barbershopId, from, to);
+
+        return new FinancialOverviewDTO(
+                summary.barbershopId(),
+                summary.currency(),
+                summary.barberServiceCommission(),
+                summary.barberWalkInCommission(),
+                summary.barberTotalCommission(),
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                summary.barberServiceCommission(),
+                summary.barberTotalCommission(),
+                summary.transactionsCount(),
+                summary.walkInAppointmentsCount(),
+                summary.approvedCount(),
+                summary.pendingCount(),
+                summary.cancelledCount()
+        );
+    }
+
+    private BarberFinancialSummaryDTO buildBarberFinancialSummary(
             UserInfoDTO barber,
             UUID barbershopId,
             LocalDate from,
@@ -482,6 +519,7 @@ public class PaymentService {
         int approvedCount = 0;
         int pendingCount = 0;
         int cancelledCount = 0;
+        BigDecimal grossServiceRevenue = BigDecimal.ZERO;
         BigDecimal serviceCommission = BigDecimal.ZERO;
 
         for (Transaction transaction : periodTransactions) {
@@ -492,6 +530,7 @@ public class PaymentService {
 
             if (transaction.getStatus() == PaymentStatus.APPROVED) {
                 approvedCount++;
+                grossServiceRevenue = grossServiceRevenue.add(calculateGrossAmount(appointment, transaction.getAmount()));
                 serviceCommission = serviceCommission.add(calculateCommission(appointment, commissionPercentages));
             } else if (transaction.getStatus() == PaymentStatus.PENDING || transaction.getStatus() == PaymentStatus.IN_PROCESS) {
                 pendingCount++;
@@ -503,21 +542,33 @@ public class PaymentService {
         List<AppointmentInfoDTO> walkInAppointments = getWalkInAppointments(barbershopId, start, end).stream()
                 .filter(a -> barber.getId().equals(a.barberId()))
                 .toList();
+        BigDecimal grossWalkInRevenue = walkInAppointments.stream()
+                .map(a -> calculateGrossAmount(a, null))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal walkInCommission = walkInAppointments.stream()
                 .map(a -> calculateCommission(a, commissionPercentages))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalCommission = serviceCommission.add(walkInCommission).setScale(2, RoundingMode.HALF_UP);
 
-        return new FinancialOverviewDTO(
+        BigDecimal grossTotalRevenue = grossServiceRevenue.add(grossWalkInRevenue);
+        BigDecimal totalCommission = serviceCommission.add(walkInCommission).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal barbershopServiceCommission = nonNegative(grossServiceRevenue.subtract(serviceCommission));
+        BigDecimal barbershopWalkInCommission = nonNegative(grossWalkInRevenue.subtract(walkInCommission));
+        BigDecimal barbershopTotalCommission = nonNegative(grossTotalRevenue.subtract(totalCommission));
+
+        return new BarberFinancialSummaryDTO(
                 barbershopId,
+                barber.getId(),
+                barber.getName(),
                 "BRL",
+                grossServiceRevenue.setScale(2, RoundingMode.HALF_UP),
+                grossWalkInRevenue.setScale(2, RoundingMode.HALF_UP),
+                grossTotalRevenue.setScale(2, RoundingMode.HALF_UP),
                 serviceCommission.setScale(2, RoundingMode.HALF_UP),
                 walkInCommission.setScale(2, RoundingMode.HALF_UP),
                 totalCommission,
-                BigDecimal.ZERO,
-                BigDecimal.ZERO,
-                serviceCommission.setScale(2, RoundingMode.HALF_UP),
-                totalCommission,
+                barbershopServiceCommission,
+                barbershopWalkInCommission,
+                barbershopTotalCommission,
                 appointmentsById.size(),
                 walkInAppointments.size(),
                 approvedCount,
@@ -574,20 +625,121 @@ public class PaymentService {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
+    private BigDecimal calculateGrossAmount(AppointmentInfoDTO appointment, BigDecimal transactionAmount) {
+        if (transactionAmount != null) {
+            return transactionAmount.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        if (appointment.totalPrice() != null) {
+            return appointment.totalPrice().setScale(2, RoundingMode.HALF_UP);
+        }
+
+        if (appointment.activities() == null || appointment.activities().isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        return appointment.activities().stream()
+                .map(activity -> activity.price() == null ? BigDecimal.ZERO : activity.price())
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal nonNegative(BigDecimal value) {
+        if (value == null || value.signum() < 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        return value.setScale(2, RoundingMode.HALF_UP);
+    }
+
     @Transactional(readOnly = true)
     public List<BarberFinancialPerformanceResponseDTO> getBarberFinancialPerformance(String firebaseUid, UUID barbershopId) {
+        return getBarberFinancialPerformance(firebaseUid, barbershopId, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BarberFinancialPerformanceResponseDTO> getBarberFinancialPerformance(
+            String firebaseUid,
+            UUID barbershopId,
+            LocalDate from,
+            LocalDate to) {
         if (!canAccessBarbershopFinancials(firebaseUid, barbershopId, true)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso restrito ao owner da barbearia.");
         }
-        return vBarberFinancialPerformanceRepository.findByBarbershopId(barbershopId).stream()
-                .map(v -> new BarberFinancialPerformanceResponseDTO(
-                        v.getBarberId(),
-                        v.getBarberName(),
-                        v.getTotalAppointments(),
-                        v.getGeneratedRevenue(),
-                        v.getContributionPercentage()
-                ))
+
+        LocalDate startDate = from != null ? from : LocalDate.now().withDayOfMonth(1);
+        LocalDate endDate = to != null ? to : LocalDate.now();
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime end = endDate.plusDays(1).atStartOfDay().minusNanos(1);
+
+        List<Transaction> approvedTransactions = transactionRepository.findByBarbershopIdAndCreatedAtBetween(
+                        barbershopId, start, end)
+                .stream()
+                .filter(transaction -> transaction.getStatus() == PaymentStatus.APPROVED)
                 .toList();
+
+        Map<UUID, AppointmentInfoDTO> appointmentsById = approvedTransactions.stream()
+                .map(Transaction::getAppointmentId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .map(this::safeGetAppointmentById)
+                .filter(Objects::nonNull)
+                .filter(appointment -> barbershopId.equals(appointment.barbershopId()))
+                .collect(Collectors.toMap(AppointmentInfoDTO::id, appointment -> appointment, (left, right) -> left));
+
+        Map<UUID, BarberPerformanceAccumulator> performanceByBarber = new HashMap<>();
+        Map<UUID, Map<UUID, BigDecimal>> commissionCache = new HashMap<>();
+
+        for (Transaction transaction : approvedTransactions) {
+            AppointmentInfoDTO appointment = appointmentsById.get(transaction.getAppointmentId());
+            if (appointment == null || appointment.barberId() == null) {
+                continue;
+            }
+            addAppointmentPerformance(
+                    performanceByBarber,
+                    commissionCache,
+                    barbershopId,
+                    appointment,
+                    calculateGrossAmount(appointment, transaction.getAmount()));
+        }
+
+        getWalkInAppointments(barbershopId, start, end).forEach(appointment -> {
+            if (appointment.barberId() == null) {
+                return;
+            }
+            addAppointmentPerformance(
+                    performanceByBarber,
+                    commissionCache,
+                    barbershopId,
+                    appointment,
+                    calculateGrossAmount(appointment, null));
+        });
+
+        BigDecimal totalGenerated = performanceByBarber.values().stream()
+                .map(accumulator -> accumulator.generatedRevenue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return performanceByBarber.values().stream()
+                .map(accumulator -> accumulator.toResponse(totalGenerated))
+                .sorted(Comparator.comparing(BarberFinancialPerformanceResponseDTO::generatedRevenue).reversed())
+                .toList();
+    }
+
+    private void addAppointmentPerformance(
+            Map<UUID, BarberPerformanceAccumulator> performanceByBarber,
+            Map<UUID, Map<UUID, BigDecimal>> commissionCache,
+            UUID barbershopId,
+            AppointmentInfoDTO appointment,
+            BigDecimal grossAmount) {
+        Map<UUID, BigDecimal> commissionPercentages = commissionCache.computeIfAbsent(
+                appointment.barberId(),
+                barberId -> getCommissionPercentages(barbershopId, barberId));
+        BigDecimal barberCommission = calculateCommission(appointment, commissionPercentages);
+        BigDecimal barbershopCommission = nonNegative(grossAmount.subtract(barberCommission));
+
+        BarberPerformanceAccumulator accumulator = performanceByBarber.computeIfAbsent(
+                appointment.barberId(),
+                barberId -> new BarberPerformanceAccumulator(barberId, appointment.barberName()));
+        accumulator.add(grossAmount, barberCommission, barbershopCommission);
     }
 
     @Transactional(readOnly = true)
@@ -886,6 +1038,51 @@ public class PaymentService {
             scheduleServiceClient.updatePaymentStatus(appointmentId, status);
         } catch (Exception e) {
             log.error("Falha ao atualizar payment status no schedule-service", e);
+        }
+    }
+
+    private static class BarberPerformanceAccumulator {
+        private final UUID barberId;
+        private final String barberName;
+        private long totalAppointments;
+        private BigDecimal generatedRevenue = BigDecimal.ZERO;
+        private BigDecimal barberCommission = BigDecimal.ZERO;
+        private BigDecimal barbershopCommission = BigDecimal.ZERO;
+
+        private BarberPerformanceAccumulator(UUID barberId, String barberName) {
+            this.barberId = barberId;
+            this.barberName = barberName;
+        }
+
+        private void add(BigDecimal grossAmount, BigDecimal barberCommission, BigDecimal barbershopCommission) {
+            this.totalAppointments++;
+            this.generatedRevenue = this.generatedRevenue.add(grossAmount == null ? BigDecimal.ZERO : grossAmount);
+            this.barberCommission = this.barberCommission.add(barberCommission == null ? BigDecimal.ZERO : barberCommission);
+            this.barbershopCommission = this.barbershopCommission.add(barbershopCommission == null ? BigDecimal.ZERO : barbershopCommission);
+        }
+
+        private BarberFinancialPerformanceResponseDTO toResponse(BigDecimal totalGenerated) {
+            BigDecimal contributionPercentage = BigDecimal.ZERO;
+            if (totalGenerated != null && totalGenerated.signum() > 0) {
+                contributionPercentage = generatedRevenue
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(totalGenerated, 2, RoundingMode.HALF_UP);
+            }
+
+            BigDecimal averageTicket = totalAppointments > 0
+                    ? generatedRevenue.divide(BigDecimal.valueOf(totalAppointments), 2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+
+            return new BarberFinancialPerformanceResponseDTO(
+                    barberId.toString(),
+                    barberName,
+                    totalAppointments,
+                    generatedRevenue.setScale(2, RoundingMode.HALF_UP),
+                    contributionPercentage,
+                    barberCommission.setScale(2, RoundingMode.HALF_UP),
+                    barbershopCommission.setScale(2, RoundingMode.HALF_UP),
+                    averageTicket
+            );
         }
     }
 

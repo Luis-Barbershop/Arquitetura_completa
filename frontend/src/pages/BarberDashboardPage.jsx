@@ -16,7 +16,8 @@ import { CustomerRetentionPanel, CustomerRetentionTable } from '../components/Da
 import { FixedExpensesPiePanel, FixedExpensesTable } from '../components/Dashboard/panels/FixedExpensesPanel';
 import { ExportPDFModal } from '../components/Dashboard/ExportPDFModal';
 import {
-    getBarberPerformance,
+    getFinancialOverview,
+    getMyShopBarberPerformance,
     getStockHealthAlert,
     getAgendaThermometer,
     getBarberSkillMatrix,
@@ -39,6 +40,7 @@ function BarberDashboardPage() {
     const [customerAcq, setCustomerAcq] = useState([]);
     const [customerRet, setCustomerRet] = useState([]);
     const [fixedExpenses, setFixedExpenses] = useState([]);
+    const [financialOverview, setFinancialOverview] = useState(null);
 
     // ── Gastos fixos modal ──────────────────────────────────────────────────
     const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -87,8 +89,18 @@ function BarberDashboardPage() {
 
     const fetchAll = useCallback(async () => {
         if (!barbershopId) return;
-        const [perf, stock, thermo, skill, acq, ret, expenses] = await Promise.allSettled([
-            getBarberPerformance(barbershopId),
+        const now = new Date();
+        const monthStartDate = new Date(expenseYear, expenseMonth - 1, 1);
+        const monthEndDate = new Date(expenseYear, expenseMonth, 0);
+        const selectedCurrentMonth = expenseYear === now.getFullYear() && expenseMonth === now.getMonth() + 1;
+        const periodEndDate = selectedCurrentMonth ? now : monthEndDate;
+        const period = {
+            from: monthStartDate.toLocaleDateString('en-CA'),
+            to: periodEndDate.toLocaleDateString('en-CA'),
+        };
+        const [overview, perf, stock, thermo, skill, acq, ret, expenses] = await Promise.allSettled([
+            getFinancialOverview(barbershopId, period),
+            getMyShopBarberPerformance(barbershopId, period),
             getStockHealthAlert(barbershopId),
             getAgendaThermometer(barbershopId),
             getBarberSkillMatrix(barbershopId),
@@ -96,6 +108,7 @@ function BarberDashboardPage() {
             getCustomerRetention(),
             getMyFixedExpenses(expenseMonth, expenseYear),
         ]);
+        if (overview.status === 'fulfilled') setFinancialOverview(overview.value);
         if (perf.status === 'fulfilled') setBarberPerf(perf.value);
         if (stock.status === 'fulfilled') setStockHealth(stock.value);
         if (thermo.status === 'fulfilled') setAgendaThermo(thermo.value);
@@ -151,6 +164,12 @@ function BarberDashboardPage() {
 
     if (loading) return <div className={styles.loadingContainer}>Carregando...</div>;
 
+    const asCurrency = (value) => `R$ ${Number(value || 0).toFixed(2).replace('.', ',')}`;
+    const fixedExpensesTotal = fixedExpenses.reduce((sum, expense) => sum + Number(expense?.amount || 0), 0);
+    const grossRevenue = Number(financialOverview?.totalServiceRevenue || 0);
+    const productExpenses = Number(financialOverview?.productExpenses || 0);
+    const estimatedResult = grossRevenue - productExpenses - fixedExpensesTotal;
+
     return (
         <div className={`${styles.pageContainer} ${styles.withNavbar}`}>
             <div className={styles.contentWrapper}>
@@ -176,6 +195,25 @@ function BarberDashboardPage() {
                         >
                             � Atualizar dados
                         </button>
+                    </div>
+                </section>
+
+                <section className={styles.dashboardStatsGrid}>
+                    <div className={styles.dashboardStatCard}>
+                        <p className={styles.dashboardStatValue}>{asCurrency(grossRevenue)}</p>
+                        <p className={styles.dashboardStatLabel}>Faturamento do mês</p>
+                    </div>
+                    <div className={styles.dashboardStatCard}>
+                        <p className={styles.dashboardStatValue}>{asCurrency(productExpenses)}</p>
+                        <p className={styles.dashboardStatLabel}>Gastos com produtos</p>
+                    </div>
+                    <div className={styles.dashboardStatCard}>
+                        <p className={styles.dashboardStatValue}>{asCurrency(fixedExpensesTotal)}</p>
+                        <p className={styles.dashboardStatLabel}>Gastos fixos</p>
+                    </div>
+                    <div className={styles.dashboardStatCard}>
+                        <p className={styles.dashboardStatValue}>{asCurrency(estimatedResult)}</p>
+                        <p className={styles.dashboardStatLabel}>Resultado estimado</p>
                     </div>
                 </section>
 

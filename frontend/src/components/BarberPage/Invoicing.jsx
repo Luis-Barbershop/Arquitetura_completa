@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import api from '../../services/api';
+import { getBarberFinancialSummary, getFinancialOverview, getFinancialSeries } from '../../services/analyticsService';
 import Styles from "./CSS/invoicing.module.css"
 
 const asCurrency = (value) => `R$ ${Number(value || 0).toFixed(2).replace('.', ',')}`;
@@ -42,26 +42,20 @@ function Invoicing({ barber }) {
         fromDate.setDate(fromDate.getDate() - 6);
         const from = fromDate.toLocaleDateString('en-CA');
 
-        const response = await api.get('/payments/my-shop/overview', {
-          params: {
-            barbershopId,
+        if (isOwner) {
+          const response = await getFinancialOverview(barbershopId, {
             from: today,
             to: today,
-          },
-        });
-        setData(response.data || null);
+          });
+          setData(response || null);
 
-        if (isOwner) {
           try {
-            const seriesResponse = await api.get('/payments/my-shop/series', {
-              params: {
-                barbershopId,
-                from,
-                to: today,
-                groupBy: 'DAY',
-              },
+            const seriesResponse = await getFinancialSeries(barbershopId, {
+              from,
+              to: today,
+              groupBy: 'DAY',
             });
-            const points = Array.isArray(seriesResponse.data?.points) ? seriesResponse.data.points : [];
+            const points = Array.isArray(seriesResponse?.points) ? seriesResponse.points : [];
             setSeries(points);
             setSeriesError(false);
           } catch (seriesLoadError) {
@@ -70,6 +64,11 @@ function Invoicing({ barber }) {
             setSeriesError(true);
           }
         } else {
+          const response = await getBarberFinancialSummary(barbershopId, {
+            from: today,
+            to: today,
+          });
+          setData(response || null);
           setSeries([]);
           setSeriesError(false);
         }
@@ -85,7 +84,7 @@ function Invoicing({ barber }) {
     loadOverview();
   }, [barbershopId, isOwner]);
 
-  const panelTitle = isOwner ? 'Faturamento Hoje:' : 'Comissão Hoje:';
+  const panelTitle = isOwner ? 'Faturamento Hoje:' : 'Você recebe hoje:';
   const serviceLabel = isOwner ? 'Receita com transacao' : 'Comissão com transacao';
   const walkInLabel = isOwner ? 'Receita de walk-in' : 'Comissão de walk-in';
   const operationalResult = useMemo(() => Number(data?.operationalResult || 0), [data]);
@@ -93,12 +92,20 @@ function Invoicing({ barber }) {
     () => Number(data?.operationalResultWithWalkIn ?? data?.operationalResult ?? 0),
     [data]
   );
-  const serviceRevenue = useMemo(() => Number(data?.serviceRevenue || 0), [data]);
-  const walkInRevenue = useMemo(() => Number(data?.walkInRevenue || 0), [data]);
-  const totalServiceRevenue = useMemo(
-    () => Number(data?.totalServiceRevenue ?? (serviceRevenue + walkInRevenue)),
-    [data, serviceRevenue, walkInRevenue]
+  const serviceRevenue = useMemo(
+    () => Number((isOwner ? data?.serviceRevenue : data?.barberServiceCommission) || 0),
+    [data, isOwner]
   );
+  const walkInRevenue = useMemo(
+    () => Number((isOwner ? data?.walkInRevenue : data?.barberWalkInCommission) || 0),
+    [data, isOwner]
+  );
+  const totalServiceRevenue = useMemo(
+    () => Number((isOwner ? data?.totalServiceRevenue : data?.barberTotalCommission) ?? (serviceRevenue + walkInRevenue)),
+    [data, isOwner, serviceRevenue, walkInRevenue]
+  );
+  const grossTotalRevenue = useMemo(() => Number(data?.grossTotalRevenue || 0), [data]);
+  const barbershopTotalCommission = useMemo(() => Number(data?.barbershopTotalCommission || 0), [data]);
   const maxSeriesRevenue = useMemo(() => {
     if (!series.length) return 1;
     const maxValue = Math.max(...series.map((point) => Number(point?.totalServiceRevenue ?? (point?.serviceRevenue || 0))));
@@ -111,8 +118,14 @@ function Invoicing({ barber }) {
         <div className={Styles.containerFaturamentoLeft}>
         <h2>{panelTitle}</h2>
         <h1>{loading ? 'Carregando...' : asCurrency(totalServiceRevenue)}</h1>
+        {!isOwner && (
+          <p>Valor bruto gerado: {loading ? '...' : asCurrency(grossTotalRevenue)}</p>
+        )}
         <p>{serviceLabel}: {loading ? '...' : asCurrency(serviceRevenue)}</p>
         <p>{walkInLabel}: {loading ? '...' : asCurrency(walkInRevenue)}</p>
+        {!isOwner && (
+          <p>Comissão da barbearia: {loading ? '...' : asCurrency(barbershopTotalCommission)}</p>
+        )}
         {isOwner && (
           <>
             <p>Gastos de produtos: {loading ? '...' : asCurrency(data?.productExpenses)}</p>

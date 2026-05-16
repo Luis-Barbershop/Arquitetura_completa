@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.paymentservice.controller;
 
 import ifsp.edu.projeto.cortaai.paymentservice.dto.BarberFinancialPerformanceResponseDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.BarberFinancialSummaryDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.CreatePaymentDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialOverviewDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesDTO;
@@ -109,6 +110,16 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.getBarbershopOverviewByFirebaseUid(firebaseUid, barbershopId, from, to));
     }
 
+    @Operation(summary = "Resumo financeiro do barbeiro", description = "Retorna valor bruto gerado, comissao do barbeiro e parte da barbearia no periodo.")
+    @GetMapping("/my-shop/barber-summary")
+    public ResponseEntity<BarberFinancialSummaryDTO> getMyBarberSummary(
+            @Parameter(description = "Firebase UID do usuário autenticado (injetado via Gateway)", hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
+            @Parameter(description = "UUID da barbearia") @RequestParam UUID barbershopId,
+            @Parameter(description = "Data inicial (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @Parameter(description = "Data final (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResponseEntity.ok(paymentService.getBarberFinancialSummaryByFirebaseUid(firebaseUid, barbershopId, from, to));
+    }
+
     @Operation(summary = "Serie financeira da barbearia", description = "Retorna série de receita de serviços aprovados por período para uso em gráficos internos.")
     @GetMapping("/my-shop/series")
     public ResponseEntity<FinancialSeriesDTO> getMyShopSeries(
@@ -124,7 +135,9 @@ public class PaymentController {
     @GetMapping("/my-shop/barber-performance")
     public ResponseEntity<List<BarberFinancialPerformanceResponseDTO>> getBarberPerformance(
             @RequestHeader("X-User-UID") String firebaseUid,
-            @RequestParam UUID barbershopId) {
-        return ResponseEntity.ok(paymentService.getBarberFinancialPerformance(firebaseUid, barbershopId));
+            @RequestParam UUID barbershopId,
+            @Parameter(description = "Data inicial (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @Parameter(description = "Data final (YYYY-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResponseEntity.ok(paymentService.getBarberFinancialPerformance(firebaseUid, barbershopId, from, to));
     }
 }

@@ -6,7 +6,7 @@ import {
 import styles from './PanelShared.module.css';
 
 const GOLD_SHADES = ['#c19006', '#e8b923', '#a07005', '#f5d76e', '#7d5604'];
-const BRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+const BRL = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v || 0));
 
 function BarberPerformancePanel({ data }) {
     if (!data?.length) return <p className={styles.empty}>Sem dados disponíveis.</p>;
@@ -26,7 +26,7 @@ function BarberPerformancePanel({ data }) {
                     <Tooltip
                         contentStyle={{ background: '#1a1a1a', border: '1px solid #333', borderRadius: 8 }}
                         labelStyle={{ color: '#fff' }}
-                        formatter={v => [BRL(v), 'Valor']}
+                        formatter={v => [BRL(v), 'Receita bruta']}
                     />
                     <Bar dataKey="receita" radius={[4, 4, 0, 0]}>
                         {chartData.map((_, i) => (
@@ -65,13 +65,26 @@ function BarberPerformanceTable({ data }) {
             </div>
             <div className={styles.tableWrapper}>
                 <table className={styles.table}>
-                    <thead><tr><th>Barbeiro</th><th>Atend.</th><th>Valor</th><th>%</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Barbeiro</th>
+                            <th>Atend.</th>
+                            <th>Receita</th>
+                            <th>Recebe</th>
+                            <th>Barbearia</th>
+                            <th>Ticket</th>
+                            <th>%</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {data.map(d => (
                             <tr key={d.barberId}>
                                 <td>{d.barberName}</td>
                                 <td>{d.totalAppointments}</td>
                                 <td>{BRL(d.generatedRevenue)}</td>
+                                <td>{BRL(d.barberCommission)}</td>
+                                <td>{BRL(d.barbershopCommission)}</td>
+                                <td>{BRL(d.averageTicket)}</td>
                                 <td>{Number(d.contributionPercentage).toFixed(1)}%</td>
                             </tr>
                         ))}

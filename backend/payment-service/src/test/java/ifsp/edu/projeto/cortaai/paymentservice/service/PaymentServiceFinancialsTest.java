@@ -2,6 +2,7 @@ package ifsp.edu.projeto.cortaai.paymentservice.service;
 
 import ifsp.edu.projeto.cortaai.paymentservice.dto.AppointmentActivityInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.AppointmentInfoDTO;
+import ifsp.edu.projeto.cortaai.paymentservice.dto.BarberFinancialSummaryDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.CommissionRuleInfoDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialOverviewDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesDTO;
@@ -262,6 +263,13 @@ class PaymentServiceFinancialsTest {
         assertThat(overview.approvedCount()).isEqualTo(1);
         assertThat(overview.pendingCount()).isEqualTo(1);
         assertThat(overview.walkInAppointmentsCount()).isEqualTo(1);
+
+        BarberFinancialSummaryDTO summary = paymentService.getBarberFinancialSummaryByFirebaseUid(
+                "staff-firebase", shopId, day, day);
+
+        assertThat(summary.grossTotalRevenue()).isEqualByComparingTo("150.00");
+        assertThat(summary.barberTotalCommission()).isEqualByComparingTo("71.00");
+        assertThat(summary.barbershopTotalCommission()).isEqualByComparingTo("79.00");
     }
 
     @Test
