@@ -7,5 +7,8 @@ public record AgendaThermometerResponseDTO(
         String barbershopId,
         Long totalAppointments,
         Long activeAppointments,
+        Long walkinAppointments,
+        Long pendingAppointments,
+        Long completedAppointments,
         Long lostAppointments
 ) {}

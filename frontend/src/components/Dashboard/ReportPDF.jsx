@@ -121,13 +121,23 @@ export function buildPDFSections({ barberPerf, stockHealth, agendaThermo, skillM
         {
             title: 'Termômetro de Agenda',
             headers: ['Data', 'Total Agend.', 'Concluídos', 'Cancelados', 'Taxa Conclusão (%)'],
-            rows: (agendaThermo ?? []).map(d => [
-                fmtDate(d.date),
-                String(d.totalAppointments ?? 0),
-                String(d.completedAppointments ?? 0),
-                String(d.cancelledAppointments ?? 0),
-                `${Number(d.completionRate ?? 0).toFixed(1)}%`,
-            ]),
+            rows: (agendaThermo ?? []).map(d => {
+                const total = Number(d.totalAppointments ?? 0);
+                const active = Number(d.activeAppointments ?? 0);
+                const walkin = Number(d.walkinAppointments ?? 0);
+                const pending = Number(d.pendingAppointments ?? 0);
+                const cancelled = Number(d.cancelledAppointments ?? d.lostAppointments ?? 0);
+                const completed = Number(d.completedAppointments ?? Math.max(total - active - walkin - pending - cancelled, 0));
+                const completionRate = d.completionRate ?? (total > 0 ? (completed / total) * 100 : 0);
+
+                return [
+                    fmtDate(d.agendaDate ?? d.date),
+                    String(total),
+                    String(completed),
+                    String(cancelled),
+                    `${Number(completionRate).toFixed(1)}%`,
+                ];
+            }),
         },
         {
             title: 'Matriz de Habilidades',

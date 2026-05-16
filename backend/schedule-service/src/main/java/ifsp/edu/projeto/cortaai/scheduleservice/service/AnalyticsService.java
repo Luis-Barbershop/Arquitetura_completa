@@ -2,7 +2,7 @@ package ifsp.edu.projeto.cortaai.scheduleservice.service;
 
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.AgendaThermometerResponseDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.BarberSkillMatrixResponseDTO;
-import ifsp.edu.projeto.cortaai.scheduleservice.repository.analytics.VAgendaThermometerRepository;
+import ifsp.edu.projeto.cortaai.scheduleservice.repository.AppointmentRepository;
 import ifsp.edu.projeto.cortaai.scheduleservice.repository.analytics.VBarberSkillMatrixRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,18 +17,21 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class AnalyticsService {
 
-    private final VAgendaThermometerRepository vAgendaThermometerRepository;
+    private final AppointmentRepository appointmentRepository;
     private final VBarberSkillMatrixRepository vBarberSkillMatrixRepository;
 
     public List<AgendaThermometerResponseDTO> getAgendaThermometer(String barbershopId) {
-        log.info("Consultando termômetro de agenda para barbearia: {}", barbershopId);
-        return vAgendaThermometerRepository.findByBarbershopId(barbershopId)
+        log.info("Consultando termômetro de agenda por status para barbearia: {}", barbershopId);
+        return appointmentRepository.findAgendaThermometerByBarbershopId(barbershopId)
                 .stream()
                 .map(v -> new AgendaThermometerResponseDTO(
                         v.getAgendaDate(),
                         v.getBarbershopId(),
                         v.getTotalAppointments(),
                         v.getActiveAppointments(),
+                        v.getWalkinAppointments(),
+                        v.getPendingAppointments(),
+                        v.getCompletedAppointments(),
                         v.getLostAppointments()
                 ))
                 .toList();

@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.scheduleservice.repository;
 
 import ifsp.edu.projeto.cortaai.scheduleservice.model.Appointment;
+import ifsp.edu.projeto.cortaai.scheduleservice.repository.projection.AgendaThermometerProjection;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -45,6 +46,23 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     List<Appointment> findByBarberIdAndStartTimeBetween(UUID barberId, LocalDateTime start, LocalDateTime end);
 
     List<Appointment> findByBarbershopIdAndStartTimeBetween(UUID barbershopId, LocalDateTime start, LocalDateTime end);
+
+    @Query(value = """
+            SELECT
+                DATE(a.start_time) AS agendaDate,
+                a.barbershop_id AS barbershopId,
+                COUNT(a.id) AS totalAppointments,
+                COALESCE(SUM(CASE WHEN a.status IN ('SCHEDULED', 'CONFIRMED', 'IN_PROGRESS') THEN 1 ELSE 0 END), 0) AS activeAppointments,
+                COALESCE(SUM(CASE WHEN a.status = 'WALK_IN' THEN 1 ELSE 0 END), 0) AS walkinAppointments,
+                COALESCE(SUM(CASE WHEN a.status IN ('PAYMENT_PENDING', 'EXPIRED') THEN 1 ELSE 0 END), 0) AS pendingAppointments,
+                COALESCE(SUM(CASE WHEN a.status IN ('COMPLETED', 'CONCLUDED') THEN 1 ELSE 0 END), 0) AS completedAppointments,
+                COALESCE(SUM(CASE WHEN a.status IN ('CANCELLED', 'NO_SHOW') THEN 1 ELSE 0 END), 0) AS lostAppointments
+            FROM appointments a
+            WHERE a.barbershop_id = :barbershopId
+            GROUP BY DATE(a.start_time), a.barbershop_id
+            ORDER BY DATE(a.start_time) ASC
+            """, nativeQuery = true)
+    List<AgendaThermometerProjection> findAgendaThermometerByBarbershopId(@Param("barbershopId") String barbershopId);
 
     @Query("SELECT a FROM Appointment a WHERE a.barberId = :barberId " +
             "AND a.startTime >= :from " +

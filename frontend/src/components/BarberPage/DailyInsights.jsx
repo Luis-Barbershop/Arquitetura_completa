@@ -22,7 +22,7 @@ function DailyInsights({ barbershopId }) {
           const start = item?.startTime ? new Date(item.startTime) : null;
           if (!start || Number.isNaN(start.getTime())) return false;
           const status = String(item?.status || '').toUpperCase();
-          const activeStatuses = ['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS'];
+          const activeStatuses = ['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'WALK_IN', 'COMPLETED', 'CONCLUDED'];
           return isSameDay(start) && activeStatuses.includes(status);
         });
 

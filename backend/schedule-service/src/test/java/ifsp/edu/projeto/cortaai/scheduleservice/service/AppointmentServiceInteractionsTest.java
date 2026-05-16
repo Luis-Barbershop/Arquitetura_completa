@@ -24,9 +24,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
@@ -61,6 +62,12 @@ class AppointmentServiceInteractionsTest {
 
     @Mock
     private RabbitTemplate rabbitTemplate;
+
+    @Mock
+    private CacheManager cacheManager;
+
+    @Mock
+    private Cache appointmentAvailabilityCache;
 
     @InjectMocks
     private AppointmentService appointmentService;
@@ -114,6 +121,7 @@ class AppointmentServiceInteractionsTest {
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
         when(userServiceClient.getUserByEmail("owner@cortaai.com")).thenReturn(owner);
         when(barbershopServiceClient.getBarbershopById(shopId)).thenReturn(barbershop);
+        mockAvailabilityCache();
 
         appointmentService.cancelAppointment("owner@cortaai.com", appointmentId);
 
@@ -130,7 +138,12 @@ class AppointmentServiceInteractionsTest {
         UUID shopId = UUID.randomUUID();
 
         Appointment appointment = buildAppointment(appointmentId, customerId, barberId, shopId, AppointmentStatus.CONFIRMED);
-        LocalDateTime newStart = LocalDateTime.of(2026, 4, 25, 11, 0);
+        LocalDateTime newStart = LocalDateTime.now()
+                .plusDays(7)
+                .withHour(11)
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0);
 
         UserInfoDTO barber = new UserInfoDTO();
         barber.setId(barberId);
@@ -139,13 +152,14 @@ class AppointmentServiceInteractionsTest {
         when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
         when(userServiceClient.getUserByEmail("barber@cortaai.com")).thenReturn(barber);
         when(userServiceClient.getBarberWorkSchedule(barberId))
-                .thenReturn(List.of(new DayScheduleDTO(DayOfWeek.SATURDAY, List.of(
+                .thenReturn(List.of(new DayScheduleDTO(newStart.getDayOfWeek(), List.of(
                         new WorkBlockDTO(LocalTime.of(9, 0), LocalTime.of(18, 0))
                 ))));
         when(appointmentRepository.findConflictsForUpdateExcludingAppointment(eq(barberId), eq(appointmentId), eq(newStart), eq(newStart.plusMinutes(30))))
                 .thenReturn(List.of());
         when(barberBlockRepository.existsByBarberIdAndStartTimeLessThanAndEndTimeGreaterThan(eq(barberId), eq(newStart.plusMinutes(30)), eq(newStart)))
                 .thenReturn(false);
+        mockAvailabilityCache();
 
         appointmentService.rescheduleAppointment("barber@cortaai.com", appointmentId, new RescheduleAppointmentDTO(newStart, null));
 
@@ -242,5 +256,9 @@ class AppointmentServiceInteractionsTest {
                 .totalPrice(BigDecimal.TEN)
                 .status(status)
                 .build();
+    }
+
+    private void mockAvailabilityCache() {
+        when(cacheManager.getCache("appointmentAvailability")).thenReturn(appointmentAvailabilityCache);
     }
 }
