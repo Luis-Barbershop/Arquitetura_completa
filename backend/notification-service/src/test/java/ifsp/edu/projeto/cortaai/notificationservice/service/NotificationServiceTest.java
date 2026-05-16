@@ -28,12 +28,14 @@ class NotificationServiceTest {
     private PushNotificationService pushNotificationService;
     @Mock
     private ScheduleServiceClient scheduleServiceClient;
+    @Mock
+    private SseEmitterService sseEmitterService;
 
     private NotificationService notificationService;
 
     @BeforeEach
     void setUp() {
-        notificationService = new NotificationService(notificationRepository, emailService, pushNotificationService, scheduleServiceClient);
+        notificationService = new NotificationService(notificationRepository, emailService, pushNotificationService, scheduleServiceClient, sseEmitterService);
         when(notificationRepository.save(any(Notification.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
