@@ -10,7 +10,6 @@ Thumbs.db
 
 # ======== IDE ========
 .idea/
-.vscode/
 *.iml
 *.iws
 *.ipr
