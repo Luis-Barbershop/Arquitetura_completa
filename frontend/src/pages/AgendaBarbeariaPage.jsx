@@ -91,7 +91,7 @@ const AgendaBarbeariaPage = () => {
 
     const filtered = appointments
         .filter((a) => activeFilter === 'ALL' || a.status === activeFilter)
-        .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+        .sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
 
     const itemsPerPage = 10;
     const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));

@@ -52,10 +52,10 @@ const getPeriodBounds = (dateStr, rangeMode) => {
     return { start: dateStr, end: dateStr };
 };
 
-const compareByStartTimeAsc = (a, b) => {
-    const first = a?.startTime ? new Date(a.startTime).getTime() : Number.MAX_SAFE_INTEGER;
-    const second = b?.startTime ? new Date(b.startTime).getTime() : Number.MAX_SAFE_INTEGER;
-    return first - second;
+const compareByStartTimeDesc = (a, b) => {
+    const first = a?.startTime ? new Date(a.startTime).getTime() : 0;
+    const second = b?.startTime ? new Date(b.startTime).getTime() : 0;
+    return second - first;
 };
 
 const MeusAgendamentosPage = () => {
@@ -129,7 +129,7 @@ const MeusAgendamentosPage = () => {
                 data = await getMyAppointments();
             }
 
-            const sorted = [...data].sort(compareByStartTimeAsc);
+            const sorted = [...data].sort(compareByStartTimeDesc);
             if (isCustomer) {
                 const completedShopIds = [...new Set(
                     sorted
@@ -390,7 +390,7 @@ const MeusAgendamentosPage = () => {
         return 'Servico';
     };
 
-    const sortedAppointments = [...appointments].sort(compareByStartTimeAsc);
+    const sortedAppointments = [...appointments].sort(compareByStartTimeDesc);
 
     const filteredAppointments = sortedAppointments.filter((app) => {
         // Filtro de status — CONFIRMED aparece junto com SCHEDULED em "Agendados"
