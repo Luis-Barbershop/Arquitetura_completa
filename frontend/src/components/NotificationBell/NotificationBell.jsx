@@ -22,7 +22,9 @@ function NotificationBell({ userType = 'barber' }) {
     const [notifications, setNotifications] = useState([]);
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
     const dropdownRef = useRef(null);
+    const buttonRef = useRef(null);
 
     // SSE — recebe contagem de não lidas em tempo real (sem polling)
     const handleUnreadCount = useCallback((count) => {
@@ -50,6 +52,15 @@ function NotificationBell({ userType = 'barber' }) {
 
     const handleToggle = async () => {
         if (open) { setOpen(false); return; }
+
+        // Calcula posição do dropdown relativa ao viewport (escapa do stacking context do header)
+        if (buttonRef.current) {
+            const rect = buttonRef.current.getBoundingClientRect();
+            setDropdownPos({
+                top: rect.bottom + 8,
+                right: window.innerWidth - rect.right,
+            });
+        }
 
         setOpen(true);
         setLoading(true);
@@ -131,6 +142,7 @@ function NotificationBell({ userType = 'barber' }) {
             <button
                 className={styles.bellButton}
                 onClick={handleToggle}
+                ref={buttonRef}
                 aria-label="Notificações"
                 title="Notificações"
             >
@@ -141,7 +153,10 @@ function NotificationBell({ userType = 'barber' }) {
             </button>
 
             {open && (
-                <div className={styles.dropdown}>
+                <div
+                    className={styles.dropdown}
+                    style={{ top: dropdownPos.top, right: dropdownPos.right }}
+                >
                     <div className={styles.dropdownHeader}>
                         <span>Notificações</span>
                         {unreadCount > 0 && (
