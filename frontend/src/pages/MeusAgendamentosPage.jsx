@@ -52,6 +52,12 @@ const getPeriodBounds = (dateStr, rangeMode) => {
     return { start: dateStr, end: dateStr };
 };
 
+const compareByStartTimeAsc = (a, b) => {
+    const first = a?.startTime ? new Date(a.startTime).getTime() : Number.MAX_SAFE_INTEGER;
+    const second = b?.startTime ? new Date(b.startTime).getTime() : Number.MAX_SAFE_INTEGER;
+    return first - second;
+};
+
 const MeusAgendamentosPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -123,7 +129,7 @@ const MeusAgendamentosPage = () => {
                 data = await getMyAppointments();
             }
 
-            const sorted = data.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+            const sorted = [...data].sort(compareByStartTimeAsc);
             if (isCustomer) {
                 const completedShopIds = [...new Set(
                     sorted
@@ -384,23 +390,7 @@ const MeusAgendamentosPage = () => {
         return 'Servico';
     };
 
-    const sortedAppointments = [...appointments].sort((a, b) => {
-        // Na visão de dia do barbeiro, ordenar por hora crescente
-        if (!isCustomer && agendaView === 'mine' && dateFilter) {
-            return new Date(a.startTime) - new Date(b.startTime);
-        }
-
-        if (activeFilter === 'ALL') {
-            const aCancelled = a.status === 'CANCELLED';
-            const bCancelled = b.status === 'CANCELLED';
-
-            if (aCancelled !== bCancelled) {
-                return aCancelled ? 1 : -1;
-            }
-        }
-
-        return new Date(b.startTime) - new Date(a.startTime);
-    });
+    const sortedAppointments = [...appointments].sort(compareByStartTimeAsc);
 
     const filteredAppointments = sortedAppointments.filter((app) => {
         // Filtro de status — CONFIRMED aparece junto com SCHEDULED em "Agendados"
