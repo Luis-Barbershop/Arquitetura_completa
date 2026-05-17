@@ -339,7 +339,7 @@ export const loginWithGoogle = async () => {
             throw incompleteError;
         }
 
-        void registerPushNotificationsIfPossible();
+        window.dispatchEvent(new CustomEvent('cortaai:login-success'));
         return {
             idToken,
             localId: result.user.uid,

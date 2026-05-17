@@ -18,6 +18,7 @@ import BarberNavbar from '../components/BarberPage/BarberNavbar';
 import CropImageModal from '../components/CropImageModal/CropImageModal';
 import { uploadBarberProfilePhoto } from '../services/userProfileService';
 import styles from './CSS/BarberHomePage.module.css';
+import PushNotificationToggle from '../components/PushNotificationToggle/PushNotificationToggle';
 
 const DAYS_OF_WEEK = [
     { key: 'MONDAY',    label: 'Seg' },
@@ -731,6 +732,16 @@ function BarberProfilePage() {
 
                         </div>
                     )}
+                </section>
+            </div>
+
+            <div className={styles.mainContent}>
+                <section className={styles.card}>
+                    <div className={styles.sectionHeader}>
+                        <h2 className={styles.sectionTitle}>Notificações</h2>
+                        <p className={styles.sectionSubtitle}>Gerencie como você recebe alertas do CortaAi.</p>
+                    </div>
+                    <PushNotificationToggle />
                 </section>
             </div>
 

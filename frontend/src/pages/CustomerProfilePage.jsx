@@ -12,6 +12,7 @@ import {
   uploadCustomerProfilePhoto,
 } from '../services/userProfileService';
 import styles from './CSS/CustomerProfilePage.module.css';
+import PushNotificationToggle from '../components/PushNotificationToggle/PushNotificationToggle';
 
 function CustomerProfilePage() {
   const navigate = useNavigate();
@@ -201,6 +202,14 @@ function CustomerProfilePage() {
             {saving ? 'Salvando...' : 'Salvar alterações'}
           </button>
         </form>
+      </section>
+
+      <section className={styles.card}>
+        <div className={styles.cardHeader}>
+          <h1>Notificações</h1>
+          <p>Gerencie como você recebe alertas do CortaAi.</p>
+        </div>
+        <PushNotificationToggle />
       </section>
     </div>
   );
