@@ -236,6 +236,7 @@ public class NotificationService {
 
     @Transactional
     public void notifyAppointmentReminder(AppointmentReminderEvent event) {
+        // IN_APP + Push — cliente
         createNotification(event.getCustomerId(), NotificationType.APPOINTMENT_REMINDER,
                 "Seu horário está chegando!",
                 String.format("Lembrete: você tem um agendamento em %s com %s às %s.",
@@ -249,6 +250,21 @@ public class NotificationService {
         if (event.getCustomerEmail() != null && !event.getCustomerEmail().isBlank()) {
             emailService.sendReminderToCustomer(event.getCustomerEmail(), event.getCustomerName(),
                     event.getBarbershopName(), event.getBarberName(), event.getStartTime());
+        }
+
+        // IN_APP + Push — barbeiro
+        if (event.getBarberId() != null) {
+            createNotification(event.getBarberId(), NotificationType.APPOINTMENT_REMINDER,
+                    "Lembrete de atendimento",
+                    String.format("Você tem um atendimento com %s às %s na %s.",
+                            event.getCustomerName(),
+                            event.getStartTime().toLocalTime().toString(),
+                            event.getBarbershopName()));
+            pushNotificationService.sendToUser(event.getBarberId(),
+                    "Lembrete de atendimento",
+                    String.format("%s às %s", event.getCustomerName(),
+                            event.getStartTime().toLocalTime().toString()),
+                    pushData(NotificationType.APPOINTMENT_REMINDER, "/barberHome"));
         }
     }
 
@@ -308,7 +324,7 @@ public class NotificationService {
 
     @Transactional
     public void notifyJoinRequestReceived(
-            UUID ownerId, String barbershopName, String barberName) {
+            UUID ownerId, String ownerEmail, String barbershopName, String barberName) {
 
         // IN_APP — dono da barbearia
         createNotification(ownerId, NotificationType.JOIN_REQUEST_RECEIVED,
@@ -320,13 +336,17 @@ public class NotificationService {
                 String.format("%s quer entrar na barbearia %s", barberName, barbershopName),
                 pushData(NotificationType.JOIN_REQUEST_RECEIVED, "/barber-team"));
 
+        // E-mail — dono
+        if (ownerEmail != null && !ownerEmail.isBlank()) {
+            emailService.sendJoinRequestReceivedToOwner(ownerEmail, barbershopName, barberName);
+        }
+
         log.info("event=join-request-notification-created ownerId={} barberName={} shop={}",
                 ownerId, barberName, barbershopName);
     }
 
     @Transactional
-    public void notifyInviteReceived(UUID barberId, String barbershopName) {
-
+    public void notifyInviteReceived(UUID barberId, String barberEmail, String barbershopName) {
         // IN_APP — barbeiro convidado
         createNotification(barberId, NotificationType.INVITE_RECEIVED,
                 "Você recebeu um convite!",
@@ -337,7 +357,32 @@ public class NotificationService {
                 String.format("A barbearia %s convidou você para o time.", barbershopName),
                 pushData(NotificationType.INVITE_RECEIVED, "/barberProfile"));
 
+        // E-mail — barbeiro convidado
+        if (barberEmail != null && !barberEmail.isBlank()) {
+            emailService.sendInviteReceivedToBarber(barberEmail, barbershopName);
+        }
+
         log.info("event=invite-notification-created barberId={} shop={}", barberId, barbershopName);
+    }
+
+    // ─── Barbeiro removido da barbearia ─────────────────────────────────────────
+
+    @Transactional
+    public void notifyBarberRemoved(UUID barberId, String barberEmail, String barberName, String barbershopName) {
+
+        createNotification(barberId, NotificationType.BARBER_REMOVED,
+                "Você foi removido da barbearia",
+                String.format("O dono da barbearia %s removeu você da equipe.", barbershopName));
+        pushNotificationService.sendToUser(barberId,
+                "Você foi removido da barbearia",
+                String.format("Você não faz mais parte da equipe %s.", barbershopName),
+                pushData(NotificationType.BARBER_REMOVED, "/barberProfile"));
+
+        if (barberEmail != null && !barberEmail.isBlank()) {
+            emailService.sendBarberRemovedToBarber(barberEmail, barberName, barbershopName);
+        }
+
+        log.info("event=barber-removed-notification-created barberId={} shop={}", barberId, barbershopName);
     }
 
     private NotificationDTO toDTO(Notification n) {

@@ -298,9 +298,61 @@ public class EmailService {
         }
     }
 
-    // ─── Template base HTML ──────────────────────────────────────────────────────
+    // ─── Join / Invite / Remoção ─────────────────────────────────────────────────
 
-    private String baseTemplate(String title, String greeting, String content, String ctaLabel, String ctaUrl) {
+    @Async
+    public void sendJoinRequestReceivedToOwner(
+            String toEmail, String barbershopName, String barberName) {
+
+        String subject = "✂ Novo pedido de entrada na sua barbearia — CortaAI";
+        String body = baseTemplate(
+                "Novo pedido de entrada!",
+                "Um barbeiro quer entrar na sua equipe.",
+                String.format("""
+                        O barbeiro <strong>%s</strong> solicitou entrada na barbearia <strong>%s</strong>.
+                        <br><br>
+                        Acesse o painel para aprovar ou recusar o pedido.
+                        """, barberName, barbershopName),
+                "Ver pedidos pendentes", "https://cortaai.shop/barber-team"
+        );
+        send(toEmail, subject, body);
+    }
+
+    @Async
+    public void sendInviteReceivedToBarber(String toEmail, String barbershopName) {
+
+        String subject = "✂ Você recebeu um convite de barbearia — CortaAI";
+        String body = baseTemplate(
+                "Convite recebido!",
+                "Uma barbearia quer você na equipe.",
+                String.format("""
+                        A barbearia <strong>%s</strong> convidou você para fazer parte da equipe.
+                        <br><br>
+                        Acesse seu perfil para aceitar ou recusar o convite.
+                        """, barbershopName),
+                "Ver meu perfil", "https://cortaai.shop/barberProfile"
+        );
+        send(toEmail, subject, body);
+    }
+
+    @Async
+    public void sendBarberRemovedToBarber(String toEmail, String barberName, String barbershopName) {
+
+        String subject = "✂ Você foi removido da barbearia — CortaAI";
+        String body = baseTemplate(
+                "Você foi removido da equipe",
+                String.format("Olá, <strong>%s</strong>!", barberName),
+                String.format("""
+                        Informamos que você foi removido da barbearia <strong>%s</strong>.
+                        <br><br>
+                        Você pode procurar outra barbearia pelo marketplace do CortaAI.
+                        """, barbershopName),
+                "Explorar barbearias", "https://cortaai.shop/marketplace"
+        );
+        send(toEmail, subject, body);
+    }
+
+    // ─── Template base HTML ──────────────────────────────────────────────────────    private String baseTemplate(String title, String greeting, String content, String ctaLabel, String ctaUrl) {
         return """
                 <!DOCTYPE html>
                 <html lang="pt-BR">

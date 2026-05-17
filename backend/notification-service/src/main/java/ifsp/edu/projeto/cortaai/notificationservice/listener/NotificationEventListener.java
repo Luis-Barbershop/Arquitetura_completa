@@ -15,6 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+import java.util.UUID;
+
 /**
  * Listeners RabbitMQ para eventos do sistema.
  * Cada listener faz deduplicação via Redis, cria notificação IN_APP
@@ -88,11 +91,11 @@ public class NotificationEventListener {
 
         if ("INVITE".equalsIgnoreCase(event.getRequestType())) {
             // Owner convidou barbeiro → notificar o barbeiro
-            notificationService.notifyInviteReceived(event.getBarberId(), event.getBarbershopName());
+            notificationService.notifyInviteReceived(event.getBarberId(), event.getBarberEmail(), event.getBarbershopName());
         } else {
             // Barbeiro pediu entrada → notificar o dono
             notificationService.notifyJoinRequestReceived(
-                    event.getOwnerId(), event.getBarbershopName(), event.getBarberName());
+                    event.getOwnerId(), event.getOwnerEmail(), event.getBarbershopName(), event.getBarberName());
         }
     }
 
@@ -101,5 +104,18 @@ public class NotificationEventListener {
         log.info("Evento recebido: appointment.reminder appointmentId={}", event.getAppointmentId());
         if (deduplicationService.isDuplicate("APPOINTMENT_REMINDER", event.getAppointmentId().toString())) return;
         notificationService.notifyAppointmentReminder(event);
+    }
+
+    @RabbitListener(queues = RabbitConfig.QUEUE_BARBER_REMOVED)
+    public void onBarberRemoved(Map<String, Object> event) {
+        String barberId = String.valueOf(event.get("barberId"));
+        String barbershopName = String.valueOf(event.get("barbershopName"));
+        log.info("Evento recebido: barber.removed barberId={} shop={}", barberId, barbershopName);
+        if (deduplicationService.isDuplicate("BARBER_REMOVED", barberId + barbershopName)) return;
+
+        String barberEmail = event.get("barberEmail") instanceof String s ? s : null;
+        String barberName = event.get("barberName") instanceof String s ? s : null;
+        notificationService.notifyBarberRemoved(
+                UUID.fromString(barberId), barberEmail, barberName, barbershopName);
     }
 }

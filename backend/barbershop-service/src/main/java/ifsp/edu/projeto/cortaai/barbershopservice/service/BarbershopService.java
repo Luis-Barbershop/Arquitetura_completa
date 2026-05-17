@@ -554,6 +554,7 @@ public class BarbershopService {
                     shop.getId(),
                     shop.getName(),
                     owner.getId(),
+                    owner.getEmail(),
                     "JOIN"
             );
             rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.RK_JOIN_REQUEST_CREATED, event);
@@ -693,6 +694,7 @@ public class BarbershopService {
                     shop.getId(),
                     shop.getName(),
                     owner.getId(),
+                    owner.getEmail(),
                     "INVITE"
             );
             rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.RK_JOIN_REQUEST_CREATED, event);
@@ -954,6 +956,8 @@ public class BarbershopService {
             event.put("barbershopId", shop.getId());
             event.put("barbershopName", shop.getName());
             event.put("barberId", targetBarber.getId());
+            event.put("barberName", targetBarber.getName());
+            event.put("barberEmail", targetBarber.getEmail());
             event.put("action", action);
             event.put("redistributeToId", redistributeToId);
             rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.RK_BARBER_REMOVED, event);

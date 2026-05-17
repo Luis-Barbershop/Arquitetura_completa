@@ -16,6 +16,7 @@ public class JoinRequestCreatedEvent {
     private UUID barbershopId;
     private String barbershopName;
     private UUID ownerId;
+    private String ownerEmail;
     /** "JOIN" = barbeiro pediu entrada; "INVITE" = owner convidou barbeiro. */
     private String requestType;
 
@@ -42,6 +43,9 @@ public class JoinRequestCreatedEvent {
 
     public UUID getOwnerId() { return ownerId; }
     public void setOwnerId(UUID ownerId) { this.ownerId = ownerId; }
+
+    public String getOwnerEmail() { return ownerEmail; }
+    public void setOwnerEmail(String ownerEmail) { this.ownerEmail = ownerEmail; }
 
     public String getRequestType() { return requestType; }
     public void setRequestType(String requestType) { this.requestType = requestType; }

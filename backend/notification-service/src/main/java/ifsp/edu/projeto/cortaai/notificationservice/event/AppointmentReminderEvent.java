@@ -15,6 +15,8 @@ public class AppointmentReminderEvent {
     private UUID customerId;
     private String customerName;
     private String customerEmail;
+    private UUID barberId;
+    private String barberEmail;
     private String barbershopName;
     private String barberName;
     private LocalDateTime startTime;

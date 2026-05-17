@@ -8,6 +8,8 @@ public record AppointmentReminderEvent(
         UUID customerId,
         String customerName,
         String customerEmail,
+        UUID barberId,
+        String barberEmail,
         String barbershopName,
         String barberName,
         LocalDateTime startTime

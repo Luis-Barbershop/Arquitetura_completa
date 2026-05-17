@@ -48,11 +48,14 @@ public class ReminderScheduler {
             }
 
             String customerEmail = resolveEmail(appt.getCustomerId());
+            String barberEmail = resolveEmail(appt.getBarberId());
             AppointmentReminderEvent event = new AppointmentReminderEvent(
                     appt.getId(),
                     appt.getCustomerId(),
                     appt.getCustomerName(),
                     customerEmail,
+                    appt.getBarberId(),
+                    barberEmail,
                     appt.getBarbershopName(),
                     appt.getBarberName(),
                     appt.getStartTime()

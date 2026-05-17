@@ -22,6 +22,7 @@ public class RabbitConfig {
     public static final String QUEUE_JOIN_REQUEST_CREATED = "notification.barbershop.join-request.created";
     public static final String QUEUE_CUSTOMER_DELETED = "notification.customer.deleted";
     public static final String QUEUE_APPOINTMENT_REMINDER = "notification.appointment.reminder";
+    public static final String QUEUE_BARBER_REMOVED = "notification.barber.removed";
 
     // Routing keys
     public static final String RK_APPOINTMENT_CREATED = "appointment.created";
@@ -32,6 +33,7 @@ public class RabbitConfig {
     public static final String RK_JOIN_REQUEST_CREATED = "barbershop.join-request.created";
     public static final String RK_CUSTOMER_DELETED = "customer.deleted";
     public static final String RK_APPOINTMENT_REMINDER = "appointment.reminder";
+    public static final String RK_BARBER_REMOVED = "barber.removed";
 
     @Bean
     public TopicExchange exchange() {
@@ -118,6 +120,16 @@ public class RabbitConfig {
     @Bean
     public Binding bindCustomerDeleted() {
         return BindingBuilder.bind(customerDeletedQueue()).to(exchange()).with(RK_CUSTOMER_DELETED);
+    }
+
+    @Bean
+    public Queue barberRemovedQueue() {
+        return QueueBuilder.durable(QUEUE_BARBER_REMOVED).build();
+    }
+
+    @Bean
+    public Binding bindBarberRemoved() {
+        return BindingBuilder.bind(barberRemovedQueue()).to(exchange()).with(RK_BARBER_REMOVED);
     }
 
     // --- JSON converter ---
