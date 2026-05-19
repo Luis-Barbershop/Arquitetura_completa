@@ -22,6 +22,7 @@
     citecolor=black}
 \usepackage[utf8]{inputenc}
 \usepackage[brazil]{babel}
+\usepackage{float}
 \usepackage{graphicx}       % Para inclusão de imagens
 \usepackage{booktabs}       % Para tabelas com linhas profissionais
 \usepackage{longtable}      % Para tabelas que quebram páginas
@@ -56,10 +57,10 @@
 
 % --- RESUMO ---
 \begin{resumo}
-Este trabalho traz a proposta do desenvolvimento de um aplicativo web de gestão de serviços e agendamentos que funcione como um marketplace para uma ou mais barbearias. O objetivo principal é eliminar ineficiências e desorganização, transformando a gestão do fluxo de clientes. Historicamente, muitos clientes perdem horas em longas filas para cortar o cabelo ou fazer a barba, o que demonstra que o fluxo de atendimento pode e deve ser melhorado. Essa ineficiência prejudica tanto a satisfação do cliente quanto o gerenciamento da barbearia como um negócio. O projeto surge como uma plataforma robusta para otimizar essa experiência. Além de ser um portal centralizado que facilita a procura por profissionais qualificados, horários disponíveis e serviços prestados em diferentes unidades, temos como objetivo primário automatizar o processo de agendamento. A aplicação irá gerar relatórios intuitivos e detalhados sobre desempenho, finanças e estoque, transformando a administração do negócio em algo fácil e baseado em dados. Espera-se que essa solução resulte em uma melhoria significativa na experiência do usuário (cliente e barbeiro) e na eficiência operacional das barbearias parceiras.
+Este trabalho traz a proposta do desenvolvimento de um aplicativo web de gestão de serviços e agendamentos que funcione como um \textit {marketplace} para uma ou mais barbearias. O objetivo principal é eliminar ineficiências e desorganização, transformando a gestão do fluxo de clientes. Historicamente, muitos clientes perdem horas em longas filas para cortar o cabelo ou fazer a barba, o que demonstra que o fluxo de atendimento pode e deve ser melhorado. Essa ineficiência prejudica tanto a satisfação do cliente quanto o gerenciamento da barbearia como um negócio. O projeto surge como uma plataforma robusta para otimizar essa experiência. Além de ser um portal centralizado que facilita a procura por profissionais qualificados, horários disponíveis e serviços prestados em diferentes unidades, temos como objetivo primário automatizar o processo de agendamento. A aplicação irá gerar relatórios intuitivos e detalhados sobre desempenho, finanças e estoque, transformando a administração do negócio em algo fácil e baseado em dados. Espera-se que essa solução resulte em uma melhoria significativa na experiência do usuário (cliente e barbeiro) e na eficiência operacional das barbearias parceiras.
 
 \vspace{\onelineskip}
-\noindent \textbf{Palavras-chave:} Gestão de Barbearia. Agendamento Online. SaaS. Marketplace.
+\noindent \textbf{Palavras-chave:} Gestão de Barbearia. Agendamento Online. SaaS. \textit{Marketplace}.
 \end{resumo}
 
 % --- SUMÁRIO ---
@@ -72,15 +73,15 @@ Este trabalho traz a proposta do desenvolvimento de um aplicativo web de gestão
 % --- CAPÍTULO 1: INTRODUÇÃO ---
 \chapter{Introdução}
 \section{Objetivos}
-O setor de serviços de cuidados pessoais, embora tradicionalmente fundamentado na interação presencial, atravessa um momento de transformação digital acelerada. Os consumidores modernos exigem conveniência, personalização e, acima de tudo, previsibilidade. Modelos de negócio que dependem exclusivamente de atendimento por ordem de chegada (walk-in) e gestão manual estão se tornando operacionais e financeiramente insustentáveis.
+O setor de serviços de cuidados pessoais, embora tradicionalmente fundamentado na interação presencial, atravessa um momento de transformação digital acelerada. Os consumidores modernos exigem conveniência, personalização e, acima de tudo, previsibilidade. Modelos de negócio que dependem exclusivamente de atendimento por ordem de chegada \textit{(walk-in)} e gestão manual estão se tornando operacionais e financeiramente insustentáveis.
 
 O ambiente clássico das barbearias, apesar de seu valor cultural, exemplifica essa inefiência crônica: é uma experiência comum clientes desperdiçarem horas em filas de espera, sem garantia de atendimento ou visibilidade sobre a disponibilidade de seus profissionais preferidos. Este cenário de espera e imprevisibilidade gera atrito significativo na jornada do cliente, resultando em insatisfação e perda de fidelidade. Para o gestor da barbearia, essa abordagem manual se traduz em um fluxo de trabalho caótico, dificuldade no gerenciamento das agendas dos profissionais, perda de receita de clientes que desistem da espera e uma incapacidade crônica de tomar decisões estratégicas por falta de dados consolidados. A administração do negócio torna-se reativa, focada em "apagar incêndios" operacionais, em vez de focar no crescimento.
 
-Diante desse desafio, este trabalho propõe o desenvolvimento do CortaAi: uma aplicação web integrada, projetada para funcionar como um marketplace robusto para a indústria de barbearia. A solução transcende a funcionalidade de um simples aplicativo de agendamento, criando um ecossistema digital que conecta múltiplas unidades de barbearias, profissionais qualificados e clientes em uma plataforma centralizada e eficiente.
+Diante desse desafio, este trabalho propõe o desenvolvimento do CortaAi: uma aplicação web integrada, projetada para funcionar como um \textit{marketplace} robusto para a indústria de barbearia. A solução transcende a funcionalidade de um simples aplicativo de agendamento, criando um ecossistema digital que conecta múltiplas unidades de barbearias, profissionais qualificados e clientes em uma plataforma centralizada e eficiente.
 
 O objetivo primário do projeto é reestruturar o fluxo de atendimento, substituindo a fila física pela previsibilidade do agendamento digital. Através da plataforma, o cliente poderá pesquisar barbearias por localização, consultar o portfólio de serviços oferecidos, verificar as especialidades e a agenda de cada barbeiro, e reservar um horário (o agendamento) de forma instantânea. Para os barbeiros, o sistema oferece uma agenda digital clara, otimizando seu tempo e permitindo que se concentrem na qualidade do serviço.
 
-Contudo, a principal inovação do CortaAi reside em sua capacidade de gestão de negócios (Business Intelligence). Além de organizar os agendamentos, o sistema foi modelado para integrar o controle de vendas de produtos e a gestão de estoque por unidade. Ao centralizar todas as transações, sejam elas de serviços prestados ou de produtos vendidos, a plataforma gerará relatórios intuitivos sobre o desempenho financeiro, a produtividade dos profissionais, os horários de pico e a receita por serviço. Isso transforma a administração do negócio de algo baseado na intuição para uma gestão baseada em dados, permitindo que os proprietários otimizem seus recursos, melhorem a lucratividade e profissionalizem suas operações.
+Contudo, a principal inovação do CortaAi reside em sua capacidade de gestão de negócios \textit{(Business Intelligence)}. Além de organizar os agendamentos, o sistema foi modelado para integrar o controle de vendas de produtos e a gestão de estoque por unidade. Ao centralizar todas as transações, sejam elas de serviços prestados ou de produtos vendidos, a plataforma gerará relatórios intuitivos sobre o desempenho financeiro, a produtividade dos profissionais, os horários de pico e a receita por serviço. Isso transforma a administração do negócio de algo baseado na intuição para uma gestão baseada em dados, permitindo que os proprietários otimizem seus recursos, melhorem a lucratividade e profissionalizem suas operações.
 
 \section{Problema e Solução Proposta}
 A gestão operacional de barbearias, mesmo as que aparentam simplicidade, envolve um ecossistema complexo de processos que vão além do serviço de corte ou barba. O obstáculo central para a manutenção do negócio é a fragmentação das ferramentas de gestão. Atualmente, o processo administrativo demanda um esforço manual elevado e recorre a múltiplas ferramentas desconectadas:
@@ -92,12 +93,12 @@ A gestão operacional de barbearias, mesmo as que aparentam simplicidade, envolv
 \end{itemize}
 Esse sistema fragmentado gera desafios operacionais críticos, como perda de informações financeiras, dificuldade na gestão de insumos (estoque), agendamentos conflitantes e ausência de métricas de desempenho.
 
-A solução proposta é o desenvolvimento do CortaAi, uma plataforma tecnológica centralizada que visa substituir e unificar todas as tarefas de gestão fragmentadas. O núcleo do projeto será uma plataforma SaaS (Software as a Service) de alta disponibilidade e usabilidade, operando em um ambiente único e integrado. O sistema funcionará como o cérebro operacional da barbearia, fazendo a interface direta com:
+A solução proposta é o desenvolvimento do CortaAi, uma plataforma tecnológica centralizada que visa substituir e unificar todas as tarefas de gestão fragmentadas. O núcleo do projeto será uma plataforma SaaS \textit {(Software as a Service)} de alta disponibilidade e usabilidade, operando em um ambiente único e integrado. O sistema funcionará como o cérebro operacional da barbearia, fazendo a interface direta com:
 \begin{itemize}
     \item Módulo de Agendamentos: Permitindo a reserva online pelo cliente e a visualização da agenda em tempo real pelo barbeiro.
     \item Módulo Financeiro (PDV): Registrando cada serviço prestado e cada produto vendido.
     \item Módulo de Compras (Estoque): Controlando os insumos utilizados nos serviços e o inventário de produtos para revenda.
-    \item Módulo de Pagamento: Integrando-se a gateways de pagamento para automatizar o recebimento e a conciliação financeira.
+    \item Módulo de Pagamento: Integrando-se a \textit {gateways} de pagamento para automatizar o recebimento e a conciliação financeira.
 \end{itemize}
 
 \section{Justificativa}
@@ -105,7 +106,7 @@ Apresentar a relevância da solução proposta, incluindo dados numéricos e gr�
 
 A importância da solução CortaAi torna-se evidente ao quantificar o custo operacional real da gestão manual para um profissional do setor. A rotina de um gestor ou "Barbeiro Dono" é intensa, totalizando aproximadamente 232 horas de trabalho mensais (considerando uma jornada de 9 horas por dia, 6 dias por semana). O problema central é que uma parcela desproporcional desse tempo é consumida por tarefas administrativas de baixo valor, que poderiam ser facilmente automatizadas.
 
-Conforme ilustrado no Gráfico 1.1 (Redução do Tempo Administrativo com o Sistema), a gestão de agendamentos via métodos desorganizados—como aplicativos de mensagens (WhatsApp) e planilhas manuais—consome, em média, 40 horas por mês do profissional. Este esforço, puramente administrativo, representa 17\% do tempo total de trabalho do barbeiro. Este tempo perdido equivale a quase uma semana inteira de trabalho (4.4 dias) que é desviada da atividade principal e geradora de receita: o atendimento ao cliente. Com a implementação do CortaAi, a plataforma automatiza a maior parte desse esforço, gerando um "Tempo Liberado" de aproximadamente 35 horas mensais (conforme o gráfico). A relevância do sistema reside na capacidade de transformar este tempo improdutivo em oportunidade de novos atendimentos ou gestão estratégica, liberando o profissional para focar no crescimento do negócio.
+Conforme ilustrado no Gráfico 1 (Redução do Tempo Administrativo com o Sistema), a gestão de agendamentos via métodos desorganizados—como aplicativos de mensagens (WhatsApp) e planilhas manuais—consome, em média, 40 horas por mês do profissional. Este esforço, puramente administrativo, representa 17\% do tempo total de trabalho do barbeiro. Este tempo perdido equivale a quase uma semana inteira de trabalho (4.4 dias) que é desviada da atividade principal e geradora de receita: o atendimento ao cliente. Com a implementação do CortaAi, a plataforma automatiza a maior parte desse esforço, gerando um "Tempo Liberado" de aproximadamente 35 horas mensais (conforme o gráfico). A relevância do sistema reside na capacidade de transformar este tempo improdutivo em oportunidade de novos atendimentos ou gestão estratégica, liberando o profissional para focar no crescimento do negócio.
 
 \begin{figure}[htb]
     \centering
@@ -115,12 +116,12 @@ Conforme ilustrado no Gráfico 1.1 (Redução do Tempo Administrativo com o Sist
 \end{figure}
 
 Extensão e Importância da Solução: A Recuperação de Clientes
-A implementação do sistema de Marketplace para Barbearias se justifica, principalmente, pela sua capacidade de eliminar perdas financeiras e operacionais causadas pelo fenômeno do "no-show" (não comparecimento sem aviso). A taxa de não comparecimento em agendamentos, uma dor generalizada no setor de serviços no Brasil, representa um custo de oportunidade significativo para o Barbeiro. Com uma rotina de aproximadamente 260 agendamentos mensais, o modelo de gestão manual está exposto a uma alta taxa de falha. Conforme ilustrado no Gráfico 1.2: Redução de No-Shows após Implantação do Sistema, o impacto é o seguinte:
+A implementação do sistema de \textit{Marketplace} para Barbearias se justifica, principalmente, pela sua capacidade de eliminar perdas financeiras e operacionais causadas pelo fenômeno do "no-show" (não comparecimento sem aviso). A taxa de não comparecimento em agendamentos, uma dor generalizada no setor de serviços no Brasil, representa um custo de oportunidade significativo para o Barbeiro. Com uma rotina de aproximadamente 260 agendamentos mensais, o modelo de gestão manual está exposto a uma alta taxa de falha. Conforme ilustrado no Gráfico 2: Redução de \textit{No-Shows} após Implantação do Sistema, o impacto é o seguinte:
 
 \begin{figure}[htb]
     \centering
     \includegraphics[width=0.6\textwidth]{images/grafico_reducao_noshow.png}
-    \caption{Redução de No-Shows após Implantação do Sistema}
+    \caption{Redução de \textit{No-Shows} após Implantação do Sistema}
     \label{fig:grafico_noshow}
 \end{figure}
 
@@ -128,17 +129,17 @@ A implementação do sistema de Marketplace para Barbearias se justifica, princi
 Avaliar os concorrentes existentes no mercado, identificando suas forças e fraquezas.
 
 \subsection{Salão99}
-O Salão99 (Enterprise) se posiciona como uma suíte de Gestão Empresarial (ERP) para o setor de beleza, oferecendo controle financeiro avançado, gestão de comissões e fluxo de caixa. Sua Proposta de Valor (PV) reside na centralização e na profundidade dos dados gerenciais. No entanto, este escopo amplo implica, muitas vezes, em interfaces mais complexas e recursos que podem ser excessivos ou irrelevantes para as necessidades específicas e simplificadas de uma barbearia de médio ou pequeno porte. O foco em ser "completo" pode comprometer a experiência do usuário (UX) no nicho específico de barbearias.
+O Salão99 se posiciona como uma suíte de Gestão Empresarial (ERP) para o setor de beleza, oferecendo controle financeiro avançado, gestão de comissões e fluxo de caixa. Sua Proposta de Valor (PV) reside na centralização e na profundidade dos dados gerenciais. No entanto, este escopo amplo implica, muitas vezes, em interfaces mais complexas e recursos que podem ser excessivos ou irrelevantes para as necessidades específicas e simplificadas de uma barbearia de médio ou pequeno porte. O foco em ser "completo" pode comprometer a experiência do usuário (UX) no nicho específico de barbearias.
 
 \subsection{AgendaServiço}
-O AgendaServiço adota uma Proposta de Valor de simplicidade e comunicação direta. Seu principal diferencial competitivo é a conexão otimizada via WhatsApp, que reduz a taxa de no-show através de lembretes automáticos e comunicações ágeis. O sistema prioriza a função de link personalizado de agendamento, tornando a organização de horários extremamente acessível. Contudo, essa simplificação tende a limitar a profundidade de ferramentas gerenciais, deixando de lado aspectos cruciais como o controle detalhado de custos e a emissão de relatórios financeiros customizados.
+O AgendaServiço adota uma Proposta de Valor de simplicidade e comunicação direta. Seu principal diferencial competitivo é a conexão otimizada via WhatsApp, que reduz a taxa de \textit{no-show} através de lembretes automáticos e comunicações ágeis. O sistema prioriza a função de \textit{link} personalizado de agendamento, tornando a organização de horários extremamente acessível. Contudo, essa simplificação tende a limitar a profundidade de ferramentas gerenciais, deixando de lado aspectos cruciais como o controle detalhado de custos e a emissão de relatórios financeiros customizados.
 
 \subsection{eAgenda}
-O eAgenda estrutura sua Proposta de Valor em torno da experiência multiplataforma. A existência de um aplicativo (App) dedicado para clientes e profissionais estabelece um diferencial de conveniência e engajamento. O foco está na facilidade de agendamento 24 horas e na gestão visual da agenda. De forma semelhante ao AgendaServiço, o eAgenda se destaca na dimensão Organização, mas é menos explícito ou robusto no módulo de Administração, falhando em oferecer as ferramentas necessárias para uma análise estratégica aprofundada do desempenho e rentabilidade da barbearia (ex: margem de lucro por serviço ou taxa de reincidência por barbeiro). Estes concorrentes, embora resolvam o desafio da organização de agenda, tendem a negligenciar a Gestão Financeira e Operacional interna da barbearia. Esta insuficiência gerencial obriga os gestores a recorrerem a ferramentas externas, como planilhas, fragmentando a administração e resultando em perda de eficiência.
+O eAgenda estrutura sua Proposta de Valor em torno da experiência multiplataforma. A existência de um aplicativo (App) dedicado para clientes e profissionais estabelece um diferencial de conveniência e engajamento. O foco está na facilidade de agendamento 24 horas e na gestão visual da agenda. De forma semelhante ao AgendaServiço, o eAgenda se destaca na dimensão Organização, mas é menos explícito ou robusto no módulo de Administração, falhando em oferecer as ferramentas necessárias para uma análise estratégica aprofundada do desempenho e rentabilidade da barbearia (ex.: margem de lucro por serviço ou taxa de reincidência por barbeiro). Estes concorrentes, embora resolvam o desafio da organização de agenda, tendem a negligenciar a Gestão Financeira e Operacional interna da barbearia. Esta insuficiência gerencial obriga os gestores a recorrerem a ferramentas externas, como planilhas, fragmentando a administração e resultando em perda de eficiência.
 
 \subsection{Trinks}
 O Trinks é uma das plataformas mais consolidadas e abrangentes no mercado brasileiro de agendamento e gestão para o setor de beleza e bem-estar. Sua Proposta de Valor baseia-se na entrega de um ecossistema completo (ERP), oferecendo desde o agendamento online multiplataforma (web e aplicativo próprio) até módulos robustos de PDV (Frente de Caixa), controle rigoroso de estoque, cálculos complexos de comissionamento e ferramentas integradas de marketing, como programas de fidelidade.
-Um dos seus principais diferenciais competitivos é o seu aplicativo voltado para o cliente final, que funciona como uma grande vitrine (marketplace). Isso facilita a descoberta de novos estabelecimentos e atrai um alto volume de usuários.
+Um dos seus principais diferenciais competitivos é o seu aplicativo voltado para o cliente final, que funciona como uma grande vitrine \textit{(marketplace)}. Isso facilita a descoberta de novos estabelecimentos e atrai um alto volume de usuários.
 Contudo, essa abrangência também é a origem de suas fraquezas em relação ao nicho específico do projeto CortaAi. Por ser uma solução genérica e desenhada para atender a toda a gama do setor de beleza (grandes salões femininos, spas, clínicas de estética e barbearias), sua interface e árvore de funcionalidades podem se tornar complexas e excessivamente poluídas para a realidade ágil e direta de uma barbearia de pequeno a médio porte. Além disso, o foco em um modelo "tudo-em-um" para grandes estabelecimentos frequentemente se traduz em planos de assinatura com custos mais elevados, o que representa uma barreira de entrada significativa para barbeiros autônomos ou donos de barbearias em fase de crescimento que buscam uma solução focada, intuitiva e sem recursos ociosos.
 
 \subsection{Comparativo}
@@ -168,7 +169,7 @@ A transição de métodos analógicos para digitais revolucionou a gestão de ne
 Um estudo da Revista Científica da UNIFENAS (2024) aborda o potencial promissor dos salões de beleza e barbearias, que historicamente enfrentam desafios relacionados à disponibilidade de profissionais, horários e, principalmente, ao tempo de espera dos clientes. Dados coletados por esta pesquisa indicam que 67\% dos clientes expressam o desejo de agendar serviços online, visando otimizar suas agendas ocupadas. A migração de um sistema de agendamento manual, sujeito a erros e desorganização, para uma plataforma digital é apresentada como uma solução direta para essa demanda. A MUTUAL TECNOLOGIA (2025) corrobora essa visão, afirmando que, para a satisfação do cliente, as inovações nos sistemas de agendamento em barbearias são imprescindíveis. A implementação de um sistema eficiente não só simplifica o processo de marcação para o cliente, mas também sinaliza a preocupação do estabelecimento em oferecer um serviço de qualidade, o que resulta em uma experiência de usuário positiva e na redução de cancelamentos de última hora.
 
 \section{Sistemas de gestão e agendamento para barbearias}
-O SEBRAE (2023) descreve como softwares e aplicativos especializados facilitam e melhoram a gestão de salões. Essas ferramentas vão além do simples agendamento automatizado, que por si só já permite o controle da agenda e a reserva ou reagendamento de horários. Elas evoluem para sistemas de Gestão de Relacionamento com o Cliente (CRM), permitindo armazenar informações valiosas, como os serviços que o cliente utiliza, a frequência com que frequenta o salão e seu gasto médio. Além disso, o SEBRAE (2023) destaca a integração da agenda com módulos essenciais como "Frente de Caixa", para o controle de pagamentos (cartão, PIX, dinheiro), e "Gestão Financeira", que controla o fluxo de caixa, comissões de barbeiros e a emissão de relatórios estratégicos para a tomada de decisão do proprietário.
+O SEBRAE (2023) descreve como \textit{softwares} e aplicativos especializados facilitam e melhoram a gestão de salões. Essas ferramentas vão além do simples agendamento automatizado, que por si só já permite o controle da agenda e a reserva ou reagendamento de horários. Elas evoluem para sistemas de Gestão de Relacionamento com o Cliente (CRM), permitindo armazenar informações valiosas, como os serviços que o cliente utiliza, a frequência com que frequenta o salão e seu gasto médio. Além disso, o SEBRAE (2023) destaca a integração da agenda com módulos essenciais como "Frente de Caixa", para o controle de pagamentos (cartão, PIX, dinheiro), e "Gestão Financeira", que controla o fluxo de caixa, comissões de barbeiros e a emissão de relatórios estratégicos para a tomada de decisão do proprietário.
 
 Um artigo do IJRASET (2023) define o "Barber Shop Management System" como uma plataforma abrangente que redefine como as barbearias interagem com os clientes e gerenciam seus processos internos. O sistema une as necessidades de proprietários, funcionários e clientes. A plataforma soluciona problemas convencionais como longos tempos de espera e agendamento manual "invisível". Nestes sistemas, os usuários são comumente categorizados em "Barbeiros" (que podem gerenciar seus serviços, visualizar agendamentos e rastrear ganhos) e "Clientes" (que podem se registrar, ver horários disponíveis, escolher serviços com preços e agendar remotamente).
 
@@ -192,30 +193,42 @@ Responsabilidades, papéis e atividades de cada membro da equipe.
         Renan Ladislau & Desenvolvedor Front-end & Implementação da interface do usuário. \\
         Guilherme Chaves/Ana Clara & Desenvolvedor Back-end & Desenvolvimento da lógica de negócios e API. \\
         João Paulo/Laryssa Giovanna & Banco de Dados & Modelagem e gerenciamento do banco de dados. \\
-        Guilherme Chaves/Kaique Diniz & Hospedagem & Estudo do serviço de Hospedagem para o projeto (AWS) \\
+        Kaique Diniz & Testes e Documentação & Testes medindo a integridade do site e suas funcionalidades assim como o registro de marcos do projeto. \\
         \bottomrule
     \end{tabular}
 \end{table}
+
+\subsection{Definição de Feitos (Definition of Done - DoD)}
+Para assegurar a transparência e a qualidade técnica em todos os ciclos de desenvolvimento, a equipe estabeleceu uma \textit{Definition of Done} (DoD) rigorosa. Uma História de Usuário só é considerada "Pronta" para entrega e demonstração ao final da \textit{Sprint} se atender integralmente aos seguintes critérios técnico-funcionais:
+
+\begin{itemize}
+    \item \textbf{Codificação e Padrões:} O código foi desenvolvido seguindo as convenções estipuladas (Google Java Style para o \textit{backend} e Airbnb Style para o \textit{frontend}) e não apresenta erros de compilação.
+    \item \textbf{Revisão de Pares (\textit{Code Review}):} O código foi submetido via \textit{Pull Request} no GitHub e revisado/aprovado por pelo menos um outro membro da equipe, garantindo a disseminação do conhecimento e a detecção precoce de falhas.
+    \item \textbf{Qualidade Estática (SonarQube):} A análise estática foi concluída com sucesso, respeitando o \textit{Quality Gate}: zero vulnerabilidades críticas e cobertura de testes em código novo superior a 80\%.
+    \item \textbf{Testes Automatizados:} Todos os testes unitários e de integração associados à funcionalidade foram executados e aprovados com sucesso no ambiente de Integração Contínua (CI).
+    \item \textbf{Documentação Técnica:} Os contratos da API foram atualizados através de anotações do Swagger/OpenAPI, e o manual do sistema ou seções pertinentes do TCC foram devidamente revisados.
+    \item \textbf{Validação em \textit{Staging}:} A funcionalidade foi implantada com sucesso no ambiente de \textit{Staging} através do \textit{pipeline} de CD e validada funcionalmente conforme os critérios de aceitação da história.
+\end{itemize}
 
 \section{Metodologias de gestão e desenvolvimento}
 Como metodologia foi adotado o SCRUM, não de forma arbitrária, mas fundamentada na natureza e contexto de um projeto integrador que por sua vez exige não apenas a entrega de um produto funcional como também a demonstração de aprendizado e adaptabilidade a requisitos emergentes.
 
 Adicionalmente, a estrutura de papéis do Scrum (Proprietário do Produto, Mestre Scrum e Time de Desenvolvimento) e a realização de cerimônias (Planejamento, Reunião Diária, Revisão e Retrospectiva) fomentam a transparência e a colaboração dentro da equipe. Isso é crucial para um Projeto Integrador, pois assegura que todos os membros estejam alinhados com a priorização das funcionalidades e permite a rápida identificação e resolução de impedimentos, potencializando o desempenho do time na busca pela qualidade final do produto.
 
-Portanto, a escolha do Scrum é justificada pela sua eficácia em lidar com a complexidade inerente ao desenvolvimento de software, assegurando um produto que é funcional, adaptável e de valor para o nicho de barbearias.
+Portanto, a escolha do Scrum é justificada pela sua eficácia em lidar com a complexidade inerente ao desenvolvimento de \textit{software}, assegurando um produto que é funcional, adaptável e de valor para o nicho de barbearias.
 
 \section{Repositório da aplicação}
 O repositório da aplicação é um ponto-chave para o desenvolvimento e manutenção e para atender as demandas do mercado, juntamente com a capacitação da nossa equipe, decidimos adotar o GitHub como forma de versionamento.
 
-O acesso ao repositório pode ser feito via link, onde não há dificuldades para navegar entre as branches. Em prol do dinamismo no reconhecimento e facilidade em encontrar os arquivos de interesse da pessoa, nomeamos as branches de acordo com o desenvolvimento inerente a ela. Desta forma, ao buscar o backend, deve-se navegar para a branch que representa ele.
+O acesso ao repositório pode ser feito via \textit{link}, onde não há dificuldades para navegar entre as \textit{branches}. Em prol do dinamismo no reconhecimento e facilidade em encontrar os arquivos de interesse da pessoa, nomeamos as \textit{branches} de acordo com o desenvolvimento inerente a ela. Desta forma, ao buscar o \textit{backend}, deve-se navegar para a branch que representa ele.
 
-Link do repositório: 
+\textit{Link} do repositório: 
 \url{https://github.com/AppCortaAi/Arquitetura_completa/tree/main}
 
 \chapter{Desenvolvimento do Projeto}
 
 \section{Escopo do projeto}
-O projeto "Cortaai" consiste no desenvolvimento de um sistema de marketplace de barbearias, focado na automação de agendamentos e na gestão de estabelecimentos. O escopo do produto inclui as seguintes funcionalidades, suportadas por um backend robusto em Java/Spring Boot:
+O projeto "Cortaai" consiste no desenvolvimento de um sistema de \textit{marketplace} de barbearias, focado na automação de agendamentos e na gestão de estabelecimentos. O escopo do produto inclui as seguintes funcionalidades, suportadas por um \textit{backend} robusto em Java/Spring Boot:
 \begin{enumerate}
     \item \textbf{Módulo de Autenticação e Usuários (Cliente e Barbeiro):}
         \begin{itemize}
@@ -247,29 +260,28 @@ O projeto "Cortaai" consiste no desenvolvimento de um sistema de marketplace de 
         \end{itemize}
     \item \textbf{Descoberta}
         \begin{itemize}
-            \item Endpoints públicos para listar barbearias, seus serviços e seus barbeiros, permitindo a descoberta pelo cliente.
+            \item \textit{Endpoints} públicos para listar barbearias, seus serviços e seus barbeiros, permitindo a descoberta pelo cliente.
         \end{itemize}
 \end{enumerate}
 
 \subsection*{Premissas}
 O sucesso do projeto baseia-se nas seguintes premissas:
 \begin{itemize}
-    \item \textbf{Infraestrutura Disponível:} Assume-se que a infraestrutura de nuvem (AWS Lambda, Amazon RDS) e os serviços de terceiros estarão disponíveis.
-    \item \textbf{Credenciais Válidas:} Assume-se que as credenciais de acesso ao banco de dados e serviços externos são válidas.
-    \item \textbf{Consumo da API:} Assume-se que uma aplicação frontend (como a prevista em React) será desenvolvida separadamente.
-    \item \textbf{Conectividade:} Assume-se que os usuários finais terão acesso à internet.
+    \item \textbf{Infraestrutura Disponível:} Assume-se que a infraestrutura de implantação baseada em contêineres, bem como os serviços de banco de dados (MySQL e Redis) e de integrações de terceiros, estarão disponíveis e operacionais com alta disponibilidade.
+    \item \textbf{Credenciais Válidas:} Assume-se que as credenciais de acesso aos bancos de dados, \textit{message brokers} e serviços externos são rigorosamente válidas e seguras.
+    \item \textbf{Consumo da API:} Assume-se que a aplicação \textit{frontend} (desenvolvida em React e Vite, e operando como PWA) funcionará como cliente exclusivo, comunicando-se de forma assíncrona com os domínios internos através do \textit{API Gateway}.
+    \item \textbf{Conectividade:} Assume-se que os usuários finais terão acesso à internet de forma minimamente estável para garantir a fluidez da \textit{Single Page Application} (SPA).
 \end{itemize}
 
 \subsection*{Restrições}
 O projeto está sujeito às seguintes restrições:
 \begin{itemize}
-    \item \textbf{Tecnologia Backend:} O desenvolvimento está restrito ao ecossistema Java 17 e Spring Boot 3.3.4.
-    \item \textbf{Persistência de Dados:} O sistema deve utilizar o banco de dados MySQL hospedado no Amazon RDS.
-    \item \textbf{Plataforma de Implantação:} A arquitetura de implantação deve ser serverless, utilizando AWS Lambda.
-    \item \textbf{Armazenamento de Mídia:} O armazenamento de mídia está restrito ao uso do serviço Cloudinary.
-    \item \textbf{Segurança:} O modelo de segurança deve obrigatoriamente implementar autenticação via token JWT.
+    \item \textbf{Tecnologia Backend:} O desenvolvimento está restrito ao ecossistema Java 17 e Spring Boot (versão 3.x), adotando obrigatoriamente o padrão arquitetural de microsserviços com o suporte do Spring Cloud (Eureka Discovery e Spring Cloud Gateway).
+    \item \textbf{Persistência e Cache:} O sistema deve utilizar o banco de dados MySQL para a persistência relacional das entidades e transações, atuando em conjunto com o Redis para estratégias de \textit{caching} em operações críticas (como consultas de disponibilidade de agendas).
+    \item \textbf{Plataforma de Implantação:} A arquitetura de implantação deve ser conteinerizada (via Docker), substituindo em caráter definitivo o design \textit{serverless} (AWS Lambda) adotado nas prototipações iniciais do monólito.
+    \item \textbf{Armazenamento de Mídia:} O armazenamento, a manipulação e a entrega de mídia (como logótipos e imagens do portfólio de cortes) estão estritamente vinculados ao serviço Cloudinary.
+    \item \textbf{Segurança:} O modelo de segurança deve obrigatoriamente implementar autenticação \textit{stateless} através de \textit{tokens} JWT, cujas assinaturas são validadas nos filtros de segurança individuais de cada microsserviço de domínio.
 \end{itemize}
-
 \subsection{Regras de negócio}
 Descrever as regras que governam as operações do sistema.
 \begin{longtable}{p{1.5cm} p{10.5cm} p{2cm}}
@@ -285,7 +297,7 @@ Descrever as regras que governam as operações do sistema.
     \endhead
     \bottomrule
     \endfoot
-    RN1 & "Usuários não autenticados podem acessar endpoints públicos (listagens gerais, registro, login, Swagger)." & \\
+    RN1 & "Usuários não autenticados podem acessar \textit{endpoints} públicos (listagens gerais, registro, login, Swagger)." & \\
     RN2 & "Autenticação é necessária para acessar funcionalidades específicas de Cliente, Barbeiro ou Dono." & \\
     RN3 & "A autenticação é realizada via e-mail e senha, retornando um token JWT." & RN2 \\
     RN4 & O token JWT deve ser enviado no cabeçalho Authorization: Bearer <token> para acessar rotas protegidas. & "RN2, RN3" \\
@@ -384,48 +396,93 @@ Os Requisitos Não Funcionais (RNF) definem as premissas de qualidade, seguranç
 \section{Histórias de usuário}
 As Histórias de Usuário foram definidas com base nos casos de uso para os três atores principais do sistema: Cliente, Barbeiro e Barbeiro Dono.
 
-\subsection{Cadastro e agendamento (Cliente)}
-\textbf{Eu como} um novo usuário, \textbf{quero} me registrar como Cliente e realizar meu primeiro agendamento, \textbf{para} poder utilizar os serviços de barbearia disponíveis na plataforma.
-\begin{description}
-    \item[Critérios de Aceitação:]
-    \item[Critério 1:] O usuário deve preencher o formulário de registro com dados válidos.
-    \item[Critério 2:] O sistema deve validar a unicidade do e-mail, telefone e CPF.
-    \item[Critério 3:] Após o registro, o usuário deve poder realizar login para obter um token JWT.
-    \item[Critério 4:] Com o token JWT, o Cliente deve poder listar barbearias, serviços, barbeiros e consultar disponibilidade.
-    \item[Critério 5:] O Cliente deve poder criar um novo agendamento.
-    \item[Critério 6:] O sistema deve validar todas as regras de negócio do agendamento.
-\end{description}
+\subsection{Criação de Barbearia (Barbeiro Dono)}
+Eu como um Barbeiro Dono de uma barbearia, quero registar os dados fundamentais do meu estabelecimento (nome, CNPJ, endereço, horário padrão de funcionamento e identidade visual), para que a minha barbearia passe a existir na plataforma e eu possa prosseguir com a configuração do catálogo de serviços e o vínculo da minha equipe de barbeiros.
 
-\subsection{Gerenciar Perfil e Agenda (Barbeiro)}
-\textbf{Eu como} Barbeiro cadastrado, \textbf{quero} gerenciar meu perfil, definir meus serviços, meu horário de trabalho e consultar minha agenda, \textbf{para} manter minhas informações atualizadas e organizar meu dia de trabalho.
-\begin{description}
-    \item[Critérios de Aceitação:]
-    \item[Critério 1:] O Barbeiro deve poder fazer login para obter um token JWT.
-    \item[Critério 2:] O Barbeiro autenticado deve poder atualizar seus dados pessoais e foto.
-    \item[Critério 4:] O Barbeiro autenticado (vinculado a uma loja) deve poder definir quais serviços da sua loja ele realiza.
-    \item[Critério 5:] O Barbeiro autenticado deve poder definir seu horário de início e fim de expediente.
-    \item[Critério 6:] O Barbeiro autenticado deve poder consultar sua própria lista de agendamentos.
-\end{description}
+\textbf{Critérios de Aceitação:}
+\begin{itemize}
+    \item \textbf{Critério 1:} O proprietário deve poder preencher e submeter o formulário de registo da barbearia, incluindo o anexo do logótipo do estabelecimento.
+    \item \textbf{Critério 2:} O sistema deve validar o CNPJ inserido, bloqueando o cadastro e exibindo uma mensagem de erro caso o documento seja inválido ou já se encontre registado por outra barbearia.
+    \item \textbf{Critério 3:} Após o sucesso na submissão e gravação dos dados, o sistema deve redirecionar o proprietário de imediato para a etapa de gestão e criação de serviços.
+\end{itemize}
 
-\subsection{Gerenciar Barbearia (Barbeiro Dono)}
-\textbf{Eu como} Barbeiro Dono, \textbf{quero} gerenciar os dados da minha barbearia, o menu de serviços, a equipe de barbeiros e as solicitações de entrada, \textbf{para} administrar completamente meu estabelecimento na plataforma.
-\begin{description}
-    \item[Critérios de Aceitação:]
-    \item[Critério 1:] O usuário deve estar autenticado como Barbeiro Dono.
-    \item[Critério 2:] O Dono deve poder atualizar os dados da sua barbearia.
-    \item[Critério 3:] O Dono deve poder gerenciar as imagens da barbearia (logo, banner, destaques).
-    \item[Critério 4:] O Dono deve poder cadastrar novos serviços.
-    \item[Critério 5:] O Dono deve poder visualizar as solicitações pendentes.
-    \item[Critério 6:] O Dono deve poder aprovar ou rejeitar uma solicitação de entrada.
-    \item[Critério 7:] O Dono deve poder remover um barbeiro (não-dono) da sua equipe.
-    \item[Critério 8:] O Dono deve poder consultar a agenda completa da sua barbearia.
-\end{description}
+\subsection{Descoberta e Pesquisa (Cliente)}
+Eu como um Visitante ou Cliente não autenticado, quero pesquisar barbearias, visualizar os serviços oferecidos e os profissionais disponíveis em cada estabelecimento, para decidir onde e com quem agendar o meu atendimento.
+
+\textbf{Critérios de Aceitação:}
+\begin{itemize}
+    \item \textbf{Critério 1:} O cliente deve poder listar todas as barbearias registadas no sistema sem necessidade de \textit{login} (Cobre RF9).
+    \item \textbf{Critério 2:} Ao selecionar uma barbearia, o sistema deve exibir a lista de serviços (com preço e duração) oferecidos (Cobre RF10).
+    \item \textbf{Critério 3:} O sistema deve permitir a visualização da equipe de barbeiros vinculada à barbearia selecionada (Cobre RF11).
+\end{itemize}
+
+\subsection{Gestão Avançada de Agendamentos (Cliente)}
+Eu como Cliente autenticado, quero poder consultar, reagendar ou cancelar os meus agendamentos futuros, para ter flexibilidade caso ocorra um imprevisto na minha rotina.
+
+\textbf{Critérios de Aceitação:}
+\begin{itemize}
+    \item \textbf{Critério 1:} O Cliente deve poder visualizar uma lista com o histórico e os agendamentos futuros associados ao seu perfil (Cobre RF34).
+    \item \textbf{Critério 2:} O Cliente deve poder reagendar (atualizar data/hora) um agendamento, desde que o mesmo não esteja com o estado "Concluído" ou "Cancelado" (Cobre RF30).
+    \item \textbf{Critério 3:} O Cliente deve poder cancelar um agendamento ativo, libertando o horário na agenda do barbeiro (Cobre RF31).
+\end{itemize}
+
+\subsection{Gestão de Vínculo e Contratação (Barbeiro Dono)}
+Eu como Barbeiro Dono, quero vincular um barbeiro profissional à minha equipe através do seu CPF, para que o processo de contratação seja iniciado pela empresa, prevenindo o excesso de notificações de solicitações externas na gestão administrativa da barbearia.
+
+\textbf{Critérios de Aceitação:}
+\begin{itemize}
+    \item \textbf{Critério 1:} O Dono da barbearia deve poder convidar um barbeiro para a sua equipe informando o CPF do profissional já devidamente registado na plataforma (Cobre RF20)
+    \item \textbf{Critério 2:} O Barbeiro convidado deve poder visualizar os convites pendentes e optar por aceitar ou rejeitar o vínculo com o estabelecimento (Cobre RF37)
+    \item \textbf{Critério 3:} O sistema deve permitir que o Barbeiro se desvincule da barbearia atual de forma autónoma, garantindo a sua liberdade de atuação profissional (Cobre RF24)
+\end{itemize}
+
+\subsection{Moderação de Agenda e Colaboradores (Barbeiro Dono)}
+Eu como Barbeiro Dono, quero ter o controle absoluto sobre a agenda da minha loja e a minha equipe, podendo forçar cancelamentos ou remover profissionais, para lidar com imprevistos operacionais ou encerramentos do espaço.
+
+\textbf{Critérios de Aceitação:}
+\begin{itemize}
+    \item \textbf{Critério 1:} O Dono deve poder cancelar administrativamente qualquer agendamento da sua loja, independentemente do cliente ou barbeiro alocado (Cobre RF32).
+    \item \textbf{Critério 2:} Em casos extremos (ex.: fraude ou erro), o Dono deve poder excluir fisicamente um agendamento do banco de dados (Cobre RF33).
+    \item \textbf{Critério 3:} O Dono deve poder remover da equipe um barbeiro (não-dono) que não preste mais serviços no seu estabelecimento (Cobre RF25).
+\end{itemize}
+
+\subsection{Gestão de Inventário e Produtos (Barbeiro Dono)}
+Eu como Barbeiro Dono, quero cadastrar, visualizar e alterar os produtos referentes ao estoque da minha unidade, para que eu possa ter o controlo total sobre os suprimentos e vendas de itens físicos de forma centralizada.
+
+\textbf{Critérios de Aceitação:}
+\begin{itemize}
+    \item \textbf{Critério 1:} O acesso às funcionalidades de criação, edição e visualização de inventário deve ser restrito exclusivamente a utilizadores com a função \texttt{ROLE\_OWNER}.
+    \item \textbf{Critério 2:} O sistema deve permitir o registo de novos produtos informando nome, preço de venda, quantidade em \textit{stock} e descrição.
+    \item \textbf{Critério 3:} O Dono deve poder atualizar a quantidade em estoque e os valores dos produtos a qualquer momento, refletindo as alterações no inventário em tempo real.
+\end{itemize}
+
+\subsection{Catálogo de Serviços e Atribuição Profissional (Barbeiro e Barbeiro Dono)}
+Eu como Barbeiro Dono, quero definir o menu de serviços da barbearia e, como Barbeiro, quero selecionar quais desses serviços estou apto a realizar, para que a agenda de agendamentos reflita com precisão as competências de cada profissional da equipa.
+
+\textbf{Critérios de Aceitação:}
+\begin{itemize}
+    \item \textbf{Critério 1:} O Barbeiro Dono deve poder criar e configurar serviços definindo o nome, o preço e a duração estimada (Cobre RF18).
+    \item \textbf{Critério 2:} Um Barbeiro, após ter o seu vínculo aceito na barbearia, deve ter acesso à lista completa de serviços previamente cadastrados pelo dono.
+    \item \textbf{Critério 3:} O Barbeiro deve poder selecionar individualmente quais os serviços do catálogo da loja ele realiza, vinculando-os ao seu perfil profissional (Cobre RF27).
+    \item \textbf{Critério 4:} O sistema de agendamento só deve permitir que um Cliente reserve um serviço específico com um Barbeiro se este profissional tiver selecionado previamente tal atividade como parte do seu portfólio.
+\end{itemize}
+
+\subsection{Personalização da Jornada e Flexibilidade de Horários}
+Eu como Barbeiro, quero ter a autonomia para selecionar quais dias da semana estarei disponível para atendimento e definir turnos específicos com horários espaçados, para que minha agenda reflita fielmente minha disponibilidade real e permita intervalos de descanso ou compromissos externos.
+
+\textbf{Critérios de Aceitação:}
+\begin{itemize}
+    \item \textbf{Critério 1:} O sistema deve permitir que o Barbeiro selecione individualmente os dias da semana (ex.: segunda a sábado) em que prestará serviços na unidade.
+    \item \textbf{Critério 2:} O Barbeiro deve poder configurar múltiplos intervalos de tempo para um mesmo dia (ex.: das 09:00 às 12:00 e das 14:00 às 19:00), suportando jornadas com horários espaçados.
+    \item \textbf{Critério 3:} O motor de busca de disponibilidade do \textit{Schedule Service} deve considerar estes intervalos para não exibir horários vagos durante os períodos de pausa definidos pelo profissional.
+    \item \textbf{Critério 4:} Qualquer alteração na jornada de trabalho deve ser validada contra os agendamentos já existentes, impedindo conflitos de horários.
+\end{itemize}
 
 \section{Arquitetura da aplicação}
 
 Com a evolução do projeto e a necessidade de maior escalabilidade, resiliência e independência entre os domínios de negócio, a arquitetura do sistema transitou de um modelo monolítico para uma \textbf{Arquitetura de Microsserviços Orientada a Eventos} (\textit{Event-Driven Microservices Architecture}). 
 
-O frontend (desenvolvido em React) atua como o cliente (Single Page Application - SPA), comunicando-se com o ecossistema de microsserviços através de um \textit{API Gateway} centralizador. O backend, desenvolvido em Java com Spring Boot, foi fragmentado em domínios de negócio específicos (Bounded Contexts), garantindo baixo acoplamento.
+O frontend (desenvolvido em React) atua como o cliente (Single Page Application - SPA), comunicando-se com o ecossistema de microsserviços através de um \textit{API Gateway} centralizador. O \textit{backend}, desenvolvido em Java com Spring Boot, foi fragmentado em domínios de negócio específicos (Bounded Contexts), garantindo baixo acoplamento.
 
 A nova topologia arquitetural é composta pelos seguintes componentes principais:
 
@@ -446,24 +503,64 @@ O domínio da aplicação foi subdividido em serviços independentes. Internamen
     \item \textbf{Schedule Service:} O núcleo de negócio, responsável pela complexa gestão de disponibilidades, bloqueios de agenda e criação de agendamentos.
     \item \textbf{Product Service:} Módulo responsável pelo inventário, gestão de produtos físicos e controlo de fluxo de stock.
     \item \textbf{Payment Service:} Gere transações financeiras e integrações com \textit{gateways} de pagamento externos (Mercado Pago), processando \textit{webhooks}.
-    \item \textbf{Notification Service:} Serviço isolado responsável pelo envio de comunicações e alertas (ex: e-mails transacionais) para os utilizadores.
+    \item \textbf{Notification Service:} Serviço isolado responsável pelo envio de comunicações e alertas (ex.: e-mails transacionais) para os utilizadores.
 \end{itemize}
 
 \subsection{Comunicação e Persistência}
 A comunicação entre os serviços ocorre de duas formas distintas, otimizando a performance:
 \begin{enumerate}
-    \item \textbf{Síncrona (REST/OpenFeign):} Utilizada para consultas imediatas onde um serviço necessita de dados de outro para completar uma operação (ex: \textit{Schedule Service} consultando os dados de um barbeiro no \textit{User Service}).
+    \item \textbf{Síncrona (REST/OpenFeign):} Utilizada para consultas imediatas onde um serviço necessita de dados de outro para completar uma operação (ex.: \textit{Schedule Service} consultando os dados de um barbeiro no \textit{User Service}).
     \item \textbf{Assíncrona (Mensageria com RabbitMQ):} Adotada para operações que não exigem resposta imediata ao cliente. A aplicação utiliza o padrão \textit{Publish-Subscribe} (Eventos). Por exemplo, ao criar um agendamento, o \textit{Schedule Service} publica um evento \texttt{AppointmentCreatedEvent} no \textbf{RabbitMQ}, que é consumido pelo \textit{Notification Service} para enviar um e-mail em segundo plano, não bloqueando a resposta ao utilizador.
 \end{enumerate}
 
 Para a persistência de dados, a arquitetura prevê a independência de banco de dados por serviço (\textit{Database-per-Service} pattern) utilizando \textbf{MySQL}, garantindo que uma falha num domínio não comprometa os dados de outro. Além disso, introduziu-se o uso de \textbf{Redis} como \textit{cache} distribuído em serviços críticos para otimizar a leitura de dados frequentemente acedidos.
 
-\begin{figure}[htb]
-    \centering
-    \includegraphics[width=\textwidth]{images/diagrama_arquitetura.png}
-    \caption{Diagrama de Componentes da Arquitetura}
-    \label{fig:arquitetura}
-\end{figure}
+\subsection{Estratégia de Notificações Ativas para Redução de \textit{No-Show}}
+
+O absenteísmo, comumente referido no mercado como \textit{no-show} (o não comparecimento do cliente ao horário agendado sem aviso prévio), representa um dos maiores fatores de ociosidade e de perda direta de receita no setor de estética e serviços. Para mitigar este risco e garantir a previsibilidade financeira das barbearias parceiras, o projeto CortaAí contempla a implementação de um fluxo automatizado de engajamento e notificações preventivas.
+
+A arquitetura desta solução de comunicação foi desenhada para atuar de forma proativa nos momentos mais críticos da jornada do utilizador, sustentada pelos seguintes pilares tecnológicos e operacionais:
+
+\begin{itemize}
+    \item \textbf{Lembretes de Proximidade (\textit{Scheduled Tasks}):} O \textit{Schedule Service} possui rotinas de execução em segundo plano orientadas a tempo (\textit{cron jobs}) que monitorizam constantemente a base de dados relacional em busca de agendamentos iminentes. O sistema dispara alertas automáticos escalonados estrategicamente (como, por exemplo, 24 horas e 2 horas antes do atendimento), induzindo o cliente a confirmar a sua presença ou realizar o cancelamento com a devida antecedência.
+    
+    \item \textbf{Notificações \textit{Push} via PWA:} Tirando o máximo proveito da adoção do \textit{Progressive Web Application} (PWA), a plataforma mitiga a necessidade e os custos associados a portais de envio de SMS. A interface utiliza as capacidades dos \textit{Service Workers} e da \textit{Web Push API} para despachar notificações nativas diretamente para a tela do dispositivo móvel do cliente, garantindo elevados índices de visualização e engajamento.
+    
+    \item \textbf{Recalibragem Dinâmica de Agenda:} Caso o cliente opte pelo cancelamento a partir da notificação recebida, o sistema executa imediatamente um fluxo de limpeza. O \textit{Schedule Service} altera o estado da reserva, invalida a chave de disponibilidade temporária armazenada em \textit{cache} no Redis e sinaliza a libertação daquele bloco de tempo. Isso garante que o horário vago retorne de forma instantânea para o catálogo, tornando-se elegível para novos clientes sem atrasos de sincronização.
+    
+    \item \textbf{Comunicação Assíncrona e Desacoplamento:} Para evitar o estrangulamento da aplicação sob picos de acesso, o processamento dos envios de notificação não concorre com as transações do sistema principal. O disparo de avisos é delegado a eventos assíncronos não bloqueantes, garantindo que as \textit{threads} ativas que recebem novas reservas permaneçam otimizadas e com baixíssima latência.
+\end{itemize}
+
+Esta abordagem tecnológica não apenas resolve uma das principais falhas de comunicação em sistemas tradicionais, como também atua ativamente na retenção de lucro dos proprietários dos estabelecimentos, reforçando o valor de negócio agregado pelo ecossistema CortaAí.
+
+\subsection{Integração de Pagamentos Online e Fluxo Transacional}
+
+Para estender o valor comercial da plataforma e oferecer conveniência aos clientes, o ecossistema disponibiliza o módulo de pagamento digital integrado diretamente ao fluxo de agendamento. Esta funcionalidade é operacionalizada através do consumo da API do Mercado Pago, permitindo a liquidação instantânea de valores via Pix ou cartão de crédito.
+
+O comportamento do sistema é regido pelos seguintes requisitos e regras operacionais:
+
+\begin{itemize}
+    \item \textbf{Geração de Preferência de Pagamento:} No momento em que o cliente confirma a intenção de reserva no \textit{front-end} (PWA), o microsserviço responsável intercepta a requisição e comunica-se de forma síncrona com a API do Mercado Pago para gerar uma "Preferência de Pagamento", obtendo em resposta o \textit{Payload} contendo o \textit{Copy and Paste} do Pix e o \textit{QR Code} correspondente.
+    \item \textbf{Processamento Assíncrono de Status (Webhooks):} O sistema não realiza consultas ativas (\textit{polling}) para checar a compensação financeira. Em vez disso, expõe um \textit{endpoint} público de \textit{Webhook} (Notificação de IPN - \textit{Instant Payment Notification}). Assim que o Mercado Pago processa o pagamento, ele efetua uma chamada assíncrona para este \textit{endpoint}, disparando a atualização automática do estado da reserva no sistema.
+\end{itemize}
+
+\subsection{Estratégia de Engajamento e Adoção de Progressive Web Application (PWA)}
+
+No cenário competitivo de plataformas de agendamento e \textit{marketplaces} de serviços de estética, a experiência do usuário em dispositivos móveis desempenha um papel determinante na retenção e fidelidade dos clientes. 
+
+Para mitigar essa desvantagem competitiva sem incorrer nos altos custos operacionais, na complexidade de manutenção de múltiplas bases de código distintas (Android, iOS e Web) e nas barreiras de entrada das lojas de aplicativos, o projeto adotou a estratégia de \textit{Progressive Web Application} (PWA). Esta abordagem transforma a aplicação web principal (acessível no domínio oficial \texttt{https://web.cortaai.shop}) em uma experiência híbrida capaz de combinar o alcance e a agilidade de atualização da web com os benefícios de engajamento de um \textit{software} instalado.
+
+A arquitetura de suporte ao PWA no ecossistema baseia-se em três pilares fundamentais:
+
+\begin{itemize}
+    \item \textbf{Manifesto da Aplicação Web (\texttt{manifest.json}):} Arquivo de metadados que define o comportamento do sistema quando adicionado à tela inicial do dispositivo. Especifica os ícones em diferentes resoluções, as cores do tema e o modo de exibição \textit{standalone}. Este modo oculta os componentes padrão do navegador (como barra de endereços e botões de navegação), garantindo uma experiência imersiva e indistinguível de um aplicativo nativo.
+    
+    \item \textbf{Service Workers:} Scripts executados em segundo plano pelo navegador, operando de forma independente da interface principal. Eles atuam como um \textit{proxy} de rede, interceptando requisições e gerenciando o armazenamento local de ativos estáticos. Esse mecanismo assegura o carregamento instantâneo da interface estrutural, mesmo sob condições de conectividade intermitente ou de baixa latência.
+    
+    \item \textbf{Estratégia de Armazenamento do App Shell:} Em conformidade com o design distribuído do \textit{back-end}, o PWA isola e retém localmente a casca da aplicação (componentes estruturais de navegação, estilos e roteamento). Isso garante que as requisições de rede sejam estritamente limitadas ao tráfego de dados dinâmicos transacionais gerenciados pelo \textit{API Gateway}, reduzindo o consumo de banda e acelerando o tempo de renderização de telas críticas, como a listagem de profissionais e o fluxo de agendamento.
+\end{itemize}
+
+Dessa forma, a conversão para PWA resolve o gargalo de engajamento identificado nos concorrentes móveis dedicados, preservando a flexibilidade de integração contínua do ecossistema web e viabilizando uma distribuição imediata.
 
 \section{Tecnologias}
 
@@ -489,7 +586,7 @@ Para garantir a escalabilidade e o desacoplamento de processos pesados, o sistem
 \subsection{Frontend e Autenticação}
 \begin{itemize}
     \item \textbf{React com Vite:} A interface do utilizador (SPA) é desenvolvida em React, utilizando a ferramenta de \textit{build} Vite, que proporciona um ambiente de desenvolvimento extremamente rápido e otimizado.
-    \item \textbf{Firebase Authentication:} Serviço \textit{Backend-as-a-Service} (BaaS) da Google utilizado como \textit{Identity Provider}. Gere com segurança o registo, o \textit{login} e a geração de tokens (JWT), aliviando o backend da gestão de credenciais sensíveis.
+    \item \textbf{Firebase Authentication:} Serviço \textit{Backend-as-a-Service} (BaaS) da Google utilizado como \textit{Identity Provider}. Gere com segurança o registo, o \textit{login} e a geração de tokens (JWT), aliviando o \textit{backend} da gestão de credenciais sensíveis.
 \end{itemize}
 
 \subsection{Persistência e Infraestrutura}
@@ -504,9 +601,56 @@ Para a gestão do projeto e garantia de qualidade, utilizam-se as seguintes plat
 \begin{itemize}
     \item \textbf{Git e GitHub:} Controlo de versões e alojamento do código-fonte, facilitando o trabalho colaborativo através de \textit{branches} organizadas por \textit{features}.
     \item \textbf{Postman / Insomnia:} Plataformas de testes de API utilizadas para modelar contratos, simular fluxos de utilizadores e validar \textit{endpoints}.
-    \item \textbf{Trello e Discord:} Ferramentas para a gestão de tarefas (metodologia Kanban/Scrum) e comunicação da equipa de desenvolvimento.
+    \item \textbf{Trello e Discord:} Ferramentas para a gestão de tarefas (metodologia Kanban/Scrum) e comunicação da equipe de desenvolvimento.
     \item \textbf{Overleaf:} Editor LaTeX colaborativo para a elaboração profissional da documentação técnica e do próprio Trabalho de Conclusão de Curso.
 \end{itemize}
+
+\subsection{Módulo de Assistência Inteligente (Assistente Gustave)}
+
+Como diferencial estratégico focado na usabilidade e no suporte à tomada de decisão dos profissionais, o ecossistema \textit{CortaAí} incorpora um módulo de inteligência artificial generativa, denominado \textit{Gustave}. Este assistente atua como uma interface conversacional inteligente integrada diretamente à console administrativa do profissional (\texttt{BarberHomePage}), viabilizando interações em linguagem natural para a extração rápida de dados e \textit{insights} operacionais sem a necessidade de navegação manual por múltiplos menus.
+
+O escopo funcional do assistente abrange três frentes críticas de suporte ao cotidiano da barbearia:
+
+\begin{itemize}
+    \item \textbf{Interpretação de Dashboards e Desempenho:} O assistente é capaz de contextualizar e sumarizar os dados analíticos de faturamento, ticket médio e gráficos de produtividade apresentados na interface, traduzindo métricas visuais complexas em diagnósticos textuais diretos.
+    \item \textbf{Consulta Dinâmica de Agendamentos:} Conectado síncronamente ao \textit{Schedule Service}, o \textit{Gustave} permite que o barbeiro consulte a sua fila de compromissos diários, confirme horários reservados ou resgate históricos de atendimento de determinados clientes através de simples comandos de texto.
+    \item \textbf{Monitoramento de Itens em Estoque:} O módulo auxilia no controle operacional de insumos e produtos do estabelecimento, respondendo instantaneamente sobre níveis de inventário, alertando sobre a necessidade de reposição e prevenindo a escassez de materiais essenciais ao trabalho.
+\end{itemize}
+
+Sob a perspectiva arquitetural, o fluxo de comunicação do \textit{Gustave} é intermediado pelo \textit{API Gateway}, que valida rigorosamente o \textit{token} JWT do profissional antes de delegar a requisição de chat para o microsserviço ou componente responsável pela orquestração de linguagem. Essa arquitetura garante que a IA opere estritamente sob o escopo de permissões do usuário autenticado. A inclusão deste componente consolida uma infraestrutura de microsserviços distribuídos capaz de sustentar de forma segura soluções de computação cognitiva voltadas ao mercado de estética.
+
+\subsection{Integração e Entrega Contínuas (CI/CD)}
+\label{sec:ci_cd}
+
+Para suportar a arquitetura de microsserviços e garantir a agilidade e segurança nas entregas, o projeto adota uma estratégia robusta de Integração e Entrega Contínuas (CI/CD). Como o repositório do código-fonte é hospedado no GitHub, a ferramenta escolhida para a orquestração dos \textit{pipelines} é o \textbf{GitHub Actions}.
+
+A automação do ciclo de vida do \textit{software} foi dividida em duas esteiras principais, garantindo que o código apenas chegue à infraestrutura da nuvem após validações rigorosas.
+
+\subsubsection{Esteira de Integração Contínua (CI)}
+\textbf{Gatilho:} Abertura ou atualização de \textit{Pull Requests} (PRs) contra a ramificação principal (\textit{main}).
+
+O objetivo desta fase é garantir que o novo código é funcional, seguro e não quebra as integrações existentes. O fluxo é composto pelos seguintes passos sequenciais:
+\begin{enumerate}
+    \item \textbf{Setup do Ambiente:} Provisionamento das instâncias de execução, instalação do Java 17 e configuração do \textit{cache} de dependências do Maven para otimização do tempo de \textit{build}.
+    \item \textbf{Testes Automatizados:} Execução da suíte completa de testes unitários e de integração, com o \textit{Testcontainers} a provisionar serviços efémeros (MySQL, Redis e RabbitMQ) de forma transparente.
+    \item \textbf{Análise Estática e \textit{Quality Gate}:} Geração do relatório de qualidade e envio para o SonarQube. Caso o \textit{Quality Gate} reprove o código (ex.: cobertura de código novo inferior a 80\% ou presença de vulnerabilidades de segurança), a integração falha e o \textit{merge} do PR é bloqueado automaticamente.
+\end{enumerate}
+
+\subsubsection{Esteira de Entrega Contínua (CD)}
+\textbf{Gatilho:} \textit{Merge} de código previamente aprovado na ramificação principal (\textit{main}).
+
+Esta fase é responsável por empacotar a versão estabilizada do sistema e publicá-la no ambiente de produção. Devido à arquitetura distribuída adotada, a esteira coordena a atualização independente de cada módulo (como o \textit{User Service}, \textit{Schedule Service}, o \textit{API Gateway} e a interface \textit{Front-end} em PWA), garantindo coesão no ecossistema. O processo engloba:
+
+\begin{enumerate}
+    \item \textbf{Geração de Artefatos:} Compilação final do código validado. No \textit{back-end}, isso envolve o empacotamento (\texttt{.jar}) dos microsserviços Java/Spring Boot. No \textit{front-end}, consiste no \textit{build} otimizado dos ativos estáticos do React/Vite.
+    
+    \item \textbf{Contentorização (\textit{Build \& Push}):} Criação das imagens Docker isoladas, restritas apenas aos serviços que sofreram alterações no ciclo atual, otimizando o tempo de processamento. Após a construção, as imagens são etiquetadas com o \textit{hash} da versão e enviadas de forma segura para o registo de contentores em nuvem (como o Amazon ECR - \textit{Elastic Container Registry} ou Docker Hub).
+    
+    \item \textbf{\textit{Deploy} Automatizado e Orquestração:} Atualização contínua na infraestrutura de hospedagem. O \textit{pipeline} sinaliza o ambiente de produção para realizar o \textit{pull} das novas imagens e instanciar os novos contentores. A sinergia entre o \textit{Discovery Service} (Eureka) e o \textit{API Gateway} assegura que as novas instâncias sejam registadas na malha de serviços e comecem a receber tráfego gradualmente, enquanto os contentores antigos são drenados e desligados, alcançando uma atualização sem indisponibilidade para o utilizador (\textit{Zero Downtime Deployment}).
+\end{enumerate}
+
+A adoção destas esteiras de CI/CD elimina o risco e a morosidade das implantações manuais, fechando o ciclo de desenvolvimento com uma infraestrutura altamente automatizada, auditável e resiliente.
+
 \section{Testes e manutenibilidade}
 O Plano de Testes serve como um mapa ou guia para todo o esforço de teste do projeto. Em essência, ele responde às seguintes perguntas:
 \begin{itemize}
@@ -523,23 +667,23 @@ Foi adotado uma estratégia que segue a pirâmide de testes. O escopo de teste �
 
 \subsubsection{Nível 1: Testes Unitários}
 \begin{itemize}
-    \item \textbf{Escopo e Foco:} Lógica de negócio. O escopo inclui todas as classes de Serviço (pacote \texttt{service.impl}).
-    \item \textbf{Descrição e Ferramentas:} Cada método de serviço (ex: \texttt{getAvailableSlots}) é testado de forma isolada. Dependências são "mockadas" utilizando Mockito.
-    \item \textbf{Execução:} Automaticamente a cada build local (\texttt{mvn test}).
+    \item \textbf{Escopo e Foco:} Validação rigorosa da lógica de negócio isolada dentro de cada microsserviço. O escopo abrange primordialmente as regras de domínio implementadas nas classes de serviço (pacote \texttt{service.impl}), operando de forma independente em módulos como o \textit{Schedule Service} e \textit{Barbershop Service}.
+    \item \textbf{Descrição e Ferramentas:} Cada método crítico (como o processamento lógico em \texttt{getAvailableSlots}) é testado de forma isolada. Todas as dependências externas, acessos a bancos de dados e comunicações de rede (como as chamadas via \textit{Feign Clients} para outros microsserviços) são simuladas (\textit{mockadas}) utilizando o \textit{framework} Mockito em conjunto com o JUnit 5.
+    \item \textbf{Execução:} Executados automaticamente a cada compilação local (\texttt{mvn test}) e no estágio inicial da esteira de Integração Contínua (CI), garantindo \textit{feedback} imediato durante o desenvolvimento.
 \end{itemize}
 
 \subsubsection{Nível 2: Testes de Integração}
 \begin{itemize}
-    \item \textbf{Escopo e Foco:} Fluxo completo da API (Controller -> Service -> BD) e a camada de segurança.
-    \item \textbf{Descrição e Ferramentas:} Utilizando \texttt{@SpringBootTest} e \texttt{MockMvc}, estes testes validam o fluxo CRUD, a lógica de segurança (JWT 401/403) e validações de DTO (400 Bad Request).
-    \item \textbf{Execução:} Automaticamente a cada build do Maven e no pipeline de CI/CD.
+    \item \textbf{Escopo e Foco:} Validação do fluxo completo das requisições dentro das fronteiras de um único microsserviço (fluxo \texttt{Controller} $\rightarrow$ \texttt{Service} $\rightarrow$ Camada de Persistência), incluindo o mapeamento objeto-relacional e a interceptação de segurança.
+    \item \textbf{Descrição e Ferramentas:} Utilizando \texttt{@SpringBootTest} e \texttt{MockMvc}, estes testes simulam o roteamento HTTP interno. Eles validam o funcionamento das operações transacionais de CRUD no banco de dados, a consistência de persistência (JPA/Hibernate), a rejeição adequada de cargas inválidas (\texttt{400 Bad Request} via DTOs) e a correta aplicação dos filtros de segurança, como a validação e rejeição de tokens JWT (\texttt{401 Unauthorized} / \texttt{403 Forbidden}).
+    \item \textbf{Execução:} Realizados automaticamente durante a fase de \textit{build} do Maven e atuam como métrica de aprovação obrigatória no \textit{pipeline} de CI/CD, imediatamente antes da geração e envio das imagens Docker para o repositório em nuvem.
 \end{itemize}
 
-\subsubsection{Nível 3: Testes de Componente/API}
+\subsubsection{Nível 3: Testes de Componente/Integração de API}
 \begin{itemize}
-    \item \textbf{Escopo e Foco:} Validação do contrato da API (JSON) e a integração real com serviços externos (Cloudinary e AWS RDS) em ambiente de homologação (Staging).
-    \item \textbf{Descrição e Ferramentas:} Após o deploy em Staging, são executados testes manuais (Insomnia ou Postman) para verificar a integração real.
-    \item \textbf{Execução:} Manual, realizado antes de qualquer promoção do código para Produção.
+    \item \textbf{Escopo e Foco:} Validação dos contratos das APIs (respostas em JSON), roteamento e balanceamento correto das requisições através do \textit{API Gateway} para os microsserviços de domínio, além da integração real com a infraestrutura de dados (MySQL e Redis) e serviços externos (Cloudinary).
+    \item \textbf{Descrição e Ferramentas:} Após a contentorização e o \textit{deploy} no ambiente de homologação (\textit{Staging}), são executados testes nos \textit{endpoints} (utilizando ferramentas como Postman ou Insomnia) para verificar o fluxo completo. Isso inclui a validação dos filtros de segurança (autenticação JWT) e o comportamento transacional entre serviços distintos.
+    \item \textbf{Execução:} Execução manual e validações exploratórias, realizadas como porta de qualidade (\textit{Quality Gate}) rigorosa antes de qualquer promoção definitiva das imagens Docker para o ambiente de Produção.
 \end{itemize}
 
 \subsection{Ambientes e Ferramentas de Teste}
@@ -556,7 +700,7 @@ A complexidade de uma arquitetura distribuída exige que os ambientes de teste s
 \textbf{Ambiente} & \textbf{Propósito e Tipos de Teste} & \textbf{Infraestrutura e Orquestração} & \textbf{Ferramentas Aplicáveis} \\ \hline
 \textbf{Local} & Desenvolvimento e validação de lógica interna. \textbf{Testes:} Unitários e Integração. & \textbf{Docker Compose}: Orquestração local de MySQL, RabbitMQ e Redis. & JUnit 5, Mockito, Spring Boot Test, Testcontainers. \\ \hline
 \textbf{Staging} & Homologação e validação de contratos entre serviços. \textbf{Testes:} E2E, Integração Assíncrona e Carga. & Instância Cloud (EC2/ECS) rodando imagens Docker. \textbf{BD:} RDS Distribuído. & Postman/Insomnia, JMeter, RabbitMQ Management Plugin. \\ \hline
-\textbf{Produção} & Ambiente real de uso. \textbf{Testes:} Monitoramento de integridade (\textit{Health Checks}). & Infraestrutura Cloud Distribuída (Docker Containers). & Firebase Console, AWS CloudWatch, Spring Boot Actuator. \\ \hline
+\textbf{Produção} & Ambiente real de uso. \textbf{Testes:} Monitoramento de integridade (\textit{Health Checks}). & Infraestrutura Cloud Distribuída (Docker Containers). & Firebase Console, Spring Boot Actuator. \\ \hline
 \end{tabular}%
 }
 \end{table}
@@ -576,7 +720,7 @@ O primeiro nível foca-se na validação isolada da lógica de negócio contida 
 \subsubsection{Testes de Integração e Contratos}
 Dada a natureza distribuída do sistema, é crucial garantir que os microsserviços compreendem os contratos uns dos outros e que interagem corretamente com as infraestruturas de persistência.
 \begin{itemize}
-    \item \textbf{Integração de Base de Dados:} Utilização do \textbf{Testcontainers} para instanciar contentores Docker efémeros (ex: MySQL e Redis) durante a execução dos testes. Isto garante que as consultas (\textit{queries}) JPA são validadas contra uma base de dados real idêntica à de produção.
+    \item \textbf{Integração de Base de Dados:} Utilização do \textbf{Testcontainers} para instanciar contentores Docker efémeros (ex.: MySQL e Redis) durante a execução dos testes. Isto garante que as consultas (\textit{queries}) JPA são validadas contra uma base de dados real idêntica à de produção.
     \item \textbf{Comunicação Síncrona:} Validação dos contratos de comunicação via \textit{OpenFeign}, garantindo que o \textit{payload} JSON esperado pelo \textit{User Service} é corretamente enviado e interpretado pelo \textit{Schedule Service}.
 \end{itemize}
 
@@ -609,7 +753,7 @@ Para garantir a fidelidade do ambiente de testes com a infraestrutura \textit{Cl
 Dada a introdução do \textbf{RabbitMQ}, a estratégia de testes foi estendida para validar a consistência eventual. No ambiente de \textit{Staging}, são realizados testes de "disparo e escuta", garantindo que um evento gerado pelo \textit{Schedule Service} seja processado corretamente pelo \textit{Notification Service} sem perda de mensagens em caso de falha temporária de conexão.
 
 \subsection{Testes funcionais}
-A estratégia de testes funcionais visa validar o software em diferentes níveis de granularidade.
+A estratégia de testes funcionais visa validar o \textit{software} em diferentes níveis de granularidade.
 
 \subsubsection{Testes Unitários}
 \textbf{Definição:} Focam em validar a menor unidade de lógica da aplicação de forma isolada (classes de Serviço). \textbf{Implementação:} Utiliza-se JUnit 5 e Mockito para simular dependências.
@@ -629,7 +773,7 @@ A estratégia de testes funcionais visa validar o software em diferentes níveis
 \end{itemize}
 
 \subsubsection{Testes de Integração}
-\textbf{Definição:} Pilar de validação do backend. Verificam a colaboração entre as camadas (Controller, Service, Repository) e a integração com o banco de dados.
+\textbf{Definição:} Pilar de validação do \textit{backend}. Verificam a colaboração entre as camadas (Controller, Service, Repository) e a integração com o banco de dados.
 \textbf{Implementação:} Utiliza-se \texttt{@SpringBootTest} para carregar o contexto completo e \texttt{MockMvc} para simular requisições HTTP.
 \begin{description}
     \item[Cenário de Exemplo (POST /api/appointments):]
@@ -638,12 +782,12 @@ A estratégia de testes funcionais visa validar o software em diferentes níveis
     \item[Então (Then):] O teste afirma que a resposta HTTP é 201 (Created) e que o AppointmentsRepository.count() é 1.
     \item[Cenário de Exemplo (Acesso Negado):]
     \item[Dado:] Um usuário simulado \texttt{@WithMockUser} (ROLE\_CUSTOMER).
-    \item[Quando (When):] MockMvc executa um GET para uma rota de Dono (ex: /api/barbershops/my-shop/pending-requests).
+    \item[Quando (When):] MockMvc executa um GET para uma rota de Dono (ex.: /api/barbershops/my-shop/pending-requests).
     \item[Então (Then):] O teste afirma que a resposta HTTP é 403 (Forbidden).
 \end{description}
 
 \subsubsection{Testes end-to-end}
-\textbf{Definição:} Simulam a jornada completa do usuário real no sistema, validando a integração entre o frontend (React) e o backend (Spring Boot) juntos.
+\textbf{Definição:} Simulam a jornada completa do usuário real no sistema, validando a integração entre o frontend (React) e o \textit{backend} (Spring Boot) juntos.
 \textbf{Implementação:} Requer que ambas as aplicações estejam implantadas em Staging. Utiliza-se ferramentas de automação de navegador (Cypress ou Playwright).
 \begin{description}
     \item[Cenário de Exemplo (Jornada de Agendamento):]
@@ -655,33 +799,79 @@ A estratégia de testes funcionais visa validar o software em diferentes níveis
     \item[Verificação:] O script afirma que o agendamento aparece na lista de "Meus Agendamentos".
 \end{description}
 
-\subsection{Testes não funcionais}
-Verificam *como* o sistema opera sob determinadas condições, focando em desempenho, confiabilidade e configuração.
+\subsubsection{Cobertura de Cenários Negativos e Casos de Borda}
+\label{sec:cenarios_negativos}
 
-\subsubsection{Testes de performance}
-\textbf{Definição:} Medem a velocidade, responsividade e estabilidade da API sob carga.
+Uma estratégia de testes de \textit{software} robusta não se limita a validar o "caminho feliz" (\textit{happy path}). Em ecossistemas distribuídos, a garantia de qualidade é comprovada pela resiliência do sistema perante entradas inválidas, violações de integridade estrutural e falhas de concorrência. Para assegurar esta fiabilidade, foram mapeados e automatizados diversos cenários negativos nas camadas de unidade e integração.
+
+\paragraph{Cenários de Validação de Domínio (Testes Unitários)}
+Estes testes focam-se na rejeição de estados inválidos pela lógica de negócio interna, operando em memória sem dependência do banco de dados.
+
 \begin{itemize}
-    \item \textbf{Testes de Estresse (Stress Testing):} Aumenta progressivamente a carga além do esperado, até o sistema falhar, identificando o ponto de ruptura (limites de concorrência do Lambda, pool de conexões do RDS).
-    \item \textbf{Testes de "Cold Start" (Inicialização a Frio):} Específico para AWS Lambda. Mede o tempo que a aplicação Spring Boot leva para inicializar do zero após um período de inatividade.
+    \item \textbf{Agendamento fora do expediente da barbearia:} \\
+    \textbf{Dado} um Barbeiro com o horário de trabalho configurado das 09:00 às 18:00. \\
+    \textbf{Quando} um Cliente tenta agendar um serviço com início às 18:30. \\
+    \textbf{Então} o \textit{Schedule Service} lança uma \texttt{BusinessValidationException} com a mensagem "Horário selecionado encontra-se fora do expediente do profissional".
+
+    \item \textbf{Incompatibilidade de Serviço (\textit{Skills}):} \\
+    \textbf{Dado} um Barbeiro que possui apenas a atividade "Corte de Cabelo" vinculada ao seu perfil. \\
+    \textbf{Quando} o Cliente tenta agendar "Barba e Sobrancelha" com este profissional. \\
+    \textbf{Então} a lógica de serviço bloqueia a ação, Impedindo que o mesmo prossiga.
+    \item \textbf{Barbeiro sem jornada de trabalho definida:} \\
+    \textbf{Dado} um Barbeiro recém-aprovado numa barbearia que ainda não configurou o seu horário de expediente (\texttt{work\_start\_time} nulo). \\
+    \textbf{Quando} o Cliente tenta consultar a disponibilidade diária deste profissional. \\
+    \textbf{Então} o sistema não gera exceções não tratadas (\textit{NullPointerException}), mas retorna graciosamente uma lista vazia, impedindo qualquer alocação.
 \end{itemize}
 
-\subsubsection{Testes de configuração}
-\textbf{Definição:} Validam que a aplicação funciona corretamente em seu ambiente de implantação final (AWS).
+\paragraph{Cenários de Restrição e Concorrência (Testes de Integração)}
+Estes testes asseguram que a camada de persistência e os controladores REST lidam adequadamente com violações no modelo relacional e acessos simultâneos.
+
 \begin{itemize}
-    \item \textbf{Validação de Variáveis de Ambiente:} Verifica se a aplicação consegue ler e utilizar as variáveis essenciais (JDBC\_DATABASE\_URL, CLOUDINARY\_URL, JWT\_SECRET\_KEY).
-    \item \textbf{Validação de Conectividade de Rede (AWS):} Testa se as regras (Security Groups) permitem que o Lambda acesse o RDS e o Cloudinary.
-    \item \textbf{Validação de Configuração da Aplicação:} Testa se as configurações do \texttt{application.yml} (ex: \texttt{app.availability.slot-interval-minutes: 15}) estão sendo aplicadas.
-    \item \textbf{Validação de Configuração de Segurança:} Testa se as regras do \texttt{SecurityConfig} (restrição de rotas) estão sendo aplicadas no ambiente.
+    \item \textbf{Violação de Dados Únicos (Duplicidade de CPF/E-mail):} \\
+    \textbf{Dado} que o CPF "123.456.789-00" já se encontra registado e ativo no \textit{User Service}. \\
+    \textbf{Quando} um novo utilizador tenta concluir o seu registo com o mesmo CPF. \\
+    \textbf{Então} o repositório lança uma \texttt{DataIntegrityViolationException}. O \textit{GlobalExceptionHandler} da aplicação interceta esta falha nativa do banco de dados e converte-a num \textit{status} HTTP 409 (\textit{Conflict}), devolvendo uma mensagem legível ao cliente sem expor a estrutura interna do SQL.
+
+    \item \textbf{Concorrência de Agendamento (\textit{Race Condition}):} \\
+    \textbf{Dado} que existe apenas um bloco de horário disponível às 14:00 para um determinado barbeiro. \\
+    \textbf{Quando} dois Clientes distintos tentam reservar exatamente o mesmo horário ao mesmo tempo (no mesmo milissegundo). \\
+    \textbf{Então} os mecanismos de isolamento transacional (\textit{Locks} de banco de dados) garantem que apenas a primeira requisição seja confirmada com HTTP 201 (\textit{Created}), enquanto a segunda requisição é rejeitada com HTTP 409 (\textit{Conflict}), impedindo a ocorrência de \textit{overbooking}.
+
+    \item \textbf{Falha de Autorização Horizontal (Insegurança Direta de Objeto):} \\
+    \textbf{Dado} um Cliente autenticado com o UID "A" através do Firebase. \\
+    \textbf{Quando} este tenta aceder ao \textit{endpoint} de cancelamento passando o ID de um agendamento pertencente ao Cliente "B". \\
+    \textbf{Então} a camada de segurança (\textit{Controller} / \textit{Service}) deteta que o proprietário do \textit{token} não tem direitos sobre o recurso solicitado e retorna o código HTTP 403 (\textit{Forbidden}).
+\end{itemize}
+
+\subsection{Testes não funcionais}
+Verificam como o sistema opera sob determinadas condições, focando em desempenho, confiabilidade e configuração.
+
+\subsubsection{Testes de Performance}
+\textbf{Definição:} Medem a velocidade, responsividade, taxa de transferência (\textit{throughput}) e estabilidade do ecossistema distribuído sob carga.
+\begin{itemize}
+    \item \textbf{Testes de Estresse (\textit{Stress Testing}):} Aumenta progressivamente o volume de requisições além da capacidade esperada para identificar o ponto de ruptura da infraestrutura. O foco é avaliar a resiliência do \textit{API Gateway} como ponto único de entrada, o esgotamento do \textit{pool} de conexões no banco de dados relacional (MySQL) e no Redis, além dos limites de consumo de CPU e memória dos contentores Docker.
+    \item \textbf{Testes de Latência e Eficácia de Cache:} Como contêineres possuem execução contínua (eliminando a latência de \textit{Cold Start} inerente ao modelo \textit{serverless}), o monitoramento de performance passa a focar no tempo de resposta das comunicações síncronas na malha de serviços. Mede-se, por exemplo, a eficiência da resposta do sistema ao processar o \textit{endpoint} de disponibilidade de agendas, validando empiricamente a redução de carga no banco de dados proporcionada pela estratégia de \textit{caching} do Redis em cenários de alta concorrência.
+\end{itemize}
+
+\subsubsection{Testes de Configuração}
+\textbf{Definição:} Validam que o ecossistema de microsserviços funciona corretamente e de forma coesa em seu ambiente de implantação final conteinerizado.
+\begin{itemize}
+    \item \textbf{Validação de Variáveis de Ambiente:} Verifica se os contêineres conseguem ler e aplicar as variáveis essenciais injetadas durante o \textit{deploy} (ex.: \texttt{SPRING\_DATASOURCE\_URL}, \texttt{SPRING\_DATA\_REDIS\_HOST}, \texttt{EUREKA\_CLIENT\_SERVICEURL\_DEFAULTZONE}, \texttt{CLOUDINARY\_URL} e a chave secreta do JWT).
+    \item \textbf{Validação de Conectividade de Rede:} Garante que as políticas de rede (como as \textit{Docker networks} ou \textit{Security Groups} na nuvem) permitam a descoberta de serviços via Eureka, o roteamento correto a partir do \textit{API Gateway}, e o acesso ininterrupto aos bancos de dados (MySQL e Redis) e integrações externas (Cloudinary).
+    \item \textbf{Validação de Configuração da Aplicação:} Testa se as parametrizações específicas definidas nos arquivos \texttt{application.yml} de cada serviço 
+    
+    (ex.: \texttt{app.availability.slot-interval-minutes:15} isolado no \textit{Schedule Service}) estão sendo carregadas corretamente na inicialização da aplicação.
+    \item \textbf{Validação de Configuração de Segurança:} Testa se as regras definidas no \texttt{SecurityConfig} e a injeção do filtro \texttt{JwtAuthorizationFilter} estão operando ativamente em cada domínio, garantindo que o acesso a rotas protegidas seja validado e rejeitado quando necessário, de forma descentralizada.
 \end{itemize}
 
 \subsection{Testes automatizados}
-Para a geração de arquivos de logs no backend (Java/Spring Boot), são utilizadas as ferramentas padrão SLF4J (fachada) e Logback (implementação). Os níveis de log utilizados seguem a semântica padrão:
+Para a geração de arquivos de logs no \textit{backend} (Java/Spring Boot), são utilizadas as ferramentas padrão SLF4J (fachada) e \textit{Logback} (implementação). Os níveis de log utilizados seguem a semântica padrão:
 \begin{itemize}
-    \item \textbf{ERROR:} Falhas críticas (ex: falha ao conectar no banco).
-    \item \textbf{WARN:} Eventos inesperados (ex: tentativa de cancelar agendamento já cancelado).
-    \item \textbf{INFO:} Mensagens informativas de progresso (ex: confirmação de criação/atualização).
-    \item \textbf{DEBUG:} Mensagens detalhadas para desenvolvimento (ex: visualização de queries SQL).
-    \item \textbf{TRACE:} Nível mais detalhado (ex: valores de parâmetros de queries).
+    \item \textbf{ERROR:} Falhas críticas (ex.: falha ao conectar no banco).
+    \item \textbf{WARN:} Eventos inesperados (ex.: tentativa de cancelar agendamento já cancelado).
+    \item \textbf{INFO:} Mensagens informativas de progresso (ex.: confirmação de criação/atualização).
+    \item \textbf{DEBUG:} Mensagens detalhadas para desenvolvimento (ex.: visualização de queries SQL).
+    \item \textbf{TRACE:} Nível mais detalhado (ex.: valores de parâmetros de queries).
 \end{itemize}
 
 \subsection{Análise estática}
@@ -702,10 +892,10 @@ A convenção de código adotada é o \textbf{Google Java Style Guide}, compleme
 \begin{itemize}
     \item \textbf{Nomenclatura:}
         \begin{itemize}
-            \item Classes e Interfaces: \texttt{UpperCamelCase}.
-            \item Métodos e Variáveis: \texttt{lowerCamelCase}.
+            \item Classes e Interfaces: \textit{UpperCamelCase}.
+            \item Métodos e Variáveis: \textit{lowerCamelCase}.
             \item Constantes: \texttt{CONSTANT\_CASE}.
-            \item Pacotes: \texttt{lowercase} (ex: \texttt{ifsp.edu.projeto.cortaai.service.impl}).
+            \item Pacotes: \texttt{lowercase} (ex.: \texttt{ifsp.edu.projeto.cortaai.service.impl}).
         \end{itemize}
     \item \textbf{Formatação:} Indentação de 4 espaços e organização padrão de \texttt{import}.
     \item \textbf{Práticas:} Uso extensivo de anotações do Spring (@Service, @RestController) e JPA (@Entity, @Id), com comentários no padrão Javadoc.
@@ -716,10 +906,10 @@ A convenção a ser adotada será o \textbf{Airbnb JavaScript Style Guide}, incl
 \begin{itemize}
     \item \textbf{Nomenclatura:}
         \begin{itemize}
-            \item Componentes React: \texttt{UpperCamelCase} (ex: \texttt{AppointmentForm}).
-            \item Variáveis, Funções e Props: \texttt{lowerCamelCase}.
+            \item Componentes React: \textit{UpperCamelCase} (ex.: \texttt{AppointmentForm}).
+            \item Variáveis, Funções e Props: \textit{lowerCamelCase}.
         \end{itemize}
-    \item \textbf{Práticas:} Preferência por componentes funcionais com Hooks, uso de \texttt{const} sobre \texttt{let}, e *arrow functions*.
+    \item \textbf{Práticas:} Preferência por componentes funcionais com \textit{Hooks}, uso de \texttt{const} sobre \texttt{let}, e \textit{*arrow functions*}.
     \item \textbf{Formatação:} A consistência do estilo será garantida automaticamente por ferramentas como \textbf{Prettier} e \textbf{ESLint}.
 \end{itemize}
 
@@ -731,7 +921,7 @@ Numa arquitetura de microsserviços, a segurança não pode ser gerida de forma 
 A estratégia de segurança divide-se em três pilares principais: Provedor de Identidade, Interceção no \textit{Gateway} e Autorização Baseada em Funções (RBAC).
 
 \subsection{Provedor de Identidade (Firebase Authentication)}
-O sistema utiliza o \textbf{Firebase Authentication} (Google) como provedor de identidade (\textit{Identity Provider} - IdP). O \textit{backend} do CortaAi \textbf{não armazena senhas} em nenhum dos seus bancos de dados (MySQL). 
+O sistema utiliza o \textbf{Firebase Authentication} (Google) como provedor de identidade (\textit{Identity Provider} - IdP). O \textit{backend} do CortaAi \textbf{não armazena senhas} em nenhum dos seus bancos de dados (MySQL).
 
 O fluxo de autenticação ocorre da seguinte forma:
 \begin{enumerate}
@@ -742,14 +932,38 @@ O fluxo de autenticação ocorre da seguinte forma:
 
 Esta abordagem garante conformidade com as melhores práticas de segurança de mercado, transferindo a responsabilidade de encriptação, recuperação de senhas e proteção contra ataques de força bruta para uma infraestrutura globalmente testada.
 
+\subsection{Ciclo de Vida do Token e Estratégia de Renovação}
+Diferente de sistemas tradicionais que utilizam sessões em servidor (\textit{stateful}), o CortaAi utiliza uma abordagem \textbf{Stateless} baseada em JWT. Isto significa que o servidor não armazena o estado do utilizador em memória; cada requisição é autossuficiente e validada apenas através da assinatura criptográfica no \textit{API Gateway}.
+
+O ciclo de vida das credenciais é dividido em dois componentes principais fornecidos pelo Firebase:
+
+\begin{itemize}
+    \item \textbf{ID Token (Access Token):} É um JWT de curta duração, com validade fixa de \textbf{60 minutos}. Este token é enviado em cada chamada à API. Devido à sua curta validade, o risco em caso de interceção é minimizado, pois o token expira rapidamente.
+    \item \textbf{Refresh Token:} É um token de longa duração persistido de forma segura no cliente (Frontend). Ele não é enviado para os microsserviços de negócio, servindo exclusivamente para comunicar com os servidores de autorização do Firebase.
+\end{itemize}
+
+O fluxo de renovação (\textit{Silent Refresh}) ocorre inteiramente no lado do cliente. Através de intercetores no Frontend (utilizando o SDK do Firebase), o sistema verifica a validade do \textit{ID Token} antes de cada requisição. Caso o token esteja prestes a expirar, o cliente utiliza o \textit{Refresh Token} para solicitar um novo \textit{ID Token} de forma transparente, garantindo que o utilizador permaneça autenticado sem interrupções na experiência de uso, enquanto o \textit{backend} mantém-se protegido e livre de gestão de sessões pesadas.
+
 \subsection{Interceção e Proteção (API Gateway)}
 O \textbf{Spring Cloud Gateway} atua como o único ponto de entrada público do ecossistema e o principal guardião de segurança. 
 
 Foi implementado um filtro de interceção customizado (\texttt{FirebaseTokenGatewayFilter}) que analisa todas as requisições de entrada. O seu papel é:
 \begin{itemize}
     \item \textbf{Validação da Assinatura:} O \textit{Gateway} verifica a validade criptográfica do JWT contra as chaves públicas da Google. Se o token for inválido, expirado ou ausente, a requisição é bloqueada imediatamente com o erro \texttt{401 Unauthorized}, protegendo os microsserviços internos de tráfego malicioso.
-    \item \textbf{Propagação de Contexto:} Após validar o token, o \textit{Gateway} extrai o UID do utilizador e injeta-o como um novo cabeçalho HTTP interno (ex: \texttt{X-User-Id}). Desta forma, microsserviços como o \textit{Schedule Service} ou \textit{User Service} podem identificar quem está a fazer a requisição sem precisarem de revalidar o token criptográfico ou de importar as bibliotecas do Firebase.
+    \item \textbf{Propagação de Contexto:} Após validar o token, o \textit{Gateway} extrai o UID do utilizador e injeta-o como um novo cabeçalho HTTP interno (ex.: \texttt{X-User-Id}). Desta forma, microsserviços como o \textit{Schedule Service} ou \textit{User Service} podem identificar quem está a fazer a requisição sem precisarem de revalidar o token criptográfico ou de importar as bibliotecas do Firebase.
 \end{itemize}
+
+\subsection{Política de Senhas Robustas e Credenciais}
+A integridade das contas de utilizadores é garantida através de uma política de senhas rigorosa, aplicada diretamente no momento do registo e alteração de credenciais. Uma vez que a autenticação é delegada ao Firebase, o sistema beneficia de mecanismos de proteção contra ataques de dicionário e \textit{brute force} nativos da infraestrutura da Google.
+
+As regras de complexidade configuradas para o ecossistema CortaAi exigem:
+\begin{itemize}
+    \item \textbf{Comprimento Mínimo:} Todas as senhas devem conter, no mínimo, 6 caracteres (padrão de segurança do Firebase).
+    \item \textbf{Complexidade Alfanumérica:} Recomenda-se a combinação de letras maiúsculas, minúsculas, números e caracteres especiais, validada através de expressões regulares (\textit{regex}) no Frontend antes do envio ao provedor.
+    \item \textbf{Proteção contra Reutilização:} O sistema impede o uso de senhas excessivamente simples ou sequenciais.
+\end{itemize}
+
+Além da validação de formato, o Firebase Authentication utiliza algoritmos de \textit{hashing} avançados (Bcrypt) para armazenar as credenciais de forma irreversível. Isto garante que, mesmo em cenários hipotéticos de acesso não autorizado aos registos do provedor, as senhas originais dos utilizadores permanecem protegidas. No fluxo de alteração de senha, o sistema exige a reautenticação do utilizador ou a validação através de um \textit{link} seguro enviado ao \textit{e-mail} verificado, garantindo que apenas o proprietário legítimo possa modificar as suas credenciais.
 
 \subsection{Autorização Baseada em Funções (RBAC)}
 Enquanto o Firebase resolve o problema da \textit{Autenticação} (quem é o utilizador), o sistema interno resolve o problema da \textit{Autorização} (o que ele pode fazer).
@@ -773,62 +987,62 @@ O projeto foi desenvolvido com atenção à conformidade com a Lei Geral de Prot
 \section{Modelo de banco de dados}
 \label{sec:modelo_banco_dados}
 
-Para a persistência de dados, o projeto adota o padrão \textit{Database-per-Service}, garantindo que cada microsserviço possua a sua própria base de dados isolada (MySQL). Esta abordagem assegura o baixo acoplamento e permite que falhas ou manutenções num banco de dados específico não interrompam o funcionamento global do ecossistema.
+Para a persistência de dados, o projeto adota o padrão \textit{Database-per-Service} em conformidade com a arquitetura de microsserviços. Esta abordagem garante que cada domínio (como \textit{User}, \textit{Barbershop} e \textit{Schedule}) possua a sua própria base de dados isolada (MySQL). Este design assegura o baixo acoplamento, permitindo escalabilidade independente e garantindo que manutenções ou falhas pontuais num serviço não comprometam a disponibilidade global do ecossistema. Adicionalmente, foi implementada uma estratégia transversal de chaves primárias baseadas em \texttt{UUID} (Universally Unique Identifier) e exclusão lógica (\textit{Soft Delete}) para mitigar vulnerabilidades (como ataques IDOR) e preservar o histórico financeiro e de auditoria.
 
 \subsection{Modelo entidade relacionamento - MER}
-O Modelo Entidade Relacionamento (MER) descreve as entidades conceptuais e as suas interações lógicas. Embora a implementação física seja distribuída, o MER global identifica os seguintes domínios:
+O Modelo Entidade-Relacionamento (MER) descreve as entidades conceituais, as suas interações e as regras de negócio intrínsecas, abstraindo a separação física. Embora a implementação final seja distribuída, o MER global consolida os seguintes domínios:
 
 \begin{itemize}
-    \item \textbf{Utilizador (User Service):} Entidade base que armazena o perfil e as funções (\textit{Roles}) de clientes e barbeiros, vinculada ao UID do Firebase.
-    \item \textbf{Barbearia (Barbershop Service):} Contém as informações do estabelecimento, portefólio e avaliações.
-    \item \textbf{Agendamento (Schedule Service):} Entidade central que gere a relação entre cliente, barbeiro, data e hora.
-    \item \textbf{Serviço/Atividade:} Define os itens oferecidos (ex: corte, barba) e a sua duração.
-    \item \textbf{Produto (Product Service):} Gere o inventário e o fluxo de \textit{stock}.
+    \item \textbf{Domínio de Utilizador (\textit{User Service}):} Entidades responsáveis por armazenar os perfis, credenciais, competências e dados de contato de clientes e barbeiros.
+    \item \textbf{Domínio de Barbearia (\textit{Barbershop Service}):} Gere as informações cadastrais dos estabelecimentos, a identidade visual (portfólio via Cloudinary), o catálogo de serviços dinâmico e o fluxo de requisições para a formação de equipas.
+    \item \textbf{Domínio de Agendamento (\textit{Schedule Service}):} Motor transacional que orquestra a relação entre o cliente, o barbeiro, a barbearia, os serviços selecionados e os blocos de horário reservados.
 \end{itemize}
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=\textwidth]{images/mer.png}
-    \caption{Modelo Entidade-Relacionamento (MER)}
+    \includegraphics[width=\textwidth]{images/Mer.png}
+    \caption{Modelo Entidade-Relacionamento (MER) - Foco em Domínios e Regras de Negócio}
     \label{fig:mer}
 \end{figure}
 
 \subsection{Diagrama entidade relacionamento - DER}
-O Diagrama Entidade Relacionamento (DER) detalha a estrutura das tabelas, chaves primárias (PK) e chaves estrangeiras (FK). É importante notar que, na arquitetura de microsserviços, as relações entre entidades de serviços diferentes (ex: \texttt{Appointment} no \textit{Schedule Service} e \texttt{User} no \textit{User Service}) são mantidas através de \textbf{IDs de referência} e consistência eventual, em vez de \textit{Foreign Keys} físicas transversais.
+O Diagrama Entidade-Relacionamento (DER) detalha a estrutura física das tabelas, a tipagem rigorosa dos dados e o isolamento dos microsserviços. É fundamental notar que, neste paradigma distribuído, as relações entre entidades de serviços diferentes (ex.: um \texttt{Appointment} no \textit{Schedule Service} vinculado a um \texttt{Customer} no \textit{User Service}) são mantidas exclusivamente através de \textbf{Referências Lógicas} (UUIDs partilhados) e consistência eventual, substituindo as tradicionais chaves estrangeiras (\textit{Foreign Keys}) físicas transversais.
 
-Isto garante que o \textit{Schedule Service} possa ser migrado ou escalado sem necessidade de aceder diretamente às tabelas do \textit{User Service}, comunicando-se apenas via API ou mensageria para validar dados do utilizador.
+Isto garante que o serviço de agendamentos orquestre reservas sem a necessidade de aceder diretamente ou bloquear tabelas do serviço de utilizadores, comunicando-se unicamente via \textit{API Gateway} ou mensageria.
+
+As principais entidades (tabelas) que compõem o sistema físico distribuem-se da seguinte forma:
+\begin{description}
+    \item[BARBERSHOPS (Barbearias):] Contém os dados cadastrais da empresa (nome, CNPJ, endereço e \textit{logo\_url}). Protegida por exclusão lógica (\texttt{deleted\_at}).
+    \item[CUSTOMERS (Clientes):] Armazena as informações dos clientes finais. Adota UUID primário e controle de \textit{Soft Delete} para retenção histórica.
+    \item[BARBERS (Barbeiros):] Contém os dados profissionais (nome, telefone, CPF, e competências em \texttt{skills}). Inclui mapeamento para a gestão da sua própria jornada de trabalho (\texttt{BARBER\_WORK\_HOURS}).
+    \item[ACTIVITIES (Atividades/Serviços):] Representa os procedimentos oferecidos (nome, preço, duração). Incorpora a \textit{flag} \texttt{is\_active}, permitindo desativar um serviço do catálogo público sem corromper o histórico financeiro de agendamentos passados.
+    \item[APPOINTMENTS (Agendamentos):] Entidade central transacional. Utiliza UUID na chave primária para ofuscar o volume de reservas (prevenção contra vazamento de inteligência de negócio) e regista o estado da marcação, além das referências lógicas para cliente, barbeiro e barbearia.
+    \item[BARBERSHOP\_JOIN\_REQUESTS:] Tabela de auditoria para gestão de equipas. Regista o ciclo de vida completo do vínculo profissional, transitando entre os estados de \texttt{PENDING}, \texttt{ACCEPTED} e \texttt{REJECTED}, marcados por \textit{timestamps} de atualização para garantir conformidade legal.
+    \item[PAYMENTS (Pagamentos):] Entidade transacional do \textit{Schedule Service} dedicada ao isolamento do fluxo financeiro. Armazena o identificador de referência externa gerado pela API do Mercado Pago (\texttt{external\_payment\_id}), o método de liquidação, o valor processado e o estado da transação (ex: \texttt{APPROVED}, \texttt{REFUNDED}). A sua separação da entidade de agendamentos garante a integridade dos dados caso ocorram múltiplas tentativas de pagamento ou falhas no \textit{checkout}.
+\end{description}
+
 
 \begin{figure}[htb]
     \centering
-    \includegraphics[width=\textwidth]{images/der.png}
-    \caption{Diagrama Entidade-Relacionamento (DER) - Modelo Lógico/Físico}
+    \includegraphics[width=\textwidth]{images/Der.png}
+    \caption{Diagrama Entidade-Relacionamento (DER) - Modelo Lógico/Físico Descentralizado}
     \label{fig:der}
 \end{figure}
 
-As principais entidades (tabelas) que compõem o sistema são:
-\begin{description}
-    \item[BARBERSHOPS (Barbearias):] Contém os dados cadastrais da barbearia (nome, CNPJ, endereço).
-    \item[CUSTOMERS (Clientes):] Armazena as informações dos clientes (dados pessoais, telefone, e-mail, CPF, senha).
-    \item[BARBERS (Barbeiros):] Contém os dados dos profissionais (nome, telefone, e-mail, CPF, senha). Inclui \texttt{is\_owner}, horários de trabalho e \texttt{barbershop\_id}.
-    \item[ACTIVITIES (Atividades/Serviços):] Representa os serviços oferecidos (nome, preço, duração) e \texttt{barbershop\_id}.
-    \item[APPOINTMENTS (Agendamentos):] Entidade central. Registra os horários (\texttt{start\_time}, \texttt{end\_time}, \texttt{status}) e chaves estrangeiras (customer\_id, barber\_id, barbershop\_id).
-    \item[BARBERSHOP\_JOIN\_REQUESTS:] Tabela de controle para gerenciar as solicitações de barbeiros para se juntarem a uma barbearia.
-\end{description}
-
 \subsubsection{Tabelas de Junção ( M:N )}
+Em arquiteturas de microsserviços, a normalização por junção ocorre estritamente dentro das fronteiras de um mesmo domínio:
 \begin{description}
-    \item[BARBER\_ACTIVITIES:] Relaciona quais atividades (\texttt{activity\_id}) um barbeiro (\texttt{barber\_id}) está habilitado a realizar.
-    \item[APPOINTMENT\_ACTIVITIES:] Especifica quais atividades (\texttt{activity\_id}) estão incluídas em um agendamento (\texttt{appointment\_id}).
+    \item[APPOINTMENT\_ACTIVITIES:] Especifica quais atividades (\texttt{activity\_id}) estão incluídas num determinado agendamento (\texttt{appointment\_id}). Esta tabela resolve a cardinalidade de serviços compostos (ex.: "Corte + Barba" na mesma reserva).
 \end{description}
 
 \subsubsection{Relacionamentos Chave ( Cardinalidade )}
 \begin{itemize}
-    \item \textbf{Barbearia e Barbeiro (Emprega):} Uma barbearia (BARBERSHOPS) emprega muitos barbeiros (BARBERS) (1:N).
-    \item \textbf{Barbearia e Atividade (Oferece):} Uma barbearia (BARBERSHOPS) oferece múltiplas atividades (ACTIVITIES) (1:N).
-    \item \textbf{Cliente e Agendamento (Realiza):} Um cliente (CUSTOMERS) realiza vários agendamentos (APPOINTMENTS) (1:N).
-    \item \textbf{Barbeiro e Agendamento (Atende):} Um barbeiro (BARBERS) pode atender a muitos agendamentos (APPOINTMENTS) (1:N).
-    \item \textbf{Barbeiro e Atividade (É realizada por):} O relacionamento entre BARBERS e ACTIVITIES é de muitos para muitos (M:N), mediado pela tabela BARBER\_ACTIVITIES.
-    \item \textbf{Agendamento e Atividade (Inclui):} O relacionamento entre APPOINTMENTS e ACTIVITIES é de muitos para muitos (M:N), resolvido pela tabela APPOINTMENT\_ACTIVITIES.
+    \item \textbf{Barbearia e Barbeiro (Emprega / Vincula):} Uma barbearia gere uma equipa de múltiplos barbeiros (1:N). Este vínculo é formalizado logicamente e auditado através do fluxo de \texttt{BARBERSHOP\_JOIN\_REQUESTS}.
+    \item \textbf{Barbearia e Atividade (Oferece):} Uma barbearia (BARBERSHOPS) oferece múltiplas atividades (ACTIVITIES) no seu catálogo dinâmico (1:N).
+    \item \textbf{Cliente e Agendamento (Realiza):} Um cliente (CUSTOMERS) realiza e detém um histórico de vários agendamentos ao longo do tempo (1:N).
+    \item \textbf{Barbeiro e Agendamento (Atende):} Um profissional (BARBERS) é o prestador responsável por múltiplos agendamentos (APPOINTMENTS) na sua jornada (1:N).
+    \item \textbf{Agendamento e Atividade (Inclui):} O relacionamento entre APPOINTMENTS e ACTIVITIES é de muitos para muitos (M:N), resolvido internamente na base de dados do \textit{Schedule Service} pela tabela física \texttt{APPOINTMENT\_ACTIVITIES}.
+    \item \textbf{Agendamento e Pagamento (Liquida / Orquestra):} Um agendamento (APPOINTMENTS) pode gerar uma ou mais transações financeiras (PAYMENTS) (1:N, considerando cenários de falha na primeira tentativa e reprocessamento). O isolamento deste relacionamento evita a sobrecarga da entidade de reservas, permitindo que os \textit{Webhooks} do Mercado Pago atualizem exclusivamente os registos financeiros até à confirmação final do serviço.
 \end{itemize}
 
 \section{Cronograma do projeto}
@@ -873,22 +1087,24 @@ A Tabela \ref{tab:cronograma_2025} apresenta o planejamento executado durante a 
 
 A gestão do projeto foi adaptada para um ciclo focado na refatoração arquitetural para microsserviços e no polimento do Produto Mínimo Viável (MVP). O cronograma a seguir compreende o período crítico iniciado em fevereiro de 2026, estendendo-se até a homologação final em maio do mesmo ano.
 
-\begin{table}[htb]
-    \centering
-    \caption{Cronograma de Sprints - Evolução para Microsserviços e Estabilização (2026)}
-    \label{tab:sprints_evolucao}
-    \begin{tabular}{|>{\centering\arraybackslash}p{1.5cm}|>{\centering\arraybackslash}p{3.2cm}|p{6.5cm}|p{4.0cm}|}
-        \hline
+\begin{table}[h!]
+\centering
+\caption{Cronograma do projeto (Fase de Evolução e Estabilização)}
+\label{tab:cronograma_2025}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|l|l|p{8cm}|p{4cm}|}
+\hline
         \textbf{Sprint} & \textbf{Período (Início/Fim)} & \textbf{Meta da Sprint (Sprint Goal)} & \textbf{Marcos Equivalentes (Novo Plano)} \\
         \hline
-        Sprint 1 & 27/02/2026 13/03/2026 & \textbf{Desacoplamento:} Fragmentação do monólito em serviços independentes e configuração do API Gateway. & M7: Arquitetura Distribuída Inicial \\ \hline
-        Sprint 2 & 16/03/2026 27/03/2026 & \textbf{Infraestrutura:} Implementação do Netflix Eureka para descoberta de serviços e configuração do ambiente Docker. & M8: Orquestração de Containers \\ \hline
-        Sprint 3 & 30/03/2026 10/04/2026 & \textbf{Segurança e Identidade:} Migração total para Firebase Authentication e validação de permissões por Roles. & M9: Provedor de Identidade Migrado \\ \hline
-        Sprint 4 & 13/04/2026 24/04/2026 & \textbf{Estabilização de Dados:} Sincronização entre serviços via OpenFeign e ajustes de persistência no cache Redis. & - \\ \hline
-        Sprint 5 & 27/04/2026 08/05/2026 & \textbf{Mensageria:} Implementação do sistema de notificações consumindo eventos do RabbitMQ. & M10: Sistema de Eventos Concluído \\ \hline
-        Sprint 6 & 11/05/2026 22/05/2026 & \textbf{QA e Bug Fixing:} Ciclo intensivo de correção de bugs, testes de carga nos microsserviços e refinamento da interface. & M11: Homologação Técnica \\ \hline
-        Sprint 7 & 25/05/2026 27/05/2026 & \textbf{Homologação Final:} Preparação do ambiente de produção (Cloud), documentação final e encerramento do projeto. & M12: Entrega Formal do TCC \\ \hline
-    \end{tabular}
+        Sprint 1 & 27/02 13/03 & \textbf{Desacoplamento:} Fragmentação do monólito em serviços independentes e configuração do API Gateway. & M7: Arquitetura Distribuída Inicial \\ \hline
+        Sprint 2 & 16/03 27/03 & \textbf{Infraestrutura:} Implementação do Netflix Eureka para descoberta de serviços e configuração do ambiente Docker. & M8: Orquestração de Containers \\ \hline
+        Sprint 3 & 30/03 10/04 & \textbf{Segurança e Identidade:} Migração total para Firebase Authentication e validação de permissões por Roles. & M9: Provedor de Identidade Migrado \\ \hline
+        Sprint 4 & 13/04 24/04 & \textbf{Estabilização de Dados:} Sincronização entre serviços via OpenFeign e ajustes de persistência no cache Redis. & - \\ \hline
+        Sprint 5 & 27/04 08/05 & \textbf{Mensageria:} Implementação do sistema de notificações consumindo eventos do RabbitMQ. & M10: Sistema de Eventos Concluído \\ \hline
+        Sprint 6 & 11/05 22/05 & \textbf{QA e Bug Fixing:} Ciclo intensivo de correção de bugs, testes de carga nos microsserviços e refinamento da interface. & M11: Homologação Técnica \\ \hline
+        Sprint 7 & 25/05 27/05 & \textbf{Homologação Final:} Preparação do ambiente de produção (Cloud), documentação final e encerramento do projeto. & M12: Entrega Formal do TCC \\ \hline
+    \end{tabular}%
+    }
 \end{table}
 
 \subsection{Análise do Caminho Crítico e Riscos}
@@ -899,20 +1115,52 @@ Nesta fase final, o caminho crítico desloca-se do desenvolvimento de novas func
     \item \textbf{Dependência de Integração:} O principal risco reside na integração do sistema de notificações via \textit{RabbitMQ}. Falhas na publicação ou consumo de eventos podem gerar inconsistências na comunicação com o usuário final.
     \item \textbf{Estabilização de Ambiente:} O período de \textit{Bug Fixing} (Sprint 6) é vital para garantir que a orquestração dos contêineres Docker mantenha a performance sob carga real de uso.
     \item \textbf{Restrição Temporal:} A data de 27 de maio de 2026 é uma restrição rígida, exigindo que o polimento do sistema não comprometa o funcionamento dos requisitos básicos de agendamento e pagamento.
+    \item \textbf{Reserva Explícita de Tempo para Infraestrutura (DevOps):} Para evitar o acúmulo de débito técnico na infraestrutura e garantir a validade dos testes de Integração e \textit{End-to-End} (E2E), este cronograma estabelece uma reserva fixa de esforço: \textbf{20\% do tempo útil de cada Sprint} (o equivalente a 2 dias úteis num ciclo quinzenal) é dedicado exclusivamente a tarefas de DevOps e manutenção de ambiente.
 \end{itemize}
 
+\section{Prototipagem e Design de Interface (UI/UX)}
+
+Para garantir que a plataforma CortaAí entregasse uma experiência de uso intuitiva e alinhada às expectativas dos seus diferentes perfis de utilizadores, a concepção do \textit{front-end} foi precedida por uma etapa rigorosa de prototipagem e design de interface. 
+
+A etapa de prototipagem de alta fidelidade permitiu validar os fluxos de navegação antes da codificação em React. Com base nas telas desenvolvidas e homologadas, destacam-se os seguintes fluxos principais:
+
+\begin{itemize}
+    \item \textbf{Autenticação e Seleção de Papéis:} O fluxo de entrada apresenta de forma clara a proposta de valor ("Seu estilo, sua hora marcada") e exige que o utilizador defina o seu contexto de uso através das opções "Entrar como Cliente" ou "Entrar como Barbeiro". Os formulários de \textit{login} e criação de conta foram desenhados para exigir apenas os dados estritamente necessários, reduzindo o atrito inicial.
+    
+    \item \textbf{Descoberta e Busca (\textit{Home Page}):} Tela principal do utilizador cliente, equipada com uma barra de pesquisa superior. O \textit{layout} divide-se em um carrossel de rolagem horizontal para "Minhas Barbearias Favoritas" e uma listagem vertical detalhada de "Barbearias Disponíveis", exibindo a imagem do estabelecimento, avaliação por estrelas, nome e distância.
+    
+    \item \textbf{Fluxo de Agendamento:} A tela de conversão principal estrutura a reserva em uma única página rolável de fácil compreensão. O utilizador seleciona categorias de serviços através de \textit{chips} visuais (ex: Corte, Barba), escolhe o profissional através de cartões com foto e \textit{status} de disponibilidade, e finaliza selecionando a data e o bloco de horário em um componente de calendário simplificado.
+    
+    \item \textbf{Gestão de Perfil e Histórico:} A interface "Meu Perfil" atua como o centro de informações do utilizador. Além de consolidar os dados de contacto, exibe de forma clara a secção "Meus Agendamentos", que funciona como um extrato de serviços, listando o procedimento realizado, o profissional responsável, a data, o horário e o valor pago (\texttt{R\$}).
+\end{itemize}
+
+As Figuras a seguir apresentam os protótipos conceituais que serviram de base arquitetural para a construção e componentização visual no \textit{front-end}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{images/Login.png}
+    \caption{Protótipo de Alta Fidelidade - Fluxo de Entrada, Seleção de Perfil e Cadastro}
+    \label{fig:prototipo_autenticacao}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{images/Agenda.png}
+    \caption{Protótipo de Alta Fidelidade - Descoberta de Barbearias, Fluxo de Agendamento e Perfil}
+    \label{fig:prototipo_aplicacao}
+\end{figure}
+
 \chapter{Considerações Finais}
-O desenvolvimento da aplicação web "Cortaai", um marketplace para gerenciamento e agendamento em barbearias, representa uma iniciativa significativa para modernizar e otimizar a operação destes estabelecimentos, trazendo organização, eficiência e maior visibilidade no ambiente digital.
-Ao adotar uma arquitetura robusta e escalável baseada em serviços na nuvem (Java/Spring Boot backend hospedado na AWS Lambda, com frontend previsto em React e banco de dados MySQL no RDS), foi possível estruturar uma solução que atende às complexidades do agendamento e da gestão de múltiplos usuários e estabelecimentos.
 
-Ao longo do projeto, foi fundamental analisar e implementar funcionalidades que atendessem às necessidades dos diferentes atores do sistema: Clientes buscando conveniência para encontrar barbearias e agendar serviços online; Barbeiros necessitando de uma ferramenta para gerenciar seu perfil, habilidades, horários e agenda; e Donos de barbearias buscando controle sobre o cadastro da loja, menu de serviços, equipe e fluxo de agendamentos. A implementação da autenticação via JWT e autorização baseada em papéis garante a segurança e o acesso adequado às funcionalidades.
+O desenvolvimento da aplicação web "CortaAí", um \textit{marketplace} para gestão e agendamento em barbearias, representa uma iniciativa significativa para modernizar e otimizar a operação destes estabelecimentos, trazendo organização, eficiência e maior visibilidade no ambiente digital. Ao evoluir para uma arquitetura distribuída e escalável baseada em microsserviços (ecossistema Java 17 e Spring Boot conteinerizado via Docker, orquestrado com \textit{API Gateway} e \textit{Service Discovery}), em conjunto com uma interface baseada em \textit{Progressive Web Application} (PWA) em React, foi possível estruturar uma solução robusta e resiliente que atende perfeitamente às complexidades de concorrência de dados e à gestão de múltiplos perfis e estabelecimentos.
 
-A aplicação "Cortaai" não só permite aos Clientes realizar agendamentos de forma eficiente, verificando a disponibilidade em tempo real, mas também oferece aos Barbeiros e Donos ferramentas para facilitar o controle da agenda, a gestão de serviços, da equipe e da imagem do estabelecimento (upload de logo, banner, destaques via Cloudinary). Espera-se que a plataforma resulte em uma melhoria significativa na experiência dos clientes e na otimização dos processos de gestão das barbearias.
+Ao longo do projeto, foi fundamental analisar e implementar funcionalidades que atendessem de forma coesa às necessidades dos diferentes atores do sistema: Clientes, buscando conveniência móvel para encontrar barbearias e agendar serviços online; Barbeiros, necessitando de uma ferramenta para gerenciar o seu perfil, habilidades, jornadas de trabalho e agenda; e Donos de barbearias, visando o controle sobre o fluxo de \textit{onboarding} da loja, catálogo de serviços, gestão da equipe e aprovação de vínculos. A implementação da autenticação \textit{stateless} via JWT, validada de forma descentralizada na malha de serviços, garante a segurança rigorosa e o acesso isolado às funcionalidades adequadas de cada papel.
 
-Além disso, a arquitetura implementada e as tecnologias utilizadas fornecem uma base sólida e escalável para iniciativas futuras, como a integração de sistemas de pagamento online, o desenvolvimento de funcionalidades avançadas de gestão de relacionamento com o cliente (CRM) e a implementação de painéis com análises e insights de negócio.
+A plataforma "CortaAí" não só permite aos Clientes realizar agendamentos de forma eficiente, verificando a disponibilidade em tempo real — operação agora otimizada por uma camada de \textit{cache} em memória (Redis) que reduz drasticamente a latência e a sobrecarga no banco de dados relacional (MySQL) —, mas também oferece aos profissionais ferramentas intuitivas para o controle do seu negócio. A gestão avançada de portfólio e identidade visual (via integração com o \textit{Cloudinary}) e a facilidade de acesso em tela cheia proporcionada pelo PWA elevam o engajamento e aproximam a experiência web à de um aplicativo nativo.
 
-Em suma, o desenvolvimento desta aplicação representa um passo importante em direção à transformação digital e ao aumento da competitividade no setor de barbearias, demonstrando o potencial das tecnologias web modernas e da computação em nuvem para resolver desafios operacionais cotidianos.
+Além disso, a modularidade e o isolamento de domínios alcançados nesta nova infraestrutura fornecem uma base tecnológica extremamente sólida para a contínua expansão do produto. A separação do \textit{Schedule Service} e do \textit{User Service}, por exemplo, viabiliza e facilita os fluxos transacionais de pagamentos utilizando a API do Mercado Pago, bem como o uso de painéis analíticos avançados para apoiar a tomada de decisão estratégica dos proprietários.
 
+Em suma, o desenvolvimento e a modernização arquitetural desta aplicação representam um passo decisivo em direção à transformação digital e ao aumento da competitividade no setor de estética. O projeto demonstra na prática como a adoção de padrões de engenharia de \textit{software} modernos e infraestruturas escaláveis em nuvem resolve desafios operacionais diários, entregando valor contínuo aos utilizadores finais.
 
 % --- ELEMENTOS PÓS-TEXTUAIS ---
 \postextual
@@ -963,6 +1211,30 @@ Em suma, o desenvolvimento desta aplicação representa um passo importante em d
 
     \bibitem{trinks2025}
     TRINKS. \textit{Agenda online para barbearia: o que é e como funciona?}. 2025. Disponível em: \url{https://blog.trinks.com/agenda-online-para-barbearia-o-que-e-e-como-funciona/}. Acesso em: 07/09/25.
+
+    \bibitem{docker_docs}
+    DOCKER. \textit{Docker Documentation}. [S.l.]: Docker Inc., [c2026]. Disponível em: \url{https://docs.docker.com/}. Acesso em: 05/02/2026.
+
+    \bibitem{google_pwa}
+        GOOGLE DEVELOPERS. \textit{Progressive Web Apps (PWAs)}. [S.l.]: Google, [c2026]. Disponível em: \url{https://developer.google.com/web/progressive-web-apps}. Acesso em: 14/04/2026.
+    
+    \bibitem{fowler_microservices}
+        FOWLER, Martin; LEWIS, James. \textit{Microservices: a definition of this new architectural term}. [S.l.]: MartinFowler.com, [c2014]. Disponível em: \url{https://martinfowler.com/articles/microservices.html}. Acesso em: 04/02/2026.
+    
+    \bibitem{mouat_docker}
+        MOUAT, Adrian. \textit{Uso do Docker: Otimize o Desenvolvimento, a Entrega e a Implantação de Seus Aplicativos}. São Paulo: Novatec Editora, 2016.
+    
+    \bibitem{newman_microservices}
+        NEWMAN, Sam. \textit{Building Microservices: Designing Fine-Grained Systems}. 2. ed. Sebastopol: O'Reilly Media, 2021.
+    
+    \bibitem{redis_docs}
+        REDIS. \textit{Redis Documentation}. [S.l.]: Redis Ltd., [c2026]. Disponível em: \url{https://redis.io/docs/}. Acesso em: 25/03/2026.
+    
+    \bibitem{spring_cloud_docs}
+        SPRING. \textit{Spring Cloud Gateway Reference Documentation}. [S.l.]: VMware, [c2026]. Disponível em: \url{https://spring.io/projects/spring-cloud-gateway}. Acesso em: 16/02/2026.
+    
+    \bibitem{walls_spring}
+        WALLS, Craig. \textit{Spring in Action}. 6. ed. Shelter Island: Manning Publications, 2022.
 \end{thebibliography}
 
 % --- APÊNDICES ---
@@ -1020,7 +1292,7 @@ Em suma, o desenvolvimento desta aplicação representa um passo importante em d
 \begin{description}
     \item[id:] VARCHAR(36). Chave Primária (PK). Identificador único (UUID) da atividade/serviço.
     \item[barbershop\_id:] VARCHAR(36). Chave Estrangeira (FK) de barbershops. Obrigatório.
-    \item[activity\_name:] VARCHAR(255). Obrigatório. Nome do serviço (Ex: "Corte de Cabelo").
+    \item[activity\_name:] VARCHAR(255). Obrigatório. Nome do serviço (Ex.: "Corte de Cabelo").
     \item[price:] DECIMAL(10,2). Obrigatório. Preço do serviço.
     \item[duration\_minutes:] INT. Obrigatório. Duração estimada do serviço em minutos.
     \item[date\_created:] DATETIME. Obrigatório. Data e hora de criação.
