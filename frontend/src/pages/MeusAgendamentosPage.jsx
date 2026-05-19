@@ -396,6 +396,8 @@ const MeusAgendamentosPage = () => {
         // Filtro de status — CONFIRMED aparece junto com SCHEDULED em "Agendados"
         if (activeFilter === 'SCHEDULED') {
             if (!['SCHEDULED', 'CONFIRMED'].includes(app.status)) return false;
+        } else if (activeFilter === 'PAYMENT_PENDING') {
+            if (!['PAYMENT_PENDING', 'EXPIRED'].includes(app.status)) return false;
         } else if (activeFilter !== 'ALL' && app.status !== activeFilter) {
             return false;
         }

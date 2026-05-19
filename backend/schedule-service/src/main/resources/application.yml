@@ -119,6 +119,10 @@ logging:
 
 app:
   timezone: ${APP_TIMEZONE:America/Sao_Paulo}
+  appointments:
+    payment-pending-timeout-minutes: ${APPOINTMENT_PAYMENT_PENDING_TIMEOUT_MINUTES:30}
+    auto-complete-after-end-minutes: ${APPOINTMENT_AUTO_COMPLETE_AFTER_END_MINUTES:30}
+    lifecycle-scheduler-delay-ms: ${APPOINTMENT_LIFECYCLE_SCHEDULER_DELAY_MS:300000}
   security:
     crypto:
       key: ${CORTAAI_DATA_CRYPTO_KEY:}

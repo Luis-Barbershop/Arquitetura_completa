@@ -160,4 +160,18 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     List<Appointment> findAppointmentsForReminderWindow(
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to);
+
+    @Query("SELECT a FROM Appointment a WHERE " +
+            "a.status = 'PAYMENT_PENDING' " +
+            "AND a.dateCreated <= :cutoff " +
+            "ORDER BY a.dateCreated ASC")
+    List<Appointment> findExpiredPaymentPendingAppointments(
+            @Param("cutoff") LocalDateTime cutoff);
+
+    @Query("SELECT a FROM Appointment a WHERE " +
+            "a.status IN ('SCHEDULED', 'CONFIRMED', 'IN_PROGRESS', 'WALK_IN') " +
+            "AND a.endTime <= :cutoff " +
+            "ORDER BY a.endTime ASC")
+    List<Appointment> findAppointmentsReadyForAutoCompletion(
+            @Param("cutoff") LocalDateTime cutoff);
 }

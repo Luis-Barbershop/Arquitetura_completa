@@ -40,16 +40,15 @@ public interface AppointmentMapper {
     }
 
     /**
-     * Projeção lazy de EXPIRED: PAYMENT_PENDING cujo startTime já passou há mais de 1h.
-     * Não persiste — apenas ajusta o DTO na leitura.
+     * Projeção lazy de EXPIRED enquanto o scheduler ainda não cancelou o agendamento.
+     * A regra canônica persiste CANCELLED após 30 minutos sem pagamento.
      */
     @AfterMapping
     default void resolveExpiredStatus(@MappingTarget AppointmentDTO dto, Appointment source) {
         if ("PAYMENT_PENDING".equals(dto.getStatus())
-                && source.getStartTime() != null
-                && LocalDateTime.now().isAfter(source.getStartTime().plusHours(1))) {
+                && source.getDateCreated() != null
+                && LocalDateTime.now().isAfter(source.getDateCreated().plusMinutes(30))) {
             dto.setStatus("EXPIRED");
         }
     }
 }
-
