@@ -14,10 +14,10 @@ function Site() {
     <div className={Styles.site}>
       <HeaderSite />
       <BannerSite />
-      <Mockup />
       <AboutUs />
       <Tutorial/>
       <Services />
+      <Mockup />
       <Faq />
       <CTAStats />
       <Footer />

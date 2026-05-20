@@ -25,8 +25,9 @@ function HeaderSite() {
             <ul>
                 <li onClick={() => scrollTo('inicio')}>INICIO</li>
                 <li onClick={() => scrollTo('sobre')}>SOBRE NÓS</li>
+                  <li onClick={() => scrollTo('como-funciona')}>COMO FUNCIONA</li>
                 <li onClick={() => scrollTo('servicos')}>NOSSOS SERVIÇOS</li>
-                <li onClick={() => scrollTo('como-funciona')}>COMO FUNCIONA</li>
+              
             </ul>
         </div>
 
