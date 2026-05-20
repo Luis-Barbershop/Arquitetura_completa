@@ -9,6 +9,13 @@
     gap: 0.75rem;
 }
 
+@media (max-width: 760px) {
+    .wrapper {
+        bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+        right: 1rem;
+    }
+}
+
 /* ── FAB ── */
 .fab {
     width: 52px;
@@ -42,6 +49,13 @@
     box-shadow: 0 8px 32px rgb(0 0 0 / 50%);
     overflow: hidden;
     animation: slideUp 0.2s ease;
+}
+
+@media (max-width: 760px) {
+    .window {
+        width: min(calc(100vw - 2rem), 360px);
+        max-height: calc(100vh - 11rem - env(safe-area-inset-bottom, 0px));
+    }
 }
 
 @keyframes slideUp {

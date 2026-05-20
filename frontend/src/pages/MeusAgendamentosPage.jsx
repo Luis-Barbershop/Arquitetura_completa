@@ -52,9 +52,45 @@ const getPeriodBounds = (dateStr, rangeMode) => {
     return { start: dateStr, end: dateStr };
 };
 
+const parseAppointmentDate = (value) => {
+    if (!value) return 0;
+
+    if (Array.isArray(value)) {
+        const [year, month, day, hour = 0, minute = 0, second = 0, nano = 0] = value;
+        return new Date(year, month - 1, day, hour, minute, second, Math.floor(nano / 1_000_000)).getTime();
+    }
+
+    if (typeof value === 'number') {
+        return value;
+    }
+
+    if (typeof value === 'string') {
+        const normalized = value
+            .replace(/(\.\d{3})\d+/, '$1')
+            .replace(' ', 'T');
+        const parsed = new Date(normalized).getTime();
+        if (!Number.isNaN(parsed)) return parsed;
+
+        const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+        if (match) {
+            const [, year, month, day, hour, minute, second = '0'] = match;
+            return new Date(
+                Number(year),
+                Number(month) - 1,
+                Number(day),
+                Number(hour),
+                Number(minute),
+                Number(second)
+            ).getTime();
+        }
+    }
+
+    return 0;
+};
+
 const compareByStartTimeDesc = (a, b) => {
-    const first = a?.startTime ? new Date(a.startTime).getTime() : 0;
-    const second = b?.startTime ? new Date(b.startTime).getTime() : 0;
+    const first = parseAppointmentDate(a?.startTime);
+    const second = parseAppointmentDate(b?.startTime);
     return second - first;
 };
 
@@ -197,7 +233,7 @@ const MeusAgendamentosPage = () => {
 
     const getDurationLabel = (app) => {
         if (!app.startTime || !app.endTime) return null;
-        const mins = Math.round((new Date(app.endTime) - new Date(app.startTime)) / 60000);
+        const mins = Math.round((parseAppointmentDate(app.endTime) - parseAppointmentDate(app.startTime)) / 60000);
         if (mins <= 0) return null;
         return mins >= 60
             ? `${Math.floor(mins / 60)}h${mins % 60 > 0 ? `${mins % 60}min` : ''}`
@@ -351,7 +387,7 @@ const MeusAgendamentosPage = () => {
 
     // Função para formatar data bonita (Ex: 28/11 às 14:00)
     const formatData = (isoString) => {
-        const date = new Date(isoString);
+        const date = new Date(parseAppointmentDate(isoString));
         return date.toLocaleString('pt-BR', { 
             day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' 
         });
