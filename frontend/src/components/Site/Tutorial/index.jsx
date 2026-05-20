@@ -18,7 +18,7 @@ function Tutorial() {
         </div>
         <div className={Style.UserOption}>
           {/* <span className={Style.Line}></span> */}
-          <p>PARA PROFSSIONAIS</p>
+          <p>PARA PROFISSIONAIS</p>
           {/* <span className={Style.Line}></span> */}
         </div>
       </div>
@@ -32,7 +32,7 @@ function Tutorial() {
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 01</p>
               <h3>Encontre a Sua Barbearia.</h3>
-              <p className={Style.ContentDescription}>Localize os Melhores Profissionais Perto de Você através do nosso sitema inteligente.</p>
+              <p className={Style.ContentDescription}>Localize os Melhores Profissionais Perto de Você através do nosso sistema inteligente.</p>
             </div>
           </div>
 
@@ -43,7 +43,7 @@ function Tutorial() {
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 02</p>
               <h3>Escolha o serviço e o profissional</h3>
-              <p className={Style.ContentDescription}>Navegue pelo portifólio, preços e especialidades de cada mestre artesão.</p>
+              <p className={Style.ContentDescription}>Navegue pelo portfólio, preços e especialidades de cada mestre artesão.</p>
             </div>
           </div>
 
@@ -80,7 +80,7 @@ function Tutorial() {
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 01</p>
               <h3>Cadastre a Sua Barbearia e equipe.</h3>
-              <p className={Style.ContentDescription}>Crie o seu perfil digital em minutos e distaque a identidade do seu negócio.</p>
+              <p className={Style.ContentDescription}>Crie o seu perfil digital em minutos e destaque a identidade do seu negócio.</p>
             </div>
           </div>
 
@@ -91,7 +91,7 @@ function Tutorial() {
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 02</p>
               <h3>Configure seus serviços e Horários.</h3>
-              <p className={Style.ContentDescription}>Navegue pelo portifólio, preços e especialidades de cada mestre artesão.</p>
+              <p className={Style.ContentDescription}>Navegue pelo portfólio, preços e especialidades de cada mestre artesão.</p>
             </div>
           </div>
 
@@ -102,7 +102,7 @@ function Tutorial() {
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 03</p>
               <h3>Gerencie agendamentos e estoque.</h3>
-              <p className={Style.ContentDescription}>Controle total da sua operação em uam interface limpa e sem distrações.</p>
+              <p className={Style.ContentDescription}>Controle total da sua operação em uma interface limpa e sem distrações.</p>
             </div>
           </div>
 
@@ -114,7 +114,7 @@ function Tutorial() {
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 04</p>
               <h3>Acompanhe o seu Crescimento.</h3>
-              <p className={Style.ContentDescription}>Dashboards intelogentes que mostram sua evolução e faturamento em tempo real.</p>
+              <p className={Style.ContentDescription}>Dashboards inteligentes que mostram sua evolução e faturamento em tempo real.</p>
             </div>
           </div> 
         </div>

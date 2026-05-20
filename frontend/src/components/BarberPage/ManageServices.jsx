@@ -114,7 +114,7 @@ const ManageServices = () => {
             <form onSubmit={handleAdd} className={styles.form}>
                 {!isOwner && (
                     <p className={styles.emptyText}>
-                        Apenas o dono pode cadastrar servicos. Se voce acabou de criar a barbearia,
+                        Apenas o dono pode cadastrar serviços. Se você acabou de criar a barbearia,
                         faca logout e login para atualizar o token.
                     </p>
                 )}

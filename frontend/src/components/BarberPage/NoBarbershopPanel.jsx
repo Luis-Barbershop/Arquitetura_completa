@@ -5,7 +5,7 @@ function NoBarbershopPanel({ onCreateShop, onGoToProfile }) {
     return (
         <section className={styles.noBarbershopPanel}>
             <p className={styles.noBarbershopKicker}>PAINEL DO PROFISSIONAL</p>
-            <h2 className={styles.noBarbershopTitle}>Voce ainda nao esta vinculado a uma barbearia</h2>
+            <h2 className={styles.noBarbershopTitle}>Você ainda não está vinculado a uma barbearia</h2>
             <p className={styles.noBarbershopSubtitle}>Crie seu proprio espaco ou aguarde o convite de um dono de barbearia pelo seu CPF.</p>
 
             <div className={styles.noBarbershopActions}>

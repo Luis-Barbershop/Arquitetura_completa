@@ -34,7 +34,7 @@ function RedirectionPage() {
 
           <p className={Styles.kicker}>ESCOLHA DE PERFIL</p>
           <h1>{actionTitle}</h1>
-          <h2>Como voce quer {actionLabel}?</h2>
+          <h2>Como você quer {actionLabel}?</h2>
         </div>
 
         <div className={Styles.redirection_buttons_container}>

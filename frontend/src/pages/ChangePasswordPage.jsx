@@ -115,7 +115,7 @@ function ChangePasswordPage() {
             return;
         }
         if (newPassword !== confirmPassword) {
-            setError("As senhas nao coincidem.");
+            setError("As senhas não coincidem.");
             return;
         }
         if (isPasswordResetFlow && !resetCodeValid) {
@@ -158,7 +158,7 @@ function ChangePasswordPage() {
             setSuccess(true);
         } catch (err) {
             changingPassword.current = false;
-            const msg = err.response?.data?.message || "Nao foi possivel alterar a senha. Tente novamente.";
+            const msg = err.response?.data?.message || "Não foi possível alterar a senha. Tente novamente.";
             setError(msg);
         } finally {
             setLoading(false);
@@ -176,9 +176,9 @@ function ChangePasswordPage() {
                         <span>CortaAI</span>
                     </div>
 
-                    <p className={Styles.kicker}>SEGURANCA DA CONTA</p>
+                    <p className={Styles.kicker}>SEGURANÇA DA CONTA</p>
                     <h1 className={Styles.title_login}>Mantenha sua conta sempre protegida.</h1>
-                    <p className={Styles.subtitle}>Crie uma nova senha forte para continuar acessando seus agendamentos com seguranca.</p>
+                    <p className={Styles.subtitle}>Crie uma nova senha forte para continuar acessando seus agendamentos com segurança.</p>
 
                     <div className={Styles.tagRow}>
                         <span className={Styles.softTag}>Mínimo 8 caracteres</span>
@@ -299,7 +299,7 @@ function ChangePasswordPage() {
                                         className={`${FPStyles.input} ${confirmPassword && confirmPassword !== newPassword ? CPStyles.inputError : ""}`}
                                     />
                                     {confirmPassword && confirmPassword !== newPassword && (
-                                        <span className={CPStyles.fieldHint}>As senhas nao coincidem</span>
+                                        <span className={CPStyles.fieldHint}>As senhas não coincidem</span>
                                     )}
                                 </label>
 

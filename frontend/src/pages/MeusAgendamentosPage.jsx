@@ -178,7 +178,7 @@ const MeusAgendamentosPage = () => {
                         try {
                             return [shopId, await hasReviewedBarbershop(shopId)];
                         } catch (error) {
-                            console.warn('Nao foi possivel consultar avaliacao da barbearia:', shopId, error);
+                            console.warn('Não foi possível consultar avaliação da barbearia:', shopId, error);
                             return [shopId, false];
                         }
                     })
@@ -204,7 +204,7 @@ const MeusAgendamentosPage = () => {
             if (isOfflineTransactionalError(error)) {
                 setOfflineTransactionalNotice(getOfflineTransactionalMessage(error));
             } else {
-                toast.error('Nao foi possivel carregar seus agendamentos.');
+                toast.error('Não foi possível carregar seus agendamentos.');
             }
             startTransition(() => setAppointments([]));
         } finally {
@@ -350,7 +350,7 @@ const MeusAgendamentosPage = () => {
 
     const handleSubmitReview = async () => {
         if (!reviewingAppointment?.barbershopId) {
-            toast.warn('Nao foi possivel identificar a barbearia deste atendimento.');
+            toast.warn('Não foi possível identificar a barbearia deste atendimento.');
             return;
         }
 
@@ -376,9 +376,9 @@ const MeusAgendamentosPage = () => {
                         ? { ...appointment, hasReviewed: true }
                         : appointment
                 )));
-                toast.warn('Voce ja avaliou esta barbearia.');
+                toast.warn('Você já avaliou esta barbearia.');
             } else {
-                toast.error('Nao foi possivel enviar sua avaliacao. Tente novamente.');
+                toast.error('Não foi possível enviar sua avaliação. Tente novamente.');
             }
         } finally {
             setIsSubmittingReview(false);
@@ -773,13 +773,13 @@ const MeusAgendamentosPage = () => {
                     <p className={Styles.kicker}>{isCustomer ? 'PAINEL DE AGENDAMENTOS' : (agendaView === 'team' ? 'AGENDA DA EQUIPE' : 'MINHA AGENDA')}</p>
                     <h1 className={Styles.title}>
                         {isCustomer
-                            ? 'Acompanhe seus proximos cortes'
+                            ? 'Acompanhe seus próximos cortes'
                             : (agendaView === 'team' ? 'Visualize os atendimentos da equipe' : 'Organize seus atendimentos')}
                     </h1>
                     <p className={Styles.subtitle}>
                         {agendaView === 'team'
                             ? 'Visão consolidada dos atendimentos da barbearia no dia selecionado.'
-                            : 'Visualize status, horario e servicos de cada agendamento em um fluxo mais claro.'}
+                            : 'Visualize status, horário e serviços de cada agendamento em um fluxo mais claro.'}
                     </p>
                 </section>
 
@@ -1201,7 +1201,7 @@ const MeusAgendamentosPage = () => {
                                     value={reviewComment}
                                     onChange={(e) => setReviewComment(e.target.value)}
                                     maxLength={500}
-                                    placeholder="Conte como foi sua experiencia"
+                                    placeholder="Conte como foi sua experiência"
                                 />
                             </div>
 
@@ -1220,7 +1220,7 @@ const MeusAgendamentosPage = () => {
                                     onClick={handleSubmitReview}
                                     disabled={isSubmittingReview}
                                 >
-                                    {isSubmittingReview ? 'Enviando...' : 'Enviar avaliacao'}
+                                    {isSubmittingReview ? 'Enviando...' : 'Enviar avaliação'}
                                 </button>
                             </div>
                         </div>

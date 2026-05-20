@@ -17,8 +17,8 @@ function LoginPage() {
                     </div>
 
                     <p className={Styles.kicker}>BEM-VINDO DE VOLTA</p>
-                    <h1 className={Styles.title_login}>Seu proximo corte comeca aqui.</h1>
-                    <p className={Styles.subtitle}>Entre para acompanhar horarios, favoritos e servicos em um painel mais rapido.</p>
+                    <h1 className={Styles.title_login}>Seu próximo corte começa aqui.</h1>
+                    <p className={Styles.subtitle}>Entre para acompanhar horários, favoritos e serviços em um painel mais rápido.</p>
 
                     <div className={Styles.tagRow}>
                         <span className={Styles.roleTag}>Perfil: <strong>{roleLabel}</strong></span>
@@ -27,7 +27,7 @@ function LoginPage() {
 
                     <ul className={Styles.featuresList}>
                         <li>Agenda organizada em poucos toques</li>
-                        <li>Historico de atendimentos em um so lugar</li>
+                        <li>Histórico de atendimentos em um só lugar</li>
                         <li>Fluxo simples para cliente e barbeiro</li>
                     </ul>
                 </aside>

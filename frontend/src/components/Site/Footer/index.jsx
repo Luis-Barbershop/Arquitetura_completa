@@ -29,7 +29,7 @@ function Footer() {
           </div>
 
           <div className={Styles.linkCol}>
-            <h4>Para Voce</h4>
+            <h4>Para Você</h4>
             <ul>
               <li><a href="#">Agendar Horario</a></li>
               <li><a href="#">Encontrar Barbearias</a></li>

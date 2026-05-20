@@ -71,7 +71,7 @@ function Favorite_barbershops({ favoriteIds = [] }) {
                     ))}
                 </div>
             ) : (
-                <p className={`${Styles.info_text} ca-state ca-state--empty`}>Voce ainda nao favoritou nenhuma barbearia.</p>
+                <p className={`${Styles.info_text} ca-state ca-state--empty`}>Você ainda não favoritou nenhuma barbearia.</p>
             )}
 
         </div>

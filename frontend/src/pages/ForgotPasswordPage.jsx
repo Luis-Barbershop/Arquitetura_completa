@@ -66,7 +66,7 @@ function ForgotPasswordPage() {
 
                     <p className={Styles.kicker}>RECUPERAR ACESSO</p>
                     <h1 className={Styles.title_login}>Redefinir sua senha e voltar a agendar.</h1>
-                    <p className={Styles.subtitle}>Informe seu e-mail e enviaremos um link para voce criar uma nova senha com seguranca.</p>
+                    <p className={Styles.subtitle}>Informe seu e-mail e enviaremos um link para você criar uma nova senha com segurança.</p>
 
                     <div className={Styles.tagRow}>
                         <span className={Styles.softTag}>Link seguro via Firebase</span>

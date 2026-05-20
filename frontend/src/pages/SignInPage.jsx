@@ -31,7 +31,7 @@ function SignInPage() {
 
                     <div className={Styles.tagRow}>
                         <span className={Styles.roleTag}>Perfil: <strong>{roleLabel}</strong></span>
-                        <span className={Styles.softTag}>Fluxo rapido</span>
+                        <span className={Styles.softTag}>Fluxo rápido</span>
                     </div>
 
                     <ul className={Styles.featuresList}>
@@ -41,8 +41,8 @@ function SignInPage() {
                     </ul>
 
                     <div className={Styles.moodCard}>
-                        <p className={Styles.moodTitle}>Experiencia atualizada</p>
-                        <p className={Styles.moodText}>Visual limpo, fluxo rapido e foco total em agendar sem atrito.</p>
+                        <p className={Styles.moodTitle}>Experiência atualizada</p>
+                        <p className={Styles.moodText}>Visual limpo, fluxo rápido e foco total em agendar sem atrito.</p>
                     </div>
                 </aside>
 
