@@ -58,7 +58,7 @@ function DailyInsights({ barbershopId }) {
 
   const insightText = useMemo(() => {
     if (lowStockCount > 0) {
-      return `Voce tem ${lowStockCount} item(ns) com estoque baixo. Planeje reposicao para evitar ruptura nos atendimentos.`;
+      return `Você tem ${lowStockCount} item(ns) com estoque baixo. Planeje reposição para evitar ruptura nos atendimentos.`;
     }
     if (occupancyPct >= 85) {
       return `Agenda forte hoje: ocupacao em ${occupancyPct}%. Priorize pontualidade e confirme os proximos atendimentos.`;

@@ -201,11 +201,11 @@ function BarberServicesPage() {
     }
 
     if (!Number.isFinite(parsedDuration) || parsedDuration < 5) {
-      showToast('Informe uma duracao valida em minutos (minimo 5).', 'warning');
+      showToast('Informe uma duração válida em minutos (mínimo 5).', 'warning');
       return;
     }
     if (parsedDuration > 300) {
-      showToast('A duracao maxima de um servico e 300 minutos.', 'warning');
+      showToast('A duração máxima de um serviço é 300 minutos.', 'warning');
       return;
     }
 
@@ -235,9 +235,9 @@ function BarberServicesPage() {
       if (status === 403) {
         showToast('Apenas o dono da barbearia pode cadastrar servicos.', 'error');
       } else if (status === 400 && backendMessage) {
-        showToast(`Nao foi possivel adicionar o servico: ${backendMessage}`, 'error');
+        showToast(`Não foi possível adicionar o serviço: ${backendMessage}`, 'error');
       } else {
-        showToast('Nao foi possivel adicionar o servico. Tente novamente.', 'error');
+        showToast('Não foi possível adicionar o serviço. Tente novamente.', 'error');
       }
     } finally {
       setIsSaving(false);
@@ -258,7 +258,7 @@ function BarberServicesPage() {
       showToast('Servico excluido com sucesso.', 'success');
     } catch (error) {
       console.error('Erro ao excluir serviço:', error);
-      showToast('Nao foi possivel excluir o servico.', 'error');
+      showToast('Não foi possível excluir o serviço.', 'error');
     } finally {
       setServicePendingDelete(null);
     }
@@ -408,7 +408,7 @@ function BarberServicesPage() {
                 <h2>Atribuir serviços ao meu perfil</h2>
               </div>
               <p className={styles.mutedText}>
-                Selecione e salve aqui os serviços que voce realmente executa. Esse vinculo
+                Selecione e salve aqui os serviços que você realmente executa. Esse vínculo
                 e obrigatorio para liberar o agendamento no fluxo do backend.
               </p>
               <ManageMySkills shopId={barber?.barbershopId || getBarbershopId()} refreshKey={skillsRefreshKey} />

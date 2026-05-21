@@ -64,7 +64,7 @@ function HomePage() {
         setFavoriteIds((prev) => (prev.includes(shopId) ? prev : [...prev, shopId]));
       }
     } catch {
-      toast.error("Nao foi possivel atualizar suas favoritas agora.");
+      toast.error("Não foi possível atualizar suas favoritas agora.");
     }
   };
 

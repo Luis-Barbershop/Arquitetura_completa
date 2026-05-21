@@ -55,7 +55,13 @@ public class AppointmentService {
     private final CacheManager cacheManager;
 
     @Value("${app.timezone:America/Sao_Paulo}")
-    private String appTimezone;
+    private String appTimezone = "America/Sao_Paulo";
+
+    @Value("${app.appointments.payment-pending-timeout-minutes:30}")
+    private long paymentPendingTimeoutMinutes = 30;
+
+    @Value("${app.appointments.auto-complete-after-end-minutes:30}")
+    private long autoCompleteAfterEndMinutes = 30;
 
     // ========== CRIAÇÃO ==========
 
@@ -566,7 +572,10 @@ public class AppointmentService {
 
     private LocalDateTime getNowInAppTimezone() {
         try {
-            return LocalDateTime.now(ZoneId.of(appTimezone));
+            String timezone = (appTimezone == null || appTimezone.isBlank())
+                    ? "America/Sao_Paulo"
+                    : appTimezone;
+            return LocalDateTime.now(ZoneId.of(timezone));
         } catch (DateTimeException ex) {
             log.warn("Timezone inválido em app.timezone='{}'; usando timezone padrão da JVM.", appTimezone);
             return LocalDateTime.now();
@@ -828,8 +837,7 @@ public class AppointmentService {
 
     private boolean includeInOperationalAgenda(Appointment appointment) {
         return appointment.getStatus() != AppointmentStatus.CANCELLED
-                && appointment.getStatus() != AppointmentStatus.NO_SHOW
-                && appointment.getStatus() != AppointmentStatus.PAYMENT_PENDING;
+                && appointment.getStatus() != AppointmentStatus.NO_SHOW;
     }
 
     private boolean isOnlinePaymentMethod(String paymentMethod) {
@@ -860,6 +868,43 @@ public class AppointmentService {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Status inválido: " + status);
         }
+    }
+
+    // ========== CICLO DE VIDA AUTOMÁTICO ==========
+
+    public int cancelExpiredPaymentPendingAppointments() {
+        LocalDateTime cutoff = getNowInAppTimezone().minusMinutes(paymentPendingTimeoutMinutes);
+        List<Appointment> expiredAppointments = appointmentRepository.findExpiredPaymentPendingAppointments(cutoff);
+
+        for (Appointment appointment : expiredAppointments) {
+            appointment.setStatus(AppointmentStatus.CANCELLED);
+            appointmentRepository.save(appointment);
+            evictAvailabilityCacheAfterCommit(appointment.getBarberId(), appointment.getStartTime().toLocalDate());
+            log.info(
+                    "Agendamento {} cancelado automaticamente por pagamento pendente ha mais de {} minutos.",
+                    appointment.getId(),
+                    paymentPendingTimeoutMinutes
+            );
+        }
+
+        return expiredAppointments.size();
+    }
+
+    public int completeAppointmentsAfterEndTime() {
+        LocalDateTime cutoff = getNowInAppTimezone().minusMinutes(autoCompleteAfterEndMinutes);
+        List<Appointment> appointmentsToComplete = appointmentRepository.findAppointmentsReadyForAutoCompletion(cutoff);
+
+        for (Appointment appointment : appointmentsToComplete) {
+            appointment.setStatus(AppointmentStatus.COMPLETED);
+            appointmentRepository.save(appointment);
+            log.info(
+                    "Agendamento {} concluido automaticamente {} minutos apos o horario final estipulado.",
+                    appointment.getId(),
+                    autoCompleteAfterEndMinutes
+            );
+        }
+
+        return appointmentsToComplete.size();
     }
 
     // ========== CACHE ==========

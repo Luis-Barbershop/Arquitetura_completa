@@ -17,7 +17,8 @@
 | 1 | E-17 | Foto barbeiro nos cards de seleção | frontend | XS |
 | 1 | E-23 | Barbeiro sem skill = opaco no card | frontend | XS |
 | 2 | E-12 | Colaborador: ocultar aba Serviços, exibir só Habilidades | frontend | S |
-| 2 | E-14 | Tamanho fixo de fotos + crop 1:1 | frontend | M |
+| 2 | E-14 | Tamanho fixo de fotos + crop 1:1 | f
+rontend | M |
 | 2 | E-16 | PWA — prompt nativo + push sem popup intermediário | frontend | S |
 | 2 | E-21 | Indicativo barbearia ativa na navbar | frontend | S |
 | 2 | E-22 | UI indisponibilidade barbeiro (BarberBlock — backend pronto) | frontend | M |

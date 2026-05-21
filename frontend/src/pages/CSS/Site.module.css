@@ -1,5 +1,9 @@
-.site{
+.site {
     width: 100%;
     height: auto;
-    
+    background:
+        radial-gradient(circle at 8% 12%, rgba(193, 144, 6, 0.18), transparent 26%),
+        radial-gradient(circle at 92% 24%, rgba(193, 144, 6, 0.12), transparent 28%),
+        linear-gradient(180deg, #050505 0%, #0f0f0f 35%, #121212 60%, #0b0b0b 100%);
+    color: #ffffff;
 }

@@ -52,9 +52,45 @@ const getPeriodBounds = (dateStr, rangeMode) => {
     return { start: dateStr, end: dateStr };
 };
 
+const parseAppointmentDate = (value) => {
+    if (!value) return 0;
+
+    if (Array.isArray(value)) {
+        const [year, month, day, hour = 0, minute = 0, second = 0, nano = 0] = value;
+        return new Date(year, month - 1, day, hour, minute, second, Math.floor(nano / 1_000_000)).getTime();
+    }
+
+    if (typeof value === 'number') {
+        return value;
+    }
+
+    if (typeof value === 'string') {
+        const normalized = value
+            .replace(/(\.\d{3})\d+/, '$1')
+            .replace(' ', 'T');
+        const parsed = new Date(normalized).getTime();
+        if (!Number.isNaN(parsed)) return parsed;
+
+        const match = normalized.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+        if (match) {
+            const [, year, month, day, hour, minute, second = '0'] = match;
+            return new Date(
+                Number(year),
+                Number(month) - 1,
+                Number(day),
+                Number(hour),
+                Number(minute),
+                Number(second)
+            ).getTime();
+        }
+    }
+
+    return 0;
+};
+
 const compareByStartTimeDesc = (a, b) => {
-    const first = a?.startTime ? new Date(a.startTime).getTime() : 0;
-    const second = b?.startTime ? new Date(b.startTime).getTime() : 0;
+    const first = parseAppointmentDate(a?.startTime);
+    const second = parseAppointmentDate(b?.startTime);
     return second - first;
 };
 
@@ -142,7 +178,7 @@ const MeusAgendamentosPage = () => {
                         try {
                             return [shopId, await hasReviewedBarbershop(shopId)];
                         } catch (error) {
-                            console.warn('Nao foi possivel consultar avaliacao da barbearia:', shopId, error);
+                            console.warn('Não foi possível consultar avaliação da barbearia:', shopId, error);
                             return [shopId, false];
                         }
                     })
@@ -168,7 +204,7 @@ const MeusAgendamentosPage = () => {
             if (isOfflineTransactionalError(error)) {
                 setOfflineTransactionalNotice(getOfflineTransactionalMessage(error));
             } else {
-                toast.error('Nao foi possivel carregar seus agendamentos.');
+                toast.error('Não foi possível carregar seus agendamentos.');
             }
             startTransition(() => setAppointments([]));
         } finally {
@@ -197,7 +233,7 @@ const MeusAgendamentosPage = () => {
 
     const getDurationLabel = (app) => {
         if (!app.startTime || !app.endTime) return null;
-        const mins = Math.round((new Date(app.endTime) - new Date(app.startTime)) / 60000);
+        const mins = Math.round((parseAppointmentDate(app.endTime) - parseAppointmentDate(app.startTime)) / 60000);
         if (mins <= 0) return null;
         return mins >= 60
             ? `${Math.floor(mins / 60)}h${mins % 60 > 0 ? `${mins % 60}min` : ''}`
@@ -314,7 +350,7 @@ const MeusAgendamentosPage = () => {
 
     const handleSubmitReview = async () => {
         if (!reviewingAppointment?.barbershopId) {
-            toast.warn('Nao foi possivel identificar a barbearia deste atendimento.');
+            toast.warn('Não foi possível identificar a barbearia deste atendimento.');
             return;
         }
 
@@ -340,9 +376,9 @@ const MeusAgendamentosPage = () => {
                         ? { ...appointment, hasReviewed: true }
                         : appointment
                 )));
-                toast.warn('Voce ja avaliou esta barbearia.');
+                toast.warn('Você já avaliou esta barbearia.');
             } else {
-                toast.error('Nao foi possivel enviar sua avaliacao. Tente novamente.');
+                toast.error('Não foi possível enviar sua avaliação. Tente novamente.');
             }
         } finally {
             setIsSubmittingReview(false);
@@ -351,7 +387,7 @@ const MeusAgendamentosPage = () => {
 
     // Função para formatar data bonita (Ex: 28/11 às 14:00)
     const formatData = (isoString) => {
-        const date = new Date(isoString);
+        const date = new Date(parseAppointmentDate(isoString));
         return date.toLocaleString('pt-BR', { 
             day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' 
         });
@@ -396,6 +432,8 @@ const MeusAgendamentosPage = () => {
         // Filtro de status — CONFIRMED aparece junto com SCHEDULED em "Agendados"
         if (activeFilter === 'SCHEDULED') {
             if (!['SCHEDULED', 'CONFIRMED'].includes(app.status)) return false;
+        } else if (activeFilter === 'PAYMENT_PENDING') {
+            if (!['PAYMENT_PENDING', 'EXPIRED'].includes(app.status)) return false;
         } else if (activeFilter !== 'ALL' && app.status !== activeFilter) {
             return false;
         }
@@ -735,13 +773,13 @@ const MeusAgendamentosPage = () => {
                     <p className={Styles.kicker}>{isCustomer ? 'PAINEL DE AGENDAMENTOS' : (agendaView === 'team' ? 'AGENDA DA EQUIPE' : 'MINHA AGENDA')}</p>
                     <h1 className={Styles.title}>
                         {isCustomer
-                            ? 'Acompanhe seus proximos cortes'
+                            ? 'Acompanhe seus próximos cortes'
                             : (agendaView === 'team' ? 'Visualize os atendimentos da equipe' : 'Organize seus atendimentos')}
                     </h1>
                     <p className={Styles.subtitle}>
                         {agendaView === 'team'
                             ? 'Visão consolidada dos atendimentos da barbearia no dia selecionado.'
-                            : 'Visualize status, horario e servicos de cada agendamento em um fluxo mais claro.'}
+                            : 'Visualize status, horário e serviços de cada agendamento em um fluxo mais claro.'}
                     </p>
                 </section>
 
@@ -1163,7 +1201,7 @@ const MeusAgendamentosPage = () => {
                                     value={reviewComment}
                                     onChange={(e) => setReviewComment(e.target.value)}
                                     maxLength={500}
-                                    placeholder="Conte como foi sua experiencia"
+                                    placeholder="Conte como foi sua experiência"
                                 />
                             </div>
 
@@ -1182,7 +1220,7 @@ const MeusAgendamentosPage = () => {
                                     onClick={handleSubmitReview}
                                     disabled={isSubmittingReview}
                                 >
-                                    {isSubmittingReview ? 'Enviando...' : 'Enviar avaliacao'}
+                                    {isSubmittingReview ? 'Enviando...' : 'Enviar avaliação'}
                                 </button>
                             </div>
                         </div>

@@ -104,7 +104,7 @@ function BarberStockPage() {
       setCategories(Array.isArray(categoriesResponse.data) ? categoriesResponse.data : []);
     } catch (error) {
       console.error('Erro ao carregar estoque da API:', error);
-      toast.error('Nao foi possivel carregar o estoque.');
+      toast.error('Não foi possível carregar o estoque.');
     } finally {
       setLoadingItems(false);
     }
@@ -176,7 +176,7 @@ function BarberStockPage() {
       setCostPrice('');
     } catch (error) {
       console.error('Erro ao criar produto no estoque:', error);
-      toast.error('Nao foi possivel salvar o produto. Verifique os dados e tente novamente.');
+      toast.error('Não foi possível salvar o produto. Verifique os dados e tente novamente.');
     } finally {
       setIsSaving(false);
     }

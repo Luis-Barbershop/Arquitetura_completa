@@ -10,7 +10,7 @@ const faqItems = [
   {
     question: 'Posso escolher um barbeiro especifico?',
     answer:
-      'Sim. Durante o agendamento voce pode filtrar os profissionais e selecionar aquele que preferir para o atendimento.',
+      'Sim. Durante o agendamento você pode filtrar os profissionais e selecionar aquele que preferir para o atendimento.',
   },
   {
     question: 'Como funciona para os profissionais?',
@@ -20,12 +20,12 @@ const faqItems = [
   {
     question: 'Consigo remarcar ou cancelar um agendamento?',
     answer:
-      'Sim. Na area de agendamentos voce pode remarcar ou cancelar dentro das regras definidas pela barbearia.',
+      'Sim. Na área de agendamentos você pode remarcar ou cancelar dentro das regras definidas pela barbearia.',
   },
   {
     question: 'A plataforma envia lembretes de horario?',
     answer:
-      'Envia sim. O sistema notifica voce antes do atendimento para reduzir esquecimentos e manter a rotina organizada.',
+      'Envia sim. O sistema notifica você antes do atendimento para reduzir esquecimentos e manter a rotina organizada.',
   },
 ]
 

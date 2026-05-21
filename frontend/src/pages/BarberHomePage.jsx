@@ -196,7 +196,7 @@ function BarberHomePage() {
           <div className={`${styles.modalCard} ${styles.logoutModalCard}`} onClick={(e) => e.stopPropagation()}>
             <p className={styles.modalKicker}>CONFIRMAR SAIDA</p>
             <h3 className={styles.modalTitle}>Deseja sair da sua conta?</h3>
-            <p className={styles.modalSubtitle}>Ao sair, voce sera redirecionado para a tela de login do profissional.</p>
+            <p className={styles.modalSubtitle}>Ao sair, você será redirecionado para a tela de login do profissional.</p>
 
             <div className={styles.modalActions}>
               <button type="button" className={styles.modalSecondaryButton} onClick={handleCloseLogoutModal}>

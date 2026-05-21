@@ -1,61 +1,170 @@
-.banner{
+.banner {
     position: relative;
     display: flex;
     width: 100%;
-    height: 500px;
+    min-height: 760px;
     background-image: url('/BarberImage.jpg');
     background-size: cover;
     background-position: center;
     align-items: center;
-    justify-content: space-evenly;
+    justify-content: flex-start;
     overflow: hidden;
+    padding: 30px 60px 50px;
 }
 
-.banner::before{
+.banner::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.747);
+    background:
+        linear-gradient(100deg, rgba(0, 0, 0, 0.9) 0%, rgba(10, 10, 10, 0.88) 42%, rgba(10, 10, 10, 0.44) 72%),
+        radial-gradient(circle at 22% 25%, rgba(193, 144, 6, 0.2), transparent 33%);
     pointer-events: none;
 }
 
-.banner::after{
+.banner::after {
     content: '';
     position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 50px;
-    background: linear-gradient(to bottom, rgba(51, 51, 51, 0), #0f0f0f);
+    right: -90px;
+    bottom: -110px;
+    width: 340px;
+    height: 340px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(193, 144, 6, 0.22), transparent 68%);
     pointer-events: none;
 }
 
-.bannerContent{
+.bannerContent {
     position: relative;
     z-index: 1;
-    width: 100%;
-    height: 100%;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     align-items: flex-start;
-    justify-content: flex-end;
     color: white;
-    padding: 40px;
-    gap: 10px;
+    gap: 18px;
+    max-width: 780px;
 }
 
-.bannerContent h1{
+.badge {
     margin: 0;
-    font-size: 2.5em;
-    font-weight: bold;
-    font-family: 'space grotesk', sans-serif;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(193, 144, 6, 0.4);
+    background: rgba(193, 144, 6, 0.12);
+    color: #ffdd8c;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.75rem;
 }
 
-.bannerContent p{
+.bannerContent h1 {
     margin: 0;
-    font-size: 1.2em;
-    font-family: "Roboto", sans-serif;
+    font-size: clamp(2.6rem, 6vw, 5rem);
+    font-weight: 900;
+    font-family: 'Space Grotesk', sans-serif;
+    line-height: 1.03;
+    letter-spacing: -0.04em;
+    color: #ffffff;
+    text-transform: uppercase;
+    text-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+}
+
+.bannerContent p {
+    margin: 0;
+    font-size: 1.1rem;
+    font-family: 'Roboto', sans-serif;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+    line-height: 1.8;
+    max-width: 86%;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.primaryAction,
+.secondaryAction {
+    text-decoration: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.primaryAction {
+    color: #0f0f0f;
+    background: linear-gradient(135deg, #ffd700, #b98603);
+    box-shadow: 0 12px 24px rgba(193, 144, 6, 0.35);
+}
+
+.secondaryAction {
+    color: #f6d693;
+    border: 1px solid rgba(193, 144, 6, 0.45);
+    background: rgba(193, 144, 6, 0.08);
+}
+
+.primaryAction:hover,
+.secondaryAction:hover {
+    transform: translateY(-2px);
+}
+
+.quickStats {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    width: min(680px, 100%);
+}
+
+.quickStats div {
+    background: linear-gradient(145deg, rgba(193, 144, 6, 0.18), rgba(193, 144, 6, 0.05));
+    border: 1px solid rgba(193, 144, 6, 0.28);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.quickStats strong {
+    font-size: 1.35rem;
+    color: #ffd66f;
+    font-family: 'Space Grotesk', sans-serif;
+}
+
+.quickStats span {
+    font-size: 0.83rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-family: 'Roboto', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+@media (max-width: 900px) {
+    .banner {
+        min-height: 680px;
+        padding: 40px 24px;
+    }
+
+    .bannerContent p {
+        max-width: 100%;
+    }
+
+    .quickStats {
+        grid-template-columns: 1fr;
+    }
 }

@@ -238,6 +238,45 @@ class AppointmentServiceInteractionsTest {
         verify(appointmentRepository).save(appointment);
     }
 
+    @Test
+    void shouldCancelExpiredPaymentPendingAppointments() {
+        UUID appointmentId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+
+        Appointment appointment = buildAppointment(appointmentId, customerId, barberId, shopId, AppointmentStatus.PAYMENT_PENDING);
+
+        when(appointmentRepository.findExpiredPaymentPendingAppointments(any(LocalDateTime.class)))
+                .thenReturn(List.of(appointment));
+        mockAvailabilityCache();
+
+        int cancelled = appointmentService.cancelExpiredPaymentPendingAppointments();
+
+        assertThat(cancelled).isEqualTo(1);
+        assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.CANCELLED);
+        verify(appointmentRepository).save(appointment);
+    }
+
+    @Test
+    void shouldCompleteAppointmentsAfterEndTime() {
+        UUID appointmentId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+
+        Appointment appointment = buildAppointment(appointmentId, customerId, barberId, shopId, AppointmentStatus.CONFIRMED);
+
+        when(appointmentRepository.findAppointmentsReadyForAutoCompletion(any(LocalDateTime.class)))
+                .thenReturn(List.of(appointment));
+
+        int completed = appointmentService.completeAppointmentsAfterEndTime();
+
+        assertThat(completed).isEqualTo(1);
+        assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.COMPLETED);
+        verify(appointmentRepository).save(appointment);
+    }
+
     private Appointment buildAppointment(UUID appointmentId,
                                          UUID customerId,
                                          UUID barberId,
