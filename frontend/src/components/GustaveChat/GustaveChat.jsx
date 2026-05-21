@@ -32,7 +32,6 @@ function GustaveChat() {
         };
     }, []);
 
-24042004
     const isBarberRole = (userRole === 'ROLE_BARBER' || userRole === 'ROLE_OWNER')
         && !!localStorage.getItem('token');
 
@@ -107,12 +106,26 @@ function GustaveChat() {
 
                     {/* Histórico */}
                     <div className={styles.messages}>
-                        {messages.map((msg, i) => (
-                            <div key={i} className={msg.role === 'user' ? styles.msgUser : styles.msgAssistant}>
-                                {msg.role === 'assistant' && <span className={styles.msgAvatar}>{AVATAR}</span>}
-                                <span className={styles.msgText}>{msg.text}</span>
-                            </div>
-                        ))}
+                        {messages.map((msg, i) => {
+                            if (msg.role === 'assistant') {
+                                return (
+                                    <div key={i} className={styles.msgAssistant}>
+                                        <span className={styles.msgAvatar}>{AVATAR}</span>
+                                        <div className={styles.msgContent}>
+                                            <span className={styles.msgTextAssistant}>{msg.text}</span>
+                                        </div>
+                                    </div>
+                                );
+                            }
+
+                            return (
+                                <div key={i} className={styles.msgUser}>
+                                    <div className={styles.msgContent}>
+                                        <span className={styles.msgTextUser}>{msg.text}</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
                         {typing && (
                             <div className={styles.msgAssistant}>
                                 <span className={styles.msgAvatar}>{AVATAR}</span>

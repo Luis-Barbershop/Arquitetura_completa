@@ -143,13 +143,9 @@
 
 .msgUser {
     align-self: flex-end;
-    background: #c19006;
-    color: #0f0f1e;
-    padding: 0.45rem 0.75rem;
-    border-radius: 14px 14px 4px 14px;
-    font-size: 0.85rem;
-    max-width: 80%;
-    word-break: break-word;
+    display: flex;
+    justify-content: flex-end;
+    max-width: 100%;
 }
 
 .msgAssistant {
@@ -162,15 +158,31 @@
 
 .msgAvatar { font-size: 1rem; flex-shrink: 0; margin-top: 2px; }
 
-.msgText {
-    background: #12122a;
-    color: #e0e0f0;
+.msgContent {
+    display: flex;
+    max-width: 100%;
+}
+
+.msgTextUser,
+.msgTextAssistant {
+    display: inline-block;
     padding: 0.45rem 0.75rem;
-    border-radius: 4px 14px 14px 14px;
     font-size: 0.85rem;
     line-height: 1.5;
     word-break: break-word;
     white-space: pre-wrap;
+}
+
+.msgTextUser {
+    background: #c19006;
+    color: #0f0f1e;
+    border-radius: 14px 14px 4px 14px;
+}
+
+.msgTextAssistant {
+    background: #12122a;
+    color: #e0e0f0;
+    border-radius: 4px 14px 14px 14px;
 }
 
 /* Indicador "digitando" */
