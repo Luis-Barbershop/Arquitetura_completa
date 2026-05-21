@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { sendMessage } from '../../services/gustaveService';
 import styles from './GustaveChat.module.css';
 
@@ -18,6 +19,7 @@ function detectMode(text) {
 }
 
 function GustaveChat() {
+    const location = useLocation();
     const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole'));
 
     useEffect(() => {
@@ -34,6 +36,19 @@ function GustaveChat() {
 
     const isBarberRole = (userRole === 'ROLE_BARBER' || userRole === 'ROLE_OWNER')
         && !!localStorage.getItem('token');
+
+    const publicRoutes = new Set([
+        '/',
+        '/login',
+        '/signin',
+        '/SignIn',
+        '/identificacao',
+        '/forgot-password',
+        '/change-password',
+        '/verify-email',
+    ]);
+
+    const shouldShowChat = isBarberRole && !publicRoutes.has(location.pathname);
 
     const [open, setOpen]         = useState(false);
     const [messages, setMessages] = useState([
@@ -53,7 +68,7 @@ function GustaveChat() {
         if (!isBarberRole) setOpen(false);
     }, [isBarberRole]);
 
-    if (!isBarberRole) return null;
+    if (!shouldShowChat) return null;
 
     const handleSend = async () => {
         const text = input.trim();
