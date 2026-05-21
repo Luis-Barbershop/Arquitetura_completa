@@ -10,21 +10,21 @@ function Tutorial() {
         <p className={Style.description}>Desenvolvemos uma experiência fluida tanto para quem senta na cadeira quanto para quem segura a tesoura. Escolha seu Caminho abaixo.</p>
       </div>
 
-      <div className={Style.Users}>
+      
+        
+     
+
+      <div className={Style.Content}>
+        <div className={Style.ContentOption1}>
+
+          <div className={Style.Users}>
         <div className={Style.UserOption}>
           {/* <span className={Style.Line}></span> */}
           <p>PARA VOCÊ</p>
           {/* <span className={Style.Line}></span> */}
         </div>
-        <div className={Style.UserOption}>
-          {/* <span className={Style.Line}></span> */}
-          <p>PARA PROFISSIONAIS</p>
-          {/* <span className={Style.Line}></span> */}
-        </div>
-      </div>
+       </div>
 
-      <div className={Style.Content}>
-        <div className={Style.ContentOption1}>
           <div className={Style.ContentOption1Container}>
             <div className={Style.ContentImage}>
               <img src="/Icons/Compass.png" alt="Bússula" />
@@ -73,6 +73,13 @@ function Tutorial() {
         </div>
 
         <div className={Style.ContentOption2}>
+          <div className={Style.Users}>
+        <div className={Style.UserOption} id={Style.UserOption2}>
+          {/* <span className={Style.Line}></span> */}
+          <p>PARA PROFISSIONAIS</p>
+          {/* <span className={Style.Line}></span> */}
+        </div>
+        </div>
            <div className={Style.ContentOption1Container}>
             <div className={Style.ContentImage}>
               <img src="/Icons/Store.png" alt="Loja" />
