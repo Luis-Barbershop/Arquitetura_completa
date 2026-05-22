@@ -19,10 +19,12 @@ import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseEmailSignInResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseTokenDebugResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.ForgotPasswordRequestDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.ResendVerificationRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository;
+import ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseDebugService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -42,7 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Service
-@RequiredArgsConstructor
 public class FirebaseDebugServiceImpl implements FirebaseDebugService {
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseDebugServiceImpl.class);
@@ -54,8 +55,56 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
     private final FirebaseAuth firebaseAuth;
     private final FirebaseAuthService firebaseAuthService;
     private final ObjectMapper objectMapper;
-    private final ifsp.edu.projeto.cortaai.userservice.repository.BarberRepository barberRepository;
-    private final ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository customerRepository;
+    private final BarberRepository barberRepository;
+    private final CustomerRepository customerRepository;
+    private final HttpClient httpClient;
+    private final TokenVerifier tokenVerifier;
+
+    @Autowired
+    public FirebaseDebugServiceImpl(
+            FirebaseAuth firebaseAuth,
+            FirebaseAuthService firebaseAuthService,
+            ObjectMapper objectMapper,
+            BarberRepository barberRepository,
+            CustomerRepository customerRepository
+    ) {
+        this(firebaseAuth, firebaseAuthService, objectMapper, barberRepository, customerRepository, HTTP_CLIENT);
+    }
+
+    FirebaseDebugServiceImpl(
+            FirebaseAuth firebaseAuth,
+            FirebaseAuthService firebaseAuthService,
+            ObjectMapper objectMapper,
+            BarberRepository barberRepository,
+            CustomerRepository customerRepository,
+            HttpClient httpClient
+    ) {
+        this(firebaseAuth, firebaseAuthService, objectMapper, barberRepository, customerRepository, httpClient,
+                idToken -> firebaseAuth.verifyIdToken(idToken));
+    }
+
+    FirebaseDebugServiceImpl(
+            FirebaseAuth firebaseAuth,
+            FirebaseAuthService firebaseAuthService,
+            ObjectMapper objectMapper,
+            BarberRepository barberRepository,
+            CustomerRepository customerRepository,
+            HttpClient httpClient,
+            TokenVerifier tokenVerifier
+    ) {
+        this.firebaseAuth = firebaseAuth;
+        this.firebaseAuthService = firebaseAuthService;
+        this.objectMapper = objectMapper;
+        this.barberRepository = barberRepository;
+        this.customerRepository = customerRepository;
+        this.httpClient = httpClient;
+        this.tokenVerifier = tokenVerifier;
+    }
+
+    @FunctionalInterface
+    interface TokenVerifier {
+        FirebaseToken verify(String idToken) throws FirebaseAuthException;
+    }
 
     @Value("${firebase.web-api-key:}")
     private String firebaseWebApiKey;
@@ -88,7 +137,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
 
-            HttpResponse<String> response = HTTP_CLIENT.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             JsonNode root = objectMapper.readTree(response.body());
 
             if (response.statusCode() >= 400) {
@@ -115,7 +164,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
     @Override
     public FirebaseTokenDebugResponseDTO verifyToken(String idToken) {
         try {
-            FirebaseToken token = firebaseAuth.verifyIdToken(idToken);
+            FirebaseToken token = tokenVerifier.verify(idToken);
             Map<String, Object> claims = token.getClaims();
             return new FirebaseTokenDebugResponseDTO(
                     token.getUid(),
@@ -155,7 +204,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                     .POST(HttpRequest.BodyPublishers.ofString(signUpBody))
                     .build();
 
-            HttpResponse<String> signUpResponse = HTTP_CLIENT.send(signUpRequest, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> signUpResponse = httpClient.send(signUpRequest, HttpResponse.BodyHandlers.ofString());
             JsonNode signUpRoot = objectMapper.readTree(signUpResponse.body());
 
             if (signUpResponse.statusCode() >= 400) {
@@ -185,7 +234,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                         .header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(verifyBody))
                         .build();
-                HTTP_CLIENT.send(verifyRequest, HttpResponse.BodyHandlers.ofString());
+                httpClient.send(verifyRequest, HttpResponse.BodyHandlers.ofString());
                 log.info("event=verification-email-sent uid={}", localId);
             } catch (Exception e) {
                 log.warn("event=verification-email-failed uid={} reason={}", localId, e.getMessage());
@@ -297,7 +346,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
 
-            HttpResponse<String> response = HTTP_CLIENT.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             JsonNode root = objectMapper.readTree(response.body());
 
             if (response.statusCode() >= 400) {
@@ -335,7 +384,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
             throw new IllegalArgumentException("A propriedade firebase.web-api-key não está configurada.");
         }
         try {
-            FirebaseToken decodedToken = firebaseAuth.verifyIdToken(request.idToken());
+            FirebaseToken decodedToken = tokenVerifier.verify(request.idToken());
             String signInProvider = extractSignInProvider(decodedToken);
             if (signInProvider != null && !"password".equalsIgnoreCase(signInProvider)) {
                 throw new IllegalArgumentException("Contas de login social nao podem alterar senha por esta rota.");
@@ -353,7 +402,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
 
-            HttpResponse<String> response = HTTP_CLIENT.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             JsonNode root = objectMapper.readTree(response.body());
 
             if (response.statusCode() >= 400) {
@@ -492,7 +541,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(signInBody))
                     .build();
-            HttpResponse<String> signInResponse = HTTP_CLIENT.send(signInRequest, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> signInResponse = httpClient.send(signInRequest, HttpResponse.BodyHandlers.ofString());
             JsonNode signInRoot = objectMapper.readTree(signInResponse.body());
 
             if (signInResponse.statusCode() >= 400) {
@@ -522,7 +571,7 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                     .header("Content-Type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(verifyBody))
                     .build();
-            HttpResponse<String> verifyResponse = HTTP_CLIENT.send(verifyRequest, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> verifyResponse = httpClient.send(verifyRequest, HttpResponse.BodyHandlers.ofString());
 
             if (verifyResponse.statusCode() >= 400) {
                 JsonNode verifyRoot = objectMapper.readTree(verifyResponse.body());
@@ -540,5 +589,3 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
         }
     }
 }
-
-

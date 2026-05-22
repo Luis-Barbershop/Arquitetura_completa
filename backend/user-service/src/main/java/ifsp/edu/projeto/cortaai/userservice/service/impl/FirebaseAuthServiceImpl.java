@@ -20,7 +20,7 @@ import ifsp.edu.projeto.cortaai.userservice.repository.CustomerRepository;
 import ifsp.edu.projeto.cortaai.userservice.security.crypto.PrivacyHash;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import feign.FeignException;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
 public class FirebaseAuthServiceImpl implements FirebaseAuthService {
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseAuthServiceImpl.class);
@@ -40,6 +39,36 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
     private final CustomerRepository customerRepository;
     private final BarberRepository barberRepository;
     private final BarbershopServiceClient barbershopServiceClient;
+    private final TokenVerifier tokenVerifier;
+
+    @Autowired
+    public FirebaseAuthServiceImpl(
+            FirebaseAuth firebaseAuth,
+            CustomerRepository customerRepository,
+            BarberRepository barberRepository,
+            BarbershopServiceClient barbershopServiceClient
+    ) {
+        this(firebaseAuth, customerRepository, barberRepository, barbershopServiceClient, firebaseAuth::verifyIdToken);
+    }
+
+    public FirebaseAuthServiceImpl(
+            FirebaseAuth firebaseAuth,
+            CustomerRepository customerRepository,
+            BarberRepository barberRepository,
+            BarbershopServiceClient barbershopServiceClient,
+            TokenVerifier tokenVerifier
+    ) {
+        this.firebaseAuth = firebaseAuth;
+        this.customerRepository = customerRepository;
+        this.barberRepository = barberRepository;
+        this.barbershopServiceClient = barbershopServiceClient;
+        this.tokenVerifier = tokenVerifier;
+    }
+
+    @FunctionalInterface
+    public interface TokenVerifier {
+        FirebaseToken verify(String idToken) throws FirebaseAuthException;
+    }
 
     // ──────────────────────────────────────────────────────────────────────────
     // Implementações públicas
@@ -302,7 +331,7 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
 
     private FirebaseToken verifyToken(String idToken) {
         try {
-            return firebaseAuth.verifyIdToken(idToken);
+            return tokenVerifier.verify(idToken);
         } catch (FirebaseAuthException e) {
             log.warn("event=firebase-token-invalid reason={}", sanitizeMessage(e.getMessage()));
             throw new SecurityException("Token Firebase inválido ou expirado: " + e.getMessage());

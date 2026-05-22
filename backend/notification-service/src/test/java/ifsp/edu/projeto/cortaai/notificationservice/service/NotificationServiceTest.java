@@ -1,7 +1,11 @@
 package ifsp.edu.projeto.cortaai.notificationservice.service;
 
+import ifsp.edu.projeto.cortaai.notificationservice.dto.NotificationDTO;
+import ifsp.edu.projeto.cortaai.notificationservice.event.AppointmentReminderEvent;
+import ifsp.edu.projeto.cortaai.notificationservice.feign.AppointmentInfoDTO;
 import ifsp.edu.projeto.cortaai.notificationservice.feign.ScheduleServiceClient;
 import ifsp.edu.projeto.cortaai.notificationservice.model.Notification;
+import ifsp.edu.projeto.cortaai.notificationservice.model.NotificationChannel;
 import ifsp.edu.projeto.cortaai.notificationservice.model.NotificationType;
 import ifsp.edu.projeto.cortaai.notificationservice.repository.NotificationRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,8 +16,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -36,7 +44,7 @@ class NotificationServiceTest {
     @BeforeEach
     void setUp() {
         notificationService = new NotificationService(notificationRepository, emailService, pushNotificationService, scheduleServiceClient, sseEmitterService);
-        when(notificationRepository.save(any(Notification.class)))
+        lenient().when(notificationRepository.save(any(Notification.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
@@ -87,5 +95,201 @@ class NotificationServiceTest {
                         argThat(data -> NotificationType.INVITE_RECEIVED.name().equals(data.get("type"))
                                 && "/barberProfile".equals(data.get("deepLink")))
                 );
+    }
+
+    @Test
+    void shouldNotifyBarberWhenCustomerCancelsAppointment() {
+        UUID customerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+
+        notificationService.notifyAppointmentCancelled(
+                customerId,
+                "customer@cortaai.com",
+                "Cliente",
+                barberId,
+                "barber@cortaai.com",
+                "Barbeiro",
+                "Barbearia",
+                LocalDateTime.of(2026, 5, 21, 14, 0),
+                "CUSTOMER"
+        );
+
+        verify(pushNotificationService).sendToUser(eq(barberId), eq("Agendamento cancelado"), contains("Cliente"), anyMap());
+        verify(emailService).sendCancelledByCustomerToBarber(
+                eq("barber@cortaai.com"),
+                eq("Barbeiro"),
+                eq("Cliente"),
+                eq(LocalDateTime.of(2026, 5, 21, 14, 0)));
+        verify(pushNotificationService, never()).sendToUser(eq(customerId), anyString(), anyString(), anyMap());
+    }
+
+    @Test
+    void shouldNotifyCustomerWhenBarberCancelsAppointment() {
+        UUID customerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+
+        notificationService.notifyAppointmentCancelled(
+                customerId,
+                "customer@cortaai.com",
+                "Cliente",
+                barberId,
+                "barber@cortaai.com",
+                "Barbeiro",
+                "Barbearia",
+                LocalDateTime.of(2026, 5, 21, 14, 0),
+                "BARBER"
+        );
+
+        verify(pushNotificationService).sendToUser(eq(customerId), eq("Agendamento cancelado"), contains("barbeiro"), anyMap());
+        verify(emailService).sendCancelledByBarberToCustomer(
+                eq("customer@cortaai.com"),
+                eq("Cliente"),
+                eq("Barbearia"),
+                eq("Barbeiro"),
+                eq(LocalDateTime.of(2026, 5, 21, 14, 0)));
+        verify(pushNotificationService, never()).sendToUser(eq(barberId), anyString(), anyString(), anyMap());
+    }
+
+    @Test
+    void shouldNotifyBothSidesWhenAppointmentIsRescheduled() {
+        UUID customerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+
+        notificationService.notifyAppointmentRescheduled(
+                customerId,
+                "customer@cortaai.com",
+                "Cliente",
+                barberId,
+                "barber@cortaai.com",
+                "Barbeiro",
+                "Barbearia",
+                LocalDateTime.of(2026, 5, 21, 14, 0),
+                LocalDateTime.of(2026, 5, 22, 15, 0)
+        );
+
+        verify(pushNotificationService).sendToUser(eq(customerId), eq("Agendamento reagendado"), contains("22/05/2026"), anyMap());
+        verify(pushNotificationService).sendToUser(eq(barberId), eq("Agendamento reagendado"), contains("Cliente"), anyMap());
+        verify(emailService).sendRescheduledToCustomer(anyString(), eq("Cliente"), eq("Barbearia"), eq("Barbeiro"), any(), any());
+        verify(emailService).sendRescheduledToBarber(anyString(), eq("Barbeiro"), eq("Cliente"), any(), any());
+    }
+
+    @Test
+    void shouldCreateReminderNotificationAndEmailWhenCustomerEmailIsPresent() {
+        AppointmentReminderEvent event = new AppointmentReminderEvent(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "Cliente",
+                "customer@cortaai.com",
+                "Barbearia",
+                "Barbeiro",
+                LocalDateTime.of(2026, 5, 21, 16, 30)
+        );
+
+        notificationService.notifyAppointmentReminder(event);
+
+        verify(pushNotificationService).sendToUser(eq(event.getCustomerId()), eq("Seu horário está chegando!"), contains("16:30"), anyMap());
+        verify(emailService).sendReminderToCustomer(
+                eq("customer@cortaai.com"),
+                eq("Cliente"),
+                eq("Barbearia"),
+                eq("Barbeiro"),
+                eq(LocalDateTime.of(2026, 5, 21, 16, 30)));
+    }
+
+    @Test
+    void shouldNotifyBarberAboutPaymentWhenAppointmentCanBeLoaded() {
+        UUID customerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        UUID appointmentId = UUID.randomUUID();
+        AppointmentInfoDTO appointment = new AppointmentInfoDTO();
+        appointment.setBarberId(barberId);
+        appointment.setBarbershopName("Barbearia");
+
+        when(scheduleServiceClient.getAppointmentById(appointmentId)).thenReturn(appointment);
+
+        notificationService.notifyPaymentApproved(customerId, "", new BigDecimal("80.00"), appointmentId);
+
+        verify(pushNotificationService).sendToUser(eq(customerId), eq("Pagamento aprovado!"), contains("80"), anyMap());
+        verify(pushNotificationService).sendToUser(eq(barberId), eq("Pagamento recebido!"), contains("Barbearia"), anyMap());
+    }
+
+    @Test
+    void shouldTolerateFailureWhenLoadingAppointmentForPaymentNotification() {
+        UUID appointmentId = UUID.randomUUID();
+        when(scheduleServiceClient.getAppointmentById(appointmentId)).thenThrow(new RuntimeException("schedule offline"));
+
+        notificationService.notifyPaymentApproved(UUID.randomUUID(), "", new BigDecimal("80.00"), appointmentId);
+
+        verify(pushNotificationService, times(1)).sendToUser(any(UUID.class), eq("Pagamento aprovado!"), anyString(), anyMap());
+    }
+
+    @Test
+    void shouldReturnNotificationsMappedToDto() {
+        UUID userId = UUID.randomUUID();
+        UUID notificationId = UUID.randomUUID();
+        Notification notification = Notification.builder()
+                .id(notificationId)
+                .userId(userId)
+                .type(NotificationType.INVITE_RECEIVED)
+                .title("Convite")
+                .message("Mensagem")
+                .channel(NotificationChannel.IN_APP)
+                .read(false)
+                .createdAt(LocalDateTime.of(2026, 5, 21, 10, 0))
+                .build();
+
+        when(notificationRepository.findByUserIdOrderByCreatedAtDesc(userId)).thenReturn(List.of(notification));
+
+        List<NotificationDTO> result = notificationService.getMyNotifications(userId);
+
+        assertThat(result).singleElement().satisfies(dto -> {
+            assertThat(dto.id()).isEqualTo(notificationId);
+            assertThat(dto.userId()).isEqualTo(userId);
+            assertThat(dto.type()).isEqualTo(NotificationType.INVITE_RECEIVED);
+            assertThat(dto.read()).isFalse();
+        });
+    }
+
+    @Test
+    void shouldMarkNotificationAsReadAndSendUnreadCount() {
+        UUID userId = UUID.randomUUID();
+        UUID notificationId = UUID.randomUUID();
+        Notification notification = Notification.builder()
+                .id(notificationId)
+                .userId(userId)
+                .type(NotificationType.APPOINTMENT_CREATED)
+                .title("Título")
+                .message("Mensagem")
+                .channel(NotificationChannel.IN_APP)
+                .read(false)
+                .createdAt(LocalDateTime.of(2026, 5, 21, 10, 0))
+                .build();
+
+        when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+        when(notificationRepository.save(notification)).thenReturn(notification);
+        when(notificationRepository.countByUserIdAndReadFalse(userId)).thenReturn(2L);
+
+        NotificationDTO result = notificationService.markAsRead(notificationId, userId);
+
+        assertThat(notification.isRead()).isTrue();
+        assertThat(result.read()).isTrue();
+        verify(sseEmitterService).sendUnreadCount(userId, 2L);
+    }
+
+    @Test
+    void shouldRejectMarkAsReadForNotificationOwnedByAnotherUser() {
+        UUID notificationId = UUID.randomUUID();
+        Notification notification = Notification.builder()
+                .id(notificationId)
+                .userId(UUID.randomUUID())
+                .build();
+
+        when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+
+        assertThatThrownBy(() -> notificationService.markAsRead(notificationId, UUID.randomUUID()))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Notificação não pertence ao usuário");
+
+        verify(notificationRepository, never()).save(any());
     }
 }
