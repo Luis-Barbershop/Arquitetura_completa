@@ -233,8 +233,8 @@ O projeto "Cortaai" consiste no desenvolvimento de um sistema de \textit{marketp
     \item \textbf{Módulo de Autenticação e Usuários (Cliente e Barbeiro):}
         \begin{itemize}
             \item Registro de Clientes e Barbeiros com validação de campos únicos (e-mail, telefone, CPF) e formato (CPF).
-            \item Login seguro para ambos os tipos de usuário usando e-mail e senha, com criptografia BCrypt.
-            \item Autenticação baseada em token JWT, definindo papéis ( ROLE\_CUSTOMER , ROLE\_BARBER , ROLE\_OWNER ).
+            \item Login seguro para ambos os tipos de usuário usando e-mail e senha, com criptografia.
+            \item Autenticação baseada em Firebase Auth, definindo papéis ( ROLE\_CUSTOMER , ROLE\_BARBER , ROLE\_OWNER ).
             \item Gerenciamento de perfil (atualização de dados cadastrais) para Clientes e Barbeiros autenticados.
         \end{itemize}
     \item \textbf{Módulo de Gerenciamento de Barbearia (Dono):}
@@ -278,9 +278,9 @@ O projeto está sujeito às seguintes restrições:
 \begin{itemize}
     \item \textbf{Tecnologia Backend:} O desenvolvimento está restrito ao ecossistema Java 17 e Spring Boot (versão 3.x), adotando obrigatoriamente o padrão arquitetural de microsserviços com o suporte do Spring Cloud (Eureka Discovery e Spring Cloud Gateway).
     \item \textbf{Persistência e Cache:} O sistema deve utilizar o banco de dados MySQL para a persistência relacional das entidades e transações, atuando em conjunto com o Redis para estratégias de \textit{caching} em operações críticas (como consultas de disponibilidade de agendas).
-    \item \textbf{Plataforma de Implantação:} A arquitetura de implantação deve ser conteinerizada (via Docker), substituindo em caráter definitivo o design \textit{serverless} (AWS Lambda) adotado nas prototipações iniciais do monólito.
+    \item \textbf{Plataforma de Implantação:} A arquitetura de implantação deve ser conteinerizada (via Docker), substituindo em caráter definitivo o design \textit{serverless} adotado nas prototipações iniciais do monólito.
     \item \textbf{Armazenamento de Mídia:} O armazenamento, a manipulação e a entrega de mídia (como logótipos e imagens do portfólio de cortes) estão estritamente vinculados ao serviço Cloudinary.
-    \item \textbf{Segurança:} O modelo de segurança deve obrigatoriamente implementar autenticação \textit{stateless} através de \textit{tokens} JWT, cujas assinaturas são validadas nos filtros de segurança individuais de cada microsserviço de domínio.
+    \item \textbf{Segurança:} O modelo de segurança implementa autenticação \textit{stateless} baseada em \textit{tokens} JWT emitidos pelo provedor de identidade \textbf{Firebase Authentication}. A validação ocorre de forma coordenada na malha: o \textit{API Gateway} atua na filtragem de borda validando a integridade inicial da requisição, enquanto os filtros de segurança individuais (\texttt{JwtAuthorizationFilter}) de cada microsserviço de domínio decodificam o \textit{token} de forma descentralizada para aplicar o controle de acesso baseado em funções.
 \end{itemize}
 \subsection{Regras de negócio}
 Descrever as regras que governam as operações do sistema.
@@ -498,7 +498,7 @@ A nova topologia arquitetural é composta pelos seguintes componentes principais
 O domínio da aplicação foi subdividido em serviços independentes. Internamente, cada microsserviço mantém uma estrutura em camadas (\textit{Controllers, Services, Repositories, Entities e Mappers}), mas macroscopicamente operam de forma isolada:
 
 \begin{itemize}
-    \item \textbf{User Service:} Responsável pela gestão de perfis de utilizadores (Clientes e Barbeiros) e sincronização de dados de perfil com o Firebase.
+    \item \textbf{User Service:} Responsável pela gestão de perfis de utilizadores (Clientes e Barbeiros) e sincronização de dados de perfil com o Firebase. Ex.: Favoritar uma barbearia.
     \item \textbf{Barbershop Service:} Gere as entidades físicas das barbearias, convites para barbeiros (\textit{Join Requests}) e avaliações.
     \item \textbf{Schedule Service:} O núcleo de negócio, responsável pela complexa gestão de disponibilidades, bloqueios de agenda e criação de agendamentos.
     \item \textbf{Product Service:} Módulo responsável pelo inventário, gestão de produtos físicos e controlo de fluxo de stock.
@@ -644,12 +644,12 @@ Esta fase é responsável por empacotar a versão estabilizada do sistema e publ
 \begin{enumerate}
     \item \textbf{Geração de Artefatos:} Compilação final do código validado. No \textit{back-end}, isso envolve o empacotamento (\texttt{.jar}) dos microsserviços Java/Spring Boot. No \textit{front-end}, consiste no \textit{build} otimizado dos ativos estáticos do React/Vite.
     
-    \item \textbf{Contentorização (\textit{Build \& Push}):} Criação das imagens Docker isoladas, restritas apenas aos serviços que sofreram alterações no ciclo atual, otimizando o tempo de processamento. Após a construção, as imagens são etiquetadas com o \textit{hash} da versão e enviadas de forma segura para o registo de contentores em nuvem (como o Amazon ECR - \textit{Elastic Container Registry} ou Docker Hub).
+    \item \textbf{Contentorização (Build \& Push):} Criação das imagens Docker isoladas, restritas apenas aos serviços que sofreram alterações no ciclo atual, otimizando o tempo de processamento. Após a construção, as imagens são etiquetadas com o hash da versão e enviadas de forma segura para o registo de contentores em nuvem (Docker Hub), preparando os artefactos para implantação no servidor privado.
     
-    \item \textbf{\textit{Deploy} Automatizado e Orquestração:} Atualização contínua na infraestrutura de hospedagem. O \textit{pipeline} sinaliza o ambiente de produção para realizar o \textit{pull} das novas imagens e instanciar os novos contentores. A sinergia entre o \textit{Discovery Service} (Eureka) e o \textit{API Gateway} assegura que as novas instâncias sejam registadas na malha de serviços e comecem a receber tráfego gradualmente, enquanto os contentores antigos são drenados e desligados, alcançando uma atualização sem indisponibilidade para o utilizador (\textit{Zero Downtime Deployment}).
+    \item \textbf{\textit{Deploy} Automatizado e Orquestração:} Atualização contínua na infraestrutura do servidor privado dedicado. O \textit{pipeline} aciona o ambiente de produção para realizar o \textit{pull} das novas imagens a partir do \textit{Container Registry} (como o Docker Hub) e instanciar os contentores atualizados. A sinergia intrínseca entre o \textit{Discovery Service} (Eureka) e o \textit{API Gateway} garante que as novas instâncias sejam automaticamente registadas na malha de serviços e comecem a receber tráfego de forma fluida. Simultaneamente, os contentores das versões anteriores são desregistados do Eureka, drenados e desligados, possibilitando transições de versão altamente estáveis e minimizando a indisponibilidade para o utilizador final.
 \end{enumerate}
 
-A adoção destas esteiras de CI/CD elimina o risco e a morosidade das implantações manuais, fechando o ciclo de desenvolvimento com uma infraestrutura altamente automatizada, auditável e resiliente.
+A adoção destas esteiras de CI/CD num ambiente de servidor próprio elimina o risco, a inconsistência e a morosidade das implantações manuais, fechando o ciclo de desenvolvimento com uma infraestrutura de entregas altamente automatizada, auditável e resiliente.
 
 \section{Testes e manutenibilidade}
 O Plano de Testes serve como um mapa ou guia para todo o esforço de teste do projeto. Em essência, ele responde às seguintes perguntas:
@@ -699,7 +699,7 @@ A complexidade de uma arquitetura distribuída exige que os ambientes de teste s
 \hline
 \textbf{Ambiente} & \textbf{Propósito e Tipos de Teste} & \textbf{Infraestrutura e Orquestração} & \textbf{Ferramentas Aplicáveis} \\ \hline
 \textbf{Local} & Desenvolvimento e validação de lógica interna. \textbf{Testes:} Unitários e Integração. & \textbf{Docker Compose}: Orquestração local de MySQL, RabbitMQ e Redis. & JUnit 5, Mockito, Spring Boot Test, Testcontainers. \\ \hline
-\textbf{Staging} & Homologação e validação de contratos entre serviços. \textbf{Testes:} E2E, Integração Assíncrona e Carga. & Instância Cloud (EC2/ECS) rodando imagens Docker. \textbf{BD:} RDS Distribuído. & Postman/Insomnia, JMeter, RabbitMQ Management Plugin. \\ \hline
+\textbf{Staging} & Homologação e validação de contratos entre serviços. \textbf{Testes e Validação:} \textit{End-to-End} (E2E), Integração Assíncrona e Carga. & Servidor Privado Próprio executando contêineres Docker. \textbf{Banco de Dados:} MySQL estruturado de forma isolada por microsserviço. & Postman/Insomnia, Apache JMeter e RabbitMQ Management Plugin. \\ \hline
 \textbf{Produção} & Ambiente real de uso. \textbf{Testes:} Monitoramento de integridade (\textit{Health Checks}). & Infraestrutura Cloud Distribuída (Docker Containers). & Firebase Console, Spring Boot Actuator. \\ \hline
 \end{tabular}%
 }
@@ -861,7 +861,7 @@ Verificam como o sistema opera sob determinadas condições, focando em desempen
     \item \textbf{Validação de Configuração da Aplicação:} Testa se as parametrizações específicas definidas nos arquivos \texttt{application.yml} de cada serviço 
     
     (ex.: \texttt{app.availability.slot-interval-minutes:15} isolado no \textit{Schedule Service}) estão sendo carregadas corretamente na inicialização da aplicação.
-    \item \textbf{Validação de Configuração de Segurança:} Testa se as regras definidas no \texttt{SecurityConfig} e a injeção do filtro \texttt{JwtAuthorizationFilter} estão operando ativamente em cada domínio, garantindo que o acesso a rotas protegidas seja validado e rejeitado quando necessário, de forma descentralizada.
+    \item \textbf{Validação de Configuração de Segurança:} Testa se as regras definidas no \texttt{SecurityConfig} e a injeção do filtro \texttt{JwtAuthorizationFilter} estão operando ativamente em cada domínio, garantindo que o acesso a rotas protegidas seja validado e rejeitado quando necessário, assegurando o isolamento das regras de autorização de cada microsserviço.
 \end{itemize}
 
 \subsection{Testes automatizados}
@@ -933,13 +933,13 @@ O fluxo de autenticação ocorre da seguinte forma:
 Esta abordagem garante conformidade com as melhores práticas de segurança de mercado, transferindo a responsabilidade de encriptação, recuperação de senhas e proteção contra ataques de força bruta para uma infraestrutura globalmente testada.
 
 \subsection{Ciclo de Vida do Token e Estratégia de Renovação}
-Diferente de sistemas tradicionais que utilizam sessões em servidor (\textit{stateful}), o CortaAi utiliza uma abordagem \textbf{Stateless} baseada em JWT. Isto significa que o servidor não armazena o estado do utilizador em memória; cada requisição é autossuficiente e validada apenas através da assinatura criptográfica no \textit{API Gateway}.
+Diferente de sistemas tradicionais que utilizam sessões mantidas em memória no servidor (\textit{stateful}), o ecossistema adota uma abordagem estritamente \textbf{Stateless}. Isto significa que os microsserviços não armazenam o estado de sessão do utilizador; cada requisição é autossuficiente, contendo um \textit{token} digital assinado criptograficamente que trafega de forma segura entre os componentes da arquitetura.
 
 O ciclo de vida das credenciais é dividido em dois componentes principais fornecidos pelo Firebase:
 
 \begin{itemize}
-    \item \textbf{ID Token (Access Token):} É um JWT de curta duração, com validade fixa de \textbf{60 minutos}. Este token é enviado em cada chamada à API. Devido à sua curta validade, o risco em caso de interceção é minimizado, pois o token expira rapidamente.
-    \item \textbf{Refresh Token:} É um token de longa duração persistido de forma segura no cliente (Frontend). Ele não é enviado para os microsserviços de negócio, servindo exclusivamente para comunicar com os servidores de autorização do Firebase.
+    \item \textbf{ID Token (Access Token):} É o JWT emitido pelo Firebase Auth no momento do \textit{login}, possuindo uma curta duração com validade fixa de \textbf{60 minutos}. Este \textit{token} é anexado ao cabeçalho de cada chamada HTTP direcionada à API. Devido ao seu curto tempo de vida, a superfície de exposição em caso de interceptação maliciosa é severamente minimizada.
+    \item \textbf{Refresh Token:} É um \textit{token} de longa duração persistido de forma segura pelo \textit{front-end} cliente. Este componente não é enviado para as rotas operacionais dos microsserviços de negócio, sendo utilizado de forma exclusiva em segundo plano para interagir com os servidores de autorização do Firebase, automatizando a renovação transparente do \textit{ID Token} quando este expira.
 \end{itemize}
 
 O fluxo de renovação (\textit{Silent Refresh}) ocorre inteiramente no lado do cliente. Através de intercetores no Frontend (utilizando o SDK do Firebase), o sistema verifica a validade do \textit{ID Token} antes de cada requisição. Caso o token esteja prestes a expirar, o cliente utiliza o \textit{Refresh Token} para solicitar um novo \textit{ID Token} de forma transparente, garantindo que o utilizador permaneça autenticado sem interrupções na experiência de uso, enquanto o \textit{backend} mantém-se protegido e livre de gestão de sessões pesadas.
@@ -963,7 +963,7 @@ As regras de complexidade configuradas para o ecossistema CortaAi exigem:
     \item \textbf{Proteção contra Reutilização:} O sistema impede o uso de senhas excessivamente simples ou sequenciais.
 \end{itemize}
 
-Além da validação de formato, o Firebase Authentication utiliza algoritmos de \textit{hashing} avançados (Bcrypt) para armazenar as credenciais de forma irreversível. Isto garante que, mesmo em cenários hipotéticos de acesso não autorizado aos registos do provedor, as senhas originais dos utilizadores permanecem protegidas. No fluxo de alteração de senha, o sistema exige a reautenticação do utilizador ou a validação através de um \textit{link} seguro enviado ao \textit{e-mail} verificado, garantindo que apenas o proprietário legítimo possa modificar as suas credenciais.
+Além da validação de formato, o Firebase Authentication utiliza algoritmos de \textit{hashing} avançados (uma versão otimizada do \textbf{scrypt}) para armazenar as credenciais de forma irreversível. Isto garante que, mesmo em cenários hipotéticos de acesso não autorizado aos registos do provedor, as senhas originais dos utilizadores permanecem protegidas. No fluxo de alteração de senha, o sistema exige a reautenticação do utilizador ou a validação através de um \textit{link} seguro enviado para o \textit{e-mail} verificado, garantindo que apenas o proprietário legítimo possa modificar as suas credenciais.
 
 \subsection{Autorização Baseada em Funções (RBAC)}
 Enquanto o Firebase resolve o problema da \textit{Autenticação} (quem é o utilizador), o sistema interno resolve o problema da \textit{Autorização} (o que ele pode fazer).
@@ -1055,7 +1055,7 @@ A execução do projeto seguirá o framework ágil Scrum. O cronograma não é b
             \item Épico 2: Módulo de Agendamento (Visualização, criação/cancelamento).
             \item Épico 3: Módulo de Serviços e Inventário (Cadastro, preços, duração).
             \item Épico 4: Painel Administrativo (Gestão de agenda e serviços).
-            \item Épico 5: Infraestrutura e Implantação (Configuração AWS Lambda, RDS, CI/CD).
+            \item Épico 5: Infraestrutura e Implantação (Configuração, RDS, CI/CD).
         \end{itemize}
 \end{itemize}
 
@@ -1154,7 +1154,7 @@ As Figuras a seguir apresentam os protótipos conceituais que serviram de base a
 
 O desenvolvimento da aplicação web "CortaAí", um \textit{marketplace} para gestão e agendamento em barbearias, representa uma iniciativa significativa para modernizar e otimizar a operação destes estabelecimentos, trazendo organização, eficiência e maior visibilidade no ambiente digital. Ao evoluir para uma arquitetura distribuída e escalável baseada em microsserviços (ecossistema Java 17 e Spring Boot conteinerizado via Docker, orquestrado com \textit{API Gateway} e \textit{Service Discovery}), em conjunto com uma interface baseada em \textit{Progressive Web Application} (PWA) em React, foi possível estruturar uma solução robusta e resiliente que atende perfeitamente às complexidades de concorrência de dados e à gestão de múltiplos perfis e estabelecimentos.
 
-Ao longo do projeto, foi fundamental analisar e implementar funcionalidades que atendessem de forma coesa às necessidades dos diferentes atores do sistema: Clientes, buscando conveniência móvel para encontrar barbearias e agendar serviços online; Barbeiros, necessitando de uma ferramenta para gerenciar o seu perfil, habilidades, jornadas de trabalho e agenda; e Donos de barbearias, visando o controle sobre o fluxo de \textit{onboarding} da loja, catálogo de serviços, gestão da equipe e aprovação de vínculos. A implementação da autenticação \textit{stateless} via JWT, validada de forma descentralizada na malha de serviços, garante a segurança rigorosa e o acesso isolado às funcionalidades adequadas de cada papel.
+Ao longo do projeto, foi fundamental analisar e implementar funcionalidades que atendessem de forma coesa às necessidades dos diferentes atores do sistema: Clientes, buscando conveniência móvel para encontrar barbearias e agendar serviços online; Barbeiros, necessitando de uma ferramenta para gerenciar o seu perfil, habilidades, jornadas de trabalho e agenda; e Donos de barbearias, visando o controle sobre o fluxo de \textit{onboarding} da loja, catálogo de serviços, gestão da equipe e aprovação de vínculos. A implementação da autenticação \textit{stateless} via JWT, combinando a filtragem de borda no \textit{API Gateway} com a validação descentralizada na malha de serviços, garante uma segurança rigorosa e o acesso isolado às funcionalidades adequadas de cada perfil.
 
 A plataforma "CortaAí" não só permite aos Clientes realizar agendamentos de forma eficiente, verificando a disponibilidade em tempo real — operação agora otimizada por uma camada de \textit{cache} em memória (Redis) que reduz drasticamente a latência e a sobrecarga no banco de dados relacional (MySQL) —, mas também oferece aos profissionais ferramentas intuitivas para o controle do seu negócio. A gestão avançada de portfólio e identidade visual (via integração com o \textit{Cloudinary}) e a facilidade de acesso em tela cheia proporcionada pelo PWA elevam o engajamento e aproximam a experiência web à de um aplicativo nativo.
 
