@@ -512,8 +512,13 @@ Esta seção descreve a pilha de tecnologia (tech stack) principal para o projet
 
 \subsection{Front-end}
 \begin{itemize}
-    \item \textbf{React:} Biblioteca JavaScript prevista para o desenvolvimento do frontend.
-    \item \textbf{Axios:} Biblioteca JavaScript prevista para realizar requisições HTTP.
+    \item \textbf{React 18:} Biblioteca JavaScript para o desenvolvimento da interface.
+    \item \textbf{Vite:} Bundler e servidor de desenvolvimento com suporte a PWA via plugin \texttt{vite-plugin-pwa}.
+    \item \textbf{React Router DOM:} Roteamento client-side declarativo (SPA).
+    \item \textbf{Axios:} Biblioteca para requisições HTTP, encapsulada em um wrapper único (\texttt{services/api.js}) que injeta automaticamente o Firebase ID Token.
+    \item \textbf{Firebase JS SDK:} Autenticação do lado do cliente — login com e-mail/senha, Google OAuth e operações de sessão.
+    \item \textbf{react-toastify:} Notificações de feedback ao usuário (toasts).
+    \item \textbf{CSS Modules:} Padrão de estilização por componente (\texttt{*.module.css}), garantindo escopo local de estilos.
 \end{itemize}
 
 \subsection{Back-end}
@@ -525,7 +530,7 @@ Esta seção descreve a pilha de tecnologia (tech stack) principal para o projet
     \item \textbf{Spring Data JPA / Hibernate:} Camada de persistência de dados (ORM).
     \item \textbf{Firebase Admin SDK:} Validação de Firebase ID Tokens no \texttt{api-gateway}.
     \item \textbf{RabbitMQ (Spring AMQP):} Mensageria para comunicação assíncrona entre microsserviços via eventos de domínio.
-    \item \textbf{Redis (Spring Data Redis):} Cache e desduplicação de eventos no \texttt{notification-service}.
+    \item \textbf{Redis (Spring Data Redis):} Cache e desduplicação de eventos no \texttt{notification-service} (desduplicação por \texttt{messageId} com TTL) e cache de horários de trabalho dos barbeiros no \texttt{schedule-service} (TTL de 5 minutos).
     \item \textbf{Mercado Pago SDK:} Integração para split de pagamentos, geração de preferências e processamento de webhooks.
     \item \textbf{MapStruct:} Ferramenta para geração de código de mapeamento (Entidades e DTOs).
     \item \textbf{Jakarta Bean Validation:} Especificação para validação de dados em DTOs.
@@ -602,7 +607,7 @@ Foi adotado uma estratégia que segue a pirâmide de testes. O escopo de teste �
         \toprule
         \textbf{Ambiente} & \textbf{Propósito e Tipos de Teste} & \textbf{Infraestrutura e Banco de Dados} & \textbf{Ferramentas Aplicáveis} \\
         \midrule
-        \textbf{Local} & Desenvolvimento, depuração e execução de testes automatizados rápidos. \newline \textbf{Testes:} Unitários e Integração. & Máquina do Desenvolvedor \newline \textbf{BD:} H2 (Em memória) & JUnit 5, Mockito, Spring Boot Test, MockMvc \\
+        \textbf{Local} & Desenvolvimento, depuração e execução de testes automatizados rápidos. \newline \textbf{Testes:} Unitários e Integração. & Máquina do Desenvolvedor \newline \textbf{BD:} MySQL containerizado (local via Docker Compose) & JUnit 5, Mockito, Spring Boot Test, MockMvc \\
         \textbf{Staging (Homologação)} & Simulação do ambiente de produção para validação final. \newline \textbf{Testes:} Componente/API e Não Funcionais (Carga/Estresse). & Docker Compose (ZimaOS) + Cloudinary (Conta de Teste) \newline \textbf{BD:} MySQL containerizado (instância de teste) & Insomnia/Postman, JMeter/Gatling, Logback + Actuator \\
         \textbf{Produção} & Ambiente final do usuário. \newline \textbf{Testes:} Monitoramento e "Smoke Tests". & Docker Compose (ZimaOS) + Cloudinary (Produção) \newline \textbf{BD:} MySQL containerizado (produção) & Logback, Spring Actuator \\
         \bottomrule
@@ -626,7 +631,7 @@ A estratégia de testes funcionais visa validar o software em diferentes níveis
 \subsubsection{Testes de Componente}
 \textbf{Definição:} Validam o comportamento de um componente ou um pequeno grupo de componentes.
 \begin{itemize}
-    \item \textbf{Camada de Dados:} Utiliza-se \texttt{@DataJpaTest} do Spring Boot para validar a camada de persistência (JPA/Repositórios) contra um banco H2. Foco em consultas customizadas.
+    \item \textbf{Camada de Dados:} Utiliza-se Mockito para isolar as dependências de repositório nos testes de serviço. Testes que exigem persistência real são executados com \texttt{@SpringBootTest} contra o MySQL containerizado. Foco em consultas customizadas e comportamento transacional.
     \item \textbf{Contrato de API:} Utiliza-se Insomnia ou Postman para executar requisições HTTP contra a aplicação e validar os códigos de status (200, 400, 403) e a estrutura do JSON.
 \end{itemize}
 
@@ -635,7 +640,7 @@ A estratégia de testes funcionais visa validar o software em diferentes níveis
 \textbf{Implementação:} Utiliza-se \texttt{@SpringBootTest} para carregar o contexto completo e \texttt{MockMvc} para simular requisições HTTP.
 \begin{description}
     \item[Cenário de Exemplo (POST /api/appointments):]
-    \item[Dado:] Um banco H2 pré-populado e um usuário simulado \texttt{@WithMockUser} (ROLE\_CUSTOMER).
+    \item[Dado:] Dados de teste pré-populados via \texttt{@BeforeEach} (Mockito) e um usuário simulado \texttt{@WithMockUser} (ROLE\_CUSTOMER).
     \item[Quando (When):] MockMvc executa um POST para /api/appointments com um DTO válido.
     \item[Então (Then):] O teste afirma que a resposta HTTP é 201 (Created) e que o AppointmentsRepository.count() é 1.
     \item[Cenário de Exemplo (Acesso Negado):]
