@@ -12,6 +12,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GlobalExceptionHandlerTest {
@@ -92,6 +94,31 @@ class GlobalExceptionHandlerTest {
 
         assertThat(response.getBody().getCorrelationId()).isEqualTo("attr-shop");
         assertThat(response.getBody().getPath()).isEqualTo("/api/barbershops/1");
+    }
+
+    @Test
+    void shouldExposeApiErrorResponseFields() {
+        ApiErrorResponse response = new ApiErrorResponse(
+                400,
+                "Bad Request",
+                "payload inválido",
+                "IllegalArgumentException",
+                "barbershop-service",
+                "/api/barbershops",
+                "cid-123",
+                List.of(new ApiErrorResponse.FieldError("name", "não pode ser vazio"))
+        );
+
+        assertThat(response.getTimestamp()).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(400);
+        assertThat(response.getError()).isEqualTo("Bad Request");
+        assertThat(response.getMessage()).isEqualTo("payload inválido");
+        assertThat(response.getCause()).isEqualTo("IllegalArgumentException");
+        assertThat(response.getOrigin()).isEqualTo("barbershop-service");
+        assertThat(response.getPath()).isEqualTo("/api/barbershops");
+        assertThat(response.getCorrelationId()).isEqualTo("cid-123");
+        assertThat(response.getFieldErrors())
+                .containsExactly(new ApiErrorResponse.FieldError("name", "não pode ser vazio"));
     }
 
     private DataIntegrityViolationException violation(String rootMessage) {

@@ -3,16 +3,21 @@ package ifsp.edu.projeto.cortaai.paymentservice.exception;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,6 +54,25 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void shouldMapValidationErrors() throws Exception {
+        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "payment");
+        bindingResult.addError(new FieldError("payment", "appointmentId", "não pode ser nulo"));
+        bindingResult.addError(new FieldError("payment", "paymentMethod", "método inválido"));
+        Method method = GlobalExceptionHandlerTest.class.getDeclaredMethod("validationTarget", String.class);
+
+        ResponseEntity<ApiErrorResponse> response = handler.handleValidation(
+                new MethodArgumentNotValidException(new MethodParameter(method, 0), bindingResult),
+                request
+        );
+
+        assertError(response, HttpStatus.BAD_REQUEST,
+                "appointmentId: não pode ser nulo; paymentMethod: método inválido",
+                "MethodArgumentNotValidException");
+        assertThat(response.getBody().getFieldErrors()).hasSize(2);
+        assertThat(response.getBody().getFieldErrors().get(0).field()).isEqualTo("appointmentId");
+    }
+
+    @Test
     void shouldMapConflictAndUnsupportedMediaType() {
         assertError(handler.handleIllegalState(new IllegalStateException("pagamento já processado"), request),
                 HttpStatus.CONFLICT, "pagamento já processado", "IllegalStateException");
@@ -77,6 +101,31 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getBody().getPath()).isEqualTo("/api/payments/1");
     }
 
+    @Test
+    void shouldExposeApiErrorResponseFields() {
+        ApiErrorResponse response = new ApiErrorResponse(
+                422,
+                "Unprocessable Entity",
+                "campo inválido",
+                "ValidationException",
+                "payment-service",
+                "/api/payments",
+                "cid-123",
+                List.of(new ApiErrorResponse.FieldError("amount", "deve ser positivo"))
+        );
+
+        assertThat(response.getTimestamp()).isNotNull();
+        assertThat(response.getStatus()).isEqualTo(422);
+        assertThat(response.getError()).isEqualTo("Unprocessable Entity");
+        assertThat(response.getMessage()).isEqualTo("campo inválido");
+        assertThat(response.getCause()).isEqualTo("ValidationException");
+        assertThat(response.getOrigin()).isEqualTo("payment-service");
+        assertThat(response.getPath()).isEqualTo("/api/payments");
+        assertThat(response.getCorrelationId()).isEqualTo("cid-123");
+        assertThat(response.getFieldErrors())
+                .containsExactly(new ApiErrorResponse.FieldError("amount", "deve ser positivo"));
+    }
+
     private void assertError(ResponseEntity<ApiErrorResponse> response,
                              HttpStatus status,
                              String message,
@@ -90,5 +139,9 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getBody().getOrigin()).isEqualTo("payment-service");
         assertThat(response.getBody().getPath()).isEqualTo("/api/payments/create");
         assertThat(response.getBody().getCorrelationId()).isEqualTo("cid-payment");
+    }
+
+    @SuppressWarnings("unused")
+    private void validationTarget(String value) {
     }
 }

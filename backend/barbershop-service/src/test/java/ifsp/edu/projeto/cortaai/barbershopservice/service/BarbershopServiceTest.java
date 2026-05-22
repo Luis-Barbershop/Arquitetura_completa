@@ -619,6 +619,353 @@ class BarbershopServiceTest {
                 .hasMessage("Não foi possível consultar dados do usuário no momento.");
     }
 
+    @Test
+    void shouldListActivitiesAndGetBarbershop() {
+        Barbershop shop = shop(UUID.randomUUID(), UUID.randomUUID());
+        Activity activity = activity(shop, "Corte", "70.00", 45);
+        when(activityRepository.findByBarbershopId(shop.getId())).thenReturn(List.of(activity));
+        when(barbershopRepository.findById(shop.getId())).thenReturn(Optional.of(shop));
+
+        List<ActivityDTO> activities = service.listActivities(shop.getId());
+        BarbershopDTO result = service.getBarbershop(shop.getId());
+
+        assertThat(activities).hasSize(1);
+        assertThat(activities.get(0).getActivityName()).isEqualTo("Corte");
+        assertThat(result.getId()).isEqualTo(shop.getId());
+    }
+
+    @Test
+    void shouldCheckCustomerReviewAndRejectInvalidReviewLookups() {
+        UUID shopId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+        when(userServiceClient.getUserByFirebaseUid("customer-uid")).thenReturn(customer(customerId));
+        when(barbershopRepository.existsById(shopId)).thenReturn(true);
+        when(barbershopReviewRepository.existsByBarbershop_IdAndCustomerId(shopId, customerId)).thenReturn(true);
+
+        assertThat(service.hasCustomerReviewed("customer-uid", shopId)).isTrue();
+
+        when(userServiceClient.getUserByFirebaseUid("barber-uid")).thenReturn(barber(UUID.randomUUID(), shopId));
+        assertThatThrownBy(() -> service.hasCustomerReviewed("barber-uid", shopId))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessage("Apenas clientes podem consultar a própria avaliação.");
+
+        UUID missingShopId = UUID.randomUUID();
+        when(userServiceClient.getUserByFirebaseUid("customer-with-missing-shop")).thenReturn(customer(customerId));
+        when(barbershopRepository.existsById(missingShopId)).thenReturn(false);
+        assertThatThrownBy(() -> service.hasCustomerReviewed("customer-with-missing-shop", missingShopId))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Barbearia não encontrada.");
+    }
+
+    @Test
+    void shouldRejectReviewFromNonCustomerAndMissingShop() {
+        UUID shopId = UUID.randomUUID();
+        CreateBarbershopReviewDTO dto = new CreateBarbershopReviewDTO();
+        dto.setRating(5);
+        when(userServiceClient.getUserByFirebaseUid("barber-uid")).thenReturn(barber(UUID.randomUUID(), shopId));
+
+        assertThatThrownBy(() -> service.createReview("barber-uid", shopId, dto))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessage("Apenas clientes podem avaliar barbearias.");
+
+        UUID customerId = UUID.randomUUID();
+        when(userServiceClient.getUserByFirebaseUid("customer-uid")).thenReturn(customer(customerId));
+        when(barbershopRepository.findById(shopId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.createReview("customer-uid", shopId, dto))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Barbearia não encontrada.");
+    }
+
+    @Test
+    void shouldRejectDuplicatedOwnerAndCnpjWhenCreatingBarbershop() {
+        UUID ownerId = UUID.randomUUID();
+        Barbershop existing = shop(UUID.randomUUID(), ownerId);
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(barber(ownerId, existing.getId()));
+        when(barbershopRepository.findByOwnerId(ownerId)).thenReturn(Optional.of(existing));
+
+        assertThatThrownBy(() -> service.createBarbershop("owner-uid", createBarbershopDTO("Nova", "11222333000181"), null))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("Você já possui uma barbearia.");
+
+        UUID otherOwnerId = UUID.randomUUID();
+        when(userServiceClient.getUserByFirebaseUid("other-owner")).thenReturn(barber(otherOwnerId, null));
+        when(barbershopRepository.findByOwnerId(otherOwnerId)).thenReturn(Optional.empty());
+        when(barbershopRepository.existsByCnpj("11222333000181")).thenReturn(true);
+
+        assertThatThrownBy(() -> service.createBarbershop("other-owner", createBarbershopDTO("Nova", "11.222.333/0001-81"), null))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("CNPJ já cadastrado.");
+    }
+
+    @Test
+    void shouldDeleteActivityWhenItBelongsToOwnerShop() {
+        UUID ownerId = UUID.randomUUID();
+        Barbershop shop = shop(UUID.randomUUID(), ownerId);
+        Activity activity = activity(shop, "Corte", "70.00", 45);
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(barber(ownerId, shop.getId()));
+        when(barbershopRepository.findByOwnerId(ownerId)).thenReturn(Optional.of(shop));
+        when(activityRepository.findById(activity.getId())).thenReturn(Optional.of(activity));
+
+        service.deleteActivity("owner-uid", activity.getId());
+
+        verify(activityRepository).delete(activity);
+    }
+
+    @Test
+    void shouldListAndDeleteCommissionsForTeamMember() {
+        UUID ownerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        Barbershop shop = shop(UUID.randomUUID(), ownerId);
+        Activity activity = activity(shop, "Corte", "80.00", 45);
+        BarberCommissionRule rule = commissionRule(shop.getId(), barberId, activity, "35.00");
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(barber(ownerId, shop.getId()));
+        when(barbershopRepository.findByOwnerId(ownerId)).thenReturn(Optional.of(shop));
+        when(userServiceClient.getUserById(barberId)).thenReturn(barber(barberId, shop.getId()));
+        when(commissionRuleRepository.findByBarbershopIdAndBarberId(shop.getId(), barberId)).thenReturn(List.of(rule));
+        when(commissionRuleRepository.findByIdAndBarbershopIdAndBarberId(rule.getId(), shop.getId(), barberId))
+                .thenReturn(Optional.of(rule));
+
+        List<CommissionRuleDTO> result = service.getCommissions("owner-uid", barberId);
+        service.deleteCommission("owner-uid", barberId, rule.getId());
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).activityName()).isEqualTo("Corte");
+        verify(commissionRuleRepository).delete(rule);
+    }
+
+    @Test
+    void shouldRejectCommissionForForeignActivityAndMissingRule() {
+        UUID ownerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        Barbershop shop = shop(UUID.randomUUID(), ownerId);
+        Activity foreignActivity = activity(shop(UUID.randomUUID(), UUID.randomUUID()), "Barba", "50.00", 30);
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(barber(ownerId, shop.getId()));
+        when(barbershopRepository.findByOwnerId(ownerId)).thenReturn(Optional.of(shop));
+        when(userServiceClient.getUserById(barberId)).thenReturn(barber(barberId, shop.getId()));
+        when(activityRepository.findById(foreignActivity.getId())).thenReturn(Optional.of(foreignActivity));
+
+        assertThatThrownBy(() -> service.upsertCommission(
+                "owner-uid",
+                barberId,
+                new CommissionRuleRequestDTO(foreignActivity.getId(), new BigDecimal("40.00"))))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessage("Esta atividade não pertence à sua barbearia.");
+
+        UUID ruleId = UUID.randomUUID();
+        when(commissionRuleRepository.findByIdAndBarbershopIdAndBarberId(ruleId, shop.getId(), barberId))
+                .thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.deleteCommission("owner-uid", barberId, ruleId))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Regra de comissão não encontrada.");
+    }
+
+    @Test
+    void shouldHandleTeamAndScheduleServiceFailures() {
+        UUID ownerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        Barbershop shop = shop(UUID.randomUUID(), ownerId);
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(barber(ownerId, shop.getId()));
+        when(barbershopRepository.findByOwnerId(ownerId)).thenReturn(Optional.of(shop));
+        when(userServiceClient.getBarbersByBarbershop(shop.getId())).thenThrow(new RuntimeException("user off"));
+
+        assertThatThrownBy(() -> service.listTeamMembers("owner-uid"))
+                .isInstanceOf(UserServiceUnavailableException.class)
+                .hasMessage("Nao foi possivel consultar a equipe vinculada.");
+
+        when(userServiceClient.getUserById(barberId)).thenReturn(barber(barberId, shop.getId()));
+        when(scheduleServiceClient.getFutureAppointmentsByBarber(barberId)).thenThrow(new RuntimeException("schedule off"));
+
+        assertThatThrownBy(() -> service.getRemovalConflicts("owner-uid", barberId))
+                .isInstanceOf(UserServiceUnavailableException.class)
+                .hasMessage("Nao foi possivel consultar conflitos no servico de agenda.");
+    }
+
+    @Test
+    void shouldRejectInvalidTeamRemovalScenarios() {
+        UUID ownerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        Barbershop shop = shop(UUID.randomUUID(), ownerId);
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(barber(ownerId, shop.getId()));
+        when(barbershopRepository.findByOwnerId(ownerId)).thenReturn(Optional.of(shop));
+        when(userServiceClient.getUserById(barberId)).thenReturn(barber(barberId, shop.getId()));
+
+        assertThatThrownBy(() -> service.removeTeamMember("owner-uid", barberId, new RemoveTeamMemberRequestDTO("REDISTRIBUTE", null)))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("Escolha um barbeiro de destino para redistribuir.");
+        assertThatThrownBy(() -> service.removeTeamMember("owner-uid", barberId, new RemoveTeamMemberRequestDTO("REDISTRIBUTE", barberId)))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("O destino da redistribuição deve ser diferente do barbeiro removido.");
+        assertThatThrownBy(() -> service.removeTeamMember("owner-uid", barberId, new RemoveTeamMemberRequestDTO("ARCHIVE", null)))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("Ação inválida. Use REDISTRIBUTE ou CANCEL.");
+
+        UserInfoDTO customer = customer(UUID.randomUUID());
+        when(userServiceClient.getUserById(customer.getId())).thenReturn(customer);
+        assertThatThrownBy(() -> service.removeTeamMember("owner-uid", customer.getId(), new RemoveTeamMemberRequestDTO("CANCEL", null)))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("Somente barbeiros podem ser removidos da equipe.");
+    }
+
+    @Test
+    void shouldRejectCloseBarbershopWithoutPasswordAndWhenTeamLookupFails() {
+        UUID ownerId = UUID.randomUUID();
+        Barbershop shop = shop(UUID.randomUUID(), ownerId);
+        CloseBarbershopRequestDTO dto = new CloseBarbershopRequestDTO();
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(barber(ownerId, shop.getId()));
+        when(barbershopRepository.findByOwnerId(ownerId)).thenReturn(Optional.of(shop));
+
+        assertThatThrownBy(() -> service.closeBarbershop("owner-uid", dto))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("A confirmacao de senha e obrigatoria para encerrar a barbearia.");
+
+        dto.setPassword("secret");
+        when(userServiceClient.getBarbersByBarbershop(shop.getId())).thenThrow(new RuntimeException("user off"));
+
+        assertThatThrownBy(() -> service.closeBarbershop("owner-uid", dto))
+                .isInstanceOf(UserServiceUnavailableException.class)
+                .hasMessage("Nao foi possivel consultar a equipe vinculada para encerrar a barbearia.");
+    }
+
+    @Test
+    void shouldRejectInvalidJoinRequestsAndListPendingRequestsBestEffort() {
+        UUID ownerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        Barbershop shop = shop(UUID.randomUUID(), ownerId);
+        when(userServiceClient.getUserByFirebaseUid("linked-barber")).thenReturn(barber(barberId, shop.getId()));
+        assertThatThrownBy(() -> service.requestToJoinBarbershop("linked-barber", "11222333000181"))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("Você já faz parte de uma barbearia. Saia antes de solicitar entrada em outra.");
+
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(barber(ownerId, shop.getId()));
+        when(barbershopRepository.findByOwnerId(ownerId)).thenReturn(Optional.of(shop));
+        BarbershopJoinRequest request = joinRequest(UUID.randomUUID(), barberId, shop, JoinRequestStatus.PENDING, JoinRequestType.JOIN);
+        when(joinRequestRepository.findByBarbershopIdAndStatusAndRequestType(shop.getId(), JoinRequestStatus.PENDING, JoinRequestType.JOIN))
+                .thenReturn(List.of(request));
+        when(userServiceClient.getUserById(barberId)).thenThrow(new RuntimeException("user off"));
+
+        List<JoinRequestDTO> result = service.getPendingJoinRequests("owner-uid");
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getBarberName()).isEqualTo("(indisponível)");
+        assertThat(result.get(0).getBarberEmail()).isEqualTo("(indisponível)");
+    }
+
+    @Test
+    void shouldRejectAndValidateJoinRequestsForOwnerShop() {
+        UUID ownerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        UUID requestId = UUID.randomUUID();
+        Barbershop shop = shop(UUID.randomUUID(), ownerId);
+        Barbershop foreignShop = shop(UUID.randomUUID(), UUID.randomUUID());
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(barber(ownerId, shop.getId()));
+        when(barbershopRepository.findByOwnerId(ownerId)).thenReturn(Optional.of(shop));
+        when(joinRequestRepository.findById(requestId))
+                .thenReturn(Optional.of(joinRequest(requestId, barberId, foreignShop, JoinRequestStatus.PENDING, JoinRequestType.JOIN)))
+                .thenReturn(Optional.of(joinRequest(requestId, barberId, shop, JoinRequestStatus.PENDING, JoinRequestType.JOIN)));
+
+        assertThatThrownBy(() -> service.approveJoinRequest("owner-uid", requestId))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessage("Esta solicitação não pertence à sua barbearia.");
+
+        service.rejectJoinRequest("owner-uid", requestId);
+
+        verify(joinRequestRepository).save(any(BarbershopJoinRequest.class));
+    }
+
+    @Test
+    void shouldRejectInvalidInviteScenariosAndRejectInviteSuccessfully() {
+        UUID ownerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        UUID requestId = UUID.randomUUID();
+        Barbershop shop = shop(UUID.randomUUID(), ownerId);
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(barber(ownerId, shop.getId()));
+        when(barbershopRepository.findByOwnerId(ownerId)).thenReturn(Optional.of(shop));
+
+        assertThatThrownBy(() -> service.inviteBarberByCpf("owner-uid", "123"))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("CPF inválido. Informe 11 dígitos.");
+
+        when(userServiceClient.getBarberByCpf(Map.of("cpf", "12345678901"))).thenReturn(null);
+        assertThatThrownBy(() -> service.inviteBarberByCpf("owner-uid", "12345678901"))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Nenhum barbeiro cadastrado com este CPF.");
+
+        when(userServiceClient.getBarberByCpf(Map.of("cpf", "99999999999"))).thenReturn(barber(ownerId, shop.getId()));
+        assertThatThrownBy(() -> service.inviteBarberByCpf("owner-uid", "99999999999"))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("Você não pode convidar a si mesmo.");
+
+        UserInfoDTO linkedBarber = barber(barberId, UUID.randomUUID());
+        when(userServiceClient.getBarberByCpf(Map.of("cpf", "11111111111"))).thenReturn(linkedBarber);
+        assertThatThrownBy(() -> service.inviteBarberByCpf("owner-uid", "11111111111"))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("Este barbeiro já faz parte de uma barbearia.");
+
+        UserInfoDTO invitee = barber(barberId, null);
+        BarbershopJoinRequest invite = joinRequest(requestId, barberId, shop, JoinRequestStatus.PENDING, JoinRequestType.INVITE);
+        when(userServiceClient.getUserByFirebaseUid("barber-uid")).thenReturn(invitee);
+        when(joinRequestRepository.findById(requestId)).thenReturn(Optional.of(invite));
+
+        service.rejectInvite("barber-uid", requestId);
+
+        assertThat(invite.getStatus()).isEqualTo(JoinRequestStatus.REJECTED);
+        verify(joinRequestRepository).save(invite);
+    }
+
+    @Test
+    void shouldRejectInvalidInviteAcceptanceStates() {
+        UUID barberId = UUID.randomUUID();
+        UUID requestId = UUID.randomUUID();
+        Barbershop shop = shop(UUID.randomUUID(), UUID.randomUUID());
+        when(userServiceClient.getUserByFirebaseUid("barber-uid")).thenReturn(barber(barberId, null));
+
+        when(joinRequestRepository.findById(requestId))
+                .thenReturn(Optional.of(joinRequest(requestId, barberId, shop, JoinRequestStatus.PENDING, JoinRequestType.JOIN)));
+        assertThatThrownBy(() -> service.acceptInvite("barber-uid", requestId))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessage("Esta solicitação não é um convite.");
+
+        when(joinRequestRepository.findById(requestId))
+                .thenReturn(Optional.of(joinRequest(requestId, barberId, shop, JoinRequestStatus.REJECTED, JoinRequestType.INVITE)));
+        assertThatThrownBy(() -> service.acceptInvite("barber-uid", requestId))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("Este convite já foi processado.");
+
+        when(userServiceClient.getUserByFirebaseUid("linked-barber")).thenReturn(barber(barberId, UUID.randomUUID()));
+        when(joinRequestRepository.findById(requestId))
+                .thenReturn(Optional.of(joinRequest(requestId, barberId, shop, JoinRequestStatus.PENDING, JoinRequestType.INVITE)));
+        assertThatThrownBy(() -> service.acceptInvite("linked-barber", requestId))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("Você já faz parte de uma barbearia. Saia antes de aceitar outro convite.");
+    }
+
+    @Test
+    void shouldUpdateBannerAddHighlightAndRejectForeignHighlight() throws IOException {
+        UUID ownerId = UUID.randomUUID();
+        Barbershop shop = shop(UUID.randomUUID(), ownerId);
+        shop.setBannerUrlPublicId("old-banner");
+        MultipartFile file = logoFile();
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(barber(ownerId, shop.getId()));
+        when(barbershopRepository.findByOwnerId(ownerId)).thenReturn(Optional.of(shop));
+        when(storageService.uploadFile(file, "barbershop-banners"))
+                .thenReturn(new UploadResultDTO("new-banner", "https://cdn/banner.png"));
+        when(storageService.uploadFile(file, "barbershop-highlights"))
+                .thenReturn(new UploadResultDTO("new-highlight", "https://cdn/highlight.png"));
+
+        assertThat(service.updateBarbershopBanner("owner-uid", file)).isEqualTo("https://cdn/banner.png");
+        assertThat(service.addBarbershopHighlight("owner-uid", file)).isEqualTo("https://cdn/highlight.png");
+
+        verify(storageService).deleteFile("old-banner");
+        verify(highlightRepository).save(any(BarbershopHighlight.class));
+
+        BarbershopHighlight foreignHighlight = highlight(shop(UUID.randomUUID(), UUID.randomUUID()), "https://cdn/foreign.png", "foreign");
+        when(highlightRepository.findById(foreignHighlight.getId())).thenReturn(Optional.of(foreignHighlight));
+        assertThatThrownBy(() -> service.deleteBarbershopHighlight("owner-uid", foreignHighlight.getId()))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessage("Este destaque não pertence à sua barbearia.");
+    }
+
     private CreateBarbershopDTO createBarbershopDTO(String name, String cnpj) {
         CreateBarbershopDTO dto = new CreateBarbershopDTO();
         dto.setName(name);
