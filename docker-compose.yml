@@ -74,11 +74,15 @@ services:
     ports: ["8080:8080"]
     environment:
       - EUREKA_HOST=discovery
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - GOOGLE_APPLICATION_CREDENTIALS=/app/firebase-service-account.json
       - JAVA_TOOL_OPTIONS=-Xms64m -Xmx192m -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss256k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=32m
     depends_on:
       discovery:
         condition: service_started
+      redis:
+        condition: service_healthy
 
   # ======== MICROSERVIÇOS DE NEGÓCIO ========
 

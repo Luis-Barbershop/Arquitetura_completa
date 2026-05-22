@@ -8,6 +8,12 @@ spring:
     lazy-initialization: true
   codec:
     max-in-memory-size: 20MB
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2s
   cloud:
     loadbalancer:
       cache:
@@ -45,6 +51,12 @@ spring:
             maxAge: 600
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin, RETAIN_FIRST
+        - name: RequestRateLimiter
+          args:
+            key-resolver: "#{@userOrIpRateLimitKeyResolver}"
+            redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH_RATE:10}
+            redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST_CAPACITY:20}
+            redis-rate-limiter.requestedTokens: 1
       discovery:
         locator:
           enabled: true
@@ -105,6 +117,18 @@ spring:
             - RewritePath=/api/barbershops/(?<barbershopId>[^/]+)/barbers, /api/barbers/barbershop/$\{barbershopId}
 
         # User Service (Auth, Cadastro, Perfil)
+        - id: user-auth-sensitive-rate-limit
+          uri: lb://user-service
+          predicates:
+            - Path=/api/auth/email/**, /api/auth/firebase-test/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@authUserOrIpRateLimitKeyResolver}"
+                redis-rate-limiter.replenishRate: ${AUTH_RATE_LIMIT_REPLENISH_RATE:2}
+                redis-rate-limiter.burstCapacity: ${AUTH_RATE_LIMIT_BURST_CAPACITY:5}
+                redis-rate-limiter.requestedTokens: 1
+
         - id: user-service
           uri: lb://user-service
           predicates:
@@ -151,6 +175,19 @@ eureka:
   client:
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+# ==================================================
+# RATE LIMIT — Gateway Redis token bucket
+# Default: 10 req/s, burst 20 por usuario autenticado ou IP.
+# Ajuste via RATE_LIMIT_REPLENISH_RATE e RATE_LIMIT_BURST_CAPACITY.
+# Endpoints sensiveis de auth: 2 req/s, burst 5 por IP.
+# ==================================================
+rate-limit:
+  replenish-rate: ${RATE_LIMIT_REPLENISH_RATE:10}
+  burst-capacity: ${RATE_LIMIT_BURST_CAPACITY:20}
+  auth:
+    replenish-rate: ${AUTH_RATE_LIMIT_REPLENISH_RATE:2}
+    burst-capacity: ${AUTH_RATE_LIMIT_BURST_CAPACITY:5}
 
 # ==================================================
 # FIREBASE AUTHENTICATION
