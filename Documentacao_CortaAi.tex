@@ -187,7 +187,7 @@ Responsabilidades, papéis e atividades de cada membro da equipe.
         Renan Ladislau & Desenvolvedor Front-end & Implementação da interface do usuário. \\
         Guilherme Chaves/Ana Clara & Desenvolvedor Back-end & Desenvolvimento da lógica de negócios e API. \\
         João Paulo/Laryssa Giovanna & Banco de Dados & Modelagem e gerenciamento do banco de dados. \\
-        Guilherme Chaves/Kaique Diniz & Hospedagem & Estudo do serviço de Hospedagem para o projeto (AWS) \\
+        Guilherme Chaves/Kaique Diniz & Hospedagem & Containerização com Docker Compose e deploy em servidor self-hosted (ZimaOS) \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -581,13 +581,13 @@ Foi adotado uma estratégia que segue a pirâmide de testes. O escopo de teste �
 \subsubsection{Nível 2: Testes de Integração}
 \begin{itemize}
     \item \textbf{Escopo e Foco:} Fluxo completo da API (Controller -> Service -> BD) e a camada de segurança.
-    \item \textbf{Descrição e Ferramentas:} Utilizando \texttt{@SpringBootTest} e \texttt{MockMvc}, estes testes validam o fluxo CRUD, a lógica de segurança (JWT 401/403) e validações de DTO (400 Bad Request).
+    \item \textbf{Descrição e Ferramentas:} Utilizando \texttt{@SpringBootTest} e \texttt{MockMvc}, estes testes validam o fluxo CRUD, a lógica de segurança (Firebase — 401 para token ausente/inválido, 403 para role insuficiente) e validações de DTO (400 Bad Request).
     \item \textbf{Execução:} Automaticamente a cada build do Maven e no pipeline de CI/CD.
 \end{itemize}
 
 \subsubsection{Nível 3: Testes de Componente/API}
 \begin{itemize}
-    \item \textbf{Escopo e Foco:} Validação do contrato da API (JSON) e a integração real com serviços externos (Cloudinary e AWS RDS) em ambiente de homologação (Staging).
+    \item \textbf{Escopo e Foco:} Validação do contrato da API (JSON) e a integração real com serviços externos (Cloudinary, Firebase Authentication e MySQL containerizado) em ambiente de homologação (Staging).
     \item \textbf{Descrição e Ferramentas:} Após o deploy em Staging, são executados testes manuais (Insomnia ou Postman) para verificar a integração real.
     \item \textbf{Execução:} Manual, realizado antes de qualquer promoção do código para Produção.
 \end{itemize}
@@ -603,8 +603,8 @@ Foi adotado uma estratégia que segue a pirâmide de testes. O escopo de teste �
         \textbf{Ambiente} & \textbf{Propósito e Tipos de Teste} & \textbf{Infraestrutura e Banco de Dados} & \textbf{Ferramentas Aplicáveis} \\
         \midrule
         \textbf{Local} & Desenvolvimento, depuração e execução de testes automatizados rápidos. \newline \textbf{Testes:} Unitários e Integração. & Máquina do Desenvolvedor \newline \textbf{BD:} H2 (Em memória) & JUnit 5, Mockito, Spring Boot Test, MockMvc \\
-        \textbf{Staging (Homologação)} & Simulação do ambiente de produção para validação final. \newline \textbf{Testes:} Componente/API e Não Funcionais (Carga/Estresse). & AWS Lambda + API Gateway + Cloudinary (Conta de Teste) \newline \textbf{BD:} AWS RDS (Instância de Teste) & Insomnia/Postman, JMeter/Gatling, AWS CloudWatch \\
-        \textbf{Produção} & Ambiente final do usuário. \newline \textbf{Testes:} Monitoramento e "Smoke Tests". & AWS Lambda + API Gateway + Cloudinary (Produção) \newline \textbf{BD:} AWS RDS (Produção) & AWS CloudWatch \\
+        \textbf{Staging (Homologação)} & Simulação do ambiente de produção para validação final. \newline \textbf{Testes:} Componente/API e Não Funcionais (Carga/Estresse). & Docker Compose (ZimaOS) + Cloudinary (Conta de Teste) \newline \textbf{BD:} MySQL containerizado (instância de teste) & Insomnia/Postman, JMeter/Gatling, Logback + Actuator \\
+        \textbf{Produção} & Ambiente final do usuário. \newline \textbf{Testes:} Monitoramento e "Smoke Tests". & Docker Compose (ZimaOS) + Cloudinary (Produção) \newline \textbf{BD:} MySQL containerizado (produção) & Logback, Spring Actuator \\
         \bottomrule
     \end{tabular}
     }
@@ -663,17 +663,17 @@ Verificam *como* o sistema opera sob determinadas condições, focando em desemp
 \subsubsection{Testes de performance}
 \textbf{Definição:} Medem a velocidade, responsividade e estabilidade da API sob carga.
 \begin{itemize}
-    \item \textbf{Testes de Estresse (Stress Testing):} Aumenta progressivamente a carga além do esperado, até o sistema falhar, identificando o ponto de ruptura (limites de concorrência do Lambda, pool de conexões do RDS).
-    \item \textbf{Testes de "Cold Start" (Inicialização a Frio):} Específico para AWS Lambda. Mede o tempo que a aplicação Spring Boot leva para inicializar do zero após um período de inatividade.
+    \item \textbf{Testes de Estresse (Stress Testing):} Aumenta progressivamente a carga além do esperado, até o sistema falhar, identificando o ponto de ruptura (pool de conexões do MySQL, limites de threads do container Spring Boot).
+    \item \textbf{Testes de Inicialização de Contêiner:} Mede o tempo que cada microsserviço Spring Boot leva para inicializar via Docker Compose, validando que o tempo de startup está dentro do aceitável para a política \texttt{restart: unless-stopped}.
 \end{itemize}
 
 \subsubsection{Testes de configuração}
-\textbf{Definição:} Validam que a aplicação funciona corretamente em seu ambiente de implantação final (AWS).
+\textbf{Definição:} Validam que a aplicação funciona corretamente em seu ambiente de implantação final (Docker Compose / ZimaOS).
 \begin{itemize}
-    \item \textbf{Validação de Variáveis de Ambiente:} Verifica se a aplicação consegue ler e utilizar as variáveis essenciais (JDBC\_DATABASE\_URL, CLOUDINARY\_URL, JWT\_SECRET\_KEY).
-    \item \textbf{Validação de Conectividade de Rede (AWS):} Testa se as regras (Security Groups) permitem que o Lambda acesse o RDS e o Cloudinary.
+    \item \textbf{Validação de Variáveis de Ambiente:} Verifica se cada microsserviço consegue ler e utilizar as variáveis essenciais definidas no \texttt{docker-compose.server.yml} (ex: \texttt{SPRING\_DATASOURCE\_URL}, \texttt{CLOUDINARY\_URL}, \texttt{CORTAAI\_DATA\_CRYPTO\_KEY}, \texttt{FIREBASE\_PROJECT\_ID}).
+    \item \textbf{Validação de Conectividade de Rede (Docker):} Testa se as regras da Docker network interna permitem que os microsserviços se comuniquem entre si e acessem o MySQL, RabbitMQ e Redis containerizados.
     \item \textbf{Validação de Configuração da Aplicação:} Testa se as configurações do \texttt{application.yml} (ex: \texttt{app.availability.slot-interval-minutes: 15}) estão sendo aplicadas.
-    \item \textbf{Validação de Configuração de Segurança:} Testa se as regras do \texttt{SecurityConfig} (restrição de rotas) estão sendo aplicadas no ambiente.
+    \item \textbf{Validação de Configuração de Segurança:} Testa se as regras de roteamento do \texttt{api-gateway} (restrição de rotas, validação do Firebase ID Token) estão sendo aplicadas corretamente.
 \end{itemize}
 
 \subsection{Testes automatizados}
@@ -769,30 +769,35 @@ O Diagrama Entidade-Relacionamento (DER) é a representação gráfica e visual 
     \label{fig:der}
 \end{figure}
 
-As principais entidades (tabelas) que compõem o sistema são:
+As principais entidades (tabelas) que compõem o sistema estão distribuídas em \textbf{seis bancos de dados isolados}, um por microsserviço. As entidades centrais são:
 \begin{description}
-    \item[BARBERSHOPS (Barbearias):] Contém os dados cadastrais da barbearia (nome, CNPJ, endereço).
-    \item[CUSTOMERS (Clientes):] Armazena as informações dos clientes (dados pessoais, telefone, e-mail, CPF, senha).
-    \item[BARBERS (Barbeiros):] Contém os dados dos profissionais (nome, telefone, e-mail, CPF, senha). Inclui \texttt{is\_owner}, horários de trabalho e \texttt{barbershop\_id}.
-    \item[ACTIVITIES (Atividades/Serviços):] Representa os serviços oferecidos (nome, preço, duração) e \texttt{barbershop\_id}.
-    \item[APPOINTMENTS (Agendamentos):] Entidade central. Registra os horários (\texttt{start\_time}, \texttt{end\_time}, \texttt{status}) e chaves estrangeiras (customer\_id, barber\_id, barbershop\_id).
-    \item[BARBERSHOP\_JOIN\_REQUESTS:] Tabela de controle para gerenciar as solicitações de barbeiros para se juntarem a uma barbearia.
+    \item[BARBERSHOPS (Barbearias) — \texttt{barbershop\_db}:] Dados cadastrais da barbearia (nome, CNPJ criptografado, endereço, geolocalização, logo, banner). Inclui média de avaliações calculada via \texttt{@Formula}.
+    \item[CUSTOMERS (Clientes) — \texttt{user\_db}:] Informações dos clientes (dados pessoais, e-mail/CPF/telefone criptografados, \texttt{firebase\_uid}, \texttt{auth\_provider}).
+    \item[BARBERS (Barbeiros) — \texttt{user\_db}:] Dados dos profissionais (nome, e-mail/CPF/telefone criptografados, \texttt{firebase\_uid}, \texttt{is\_owner}, \texttt{act\_as\_barber}, tokens Mercado Pago criptografados).
+    \item[ACTIVITIES (Atividades/Serviços) — \texttt{barbershop\_db}:] Serviços oferecidos pela barbearia (nome, preço, duração, \texttt{barbershop\_id}).
+    \item[APPOINTMENTS (Agendamentos) — \texttt{schedule\_db}:] Entidade central. Registra horários (\texttt{start\_time}, \texttt{end\_time}, \texttt{status}) com snapshots de nomes e preços. Referências cross-service por UUID.
+    \item[BARBERSHOP\_JOIN\_REQUESTS — \texttt{barbershop\_db}:] Controla solicitações de barbeiros para ingressar em uma barbearia, bem como convites diretos do dono (\texttt{request\_type}: JOIN ou INVITE).
+    \item[TRANSACTIONS — \texttt{payment\_db}:] Transações de pagamento com split (net, mp\_fee, platform\_fee) e status do Mercado Pago.
+    \item[PRODUCTS / STOCK\_MOVEMENTS — \texttt{product\_db}:] Estoque de produtos e auditoria completa de movimentações (IN, OUT, LOSS, etc.).
+    \item[NOTIFICATIONS / DEVICE\_TOKENS — \texttt{notification\_db}:] Notificações in-app, e-mail e push; tokens FCM dos dispositivos.
 \end{description}
 
-\subsubsection{Tabelas de Junção ( M:N )}
+\subsubsection{Tabelas de Junção / Coleções}
 \begin{description}
-    \item[BARBER\_ACTIVITIES:] Relaciona quais atividades (\texttt{activity\_id}) um barbeiro (\texttt{barber\_id}) está habilitado a realizar.
-    \item[APPOINTMENT\_ACTIVITIES:] Especifica quais atividades (\texttt{activity\_id}) estão incluídas em um agendamento (\texttt{appointment\_id}).
+    \item[BARBER\_ASSIGNED\_ACTIVITIES:] Registra quais atividades (\texttt{activity\_id}) um barbeiro (\texttt{barber\_id}) está habilitado a realizar (coleção \texttt{@ElementCollection} em \texttt{user\_db}).
+    \item[APPOINTMENT\_ACTIVITIES:] Especifica quais atividades estão incluídas em um agendamento (\texttt{appointment\_id}), com snapshot de nome, preço e duração (em \texttt{schedule\_db}).
+    \item[CUSTOMER\_FAVORITE\_BARBERSHOPS:] Barbearias favoritadas por cada cliente (coleção em \texttt{user\_db}).
 \end{description}
 
 \subsubsection{Relacionamentos Chave ( Cardinalidade )}
 \begin{itemize}
-    \item \textbf{Barbearia e Barbeiro (Emprega):} Uma barbearia (BARBERSHOPS) emprega muitos barbeiros (BARBERS) (1:N).
+    \item \textbf{Barbearia e Barbeiro (Emprega):} Uma barbearia (BARBERSHOPS) emprega muitos barbeiros (BARBERS) (1:N). Referência mantida por UUID em \texttt{barbers.barbershop\_id}.
     \item \textbf{Barbearia e Atividade (Oferece):} Uma barbearia (BARBERSHOPS) oferece múltiplas atividades (ACTIVITIES) (1:N).
     \item \textbf{Cliente e Agendamento (Realiza):} Um cliente (CUSTOMERS) realiza vários agendamentos (APPOINTMENTS) (1:N).
     \item \textbf{Barbeiro e Agendamento (Atende):} Um barbeiro (BARBERS) pode atender a muitos agendamentos (APPOINTMENTS) (1:N).
-    \item \textbf{Barbeiro e Atividade (É realizada por):} O relacionamento entre BARBERS e ACTIVITIES é de muitos para muitos (M:N), mediado pela tabela BARBER\_ACTIVITIES.
-    \item \textbf{Agendamento e Atividade (Inclui):} O relacionamento entre APPOINTMENTS e ACTIVITIES é de muitos para muitos (M:N), resolvido pela tabela APPOINTMENT\_ACTIVITIES.
+    \item \textbf{Barbeiro e Atividade (Habilitado para):} O relacionamento entre BARBERS e ACTIVITIES é de muitos para muitos (M:N), registrado na coleção BARBER\_ASSIGNED\_ACTIVITIES.
+    \item \textbf{Agendamento e Atividade (Inclui):} O relacionamento entre APPOINTMENTS e ACTIVITIES é de muitos para muitos (M:N), resolvido pela tabela APPOINTMENT\_ACTIVITIES com snapshot de dados.
+    \item \textbf{Isolamento Cross-Service:} Não existem FKs físicas entre bancos. Todas as referências entre microsserviços são mantidas via UUID (\texttt{VARCHAR(36)}) armazenado localmente em cada serviço.
 \end{itemize}
 
 \section{Cronograma do projeto}
@@ -801,11 +806,11 @@ A execução do projeto seguirá o framework ágil Scrum. O cronograma não é b
     \item \textbf{Cadência das Sprints:} 8 Sprints de 2 semanas (10 dias úteis) cada.
     \item \textbf{Product Backlog:}
         \begin{itemize}
-            \item Épico 1: Gestão de Acesso (Autenticação JWT, Perfis).
+            \item Épico 1: Gestão de Acesso (Firebase Authentication, Perfis).
             \item Épico 2: Módulo de Agendamento (Visualização, criação/cancelamento).
             \item Épico 3: Módulo de Serviços e Inventário (Cadastro, preços, duração).
             \item Épico 4: Painel Administrativo (Gestão de agenda e serviços).
-            \item Épico 5: Infraestrutura e Implantação (Configuração AWS Lambda, RDS, CI/CD).
+            \item Épico 5: Infraestrutura e Implantação (Containerização Docker Compose, ZimaOS, CI/CD).
         \end{itemize}
 \end{itemize}
 
@@ -822,13 +827,13 @@ A linha do tempo do projeto é dividida em 8 ciclos curtos de 2 semanas cada. Ca
         \textbf{Sprint} & \textbf{Período (Início/Fim)} & \textbf{Meta da Sprint (Sprint Goal)} & \textbf{Marcos Equivalentes (Plano Antigo)} \\
         \midrule
         Sprint 1 & 15/08/2025 - 29/08/2025 & "Setup e Fundação: Configurar ambientes (Git, CI/CD, Trello), definir o Product Backlog (MVP) e criar o ""Walking Skeleton""." & M1: Requisitos e Escopo Aprovados \\
-        Sprint 2 & 01/09/2025 - 12/09/2025 & Autenticação: Implementar o fluxo de autenticação (JWT) e o CRUD básico de Usuários. Definir a arquitetura de base. & M2: Arquitetura e Design Concluídos \\
+        Sprint 2 & 01/09/2025 - 12/09/2025 & Autenticação: Implementar o fluxo de autenticação (Firebase Authentication) e o CRUD básico de Usuários. Definir a arquitetura de base dos microsserviços. & M2: Arquitetura e Design Concluídos \\
         Sprint 3 & 15/09/2025 - 26/09/2025 & MVP do Agendamento (Back-end): API para lógica de horários disponíveis e criação de agendamento. & - \\
         Sprint 4 & 29/09/2025 - 10/10/2025 & MVP de Serviços (Back-end): APIs para CRUD de Serviços e Inventário. & M3: Desenvolvimento Back-end Concluído \\
         Sprint 5 & 13/10/2025 - 24/10/2025 & MVP do Cliente (Front-end): Telas de Login e fluxo principal do cliente (ver horários e realizar agendamento). & - \\
         Sprint 6 & 27/10/2025 - 07/11/2025 & Painel do Barbeiro (Front-end): Telas para o barbeiro visualizar e gerenciar sua agenda e serviços. & M4: Desenvolvimento Front-end Concluído \\
         Sprint 7 & 10/11/2025 - 21/11/2025 & "Testes de Aceite (UAT): Foco em testes de integração (E2E), correção de bugs e validação do fluxo com usuários-piloto." & M5: Ciclo de Testes (UAT) Finalizado \\
-        Sprint 8 & 24/11/2025 - 05/12/2025 & "Hardening e Implantação: Preparação do ambiente de produção (AWS), testes, deploy e documentação final." & M6: Implantação (Go-Live) \\
+        Sprint 8 & 24/11/2025 - 05/12/2025 & "Hardening e Implantação: Preparação do ambiente de produção (Docker Compose / ZimaOS), testes finais, deploy e documentação final." & M6: Implantação (Go-Live) \\
         \bottomrule
     \end{tabular}
     }
