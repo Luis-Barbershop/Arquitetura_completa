@@ -49,11 +49,14 @@
 
 .Users {
     width: 100%;
-    display: grid;
+    
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
+    
     margin-bottom: 2rem;
 }
+
+
 
 .UserOption {
     display: flex;
@@ -183,6 +186,12 @@
 }
 
 @media (max-width: 980px) {
+
+    #UserOption2{
+    margin-top: 1rem;
+    }
+
+
     .Container {
         padding: 5rem 24px;
     }

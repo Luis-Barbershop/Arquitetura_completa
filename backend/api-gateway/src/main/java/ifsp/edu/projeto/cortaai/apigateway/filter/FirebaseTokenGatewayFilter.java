@@ -110,11 +110,15 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             "/api/barbershops/leave-shop"
         );
 
-    private final FirebaseAuth firebaseAuth;
+    private final TokenVerifier tokenVerifier;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     public FirebaseTokenGatewayFilter(FirebaseAuth firebaseAuth) {
-        this.firebaseAuth = firebaseAuth;
+        this(firebaseAuth, token -> firebaseAuth.verifyIdToken(token));
+    }
+
+    FirebaseTokenGatewayFilter(FirebaseAuth firebaseAuth, TokenVerifier tokenVerifier) {
+        this.tokenVerifier = tokenVerifier;
     }
 
     @Override
@@ -149,7 +153,7 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             );
         }
 
-        return Mono.fromCallable(() -> firebaseAuth.verifyIdToken(tokenResolution.token()))
+        return Mono.fromCallable(() -> tokenVerifier.verify(tokenResolution.token()))
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(decodedToken -> {
                     if (requiresVerifiedEmail(decodedToken)) {
@@ -469,5 +473,10 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             return UUID.randomUUID().toString();
         }
         return incomingCorrelationId;
+    }
+
+    @FunctionalInterface
+    interface TokenVerifier {
+        FirebaseToken verify(String token) throws FirebaseAuthException;
     }
 }

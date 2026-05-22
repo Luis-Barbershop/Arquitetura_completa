@@ -95,6 +95,38 @@ class PaymentServiceWebhookSecurityTest {
     }
 
     @Test
+    void shouldRejectWebhookWithMissingSignatureInputs() {
+        setField("webhookSecret", "segredo-teste-webhook");
+
+        assertFalse(paymentService.isWebhookTrusted(null, "ts=1,v1=abc", "req"));
+        assertFalse(paymentService.isWebhookTrusted("123", null, "req"));
+        assertFalse(paymentService.isWebhookTrusted("123", "ts=1,v1=abc", " "));
+    }
+
+    @Test
+    void shouldRejectWebhookWithMalformedSignature() {
+        setField("webhookSecret", "segredo-teste-webhook");
+
+        assertFalse(paymentService.isWebhookTrusted("123", "bad-header", "req"));
+        assertFalse(paymentService.isWebhookTrusted("123", "ts=not-a-number,v1=abc", "req"));
+        assertFalse(paymentService.isWebhookTrusted("123", "ts=123", "req"));
+    }
+
+    @Test
+    void shouldRejectWebhookWhenSignatureLengthDiffers() {
+        String secret = "segredo-teste-webhook";
+        String resourceId = "12345";
+        String requestId = "req-abc-short";
+        long nowTs = Instant.now().getEpochSecond();
+
+        setField("webhookSecret", secret);
+
+        String shortSignature = "ts=" + nowTs + ",v1=abc";
+
+        assertFalse(paymentService.isWebhookTrusted(resourceId, shortSignature, requestId));
+    }
+
+    @Test
     void shouldRejectWebhookOutsideReplayWindow() {
         String secret = "segredo-teste-webhook";
         String resourceId = "12345";
