@@ -176,3 +176,29 @@ backend/<servico>/src/main/java/ifsp/edu/projeto/cortaai/<servico>/
 - [ ] Nomes e mensagens em pt-BR; código em inglês?
 
 Se alguma resposta for **não**, corrija antes de entregar.
+
+---
+
+## 8. Documentos de Referência Técnica
+
+> Leia os documentos abaixo quando precisar de contexto detalhado sobre banco de dados, regras de negócio ou fluxos específicos. Eles foram gerados por análise estática completa do código.
+
+### 8.1 Análise do Banco de Dados
+📄 **[`ANALISE_BANCO_DADOS.md`](ANALISE_BANCO_DADOS.md)**
+
+Contém:
+- Schema completo de todas as **18+ tabelas** distribuídas em 6 bancos (`user_db`, `barbershop_db`, `schedule_db`, `payment_db`, `product_db`, `notification_db`)
+- Todos os **tipos de coluna, constraints, PKs, UNIQUEs e índices**
+- **FKs lógicas cross-service** — referências UUID entre bancos isolados
+- **Mapa completo de eventos RabbitMQ** — exchange, routing keys, filas e payloads
+- **Regras de negócio críticas**: agendamento (conflito de horário, snapshots), pagamento (split MP, idempotência webhook), LGPD (criptografia AES, anonimização), estoque (movimentações, alerta de reposição)
+- **Enums documentados**: `AppointmentStatus`, `JoinRequestStatus`, `MovementType`, `FixedExpenseCategory`, `NotificationChannel`, `PushPlatform`
+- **Mapeamento Frontend → Backend**: services JS, endpoints consumidos e chaves localStorage
+- **Queries de inspeção ao vivo** para executar diretamente no MySQL do servidor de produção
+
+**Use este documento sempre que:**
+- Precisar entender a estrutura de uma tabela antes de criar/alterar uma entidade JPA
+- Precisar rastrear de onde vem um UUID referenciado em outro serviço
+- Precisar entender o ciclo de vida de um agendamento ou pagamento
+- Precisar saber quais campos são criptografados (dados PII / LGPD)
+- Precisar adicionar um novo evento RabbitMQ (para não duplicar routing keys)
