@@ -3,6 +3,7 @@ package ifsp.edu.projeto.cortaai.apigateway.config;
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -12,6 +13,7 @@ import java.net.InetSocketAddress;
 @Configuration
 public class GatewayRateLimitConfig {
 
+    @Primary
     @Bean
     public KeyResolver userOrIpRateLimitKeyResolver() {
         return exchange -> Mono.just(resolveKey(exchange));
