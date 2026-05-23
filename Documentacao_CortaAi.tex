@@ -558,9 +558,43 @@ A infraestrutura do projeto é baseada em contêineres Docker, hospedados em um 
 \begin{itemize}
     \item \textbf{Trello (Gestão de Projetos e Tarefas):} Ferramenta central para o gerenciamento de tarefas e acompanhamento do progresso (Kanban).
     \item \textbf{GitHub (Controle de Versão e Repositório de Código):} Sistema de controle de versão (VCS) e repositório central de todo o código-fonte.
+    \item \textbf{Postman / Insomnia:} Plataformas de testes de API utilizadas para modelar contratos, simular fluxos de usuários e validar endpoints.
     \item \textbf{Overleaf (Documentação Colaborativa):} Plataforma adotada para a elaboração e manutenção da documentação oficial do projeto (LaTeX).
     \item \textbf{Discord (Comunicação da Equipe):} Plataforma para a comunicação síncrona (instantânea) da equipe.
 \end{itemize}
+
+\subsection{Módulo de Assistência Inteligente (Assistente Gustave)}
+Como diferencial estratégico focado na usabilidade e no suporte à tomada de decisão dos profissionais, o ecossistema CortaAi incorpora um módulo de inteligência artificial generativa, denominado \textbf{Gustave}. Este assistente atua como uma interface conversacional inteligente integrada à console administrativa do profissional (\textit{BarberHomePage}), viabilizando interações em linguagem natural para a extração rápida de dados e insights operacionais.
+
+O escopo funcional do assistente abrange três frentes críticas:
+\begin{itemize}
+    \item \textbf{Interpretação de Dashboards e Desempenho:} Contextualiza e sumariza dados analíticos de faturamento, ticket médio e gráficos de produtividade, traduzindo métricas visuais complexas em diagnósticos textuais diretos.
+    \item \textbf{Consulta Dinâmica de Agendamentos:} Conectado ao \texttt{schedule-service}, permite que o barbeiro consulte sua fila de compromissos diários, confirme horários reservados ou resgate históricos de atendimento através de comandos de texto.
+    \item \textbf{Monitoramento de Estoque:} Responde sobre níveis de inventário, alerta sobre necessidade de reposição e previne a escassez de materiais essenciais.
+\end{itemize}
+
+Sob a perspectiva arquitetural, o fluxo de comunicação do Gustave é intermediado pelo API Gateway, que valida o token JWT do profissional antes de delegar a requisição de chat ao componente responsável pela orquestração de linguagem. Essa arquitetura garante que a IA opere estritamente sob o escopo de permissões do usuário autenticado.
+
+\subsection{Integração e Entrega Contínuas (CI/CD)}
+Para suportar a arquitetura de microsserviços e garantir agilidade e segurança nas entregas, o projeto adota uma estratégia robusta de CI/CD com \textbf{GitHub Actions} como orquestrador dos pipelines.
+
+A automação do ciclo de vida do software é dividida em duas esteiras principais:
+
+\subsubsection{Esteira de Integração Contínua (CI)}
+\textbf{Gatilho:} Abertura ou atualização de Pull Requests contra a ramificação principal (\texttt{main}).
+\begin{enumerate}
+    \item \textbf{Setup do Ambiente:} Provisionamento das instâncias de execução, instalação do Java 17 e configuração do cache de dependências do Maven.
+    \item \textbf{Testes Automatizados:} Execução da suíte completa de testes unitários e de integração, com \textbf{Testcontainers} provisionando serviços efêmeros (MySQL, Redis e RabbitMQ) de forma transparente.
+    \item \textbf{Análise Estática e Quality Gate:} Geração do relatório de qualidade e envio para o SonarQube. Caso o Quality Gate reprove o código (ex.: cobertura inferior a 80\% ou presença de vulnerabilidades), a integração falha e o merge do PR é bloqueado.
+\end{enumerate}
+
+\subsubsection{Esteira de Entrega Contínua (CD)}
+\textbf{Gatilho:} Merge de código previamente aprovado na ramificação principal (\texttt{main}).
+\begin{enumerate}
+    \item \textbf{Geração de Artefatos:} Compilação final do código. No back-end, empacotamento (.jar) dos microsserviços Java/Spring Boot. No front-end, build otimizado dos ativos estáticos do React/Vite.
+    \item \textbf{Containerização (Build \& Push):} Criação das imagens Docker isoladas, restritas apenas aos serviços que sofreram alterações. As imagens são etiquetadas com o hash da versão e enviadas ao Docker Hub.
+    \item \textbf{Deploy Automatizado:} Atualização contínua na infraestrutura do servidor privado. A sinergia entre o Discovery Service (Eureka) e o API Gateway garante que as novas instâncias sejam automaticamente registradas na malha de serviços, com drenagem e desligamento das versões anteriores para transições estáveis.
+\end{enumerate}
 
 \section{Testes e manutenibilidade}
 O Plano de Testes serve como um mapa ou guia para todo o esforço de teste do projeto. Em essência, ele responde às seguintes perguntas:
@@ -691,6 +725,21 @@ Para a geração de arquivos de logs no backend (Java/Spring Boot), são utiliza
     \item \textbf{TRACE:} Nível mais detalhado (ex: valores de parâmetros de queries).
 \end{itemize}
 
+\subsection{Testes de Transição de Arquitetura}
+A transição de uma arquitetura monolítica para um ecossistema de microsserviços introduz desafios significativos de qualidade, como latência de rede, falhas parciais de comunicação e a validação da consistência eventual. A estratégia de testes do CortaAi foi reestruturada com base em uma abordagem de camadas para mitigar esses riscos.
+
+\subsubsection{Testes Unitários (Nível de Domínio)}
+As dependências externas (bancos de dados, clientes REST e message brokers) são simuladas via Mocks (Mockito + JUnit 5). Exemplo prático: validar se o \texttt{Schedule Service} lança corretamente uma \texttt{ConflictException} ao tentar agendar um horário já ocupado, sem consultar o banco real.
+
+\subsubsection{Testes de Integração e Contratos}
+\begin{itemize}
+    \item \textbf{Integração de Base de Dados:} Utilização do \textbf{Testcontainers} para instanciar contêineres Docker efêmeros (MySQL e Redis) durante a execução dos testes, garantindo que as queries JPA sejam validadas contra uma base de dados real idêntica à de produção.
+    \item \textbf{Comunicação Síncrona:} Validação dos contratos de comunicação via OpenFeign, garantindo que o payload JSON esperado pelo \texttt{User Service} seja corretamente enviado e interpretado pelo \texttt{Schedule Service}.
+\end{itemize}
+
+\subsubsection{Testes de Mensageria e Eventos (Assíncronos)}
+Os testes de integração validam o ciclo de vida completo de uma mensagem: verifica-se se o publisher formata corretamente o evento e se o listener o consome sem erros de desserialização. Exemplo prático: quando um agendamento é criado, o teste valida se o evento \texttt{AppointmentCreatedEvent} é publicado na Exchange do RabbitMQ e se o \texttt{Notification Service} consegue recolher essa mensagem para gerar o envio de e-mail, validando assim a consistência eventual.
+
 \subsection{Análise estática}
 Visto a importância de se preservar a qualidade e segurança do código, é essencial realizar a Análise Estática de Código e Segurança (SAST). Para isso, empregaremos a ferramenta SonarQube. O SonarQube é uma plataforma de código aberto para inspeção contínua da qualidade do código, integrada ao processo de build (Maven). Ele analisa o código-fonte Java em busca de:
 \begin{itemize}
@@ -731,25 +780,61 @@ A convenção a ser adotada será o \textbf{Airbnb JavaScript Style Guide}, incl
 \end{itemize}
 
 \section{Segurança, privacidade e legislação}
-Para garantir a segurança dos dados e a privacidade dos usuários, os seguintes critérios foram implementados:
+Numa arquitetura de microsserviços, a segurança não pode ser gerida de forma isolada por cada serviço, sob pena de criar vulnerabilidades e redundância de código. O CortaAi adotou um modelo de \textbf{Identidade Federada e Roteamento Seguro}, estruturado em três pilares: Provedor de Identidade, Interceptação no Gateway e Autorização Baseada em Funções (RBAC).
+
+\subsection{Provedor de Identidade (Firebase Authentication)}
+O sistema utiliza o \textbf{Firebase Authentication} (Google) como provedor de identidade (\textit{Identity Provider} — IdP). O backend do CortaAi não armazena senhas em nenhum dos seus bancos de dados (MySQL).
+
+O fluxo de autenticação ocorre da seguinte forma:
+\begin{enumerate}
+    \item O cliente (Frontend em React) envia as credenciais (e-mail e senha) diretamente para os servidores seguros do Firebase.
+    \item Após a validação, o Firebase retorna um \textbf{JSON Web Token (JWT)} assinado assimetricamente ao cliente, contendo o User ID (UID) único daquele utilizador.
+    \item Este token passa a ser enviado pelo Frontend no cabeçalho \texttt{Authorization: Bearer <token>} em todas as requisições subsequentes para a API.
+\end{enumerate}
+
+\subsection{Ciclo de Vida do Token e Estratégia de Renovação}
+O ecossistema adota uma abordagem estritamente \textbf{Stateless}: os microsserviços não armazenam estado de sessão; cada requisição é autossuficiente, contendo um token digital assinado criptograficamente. O ciclo de vida das credenciais divide-se em dois componentes:
 \begin{itemize}
-    \item \textbf{Autenticação via Firebase:} O sistema utiliza o Firebase Authentication como provedor de identidade, suportando login por e-mail/senha e login social (Google). O API Gateway é o único ponto que valida o Firebase ID Token, injetando os headers \texttt{X-User-Id}, \texttt{X-User-Email} e \texttt{X-User-Role} para os microsserviços downstream.
-    \item \textbf{Senhas locais com BCrypt:} Para usuários que optam pelo provedor \texttt{EMAIL}, a senha é armazenada com hash \texttt{BCryptPasswordEncoder}. Usuários de login social não possuem senha local (\texttt{password = null}).
-    \item \textbf{Autorização Baseada em Papéis:} A arquitetura define \textit{roles} específicas (\texttt{ROLE\_CUSTOMER}, \texttt{ROLE\_BARBER}) injetadas pelo API Gateway após validação do token, implementando o princípio do menor privilégio.
-    \item \textbf{Criptografia de Dados em Repouso (LGPD):} Campos sensíveis (e-mail, CPF, telefone, data de nascimento, CNPJ, tokens Mercado Pago) são criptografados em repouso com AES/GCM via \texttt{SensitiveStringConverter}. Um campo \texttt{email\_hash} (SHA-256) permite busca sem descriptografar.
-    \item \textbf{Validação de Entrada de Dados:} Jakarta Bean Validation é aplicado nos DTOs para validar os dados recebidos, incluindo validações customizadas para unicidade (e-mail, CPF) e formato (CPF, CNPJ).
-    \item \textbf{Segurança na Infraestrutura:} Os microsserviços são acessíveis apenas internamente via Docker network. Somente o \texttt{api-gateway} está exposto publicamente. Credenciais são gerenciadas como variáveis de ambiente.
-    \item \textbf{Direitos do Usuário:} O sistema garante aos usuários direitos de acesso, correção e exclusão de seus dados pessoais, com estratégia de anonimização (não deleção física) para preservar histórico financeiro.
+    \item \textbf{ID Token (Access Token):} JWT emitido pelo Firebase Auth no momento do login, com validade fixa de \textbf{60 minutos}. Devido ao curto tempo de vida, a superfície de exposição em caso de interceptação maliciosa é severamente minimizada.
+    \item \textbf{Refresh Token:} Token de longa duração persistido de forma segura pelo frontend. Não é enviado às rotas operacionais dos microsserviços de negócio; é utilizado exclusivamente em segundo plano para renovar o ID Token de forma transparente (\textit{Silent Refresh}).
 \end{itemize}
 
-\subsection{Observância à Legislação}
-O projeto foi desenvolvido com atenção à conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018):
+\subsection{Interceptação e Proteção (API Gateway)}
+O Spring Cloud Gateway atua como o único ponto de entrada público do ecossistema e o principal guardião de segurança. Foi implementado um filtro customizado (\texttt{FirebaseTokenGatewayFilter}) que analisa todas as requisições de entrada:
 \begin{itemize}
-    \item \textbf{Finalidade Específica e Consentimento:} A LGPD exige que dados pessoais (nome, telefone, e-mail, CPF) sejam coletados com consentimento explícito e utilizados apenas para a finalidade informada (agendamentos, gerenciamento).
-    \item \textbf{Proteção de Dados Pessoais:} Medidas como criptografia de senhas, controle de acesso e validação de dados são implementadas para proteger os dados.
-    \item \textbf{Direitos dos Titulares:} A LGPD garante aos titulares (usuários) direitos como acesso, correção, eliminação e portabilidade de seus dados.
-    \item \textbf{Transparência:} A política de privacidade da aplicação deve informar claramente quais dados são coletados, como são utilizados e por quanto tempo são armazenados.
+    \item \textbf{Validação da Assinatura:} O Gateway verifica a validade criptográfica do JWT contra as chaves públicas da Google. Se o token for inválido, expirado ou ausente, a requisição é bloqueada imediatamente com erro \textbf{401 Unauthorized}.
+    \item \textbf{Propagação de Contexto:} Após validar o token, o Gateway extrai o UID do utilizador e injeta-o como header HTTP interno (\texttt{X-User-Id}). Dessa forma, microsserviços como o \texttt{Schedule Service} ou \texttt{User Service} podem identificar quem está fazendo a requisição sem precisar revalidar o token criptográfico.
 \end{itemize}
+
+\subsection{Política de Senhas e Proteção de Credenciais}
+A integridade das contas é garantida pela política de senhas aplicada no Firebase Authentication:
+\begin{itemize}
+    \item \textbf{Comprimento Mínimo:} 6 caracteres (padrão de segurança do Firebase).
+    \item \textbf{Complexidade:} Recomenda-se combinação de letras maiúsculas, minúsculas, números e caracteres especiais, validada via expressões regulares no Frontend antes do envio ao provedor.
+    \item \textbf{Hashing:} O Firebase Authentication utiliza algoritmos avançados (versão otimizada do \textit{scrypt}) para armazenar as credenciais de forma irreversível.
+\end{itemize}
+
+Para usuários que optam pelo provedor \texttt{EMAIL}, a senha local é armazenada com hash \texttt{BCryptPasswordEncoder}. Usuários de login social não possuem senha local (\texttt{password = null}).
+
+\subsection{Autorização Baseada em Funções (RBAC)}
+Enquanto o Firebase resolve o problema da \textbf{Autenticação} (quem é o utilizador), o sistema interno resolve o problema da \textbf{Autorização} (o que ele pode fazer). O \texttt{User Service} mantém o mapeamento entre o UID do Firebase e a função (\textit{Role}) do utilizador. Foram definidas três funções principais:
+\begin{itemize}
+    \item \textbf{ROLE\_CUSTOMER:} Acesso aos próprios agendamentos e visualização de barbearias públicas.
+    \item \textbf{ROLE\_BARBER:} Acesso à gestão da própria agenda, bloqueios de horário e visualização de comissionamentos.
+    \item \textbf{ROLE\_OWNER:} Privilégios administrativos — gestão de inventário (\texttt{Product Service}), aprovação de barbeiros e métricas financeiras globais (\texttt{Payment Service}).
+\end{itemize}
+
+\subsection{Criptografia de Dados em Repouso (LGPD)}
+Campos sensíveis (e-mail, CPF, telefone, data de nascimento, CNPJ, tokens Mercado Pago) são criptografados em repouso com \textbf{AES/GCM} via \texttt{SensitiveStringConverter}. Um campo \texttt{email\_hash} (SHA-256) permite busca sem descriptografar.
+
+\subsection{Segurança da Infraestrutura}
+Os microsserviços são acessíveis apenas internamente via Docker network. Somente o \texttt{api-gateway} está exposto publicamente. Credenciais são gerenciadas como variáveis de ambiente.
+
+\subsection{Validação de Entrada de Dados}
+Jakarta Bean Validation é aplicado nos DTOs para validar os dados recebidos, incluindo validações customizadas para unicidade (e-mail, CPF) e formato (CPF, CNPJ).
+
+\subsection{Direitos do Usuário (LGPD)}
+O sistema garante direitos de acesso, correção e exclusão de dados pessoais. A estratégia de anonimização (não deleção física) preserva o histórico financeiro. O projeto foi desenvolvido em conformidade com a \textbf{Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018)}.
 
 \section{Modelo de banco de dados}
 Esta seção apresenta a estrutura de dados projetada para suportar a aplicação. O modelo de banco de dados é o alicerce do backend, sendo fundamental para garantir a integridade, consistência e performance.
@@ -844,6 +929,39 @@ A linha do tempo do projeto é dividida em 8 ciclos curtos de 2 semanas cada. Ca
     }
 \end{table}
 
+\subsection{Cronograma do projeto (Fase de Evolução e Estabilização)}
+A gestão do projeto foi adaptada para um ciclo focado na refatoração arquitetural para microsserviços e no polimento do MVP. O cronograma a seguir compreende o período crítico iniciado em fevereiro de 2026, estendendo-se até a homologação final em maio do mesmo ano.
+
+\begin{table}[htb]
+    \centering
+    \caption{Cronograma do Projeto — Fase de Evolução e Estabilização (2026)}
+    \label{tab:sprints2026}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{p{1.5cm} p{3.5cm} p{8.5cm} p{5cm}}
+        \toprule
+        \textbf{Sprint} & \textbf{Período (Início/Fim)} & \textbf{Meta da Sprint (Sprint Goal)} & \textbf{Marco} \\
+        \midrule
+        Sprint 1 & 27/02 - 13/03/2026 & Desacoplamento: Fragmentação do monólito em serviços independentes e configuração do API Gateway. & M7: Arquitetura Distribuída Inicial \\
+        Sprint 2 & 16/03 - 27/03/2026 & Infraestrutura: Implementação do Netflix Eureka para descoberta de serviços e configuração do ambiente Docker. & M8: Orquestração de Containers \\
+        Sprint 3 & 30/03 - 10/04/2026 & Segurança e Identidade: Migração total para Firebase Authentication e validação de permissões por Roles. & M9: Provedor de Identidade Migrado \\
+        Sprint 4 & 13/04 - 24/04/2026 & Estabilização de Dados: Sincronização entre serviços via OpenFeign e ajustes de persistência no cache Redis. & — \\
+        Sprint 5 & 27/04 - 08/05/2026 & Mensageria: Implementação do sistema de notificações consumindo eventos do RabbitMQ. & M10: Sistema de Eventos Concluído \\
+        Sprint 6 & 11/05 - 22/05/2026 & QA e Bug Fixing: Ciclo intensivo de correção de bugs, testes de carga nos microsserviços e refinamento da interface. & M11: Homologação Técnica \\
+        Sprint 7 & 25/05 - 27/05/2026 & Homologação Final: Preparação do ambiente de produção (Cloud), documentação final e encerramento do projeto. & M12: Entrega Formal do TCC \\
+        \bottomrule
+    \end{tabular}
+    }
+\end{table}
+
+\subsection{Análise do Caminho Crítico e Riscos}
+Nesta fase final, o caminho crítico desloca-se do desenvolvimento de novas funcionalidades para a resiliência da infraestrutura distribuída. Os principais pontos de atenção são:
+\begin{itemize}
+    \item \textbf{Dependência de Integração:} Falhas na publicação ou consumo de eventos RabbitMQ podem gerar inconsistências na comunicação com o usuário final.
+    \item \textbf{Estabilização de Ambiente:} O período de Bug Fixing (Sprint 6) é vital para garantir que a orquestração dos contêineres Docker mantenha a performance sob carga real.
+    \item \textbf{Restrição Temporal:} A data de 27 de maio de 2026 é uma restrição rígida, exigindo que o polimento do sistema não comprometa o funcionamento dos requisitos básicos de agendamento e pagamento.
+    \item \textbf{Reserva para DevOps:} 20\% do tempo útil de cada Sprint (2 dias úteis por ciclo quinzenal) é dedicado exclusivamente a tarefas de DevOps e manutenção de ambiente.
+\end{itemize}
+
 \chapter{Considerações Finais}
 O desenvolvimento da aplicação web "CortaAi", um marketplace para gerenciamento e agendamento em barbearias, representa uma iniciativa significativa para modernizar e otimizar a operação destes estabelecimentos, trazendo organização, eficiência e maior visibilidade no ambiente digital.
 
@@ -906,6 +1024,27 @@ Em suma, o desenvolvimento desta aplicação demonstra o potencial de arquitetur
 
     \bibitem{trinks2025}
     TRINKS. \textit{Agenda online para barbearia: o que é e como funciona?}. 2025. Disponível em: \url{https://blog.trinks.com/agenda-online-para-barbearia-o-que-e-e-como-funciona/}. Acesso em: 07/09/25.
+
+    \bibitem{docker2026}
+    DOCKER. \textit{Docker Documentation}. [S.l.]: Docker Inc., [c2026]. Disponível em: \url{https://docs.docker.com/}. Acesso em: 05/02/2026.
+
+    \bibitem{pwa2026}
+    GOOGLE DEVELOPERS. \textit{Progressive Web Apps (PWAs)}. [S.l.]: Google, [c2026]. Disponível em: \url{https://developer.google.com/web/progressive-web-apps}. Acesso em: 14/04/2026.
+
+    \bibitem{fowler2014}
+    FOWLER, Martin; LEWIS, James. \textit{Microservices: a definition of this new architectural term}. [S.l.]: MartinFowler.com, [c2014]. Disponível em: \url{https://martinfowler.com/articles/microservices.html}. Acesso em: 04/02/2026.
+
+    \bibitem{newman2021}
+    NEWMAN, Sam. \textit{Building Microservices: Designing Fine-Grained Systems}. 2. ed. Sebastopol: O'Reilly Media, 2021.
+
+    \bibitem{redis2026}
+    REDIS. \textit{Redis Documentation}. [S.l.]: Redis Ltd., [c2026]. Disponível em: \url{https://redis.io/docs/}. Acesso em: 25/03/2026.
+
+    \bibitem{springgateway2026}
+    SPRING. \textit{Spring Cloud Gateway Reference Documentation}. [S.l.]: VMware, [c2026]. Disponível em: \url{https://spring.io/projects/spring-cloud-gateway}. Acesso em: 16/02/2026.
+
+    \bibitem{walls2022}
+    WALLS, Craig. \textit{Spring in Action}. 6. ed. Shelter Island: Manning Publications, 2022.
 \end{thebibliography}
 
 % --- APÊNDICES ---
