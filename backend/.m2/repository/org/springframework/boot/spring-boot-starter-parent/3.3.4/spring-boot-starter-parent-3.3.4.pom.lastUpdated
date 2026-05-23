@@ -1,0 +1,6 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Fri May 22 21:40:55 BRT 2026
+https\://repo1.maven.org/maven2/.error=Could not transfer artifact org.springframework.boot\:spring-boot-starter-parent\:pom\:3.3.4 from/to central-fallback (https\://repo1.maven.org/maven2/)\: repo1.maven.org\: nodename nor servname provided, or not known
+https\://maven-central.storage.googleapis.com/maven2/.error=Could not transfer artifact org.springframework.boot\:spring-boot-starter-parent\:pom\:3.3.4 from/to google-maven-central (https\://maven-central.storage.googleapis.com/maven2/)\: maven-central.storage.googleapis.com\: nodename nor servname provided, or not known
+@default-central-fallback-https\://repo1.maven.org/maven2/.lastUpdated=1779496855614
+@default-google-maven-central-https\://maven-central.storage.googleapis.com/maven2/.lastUpdated=1779496855626

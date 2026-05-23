@@ -352,7 +352,8 @@ public class EmailService {
         send(toEmail, subject, body);
     }
 
-    // ─── Template base HTML ──────────────────────────────────────────────────────    private String baseTemplate(String title, String greeting, String content, String ctaLabel, String ctaUrl) {
+    // ─── Template base HTML ──────────────────────────────────────────────────────
+    private String baseTemplate(String title, String greeting, String content, String ctaLabel, String ctaUrl) {
         return """
                 <!DOCTYPE html>
                 <html lang="pt-BR">
