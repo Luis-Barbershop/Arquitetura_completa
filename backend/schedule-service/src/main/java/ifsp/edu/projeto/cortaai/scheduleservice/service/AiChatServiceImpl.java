@@ -24,9 +24,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -36,6 +40,7 @@ import java.util.UUID;
 public class AiChatServiceImpl implements AiChatService {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final int MAX_APPOINTMENTS_CONTEXT = 50;
 
     private final AppointmentRepository appointmentRepository;
@@ -95,7 +100,7 @@ public class AiChatServiceImpl implements AiChatService {
         var history = chatHistoryService.getHistory(userUid);
 
         String context = buildContext(userUid, userRole, request.mode(), resolvedUser);
-        String prompt  = buildPrompt(context, chatHistoryService.formatHistoryForPrompt(history), request.message(), resolvedUser);
+        String prompt  = buildPrompt(context, chatHistoryService.formatHistoryForPrompt(history), request.message(), resolvedUser, userRole);
 
         String reply = null;
         String source = "fallback";
@@ -139,8 +144,9 @@ public class AiChatServiceImpl implements AiChatService {
         UUID internalId   = user != null ? user.getId() : null;
         UUID barbershopId = user != null ? user.getBarbershopId() : null;
         boolean isCustomer = user != null && "CUSTOMER".equalsIgnoreCase(user.getUserType());
-        boolean isOwner    = !isCustomer && barbershopId != null;
+        boolean isOwner    = isOwnerUser(user, userRole);
         LocalDateTime now  = LocalDateTime.now();
+        LocalDate today = LocalDate.now();
 
         StringBuilder ctx = new StringBuilder();
 
@@ -180,13 +186,17 @@ public class AiChatServiceImpl implements AiChatService {
                         ctx.append('\n').append(formatCancelledContext(cancelados));
                     }
                 }
-                // Colaborador: adiciona resumo financeiro pessoal com comissões
-                if (!isOwner && !isCustomer && barbershopId != null) {
-                    ctx.append("\n\n").append(formatBarberCommissionContext(barbershopId, internalId, appointments));
-                }
             }
         } else {
             ctx.append("Dados de agenda não disponíveis no momento.");
+        }
+
+        if (!isCustomer && internalId != null) {
+            ctx.append("\n\n").append(formatOperationalAppointmentMetrics(internalId, barbershopId, isOwner, today, now));
+        }
+
+        if (!isCustomer && barbershopId != null) {
+            ctx.append("\n\n").append(formatDashboardFinancialContext(firebaseUid, barbershopId, internalId, isOwner, today, now));
         }
 
         // 2–4. Contexto adicional exclusivo para owners
@@ -195,10 +205,6 @@ public class AiChatServiceImpl implements AiChatService {
             ctx.append("\n\n").append(formatServiceRevenueContext(barbershopId));
             ctx.append("\n\n").append(formatUncoveredServicesContext(barbershopId));
             ctx.append("\n\n").append(formatStockContext(barbershopId));
-            // Resumo financeiro calculado a partir dos appointments concluídos (fonte primária)
-            ctx.append("\n\n").append(formatFinancialSummaryFromAppointments(barbershopId, now));
-            // Performance por barbeiro via payment-service (complementar — pode estar vazia)
-            ctx.append("\n\n").append(formatFinancialContext(barbershopId));
         }
 
         return ctx.toString();
@@ -282,6 +288,244 @@ public class AiChatServiceImpl implements AiChatService {
         if (fullName == null || fullName.isBlank()) return "—";
         // Não expõe sobrenome — política de privacidade (ADR-13)
         return fullName.trim().split("\\s+")[0];
+    }
+
+    private boolean isOwnerUser(UserInfoDTO user, String headerRole) {
+        if (user == null) return false;
+        String role = ((user.getRole() != null ? user.getRole() : "") + " " + (headerRole != null ? headerRole : ""))
+                .toUpperCase(Locale.ROOT);
+        return role.contains("OWNER");
+    }
+
+    private String formatOperationalAppointmentMetrics(UUID barberId, UUID barbershopId, boolean isOwner, LocalDate today, LocalDateTime now) {
+        try {
+            LocalDate monthStart = today.withDayOfMonth(1);
+            LocalDateTime todayStart = today.atStartOfDay();
+            LocalDateTime todayEnd = today.plusDays(1).atStartOfDay().minusNanos(1);
+            LocalDateTime tomorrowStart = today.plusDays(1).atStartOfDay();
+            LocalDateTime tomorrowEnd = today.plusDays(2).atStartOfDay().minusNanos(1);
+            LocalDateTime monthStartDateTime = monthStart.atStartOfDay();
+            LocalDateTime monthEnd = today.plusDays(1).atStartOfDay().minusNanos(1);
+
+            List<Appointment> todayAppointments = findScopedAppointments(barberId, barbershopId, isOwner, todayStart, todayEnd);
+            List<Appointment> tomorrowAppointments = findScopedAppointments(barberId, barbershopId, isOwner, tomorrowStart, tomorrowEnd);
+            List<Appointment> monthAppointments = findScopedAppointments(barberId, barbershopId, isOwner, monthStartDateTime, monthEnd);
+
+            long todayUpcoming = todayAppointments.stream()
+                    .filter(a -> a.getStartTime() != null && !a.getStartTime().isBefore(now))
+                    .filter(a -> !isLostStatus(a) && !isCompletedStatus(a))
+                    .count();
+            long todayCompleted = todayAppointments.stream().filter(this::isCompletedStatus).count();
+            long tomorrowActive = tomorrowAppointments.stream().filter(a -> !isLostStatus(a) && !isCompletedStatus(a)).count();
+            long monthCompleted = monthAppointments.stream().filter(this::isCompletedStatus).count();
+            long monthLost = monthAppointments.stream().filter(this::isLostStatus).count();
+            BigDecimal monthRevenue = monthAppointments.stream()
+                    .filter(this::isCompletedStatus)
+                    .map(a -> a.getTotalPrice() != null ? a.getTotalPrice() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            String scope = isOwner ? "toda a barbearia" : "apenas este barbeiro";
+            StringBuilder sb = new StringBuilder("Agenda e atendimentos do painel (escopo: " + scope + "):\n");
+            sb.append("- Hoje (").append(today.format(DATE_FMT)).append("): ")
+                    .append(todayUpcoming).append(" próximos/ativos, ")
+                    .append(todayCompleted).append(" concluídos\n");
+            sb.append("- Amanhã (").append(today.plusDays(1).format(DATE_FMT)).append("): ")
+                    .append(tomorrowActive).append(" agendamentos ativos\n");
+            sb.append("- Mês atual (").append(monthStart.format(DATE_FMT)).append(" a ").append(today.format(DATE_FMT)).append("): ")
+                    .append(monthCompleted).append(" atendimentos concluídos, ")
+                    .append(monthLost).append(" cancelados/no-show, ")
+                    .append("valor bruto em atendimentos concluídos: R$ ").append(formatMoney(monthRevenue)).append('\n');
+            sb.append(formatTopServicesFromAppointments(monthAppointments));
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustavo: não foi possível calcular métricas operacionais — {}", e.getMessage());
+            return "Agenda e atendimentos do painel: dados temporariamente indisponíveis.";
+        }
+    }
+
+    private List<Appointment> findScopedAppointments(UUID barberId, UUID barbershopId, boolean isOwner, LocalDateTime from, LocalDateTime to) {
+        if (isOwner && barbershopId != null) {
+            return appointmentRepository.findByBarbershopIdAndStartTimeBetween(barbershopId, from, to);
+        }
+        return appointmentRepository.findByBarberIdAndStartTimeBetween(barberId, from, to);
+    }
+
+    private boolean isCompletedStatus(Appointment appointment) {
+        if (appointment == null || appointment.getStatus() == null) return false;
+        return switch (appointment.getStatus()) {
+            case COMPLETED, CONCLUDED, WALK_IN -> true;
+            default -> false;
+        };
+    }
+
+    private boolean isLostStatus(Appointment appointment) {
+        if (appointment == null || appointment.getStatus() == null) return false;
+        return switch (appointment.getStatus()) {
+            case CANCELLED, NO_SHOW -> true;
+            default -> false;
+        };
+    }
+
+    private String formatTopServicesFromAppointments(List<Appointment> appointments) {
+        Map<String, ServiceStats> stats = new java.util.LinkedHashMap<>();
+        appointments.stream()
+                .filter(this::isCompletedStatus)
+                .filter(a -> a.getActivities() != null)
+                .flatMap(a -> a.getActivities().stream())
+                .forEach(activity -> {
+                    String name = activity.getActivityName() != null ? activity.getActivityName() : "Serviço sem nome";
+                    ServiceStats current = stats.computeIfAbsent(name, key -> new ServiceStats());
+                    current.count++;
+                    current.revenue = current.revenue.add(activity.getPrice() != null ? activity.getPrice() : BigDecimal.ZERO);
+                });
+
+        if (stats.isEmpty()) return "- Serviços no mês atual: sem atendimentos concluídos.\n";
+
+        var top = stats.entrySet().stream()
+                .sorted((a, b) -> {
+                    int countCompare = Long.compare(b.getValue().count, a.getValue().count);
+                    if (countCompare != 0) return countCompare;
+                    return b.getValue().revenue.compareTo(a.getValue().revenue);
+                })
+                .limit(5)
+                .toList();
+
+        StringBuilder sb = new StringBuilder("- Serviços mais executados no mês atual:\n");
+        top.forEach(entry -> sb
+                .append("  · ").append(entry.getKey())
+                .append(": ").append(entry.getValue().count)
+                .append(" vez(es), R$ ").append(formatMoney(entry.getValue().revenue))
+                .append('\n'));
+        return sb.toString();
+    }
+
+    private String formatDashboardFinancialContext(String firebaseUid, UUID barbershopId, UUID barberId, boolean isOwner, LocalDate today, LocalDateTime now) {
+        LocalDate monthStart = today.withDayOfMonth(1);
+        try {
+            if (isOwner) {
+                Map<String, Object> month = paymentServiceClient.getMyShopOverview(firebaseUid, barbershopId, monthStart, today);
+                Map<String, Object> day = paymentServiceClient.getMyShopOverview(firebaseUid, barbershopId, today, today);
+                if (month == null || day == null) {
+                    return formatFinancialSummaryFromAppointments(barbershopId, now);
+                }
+
+                StringBuilder sb = new StringBuilder("Financeiro do painel do dono (mesma fonte do Dashboard):\n");
+                sb.append("- Mês atual (").append(monthStart.format(DATE_FMT)).append(" a ").append(today.format(DATE_FMT)).append("):\n");
+                appendOwnerOverview(sb, month, "  ");
+                sb.append("- Hoje (").append(today.format(DATE_FMT)).append("): faturamento total R$ ")
+                        .append(formatMoney(decimalValue(day, "totalServiceRevenue")))
+                        .append(", resultado operacional total R$ ")
+                        .append(formatMoney(decimalValue(day, "operationalResultWithWalkIn")))
+                        .append(", atendimentos walk-in: ").append(intValue(day, "walkInAppointmentsCount"))
+                        .append(", transações aprovadas: ").append(intValue(day, "approvedCount"))
+                        .append('\n');
+
+                List<Map<String, Object>> performance = paymentServiceClient.getMyShopBarberPerformance(firebaseUid, barbershopId, monthStart, today);
+                if (performance != null && !performance.isEmpty()) {
+                    sb.append("- Ranking de barbeiros no mês atual:\n");
+                    performance.stream().limit(5).forEach(p -> sb
+                            .append("  · ").append(firstNameOnly(String.valueOf(p.getOrDefault("barberName", "?"))))
+                            .append(": receita gerada R$ ").append(formatMoney(decimalValue(p, "generatedRevenue")))
+                            .append(", atendimentos: ").append(intValue(p, "totalAppointments"))
+                            .append(", participação: ").append(formatMoney(decimalValue(p, "contributionPercentage"))).append("%")
+                            .append('\n'));
+                }
+                return sb.toString();
+            }
+
+            if (barberId == null) {
+                return "Financeiro do painel do barbeiro: dados não disponíveis para este usuário.";
+            }
+
+            Map<String, Object> month = paymentServiceClient.getMyBarberSummary(firebaseUid, barbershopId, monthStart, today);
+            Map<String, Object> day = paymentServiceClient.getMyBarberSummary(firebaseUid, barbershopId, today, today);
+            if (month == null || day == null) {
+                List<Appointment> appointments = appointmentRepository.findCompletedByBarberId(barberId, monthStart.atStartOfDay(), today.plusDays(1).atStartOfDay().minusNanos(1));
+                return formatBarberCommissionContext(barbershopId, barberId, appointments);
+            }
+
+            StringBuilder sb = new StringBuilder("Financeiro do painel do barbeiro (mesma fonte do card de faturamento):\n");
+            sb.append("- Mês atual (").append(monthStart.format(DATE_FMT)).append(" a ").append(today.format(DATE_FMT)).append("):\n");
+            appendBarberSummary(sb, month, "  ");
+            sb.append("- Hoje (").append(today.format(DATE_FMT)).append("): comissão total R$ ")
+                    .append(formatMoney(decimalValue(day, "barberTotalCommission")))
+                    .append(", valor bruto gerado R$ ")
+                    .append(formatMoney(decimalValue(day, "grossTotalRevenue")))
+                    .append(", comissão da barbearia R$ ")
+                    .append(formatMoney(decimalValue(day, "barbershopTotalCommission")))
+                    .append('\n');
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustavo: não foi possível obter financeiro do painel — {}", e.getMessage());
+            if (isOwner && barbershopId != null) {
+                return formatFinancialSummaryFromAppointments(barbershopId, now);
+            }
+            if (barberId != null && barbershopId != null) {
+                List<Appointment> appointments = appointmentRepository.findCompletedByBarberId(barberId, monthStart.atStartOfDay(), today.plusDays(1).atStartOfDay().minusNanos(1));
+                return formatBarberCommissionContext(barbershopId, barberId, appointments);
+            }
+            return "Financeiro do painel: dados temporariamente indisponíveis.";
+        }
+    }
+
+    private void appendOwnerOverview(StringBuilder sb, Map<String, Object> overview, String indent) {
+        sb.append(indent).append("Faturamento total: R$ ").append(formatMoney(decimalValue(overview, "totalServiceRevenue"))).append('\n');
+        sb.append(indent).append("Receita com transações: R$ ").append(formatMoney(decimalValue(overview, "serviceRevenue"))).append('\n');
+        sb.append(indent).append("Receita walk-in: R$ ").append(formatMoney(decimalValue(overview, "walkInRevenue"))).append('\n');
+        sb.append(indent).append("Gastos com produtos: R$ ").append(formatMoney(decimalValue(overview, "productExpenses"))).append('\n');
+        sb.append(indent).append("Valor em estoque: R$ ").append(formatMoney(decimalValue(overview, "inventoryAssetValue"))).append('\n');
+        sb.append(indent).append("Resultado operacional total: R$ ").append(formatMoney(decimalValue(overview, "operationalResultWithWalkIn"))).append('\n');
+        sb.append(indent).append("Transações aprovadas: ").append(intValue(overview, "approvedCount"))
+                .append(", pendentes: ").append(intValue(overview, "pendingCount"))
+                .append(", canceladas: ").append(intValue(overview, "cancelledCount"))
+                .append(", walk-ins: ").append(intValue(overview, "walkInAppointmentsCount"))
+                .append('\n');
+    }
+
+    private void appendBarberSummary(StringBuilder sb, Map<String, Object> summary, String indent) {
+        sb.append(indent).append("Comissão total do barbeiro: R$ ").append(formatMoney(decimalValue(summary, "barberTotalCommission"))).append('\n');
+        sb.append(indent).append("Comissão com transações: R$ ").append(formatMoney(decimalValue(summary, "barberServiceCommission"))).append('\n');
+        sb.append(indent).append("Comissão walk-in: R$ ").append(formatMoney(decimalValue(summary, "barberWalkInCommission"))).append('\n');
+        sb.append(indent).append("Valor bruto gerado: R$ ").append(formatMoney(decimalValue(summary, "grossTotalRevenue"))).append('\n');
+        sb.append(indent).append("Parte da barbearia: R$ ").append(formatMoney(decimalValue(summary, "barbershopTotalCommission"))).append('\n');
+        sb.append(indent).append("Transações aprovadas: ").append(intValue(summary, "approvedCount"))
+                .append(", pendentes: ").append(intValue(summary, "pendingCount"))
+                .append(", canceladas: ").append(intValue(summary, "cancelledCount"))
+                .append(", walk-ins: ").append(intValue(summary, "walkInAppointmentsCount"))
+                .append('\n');
+    }
+
+    private BigDecimal decimalValue(Map<String, Object> data, String key) {
+        if (data == null || !data.containsKey(key) || data.get(key) == null) return BigDecimal.ZERO;
+        Object value = data.get(key);
+        if (value instanceof BigDecimal bd) return bd;
+        if (value instanceof Number number) return BigDecimal.valueOf(number.doubleValue());
+        try {
+            return new BigDecimal(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return BigDecimal.ZERO;
+        }
+    }
+
+    private int intValue(Map<String, Object> data, String key) {
+        if (data == null || !data.containsKey(key) || data.get(key) == null) return 0;
+        Object value = data.get(key);
+        if (value instanceof Number number) return number.intValue();
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private String formatMoney(BigDecimal value) {
+        BigDecimal safe = value != null ? value : BigDecimal.ZERO;
+        return safe.setScale(2, RoundingMode.HALF_UP).toPlainString().replace('.', ',');
+    }
+
+    private static class ServiceStats {
+        long count;
+        BigDecimal revenue = BigDecimal.ZERO;
     }
 
     private String formatSkillMatrix(UUID barbershopId) {
@@ -580,12 +824,12 @@ public class AiChatServiceImpl implements AiChatService {
 
     // ── Prompt ───────────────────────────────────────────────────────────────
 
-    private String buildPrompt(String context, String history, String message, UserInfoDTO user) {
+    private String buildPrompt(String context, String history, String message, UserInfoDTO user, String userRole) {
         String nomeUsuario = user != null && user.getName() != null
                 ? user.getName().trim().split("\\s+")[0]
                 : "usuário";
         boolean isCustomer = user != null && "CUSTOMER".equalsIgnoreCase(user.getUserType());
-        boolean isOwner    = !isCustomer && user != null && user.getBarbershopId() != null;
+        boolean isOwner    = isOwnerUser(user, userRole);
         String perfil = isOwner ? "DONO DE BARBEARIA" : isCustomer ? "CLIENTE" : "BARBEIRO COLABORADOR";
         String historyBlock = history.isBlank() ? "" : "\n" + history + "\n";
 
@@ -608,6 +852,9 @@ public class AiChatServiceImpl implements AiChatService {
                 5. Se a pergunta for fora do contexto de gestão de barbearia (agenda, financeiro, equipe, estoque), recuse: "Meu foco é a gestão da sua barbearia. Posso ajudar com agenda, financeiro, equipe ou estoque."
                 6. Nunca exponha sobrenomes ou dados pessoais de clientes.
                 7. Use o histórico da conversa acima para manter continuidade — se o usuário disser "ele" ou "aquele", interprete com base no contexto anterior.
+                8. Quando o usuário perguntar sobre "mês", "este mês", "rendimento", "faturamento", "ganhei" ou "recebi", use o bloco "Mês atual" do financeiro do painel. Não troque por "últimos 30 dias" nem por projeção.
+                9. Para DONO, "rendimento/faturamento do mês" significa faturamento total da barbearia; se ele pedir lucro/resultado, use resultado operacional total. Para BARBEIRO COLABORADOR, "rendimento/quanto recebi" significa comissão total do barbeiro.
+                10. Se existirem várias métricas parecidas, escolha a mais aderente à pergunta e cite o rótulo exato usado. Não diga que um único valor representa 30 dias, 90 dias e projeção ao mesmo tempo.
                 %s
 
                 Pergunta: %s
@@ -616,12 +863,12 @@ public class AiChatServiceImpl implements AiChatService {
                 perfil,
                 isOwner
                         ? "- Acesso: agenda completa da barbearia, financeiro, estoque e equipe"
-                        : "- Acesso: apenas seus próprios agendamentos",
+                        : "- Acesso: apenas seus próprios agendamentos e financeiro pessoal",
                 context,
                 historyBlock,
                 isOwner
                         ? ""
-                        : "8. Este usuário é colaborador, não dono. Não forneça dados financeiros globais da barbearia, apenas os dados dele.",
+                        : "11. Este usuário é colaborador, não dono. Não forneça dados financeiros globais da barbearia, apenas os dados dele.",
                 message
         );
     }

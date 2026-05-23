@@ -117,9 +117,15 @@ class AiChatServiceImplTest {
                 Map.of("productName", "Pomada", "category", "Finalizador", "currentStock", 0, "predictedMinimum", 3, "requiresRestock", true),
                 Map.of("productName", "Shampoo", "currentStock", 12, "requiresRestock", false)
         ));
-        when(appointmentRepository.findCompletedByBarbershop(eq(shopId), any(), any()))
-                .thenReturn(List.of(appointment(shopId, barberId, ownerId, AppointmentStatus.COMPLETED, "Carla Mendes", "Bruno Costa", "90.00")));
-        when(paymentServiceClient.getBarberPerformance(shopId)).thenReturn(List.of(
+        when(paymentServiceClient.getMyShopOverview(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(
+                        Map.of("totalServiceRevenue", "413.40", "serviceRevenue", "350.00", "walkInRevenue", "63.40",
+                                "productExpenses", "50.00", "inventoryAssetValue", "120.00", "operationalResultWithWalkIn", "363.40",
+                                "approvedCount", 5, "pendingCount", 1, "cancelledCount", 0, "walkInAppointmentsCount", 1),
+                        Map.of("totalServiceRevenue", "90.00", "operationalResultWithWalkIn", "90.00",
+                                "approvedCount", 1, "walkInAppointmentsCount", 0)
+                );
+        when(paymentServiceClient.getMyShopBarberPerformance(eq("firebase-uid"), eq(shopId), any(), any())).thenReturn(List.of(
                 Map.of("barberName", "Bruno", "totalAppointments", 6, "generatedRevenue", "540.00", "contributionPercentage", "70")
         ));
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class)))
@@ -138,7 +144,9 @@ class AiChatServiceImplTest {
         assertThat(entityCaptor.getValue().getBody().toString())
                 .contains("Agendamentos futuros")
                 .contains("Situação do estoque")
-                .contains("Receita últimos 90 dias")
+                .contains("Financeiro do painel do dono")
+                .contains("Faturamento total: R$ 413,40")
+                .contains("Ranking de barbeiros no mês atual")
                 .contains("Serviços não executados por barbeiro");
         verify(chatHistoryService).appendTurn("firebase-uid", "Resumo da barbearia", "Agenda cheia hoje.");
     }
@@ -203,6 +211,45 @@ class AiChatServiceImplTest {
     }
 
     @Test
+    void shouldTreatLinkedBarberAsCollaboratorWhenRoleIsNotOwner() {
+        UUID barberId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+        UserInfoDTO barber = user(barberId, "BARBER", shopId);
+        barber.setRole("ROLE_BARBER");
+        setProvider("groqApiKey", "groq-token");
+        when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(barber);
+        when(appointmentRepository.findCompletedByBarberId(eq(barberId), any(), any()))
+                .thenReturn(List.of(appointment(shopId, barberId, UUID.randomUUID(), AppointmentStatus.COMPLETED, "Cliente Um", "Barbeiro Linkado", "70.00")));
+        when(paymentServiceClient.getMyBarberSummary(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(
+                        Map.of("barberTotalCommission", "35.00", "barberServiceCommission", "35.00", "barberWalkInCommission", "0.00",
+                                "grossTotalRevenue", "70.00", "barbershopTotalCommission", "35.00",
+                                "approvedCount", 1, "pendingCount", 0, "cancelledCount", 0, "walkInAppointmentsCount", 0),
+                        Map.of("barberTotalCommission", "35.00", "grossTotalRevenue", "70.00", "barbershopTotalCommission", "35.00")
+                );
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(Map.of("choices", List.of(Map.of("message", Map.of("content", "Sua comissão é R$ 35,00.")))));
+
+        AiChatResponseDTO response = service.chat(
+                "firebase-uid",
+                "BARBER",
+                new AiChatRequestDTO("qual foi meu rendimento do mes?", AiChatMode.CONSOLIDATED)
+        );
+
+        assertThat(response.source()).isEqualTo("groq");
+        ArgumentCaptor<HttpEntity> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).postForObject(anyString(), entityCaptor.capture(), eq(Map.class));
+        assertThat(entityCaptor.getValue().getBody().toString())
+                .contains("BARBEIRO COLABORADOR")
+                .contains("Financeiro do painel do barbeiro")
+                .contains("Comissão total do barbeiro: R$ 35,00")
+                .doesNotContain("DONO DE BARBEARIA")
+                .doesNotContain("Financeiro do painel do dono");
+        verify(paymentServiceClient, never()).getMyShopOverview(anyString(), any(), any(), any());
+        verify(productServiceClient, never()).getStockHealth(any());
+    }
+
+    @Test
     void shouldFallbackFromUnavailableProvidersUntilCohereSucceeds() {
         UUID customerId = UUID.randomUUID();
         setProvider("geminiApiKey", "gemini-token");
@@ -243,7 +290,8 @@ class AiChatServiceImplTest {
                 .thenThrow(new RuntimeException("view off"));
         when(barbershopServiceClient.getAllActivities(shopId)).thenThrow(new RuntimeException("barbershop off"));
         when(productServiceClient.getStockHealth(shopId)).thenThrow(new RuntimeException("product off"));
-        when(paymentServiceClient.getBarberPerformance(shopId)).thenThrow(new RuntimeException("payment off"));
+        when(paymentServiceClient.getMyShopOverview(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenThrow(new RuntimeException("payment off"));
         when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class)))
                 .thenReturn(Map.of("choices", List.of(Map.of("message", Map.of("content", "Dados parciais.")))));
 
@@ -270,6 +318,7 @@ class AiChatServiceImplTest {
         user.setId(id);
         user.setName(type.equals("CUSTOMER") ? "Ana Cliente" : "Bruno Barbeiro");
         user.setUserType(type);
+        user.setRole(type.equals("CUSTOMER") ? "ROLE_CUSTOMER" : shopId != null ? "ROLE_OWNER" : "ROLE_BARBER");
         user.setBarbershopId(shopId);
         return user;
     }

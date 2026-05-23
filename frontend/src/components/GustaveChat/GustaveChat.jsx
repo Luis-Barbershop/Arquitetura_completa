@@ -11,9 +11,12 @@ const AVATAR = '✂️';
 function detectMode(text) {
     const lower = text.toLowerCase();
     const consolidatedKeywords = [
-        'semana passada', 'mês passado', 'ontem', 'histórico', 'relatório',
+        'semana passada', 'mês passado', 'mes passado', 'ontem', 'histórico', 'historico', 'relatório', 'relatorio',
         'faturamento', 'receita', 'atendimentos realizados', 'concluídos',
-        'desempenho', 'balanço', 'resumo do mês', 'últimos dias',
+        'concluidos', 'desempenho', 'balanço', 'balanco', 'resumo do mês',
+        'resumo do mes', 'últimos dias', 'ultimos dias', 'rendimento',
+        'rendimentos', 'ganhei', 'ganho', 'recebi', 'receber', 'comissão',
+        'comissao', 'lucro', 'resultado', 'mês', 'mes',
     ];
     return consolidatedKeywords.some(k => lower.includes(k)) ? 'CONSOLIDATED' : 'PREVIEW';
 }
