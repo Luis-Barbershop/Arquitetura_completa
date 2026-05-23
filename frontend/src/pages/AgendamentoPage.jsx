@@ -569,6 +569,7 @@ const AgendamentoPage = () => {
               latitude={shopInfo.latitude}
               longitude={shopInfo.longitude}
               barbershopName={shopInfo.name}
+              address={shopInfo.address}
             />
           </section>
         )}

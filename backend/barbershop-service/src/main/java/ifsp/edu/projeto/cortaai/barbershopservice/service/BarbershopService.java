@@ -161,9 +161,9 @@ public class BarbershopService {
     // ========== LEITURA PÚBLICA ==========
 
     @Transactional(readOnly = true)
-    public List<BarbershopDTO> listBarbershops() {
+    public List<BarbershopPublicDTO> listBarbershops() {
         return barbershopRepository.findAll().stream()
-                .map(barbershopMapper::toDTO)
+                .map(barbershopMapper::toPublicDTO)
                 .collect(Collectors.toList());
     }
 
@@ -219,10 +219,10 @@ public class BarbershopService {
     }
 
     @Transactional(readOnly = true)
-    public BarbershopDTO getBarbershop(UUID shopId) {
+    public BarbershopPublicDTO getBarbershop(UUID shopId) {
         Barbershop shop = barbershopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Barbearia não encontrada."));
-        return barbershopMapper.toDTO(shop);
+        return barbershopMapper.toPublicDTO(shop);
     }
 
     public void createReview(String customerUid, UUID shopId, CreateBarbershopReviewDTO dto) {

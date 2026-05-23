@@ -72,8 +72,7 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             "/webjars/**",
             "/actuator/**",
         "/api/payments/mp-callback", "/api/payments/mp-callback/",
-            "/api/payments/webhook", "/api/payments/webhook/",
-            "/api/internal/**"
+            "/api/payments/webhook", "/api/payments/webhook/"
     );
 
     /**

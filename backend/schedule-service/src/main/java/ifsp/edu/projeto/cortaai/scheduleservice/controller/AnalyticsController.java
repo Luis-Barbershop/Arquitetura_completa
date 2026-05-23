@@ -19,13 +19,15 @@ public class AnalyticsController {
 
     @GetMapping("/agenda-thermometer")
     public ResponseEntity<List<AgendaThermometerResponseDTO>> getAgendaThermometer(
+            @RequestHeader("X-User-UID") String firebaseUid,
             @RequestParam String barbershopId) {
-        return ResponseEntity.ok(analyticsService.getAgendaThermometer(barbershopId));
+        return ResponseEntity.ok(analyticsService.getAgendaThermometer(firebaseUid, barbershopId));
     }
 
     @GetMapping("/barber-skill-matrix")
     public ResponseEntity<List<BarberSkillMatrixResponseDTO>> getBarberSkillMatrix(
+            @RequestHeader("X-User-UID") String firebaseUid,
             @RequestParam String barbershopId) {
-        return ResponseEntity.ok(analyticsService.getBarberSkillMatrix(barbershopId));
+        return ResponseEntity.ok(analyticsService.getBarberSkillMatrix(firebaseUid, barbershopId));
     }
 }

@@ -10,6 +10,8 @@ import ifsp.edu.projeto.cortaai.productservice.dto.StockHealthAlertResponseDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.StockMovementDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.StockMovementRequestDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.UpdateProductDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.UserInfoDTO;
+import ifsp.edu.projeto.cortaai.productservice.feign.UserServiceClient;
 import ifsp.edu.projeto.cortaai.productservice.mapper.ProductMapper;
 import ifsp.edu.projeto.cortaai.productservice.model.Category;
 import ifsp.edu.projeto.cortaai.productservice.model.MovementType;
@@ -28,6 +30,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -61,6 +65,9 @@ class ProductServiceTest {
 
     @Mock
     private VStockHealthAlertRepository vStockHealthAlertRepository;
+
+    @Mock
+    private UserServiceClient userServiceClient;
 
     @InjectMocks
     private ProductService productService;
@@ -820,6 +827,38 @@ class ProductServiceTest {
         assertThat(alerts.get(1).requiresRestock()).isFalse();
     }
 
+    @Test
+    void shouldAllowOwnerToUseSecuredStockEndpoints() {
+        UUID shopId = UUID.randomUUID();
+        UserInfoDTO owner = ownerUser(shopId);
+        Product product = Product.builder()
+                .id(UUID.randomUUID())
+                .barbershopId(shopId)
+                .name("Pomada")
+                .active(true)
+                .build();
+        ProductDTO dto = new ProductDTO(product.getId(), shopId, "Pomada", null,
+                BigDecimal.TEN, null, null, ProductCategory.OTHER, 2, 1,
+                null, true, null);
+
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(owner);
+        when(productRepository.findByBarbershopIdAndActiveTrue(shopId)).thenReturn(List.of(product));
+        when(productMapper.toDTO(product)).thenReturn(dto);
+
+        assertThat(productService.getProductsByBarbershop("owner-uid", shopId)).containsExactly(dto);
+    }
+
+    @Test
+    void shouldRejectSecuredStockAccessForAnotherBarbershop() {
+        UUID ownerShopId = UUID.randomUUID();
+        UUID requestedShopId = UUID.randomUUID();
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(ownerUser(ownerShopId));
+
+        assertThatThrownBy(() -> productService.getCategories("owner-uid", requestedShopId))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN));
+    }
+
     private void assertMovementReason(MovementType type, String expectedReason, int initialQuantity, int expectedQuantity) {
         UUID productId = UUID.randomUUID();
         Product product = Product.builder()
@@ -847,6 +886,15 @@ class ProductServiceTest {
 
         assertThat(product.getStockQuantity()).isEqualTo(expectedQuantity);
         assertThat(result.reason()).isEqualTo(expectedReason);
+    }
+
+    private UserInfoDTO ownerUser(UUID barbershopId) {
+        UserInfoDTO user = new UserInfoDTO();
+        user.setId(UUID.randomUUID());
+        user.setUserType("BARBER");
+        user.setRole("ROLE_OWNER");
+        user.setBarbershopId(barbershopId);
+        return user;
     }
 
     private VStockHealthAlertRepository.StockHealthAlertProjection stockHealthAlert(String productId,

@@ -4,6 +4,7 @@ import ifsp.edu.projeto.cortaai.barbershopservice.dto.ActivityDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.AppointmentSummaryDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.BarberPublicDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.BarbershopDTO;
+import ifsp.edu.projeto.cortaai.barbershopservice.dto.BarbershopPublicDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.BarbershopSummaryDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.CloseBarbershopRequestDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.CommissionRuleDTO;
@@ -124,7 +125,7 @@ class BarbershopServiceTest {
         shop.setHighlights(Set.of(highlight));
         when(barbershopRepository.findAll()).thenReturn(List.of(shop));
 
-        List<BarbershopDTO> result = service.listBarbershops();
+        List<BarbershopPublicDTO> result = service.listBarbershops();
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo(shop.getId());
@@ -627,7 +628,7 @@ class BarbershopServiceTest {
         when(barbershopRepository.findById(shop.getId())).thenReturn(Optional.of(shop));
 
         List<ActivityDTO> activities = service.listActivities(shop.getId());
-        BarbershopDTO result = service.getBarbershop(shop.getId());
+        BarbershopPublicDTO result = service.getBarbershop(shop.getId());
 
         assertThat(activities).hasSize(1);
         assertThat(activities.get(0).getActivityName()).isEqualTo("Corte");

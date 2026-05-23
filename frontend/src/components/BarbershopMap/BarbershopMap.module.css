@@ -1,7 +1,7 @@
 .wrapper {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
 }
 
@@ -11,6 +11,38 @@
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.locationInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.24);
+}
+
+.address {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin: 0;
+    color: #e6e6e6;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.address svg {
+    flex: 0 0 auto;
+    color: #f5c518;
+}
+
+.address span {
+    overflow-wrap: anywhere;
 }
 
 .googleMapsLink {
@@ -23,8 +55,26 @@
     font-weight: 600;
     transition: opacity 0.2s;
     align-self: flex-start;
+    white-space: nowrap;
 }
 
 .googleMapsLink:hover {
     opacity: 0.8;
+}
+
+:global(.leaflet-popup-content) {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+@media (max-width: 520px) {
+    .map {
+        height: 190px;
+    }
+
+    .locationInfo {
+        align-items: flex-start;
+        flex-direction: column;
+    }
 }

@@ -11,6 +11,8 @@ import ifsp.edu.projeto.cortaai.productservice.dto.StockHealthAlertResponseDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.StockMovementDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.StockMovementRequestDTO;
 import ifsp.edu.projeto.cortaai.productservice.dto.UpdateProductDTO;
+import ifsp.edu.projeto.cortaai.productservice.dto.UserInfoDTO;
+import ifsp.edu.projeto.cortaai.productservice.feign.UserServiceClient;
 import ifsp.edu.projeto.cortaai.productservice.mapper.ProductMapper;
 import ifsp.edu.projeto.cortaai.productservice.model.Category;
 import ifsp.edu.projeto.cortaai.productservice.model.MovementType;
@@ -26,13 +28,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -48,6 +53,13 @@ public class ProductService {
     private final StockMovementRepository stockMovementRepository;
     private final ProductMapper productMapper;
     private final VStockHealthAlertRepository vStockHealthAlertRepository;
+    private final UserServiceClient userServiceClient;
+
+    @Transactional
+    public ProductDTO createProduct(String firebaseUid, CreateProductDTO dto) {
+        requireOwnerAccessToBarbershop(firebaseUid, dto.barbershopId());
+        return createProduct(dto);
+    }
 
     @Transactional
     public ProductDTO createProduct(CreateProductDTO dto) {
@@ -84,11 +96,30 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public List<ProductDTO> getProductsByBarbershop(String firebaseUid, UUID barbershopId) {
+        requireOwnerAccessToBarbershop(firebaseUid, barbershopId);
+        return getProductsByBarbershop(barbershopId);
+    }
+
+    @Transactional(readOnly = true)
     public List<ProductDTO> getProductsByBarbershop(UUID barbershopId) {
         return productRepository.findByBarbershopIdAndActiveTrue(barbershopId)
                 .stream()
                 .map(productMapper::toDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public InventoryPageDTO getInventoryPage(String firebaseUid,
+                                             UUID barbershopId,
+                                             String search,
+                                             ProductCategory category,
+                                             UUID categoryId,
+                                             Boolean lowStock,
+                                             int page,
+                                             int size) {
+        requireOwnerAccessToBarbershop(firebaseUid, barbershopId);
+        return getInventoryPage(barbershopId, search, category, categoryId, lowStock, page, size);
     }
 
     @Transactional(readOnly = true)
@@ -122,10 +153,22 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public ProductDTO getById(String firebaseUid, UUID id) {
+        requireOwnerAccessToProduct(firebaseUid, id);
+        return getById(id);
+    }
+
+    @Transactional(readOnly = true)
     public ProductDTO getById(UUID id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado: " + id));
         return productMapper.toDTO(product);
+    }
+
+    @Transactional
+    public ProductDTO updateProduct(String firebaseUid, UUID id, UpdateProductDTO dto) {
+        requireOwnerAccessToProduct(firebaseUid, id);
+        return updateProduct(id, dto);
     }
 
     @Transactional
@@ -160,6 +203,12 @@ public class ProductService {
         Product saved = productRepository.save(product);
         log.info("Produto atualizado: id={}", saved.getId());
         return productMapper.toDTO(saved);
+    }
+
+    @Transactional
+    public void deleteProduct(String firebaseUid, UUID id) {
+        requireOwnerAccessToProduct(firebaseUid, id);
+        deleteProduct(id);
     }
 
     @Transactional
@@ -208,6 +257,12 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public List<StockMovementDTO> getStockMovementHistory(String firebaseUid, UUID productId, int page, int size) {
+        requireOwnerAccessToProduct(firebaseUid, productId);
+        return getStockMovementHistory(productId, page, size);
+    }
+
+    @Transactional(readOnly = true)
     public List<StockMovementDTO> getStockMovementHistory(UUID productId, int page, int size) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.max(1, Math.min(size, 100));
@@ -227,6 +282,12 @@ public class ProductService {
                         m.getCreatedAt()
                 ))
                 .toList();
+    }
+
+    @Transactional
+    public StockMovementDTO createStockMovement(String firebaseUid, StockMovementRequestDTO dto) {
+        requireOwnerAccessToProduct(firebaseUid, dto.productId());
+        return createStockMovement(dto);
     }
 
     @Transactional
@@ -275,10 +336,22 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
+    public List<CategoryResponseDTO> getCategories(String firebaseUid, UUID barbershopId) {
+        requireOwnerAccessToBarbershop(firebaseUid, barbershopId);
+        return getCategories(barbershopId);
+    }
+
+    @Transactional(readOnly = true)
     public List<CategoryResponseDTO> getCategories(UUID barbershopId) {
         return categoryRepository.findByBarbershopIdOrderByNameAsc(barbershopId).stream()
                 .map(this::toCategoryResponse)
                 .toList();
+    }
+
+    @Transactional
+    public CategoryResponseDTO createCategory(String firebaseUid, UUID barbershopId, CategoryRequestDTO dto) {
+        requireOwnerAccessToBarbershop(firebaseUid, barbershopId);
+        return createCategory(barbershopId, dto);
     }
 
     @Transactional
@@ -297,6 +370,12 @@ public class ProductService {
     }
 
     @Transactional
+    public CategoryResponseDTO updateCategory(String firebaseUid, UUID barbershopId, UUID categoryId, CategoryRequestDTO dto) {
+        requireOwnerAccessToBarbershop(firebaseUid, barbershopId);
+        return updateCategory(barbershopId, categoryId, dto);
+    }
+
+    @Transactional
     public CategoryResponseDTO updateCategory(UUID barbershopId, UUID categoryId, CategoryRequestDTO dto) {
         Category category = categoryRepository.findByIdAndBarbershopId(categoryId, barbershopId)
                 .orElseThrow(() -> new RuntimeException("Categoria não encontrada: " + categoryId));
@@ -308,6 +387,12 @@ public class ProductService {
 
         category.setName(name);
         return toCategoryResponse(categoryRepository.save(category));
+    }
+
+    @Transactional
+    public void deleteCategory(String firebaseUid, UUID barbershopId, UUID categoryId) {
+        requireOwnerAccessToBarbershop(firebaseUid, barbershopId);
+        deleteCategory(barbershopId, categoryId);
     }
 
     @Transactional
@@ -339,6 +424,12 @@ public class ProductService {
                 lowStock,
                 product.isActive()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<StockHealthAlertResponseDTO> getStockHealthAlert(String firebaseUid, UUID barbershopId) {
+        requireOwnerAccessToBarbershop(firebaseUid, barbershopId);
+        return getStockHealthAlert(barbershopId);
     }
 
     @Transactional(readOnly = true)
@@ -380,5 +471,29 @@ public class ProductService {
             case OUT_SALE -> "Venda";
             case LOSS -> "Perda / Descarte";
         };
+    }
+
+    private void requireOwnerAccessToProduct(String firebaseUid, UUID productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Produto não encontrado: " + productId));
+        requireOwnerAccessToBarbershop(firebaseUid, product.getBarbershopId());
+    }
+
+    private void requireOwnerAccessToBarbershop(String firebaseUid, UUID barbershopId) {
+        UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        if (user == null || user.getId() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário autenticado não encontrado.");
+        }
+        if (!"BARBER".equalsIgnoreCase(user.getUserType()) || !isOwner(user)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas o dono pode gerenciar o estoque.");
+        }
+        if (barbershopId == null || !barbershopId.equals(user.getBarbershopId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sem permissão para acessar o estoque desta barbearia.");
+        }
+    }
+
+    private boolean isOwner(UserInfoDTO user) {
+        String role = user.getRole() == null ? "" : user.getRole().toUpperCase(Locale.ROOT);
+        return role.contains("OWNER");
     }
 }
