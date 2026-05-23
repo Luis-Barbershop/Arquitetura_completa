@@ -262,7 +262,8 @@ O projeto "CortaAi" consiste no desenvolvimento de um sistema de marketplace de 
         \end{itemize}
     \item \textbf{Módulo de Notificações:}
         \begin{itemize}
-            \item Notificações in-app, e-mail transacional e push (FCM) para eventos de negócio.
+            \item Notificações in-app, e-mail transacional e push (Web Push via FCM) para eventos de negócio.
+            \item \textbf{SSE (Server-Sent Events):} endpoint \texttt{GET /api/notifications/stream} mantém conexão persistente com o browser, eliminando o polling. Sempre que uma notificação é salva, o servidor empurra um evento \texttt{unread-count} em tempo real.
             \item Eventos notificados: criação, cancelamento, conclusão e lembrete de agendamento; pagamento aprovado; solicitação/convite de equipe; remoção de barbeiro.
             \item Desduplicação via Redis para garantir idempotência.
         \end{itemize}
@@ -313,7 +314,7 @@ Descrever as regras que governam as operações do sistema.
     RN1 & "Usuários não autenticados podem acessar endpoints públicos (listagens gerais, registro, login, Swagger)." & \\
     RN2 & "Autenticação é necessária para acessar funcionalidades específicas de Cliente, Barbeiro ou Dono." & \\
     RN3 & "A autenticação é realizada via Firebase Authentication: e-mail/senha ou login social (Google). O cliente recebe um Firebase ID Token." & RN2 \\
-    RN4 & O Firebase ID Token deve ser enviado no cabeçalho Authorization: Bearer <token>. O API Gateway valida o token e injeta os headers internos X-User-Id, X-User-Email e X-User-Role para os microsserviços. & "RN2, RN3" \\
+    RN4 & O Firebase ID Token deve ser enviado no cabeçalho Authorization: Bearer <token>. O API Gateway valida o token e injeta quatro headers internos nos microsserviços: \texttt{X-User-UID} (Firebase UID), \texttt{X-User-Email}, \texttt{X-User-Type} (\texttt{ROLE\_CUSTOMER}, \texttt{ROLE\_BARBER} ou \texttt{ROLE\_OWNER}) e \texttt{X-User-Owner} (booleano — indica se é dono de barbearia). & "RN2, RN3" \\
     RN5 & Apenas o Cliente pode gerenciar seu próprio perfil e agendamentos. & RN2 \\
     RN6 & "Apenas o Barbeiro pode gerenciar seu próprio perfil, solicitar entrada ou sair de uma loja." & RN2 \\
     RN7 & Apenas o Barbeiro Owner pode gerenciar sua barbearia. & "RN2, RN6" \\
@@ -481,7 +482,7 @@ Os oito microsserviços que compõem o sistema são:
         \texttt{schedule-service} & Agendamentos, disponibilidade, bloqueios, walk-ins & \texttt{schedule\_db} \\
         \texttt{product-service} & Estoque, produtos, movimentações, categorias & \texttt{product\_db} \\
         \texttt{payment-service} & Integração Mercado Pago, transações, split, webhooks & \texttt{payment\_db} \\
-        \texttt{notification-service} & E-mails transacionais, notificações in-app, push (FCM), desduplicação via Redis & \texttt{notification\_db} \\
+        \texttt{notification-service} & E-mails transacionais, notificações in-app, push (FCM/Web), SSE em tempo real, desduplicação via Redis & \texttt{notification\_db} \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -513,7 +514,7 @@ Esta seção descreve a pilha de tecnologia (tech stack) principal para o projet
 \subsection{Front-end}
 \begin{itemize}
     \item \textbf{React 18:} Biblioteca JavaScript para o desenvolvimento da interface.
-    \item \textbf{Vite:} Bundler e servidor de desenvolvimento com suporte a PWA via plugin \texttt{vite-plugin-pwa}.
+    \item \textbf{Vite:} Bundler e servidor de desenvolvimento com suporte a PWA via plugin \texttt{vite-plugin-pwa}. A aplicação é instalável como \textbf{Progressive Web App (PWA)}: possui \texttt{manifest.json}, Service Worker e estratégia \textit{App Shell} — garantindo funcionamento offline parcial, instalação na tela inicial do dispositivo e experiência próxima a um aplicativo nativo.
     \item \textbf{React Router DOM:} Roteamento client-side declarativo (SPA).
     \item \textbf{Axios:} Biblioteca para requisições HTTP, encapsulada em um wrapper único (\texttt{services/api.js}) que injeta automaticamente o Firebase ID Token.
     \item \textbf{Firebase JS SDK:} Autenticação do lado do cliente — login com e-mail/senha, Google OAuth e operações de sessão.
@@ -573,7 +574,7 @@ O escopo funcional do assistente abrange três frentes críticas:
     \item \textbf{Monitoramento de Estoque:} Responde sobre níveis de inventário, alerta sobre necessidade de reposição e previne a escassez de materiais essenciais.
 \end{itemize}
 
-Sob a perspectiva arquitetural, o fluxo de comunicação do Gustave é intermediado pelo API Gateway, que valida o token JWT do profissional antes de delegar a requisição de chat ao componente responsável pela orquestração de linguagem. Essa arquitetura garante que a IA opere estritamente sob o escopo de permissões do usuário autenticado.
+Sob a perspectiva arquitetural, o módulo Gustave está implementado no \texttt{schedule-service} como um controller dedicado (\texttt{AiChatController}), exposto no endpoint \texttt{POST /api/schedule/ai/chat}. O histórico de conversa pode ser limpo via \texttt{DELETE /api/schedule/ai/chat/history}. O fluxo de comunicação é intermediado pelo API Gateway, que valida o token do profissional (injetando \texttt{X-User-UID} e \texttt{X-User-Type}) antes de rotear a requisição ao módulo de IA. Essa arquitetura garante que o assistente opere estritamente sob o escopo de permissões do usuário autenticado.
 
 \subsection{Integração e Entrega Contínuas (CI/CD)}
 Para suportar a arquitetura de microsserviços e garantir agilidade e segurança nas entregas, o projeto adota uma estratégia robusta de CI/CD com \textbf{GitHub Actions} como orquestrador dos pipelines.
@@ -803,7 +804,7 @@ O ecossistema adota uma abordagem estritamente \textbf{Stateless}: os microsserv
 O Spring Cloud Gateway atua como o único ponto de entrada público do ecossistema e o principal guardião de segurança. Foi implementado um filtro customizado (\texttt{FirebaseTokenGatewayFilter}) que analisa todas as requisições de entrada:
 \begin{itemize}
     \item \textbf{Validação da Assinatura:} O Gateway verifica a validade criptográfica do JWT contra as chaves públicas da Google. Se o token for inválido, expirado ou ausente, a requisição é bloqueada imediatamente com erro \textbf{401 Unauthorized}.
-    \item \textbf{Propagação de Contexto:} Após validar o token, o Gateway extrai o UID do utilizador e injeta-o como header HTTP interno (\texttt{X-User-Id}). Dessa forma, microsserviços como o \texttt{Schedule Service} ou \texttt{User Service} podem identificar quem está fazendo a requisição sem precisar revalidar o token criptográfico.
+    \item \textbf{Propagação de Contexto:} Após validação, o Gateway extrai o UID do utilizador e injeta-o como header HTTP interno (\texttt{X-User-UID}). Além disso, injeta \texttt{X-User-Email}, \texttt{X-User-Type} (role do usuário: \texttt{ROLE\_CUSTOMER}, \texttt{ROLE\_BARBER} ou \texttt{ROLE\_OWNER}) e \texttt{X-User-Owner} (booleano). Headers \texttt{X-User-*} enviados pelo cliente são removidos antes do roteamento para evitar spoofing. Dessa forma, microsserviços como o \texttt{Schedule Service} ou \texttt{User Service} podem identificar quem está fazendo a requisição sem precisar revalidar o token criptográfico.
 \end{itemize}
 
 \subsection{Política de Senhas e Proteção de Credenciais}
@@ -821,7 +822,7 @@ Enquanto o Firebase resolve o problema da \textbf{Autenticação} (quem é o uti
 \begin{itemize}
     \item \textbf{ROLE\_CUSTOMER:} Acesso aos próprios agendamentos e visualização de barbearias públicas.
     \item \textbf{ROLE\_BARBER:} Acesso à gestão da própria agenda, bloqueios de horário e visualização de comissionamentos.
-    \item \textbf{ROLE\_OWNER:} Privilégios administrativos — gestão de inventário (\texttt{Product Service}), aprovação de barbeiros e métricas financeiras globais (\texttt{Payment Service}).
+    \item \textbf{ROLE\_OWNER:} Privilégios administrativos — gestão de inventário (\texttt{Product Service}), aprovação de barbeiros e métricas financeiras globais (\texttt{Payment Service}). Atribuído automaticamente quando um barbeiro registra sua primeira barbearia (\texttt{is\_owner = true}). O header \texttt{X-User-Owner: true} também é injetado pelo Gateway para que os microsserviços possam diferenciar dono de barbeiro comum sem consultar o banco.
 \end{itemize}
 
 \subsection{Criptografia de Dados em Repouso (LGPD)}
