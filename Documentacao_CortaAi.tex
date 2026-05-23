@@ -335,7 +335,7 @@ Descrever as regras que governam as operações do sistema.
     RN22 & O Dono pode rejeitar uma solicitação. & RN7 \\
     RN23 & Um cliente pode avaliar cada barbearia no máximo uma vez. & RN5 \\
     RN24 & O total do agendamento é calculado somando o preço snapshot de cada serviço selecionado; o \texttt{end\_time} é calculado somando a duração snapshot de cada serviço ao \texttt{start\_time}. & RN11 \\
-    RN25 & Agendamentos com \texttt{status = PAYMENT\_PENDING} expiram automaticamente se \texttt{start\_time + 1h < now}. & RN11 \\
+    RN25 & Agendamentos com \texttt{status = PAYMENT\_PENDING} são cancelados automaticamente (status → \texttt{CANCELLED}) pelo \texttt{AppointmentLifecycleScheduler} se tiverem sido criados há mais de 30 minutos (\texttt{date\_created + 30min < now}). O valor padrão é configurável via \texttt{APPOINTMENT\_PAYMENT\_PENDING\_TIMEOUT\_MINUTES}. & RN11 \\
     RN26 & O split de pagamento é calculado como: \texttt{gross\_amount = net\_amount + mp\_fee + platform\_fee}. & \\
     RN27 & Webhooks do Mercado Pago são processados com idempotência: o campo \texttt{mp\_resource\_id} é verificado antes de qualquer processamento. & \\
     RN28 & Ao excluir um cliente (LGPD), o \texttt{user-service} publica o evento \texttt{customer.deleted} na exchange \texttt{cortaai.events}; \texttt{schedule-service}, \texttt{payment-service} e \texttt{notification-service} consomem o evento e anonimizam os dados de forma independente, preservando o histórico financeiro. & \\
@@ -574,7 +574,7 @@ O escopo funcional do assistente abrange três frentes críticas:
     \item \textbf{Monitoramento de Estoque:} Responde sobre níveis de inventário, alerta sobre necessidade de reposição e previne a escassez de materiais essenciais.
 \end{itemize}
 
-Sob a perspectiva arquitetural, o módulo Gustave está implementado no \texttt{schedule-service} como um controller dedicado (\texttt{AiChatController}), exposto no endpoint \texttt{POST /api/schedule/ai/chat}. O histórico de conversa pode ser limpo via \texttt{DELETE /api/schedule/ai/chat/history}. O fluxo de comunicação é intermediado pelo API Gateway, que valida o token do profissional (injetando \texttt{X-User-UID} e \texttt{X-User-Type}) antes de rotear a requisição ao módulo de IA. Essa arquitetura garante que o assistente opere estritamente sob o escopo de permissões do usuário autenticado.
+Sob a perspectiva arquitetural, o módulo Gustave está implementado no \texttt{schedule-service} como um controller dedicado (\texttt{AiChatController}), exposto no endpoint \texttt{POST /api/schedule/ai/chat}. O histórico de conversa pode ser limpo via \texttt{DELETE /api/schedule/ai/chat/history}. O fluxo de comunicação é intermediado pelo API Gateway, que valida o token do profissional (injetando \texttt{X-User-UID} e \texttt{X-User-Type}) antes de rotear a requisição ao módulo de IA. A estratégia de provedores adota \textbf{Gemini 2.0 Flash} como modelo primário, com cadeia de fallback sequencial para \textbf{Groq} (llama-3.3-70b), \textbf{OpenRouter} (meta-llama/llama-3.1-8b) e \textbf{Cohere} (command-a-03-2025), garantindo disponibilidade mesmo em caso de indisponibilidade de um provedor. Essa arquitetura garante que o assistente opere estritamente sob o escopo de permissões do usuário autenticado.
 
 \subsection{Integração e Entrega Contínuas (CI/CD)}
 Para suportar a arquitetura de microsserviços e garantir agilidade e segurança nas entregas, o projeto adota uma estratégia robusta de CI/CD com \textbf{GitHub Actions} como orquestrador dos pipelines.
@@ -1333,6 +1333,7 @@ Em suma, o desenvolvimento desta aplicação demonstra o potencial de arquitetur
     \item[quantity:] INT. Quantidade movimentada.
     \item[unit\_sale\_price:] DECIMAL(10,2). Nullable. Preço de venda (para OUT\_SALE).
     \item[notes:] VARCHAR(500). Observação.
+    \item[reason:] VARCHAR. Nullable. Motivo textual da movimentação.
     \item[created\_at:] DATETIME. Obrigatório.
 \end{description}
 
@@ -1352,7 +1353,7 @@ Em suma, o desenvolvimento desta aplicação demonstra o potencial de arquitetur
 \begin{description}
     \item[id:] VARCHAR(36). PK. UUID.
     \item[user\_id:] VARCHAR(36). FK lógica → \texttt{barbers.id} ou \texttt{customers.id}.
-    \item[type:] VARCHAR. Ex: APPOINTMENT\_CREATED, PAYMENT\_APPROVED, JOIN\_REQUEST\_RECEIVED.
+    \item[type:] VARCHAR. Valores: \texttt{APPOINTMENT\_CREATED}, \texttt{APPOINTMENT\_CANCELLED}, \texttt{APPOINTMENT\_CONCLUDED}, \texttt{APPOINTMENT\_RESCHEDULED}, \texttt{APPOINTMENT\_REMINDER}, \texttt{PAYMENT\_APPROVED}, \texttt{JOIN\_REQUEST\_RECEIVED}, \texttt{INVITE\_RECEIVED}, \texttt{BARBER\_REMOVED}.
     \item[title:] VARCHAR. Obrigatório.
     \item[message:] TEXT. Obrigatório.
     \item[channel:] VARCHAR. Valores: IN\_APP, EMAIL.
