@@ -85,7 +85,7 @@ class NotificationServiceTest {
     void shouldIncludeDeepLinkAndTypeInPushDataForInvite() {
         UUID barberId = UUID.randomUUID();
 
-        notificationService.notifyInviteReceived(barberId, "Barbearia Convite");
+        notificationService.notifyInviteReceived(barberId, "barber@cortaai.com", "Barbearia Convite");
 
         verify(pushNotificationService)
                 .sendToUser(
@@ -180,6 +180,8 @@ class NotificationServiceTest {
                 UUID.randomUUID(),
                 "Cliente",
                 "customer@cortaai.com",
+                UUID.randomUUID(),
+                "barber@cortaai.com",
                 "Barbearia",
                 "Barbeiro",
                 LocalDateTime.of(2026, 5, 21, 16, 30)

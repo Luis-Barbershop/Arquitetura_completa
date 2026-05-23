@@ -55,7 +55,8 @@ class NotificationEventListenerTest {
         listener.onPaymentApproved(new PaymentApprovedEvent(
                 UUID.randomUUID(), appointmentId, customerId, "cliente@example.com", new BigDecimal("80.00")));
         listener.onAppointmentReminder(new AppointmentReminderEvent(
-                appointmentId, customerId, "Cliente", "cliente@example.com", "Barbearia", "Barbeiro", start));
+                appointmentId, customerId, "Cliente", "cliente@example.com", barberId, "barber@example.com",
+                "Barbearia", "Barbeiro", start));
 
         verify(notificationService).notifyAppointmentCreated(
                 eq(customerId), eq("cliente@example.com"), eq("Cliente"),
@@ -87,8 +88,8 @@ class NotificationEventListenerTest {
         listener.onJoinRequestCreated(invite);
         listener.onJoinRequestCreated(join);
 
-        verify(notificationService).notifyInviteReceived(barberId, "Barbearia");
-        verify(notificationService).notifyJoinRequestReceived(ownerId, "Barbearia", "Barbeiro");
+        verify(notificationService).notifyInviteReceived(barberId, "barber@example.com", "Barbearia");
+        verify(notificationService).notifyJoinRequestReceived(ownerId, "owner@example.com", "Barbearia", "Barbeiro");
     }
 
     @Test
@@ -109,6 +110,8 @@ class NotificationEventListenerTest {
         event.setBarberId(barberId);
         event.setOwnerId(ownerId);
         event.setBarberName("Barbeiro");
+        event.setBarberEmail("barber@example.com");
+        event.setOwnerEmail("owner@example.com");
         event.setBarbershopName("Barbearia");
         event.setRequestType(type);
         return event;
