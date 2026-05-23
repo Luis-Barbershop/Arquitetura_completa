@@ -242,8 +242,8 @@ O projeto "CortaAi" consiste no desenvolvimento de um sistema de marketplace de 
             \item Criação, atualização e cancelamento de agendamentos pelo Cliente.
             \item Suporte a walk-in (\texttt{status = WALK\_IN}): atendimento sem agendamento prévio.
             \item Bloqueios manuais de agenda pelo barbeiro (\texttt{barber\_blocks}).
-            \item Lembretes automáticos via scheduler (\texttt{@Scheduled}) com notificação ao cliente e ao barbeiro.
-            \item Ciclo de vida completo: \texttt{SCHEDULED → CONFIRMED → IN\_PROGRESS → COMPLETED}.
+            \item Lembretes automáticos via \texttt{ReminderScheduler} com notificação ao cliente e ao barbeiro; transições automáticas de status gerenciadas pelo \texttt{AppointmentLifecycleScheduler}.
+            \item Ciclo de vida completo: \texttt{SCHEDULED}, \texttt{PAYMENT\_PENDING}, \texttt{CONFIRMED}, \texttt{IN\_PROGRESS}, \texttt{COMPLETED}, \texttt{WALK\_IN}, \texttt{CANCELLED}, \texttt{NO\_SHOW} e \texttt{EXPIRED}.
             \item Snapshot de dados no agendamento (nome, preço, duração) para preservar histórico.
         \end{itemize}
     \item \textbf{Módulo de Pagamentos (Mercado Pago):}
@@ -338,7 +338,7 @@ Descrever as regras que governam as operações do sistema.
     RN25 & Agendamentos com \texttt{status = PAYMENT\_PENDING} expiram automaticamente se \texttt{start\_time + 1h < now}. & RN11 \\
     RN26 & O split de pagamento é calculado como: \texttt{gross\_amount = net\_amount + mp\_fee + platform\_fee}. & \\
     RN27 & Webhooks do Mercado Pago são processados com idempotência: o campo \texttt{mp\_resource\_id} é verificado antes de qualquer processamento. & \\
-    RN28 & Ao excluir um cliente (LGPD), seus dados são anonimizados, não deletados fisicamente, para preservar o histórico financeiro. & \\
+    RN28 & Ao excluir um cliente (LGPD), o \texttt{user-service} publica o evento \texttt{customer.deleted} na exchange \texttt{cortaai.events}; \texttt{schedule-service}, \texttt{payment-service} e \texttt{notification-service} consomem o evento e anonimizam os dados de forma independente, preservando o histórico financeiro. & \\
 \end{longtable}
 
 \subsection{Requisitos funcionais}
@@ -462,7 +462,7 @@ A arquitetura do sistema adota o modelo de \textbf{microsserviços}, onde cada d
 A comunicação entre os serviços segue dois padrões:
 \begin{itemize}
     \item \textbf{Síncrona (OpenFeign):} Utilizada para consultas cross-service (ex: \texttt{schedule-service} consultando dados de barbeiro no \texttt{user-service}).
-    \item \textbf{Assíncrona (RabbitMQ):} Utilizada para mutações cross-service via eventos de domínio (ex: \texttt{appointment.created}, \texttt{payment.approved}).
+    \item \textbf{Assíncrona (RabbitMQ):} Utilizada para mutações cross-service via eventos de domínio publicados na exchange \texttt{cortaai.events} (TopicExchange). Ex: \texttt{appointment.created}, \texttt{payment.approved}, \texttt{customer.deleted}.
 \end{itemize}
 
 Os oito microsserviços que compõem o sistema são:
