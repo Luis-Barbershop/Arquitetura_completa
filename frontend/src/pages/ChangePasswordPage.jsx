@@ -52,10 +52,21 @@ function ChangePasswordPage() {
     const mode = searchParams.get("mode");
     const oobCode = searchParams.get("oobCode");
     const isPasswordResetFlow = mode === "resetPassword" && Boolean(oobCode);
+    const isEmailVerificationFlow = mode === "verifyEmail" || mode === "verifyAndChangeEmail";
+
+    useEffect(() => {
+        if (isEmailVerificationFlow) {
+            navigate(`/verify-email${location.search}`, { replace: true });
+        }
+    }, [isEmailVerificationFlow, location.search, navigate]);
 
     // Fluxo autenticado usa authProvider vindo do backend. O Firebase SDK pode
     // não estar logado no browser quando o login por e-mail veio via backend.
     useEffect(() => {
+        if (isEmailVerificationFlow) {
+            return undefined;
+        }
+
         if (isPasswordResetFlow) {
             verifyPasswordResetCode(auth, oobCode)
                 .then((email) => {
@@ -97,7 +108,7 @@ function ChangePasswordPage() {
             setCanChangePassword(hasPasswordProvider);
         });
         return () => unsubscribe();
-    }, [idToken, isPasswordResetFlow, navigate, oobCode]);
+    }, [idToken, isPasswordResetFlow, isEmailVerificationFlow, navigate, oobCode]);
 
     const passwordStrength = useMemo(() => evaluatePasswordStrength(newPassword), [newPassword]);
 
@@ -165,7 +176,7 @@ function ChangePasswordPage() {
         }
     };
 
-    if (initializing) return null;
+    if (initializing || isEmailVerificationFlow) return null;
 
     return (
         <div className={Styles.loginStage}>
