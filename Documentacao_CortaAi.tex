@@ -330,7 +330,7 @@ Descrever as regras que governam as operações do sistema.
     RN17 & O horário do agendamento não pode conflitar com outros agendamentos existentes para o mesmo Barbeiro (exceto cancelados). & "RN11, RN16" \\
     RN18 & "Um Cliente ou o Dono da Barbearia podem cancelar um agendamento, desde que não esteja concluído." & "RN5, RN7" \\
     RN19 & Apenas o Dono pode excluir fisicamente um agendamento. & RN7 \\
-    RN20 & Um Barbeiro só pode solicitar entrada em uma barbearia se não estiver vinculado a nenhuma. & RN6 \\
+    RN20 & Um Barbeiro só pode solicitar entrada em uma barbearia (tipo \texttt{JOIN}) ou ser convidado pelo Dono (tipo \texttt{INVITE}) se não estiver vinculado a nenhuma barbearia. & RN6 \\
     RN21 & Um Dono só pode aprovar uma solicitação se o Barbeiro ainda estiver livre. & "RN7, RN20" \\
     RN22 & O Dono pode rejeitar uma solicitação. & RN7 \\
     RN23 & Um cliente pode avaliar cada barbearia no máximo uma vez. & RN5 \\
@@ -810,7 +810,7 @@ O Spring Cloud Gateway atua como o único ponto de entrada público do ecossiste
 \subsection{Política de Senhas e Proteção de Credenciais}
 A integridade das contas é garantida pela política de senhas aplicada no Firebase Authentication:
 \begin{itemize}
-    \item \textbf{Comprimento Mínimo:} 6 caracteres (padrão de segurança do Firebase).
+    \item \textbf{Comprimento Mínimo:} 6 caracteres — limite definido e imposto pelo Firebase Authentication, provedor de identidade adotado. A responsabilidade de aplicação desse requisito é do provedor externo, não do backend da aplicação.
     \item \textbf{Complexidade:} Recomenda-se combinação de letras maiúsculas, minúsculas, números e caracteres especiais, validada via expressões regulares no Frontend antes do envio ao provedor.
     \item \textbf{Hashing:} O Firebase Authentication utiliza algoritmos avançados (versão otimizada do \textit{scrypt}) para armazenar as credenciais de forma irreversível.
 \end{itemize}
@@ -830,6 +830,8 @@ Campos sensíveis (e-mail, CPF, telefone, data de nascimento, CNPJ, tokens Merca
 
 \subsection{Segurança da Infraestrutura}
 Os microsserviços são acessíveis apenas internamente via Docker network. Somente o \texttt{api-gateway} está exposto publicamente. Credenciais são gerenciadas como variáveis de ambiente.
+
+A proteção contra \textit{Cross-Site Request Forgery} (CSRF) não é aplicável neste sistema: a arquitetura utiliza uma \textit{Single-Page Application} (SPA) que se autentica exclusivamente via token Bearer no header \texttt{Authorization}. Como navegadores não enviam headers customizados automaticamente em requisições cross-site, o vetor de ataque do CSRF é estruturalmente eliminado sem necessidade de tokens CSRF adicionais \cite{springboot}.
 
 \subsection{Validação de Entrada de Dados}
 Jakarta Bean Validation é aplicado nos DTOs para validar os dados recebidos, incluindo validações customizadas para unicidade (e-mail, CPF) e formato (CPF, CNPJ).
@@ -975,6 +977,37 @@ A integração com o Mercado Pago viabiliza o pagamento online com split automá
 Espera-se que a plataforma resulte em melhoria significativa na experiência dos clientes e na otimização dos processos de gestão das barbearias. A base arquitetural implementada abre caminho para evoluções futuras, como análises avançadas de negócio via KPIs pré-agregados (dashboard\_kpi\_daily), expansão dos canais de notificação push, implementação de relatórios financeiros detalhados e eventual extração de insights por meio de ferramentas de Business Intelligence.
 
 Em suma, o desenvolvimento desta aplicação demonstra o potencial de arquiteturas distribuídas modernas, integradas a serviços de autenticação, pagamento e CDN consolidados no mercado, para resolver desafios operacionais cotidianos do setor de barbearias.
+
+\section{Limitações do MVP}
+O escopo atual do sistema contempla as funcionalidades essenciais para validação do produto, sendo reconhecidas as seguintes limitações no contexto deste trabalho de conclusão de curso:
+
+\begin{itemize}
+    \item \textbf{Notificações Push:} O módulo de notificações opera apenas com os canais \texttt{IN\_APP} e \texttt{EMAIL}. A integração com FCM para envio de push notifications em dispositivos móveis e web foi arquitetada (tabela \texttt{device\_tokens}), mas não implementada nesta versão.
+    \item \textbf{Relatórios Financeiros:} O dashboard apresenta KPIs pré-agregados (\texttt{dashboard\_kpi\_daily}), porém relatórios detalhados com filtros avançados e exportação (PDF/CSV) não foram desenvolvidos.
+    \item \textbf{Escala Horizontal:} A infraestrutura atual opera em servidor único (ZimaOS). Embora a arquitetura de microsserviços viabilize escala horizontal, os mecanismos de orquestração para múltiplos nós (Kubernetes) não estão configurados.
+    \item \textbf{Testes de Carga:} A validação de desempenho foi realizada de forma empírica. Testes formais com ferramentas como JMeter ou k6 não fazem parte do escopo deste trabalho.
+\end{itemize}
+
+\section{Trabalhos Futuros}
+A base arquitetural implementada abre caminho para diversas evoluções planejadas:
+
+\begin{itemize}
+    \item \textbf{Aplicativo Mobile (React Native):} Portabilidade da experiência para iOS e Android, aproveitando a mesma API REST já disponível.
+    \item \textbf{Integração Fiscal (NF-e/NFS-e):} Emissão de notas fiscais eletrônicas de serviço, atendendo às obrigações tributárias das barbearias formalizadas.
+    \item \textbf{Modelo de Franquias:} Extensão do modelo multi-tenant para suportar redes de barbearias com hierarquia de contas (rede → unidade → barbeiro).
+    \item \textbf{Inteligência Artificial e Recomendações:} Expansão do assistente Gustave com modelos de recomendação de serviços baseados no histórico do cliente e análises preditivas de demanda.
+    \item \textbf{Business Intelligence:} Conexão das views analíticas já existentes (ex.: \texttt{v\_barber\_skill\_matrix}, \texttt{v\_avg\_ticket}) a ferramentas de BI como Metabase ou Power BI.
+    \item \textbf{Programa de Fidelidade:} Sistema de pontos e recompensas para reter clientes recorrentes.
+\end{itemize}
+
+\section{Aprendizados da Equipe}
+A migração de uma arquitetura monolítica para microsserviços ao longo do projeto trouxe aprendizados técnicos relevantes:
+
+A gestão de consistência eventual entre serviços autônomos exigiu uma mudança de paradigma significativa — o modelo de transação distribuída via eventos RabbitMQ demandou atenção especial à idempotência dos consumidores e ao tratamento de falhas parciais. A separação de bancos de dados por domínio eliminou dependências de esquema, mas criou a necessidade de \textit{snapshots} de dados em agendamentos para preservar o histórico frente a mudanças futuras de entidades externas.
+
+A adoção do Firebase Authentication como provedor de identidade simplificou consideravelmente o gerenciamento de credenciais, login social e reset de senha, permitindo que a equipe focasse na lógica de negócio ao invés da infraestrutura de autenticação. Por outro lado, a integração com Mercado Pago evidenciou a complexidade inerente a sistemas de pagamento com split, exigindo tratamento rigoroso de webhooks e idempotência.
+
+Por fim, a experiência reforçou que a escolha arquitetural de microsserviços é adequada para sistemas com domínios bem definidos e equipes que precisam evoluir módulos de forma independente, mas exige maior maturidade operacional em DevOps, monitoramento e resiliência do que soluções monolíticas equivalentes.
 
 % --- ELEMENTOS PÓS-TEXTUAIS ---
 \postextual
