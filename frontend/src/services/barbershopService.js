@@ -282,9 +282,38 @@ export const deleteFixedExpense = async (id) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const geocodeAddress = async (address) => {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
-    const data = await res.json();
-    if (!data.length) return null;
-    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    if (!address) return null;
+
+    const nominatim = async (query) => {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=br`;
+        const res = await fetch(url, {
+            headers: { 'Accept-Language': 'pt-BR', 'User-Agent': 'CortaAi/1.0' },
+        });
+        const data = await res.json();
+        if (!data.length) return null;
+        return { lat: Number.parseFloat(data[0].lat), lng: Number.parseFloat(data[0].lon) };
+    };
+
+    // Endereços cadastrados podem ter complemento, "CEP:" e parênteses que confundem o Nominatim.
+    // Ex.: "Rua X, 123, casa, Vila Y (Zona Norte), São Paulo - SP, CEP: 01234-567"
+    const cleaned = address
+        .replace(/CEP:\s*[\d-]+/gi, '')       // remove "CEP: 12345-678"
+        .replace(/\([^)]*\)/g, '')             // remove "(Zona Norte)", "(Zona Leste)" etc.
+        .replace(/\b(casa|apto?\s*\d*|apart\w*|bloco\s*\w+|andar\s*\d+)\b/gi, '') // remove complementos
+        .replace(/,\s*,/g, ',')               // remove vírgulas duplas
+        .replace(/,\s*$/, '')                 // remove vírgula final
+        .trim();
+
+    // Tentativa 1: endereço limpo
+    const result1 = await nominatim(cleaned);
+    if (result1) return result1;
+
+    // Tentativa 2: apenas o CEP (muito preciso para o Brasil)
+    const cepMatch = address.match(/\b(\d{5})-?(\d{3})\b/);
+    if (cepMatch) {
+        const result2 = await nominatim(`${cepMatch[1]}-${cepMatch[2]}, Brasil`);
+        if (result2) return result2;
+    }
+
+    return null;
 };
