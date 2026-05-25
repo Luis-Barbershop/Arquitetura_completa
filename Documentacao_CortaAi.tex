@@ -74,7 +74,7 @@ Este trabalho traz a proposta do desenvolvimento de um aplicativo web de gestão
 \section{Objetivos}
 O setor de serviços de cuidados pessoais, embora tradicionalmente fundamentado na interação presencial, atravessa um momento de transformação digital acelerada. Os consumidores modernos exigem conveniência, personalização e, acima de tudo, previsibilidade. Modelos de negócio que dependem exclusivamente de atendimento por ordem de chegada (walk-in) e gestão manual estão se tornando operacionais e financeiramente insustentáveis.
 
-O ambiente clássico das barbearias, apesar de seu valor cultural, exemplifica essa inefiência crônica: é uma experiência comum clientes desperdiçarem horas em filas de espera, sem garantia de atendimento ou visibilidade sobre a disponibilidade de seus profissionais preferidos. Este cenário de espera e imprevisibilidade gera atrito significativo na jornada do cliente, resultando em insatisfação e perda de fidelidade. Para o gestor da barbearia, essa abordagem manual se traduz em um fluxo de trabalho caótico, dificuldade no gerenciamento das agendas dos profissionais, perda de receita de clientes que desistem da espera e uma incapacidade crônica de tomar decisões estratégicas por falta de dados consolidados. A administração do negócio torna-se reativa, focada em "apagar incêndios" operacionais, em vez de focar no crescimento.
+O ambiente clássico das barbearias, apesar de seu valor cultural, exemplifica essa inefiência crônica: é uma experiência comum clientes desperdiçarem horas em filas de espera, sem garantia de atendimento ou visibilidade sobre a disponibilidade de seus profissionais preferidos. Este cenário de espera e imprevisibilidade gera atrito significativo na jornada do cliente, resultando em insatisfação e perda de fidelidade. Para o gestor da barbearia, essa abordagem manual se traduz em um fluxo de trabalho caótico, dificuldade no gerenciamento das agendas dos profissionais, perda de receita de clientes que desistem da espera e uma incapacidade crônica de tomar decisões estratégicas por falta de dados consolidados. A administração do negócio torna-se reativa, focada na resolução emergencial de ocorrências operacionais, em vez de focar no crescimento estratégico.
 
 Diante desse desafio, este trabalho propõe o desenvolvimento do CortaAi: uma aplicação web integrada, projetada para funcionar como um marketplace robusto para a indústria de barbearia. A solução transcende a funcionalidade de um simples aplicativo de agendamento, criando um ecossistema digital que conecta múltiplas unidades de barbearias, profissionais qualificados e clientes em uma plataforma centralizada e eficiente.
 
@@ -92,10 +92,10 @@ A gestão operacional de barbearias, mesmo as que aparentam simplicidade, envolv
 \end{itemize}
 Esse sistema fragmentado gera desafios operacionais críticos, como perda de informações financeiras, dificuldade na gestão de insumos (estoque), agendamentos conflitantes e ausência de métricas de desempenho.
 
-A solução proposta é o desenvolvimento do CortaAi, uma plataforma tecnológica centralizada que visa substituir e unificar todas as tarefas de gestão fragmentadas. O núcleo do projeto será uma plataforma SaaS (Software as a Service) de alta disponibilidade e usabilidade, operando em um ambiente único e integrado. O sistema funcionará como o cérebro operacional da barbearia, fazendo a interface direta com:
+A solução proposta é o desenvolvimento do CortaAi, uma plataforma tecnológica centralizada que visa substituir e unificar todas as tarefas de gestão fragmentadas. O núcleo do projeto será uma plataforma \textbf{SaaS} (\textit{Software as a Service}) de alta disponibilidade e usabilidade, operando em um ambiente único e integrado. O sistema funcionará como o cérebro operacional da barbearia, fazendo a interface direta com:
 \begin{itemize}
     \item Módulo de Agendamentos: Permitindo a reserva online pelo cliente e a visualização da agenda em tempo real pelo barbeiro.
-    \item Módulo Financeiro (PDV): Registrando cada serviço prestado e cada produto vendido.
+    \item Módulo Financeiro (\textbf{PDV} — Ponto de Venda): Registrando cada serviço prestado e cada produto vendido.
     \item Módulo de Compras (Estoque): Controlando os insumos utilizados nos serviços e o inventário de produtos para revenda.
     \item Módulo de Pagamento: Integrando-se a gateways de pagamento para automatizar o recebimento e a conciliação financeira.
 \end{itemize}
@@ -105,7 +105,7 @@ Apresentar a relevância da solução proposta, incluindo dados numéricos e gr�
 
 A importância da solução CortaAi torna-se evidente ao quantificar o custo operacional real da gestão manual para um profissional do setor. A rotina de um gestor ou "Barbeiro Dono" é intensa, totalizando aproximadamente 232 horas de trabalho mensais (considerando uma jornada de 9 horas por dia, 6 dias por semana). O problema central é que uma parcela desproporcional desse tempo é consumida por tarefas administrativas de baixo valor, que poderiam ser facilmente automatizadas.
 
-Conforme ilustrado no Gráfico 1.1 (Redução do Tempo Administrativo com o Sistema), a gestão de agendamentos via métodos desorganizados—como aplicativos de mensagens (WhatsApp) e planilhas manuais—consome, em média, 40 horas por mês do profissional. Este esforço, puramente administrativo, representa 17\% do tempo total de trabalho do barbeiro. Este tempo perdido equivale a quase uma semana inteira de trabalho (4.4 dias) que é desviada da atividade principal e geradora de receita: o atendimento ao cliente. Com a implementação do CortaAi, a plataforma automatiza a maior parte desse esforço, gerando um "Tempo Liberado" de aproximadamente 35 horas mensais (conforme o gráfico). A relevância do sistema reside na capacidade de transformar este tempo improdutivo em oportunidade de novos atendimentos ou gestão estratégica, liberando o profissional para focar no crescimento do negócio.
+Conforme ilustrado no Gráfico 1.1 (Redução do Tempo Administrativo com o Sistema), a gestão de agendamentos via métodos desorganizados—como aplicativos de mensagens (WhatsApp) e planilhas manuais—consome, em média, 40 horas por mês do profissional\footnote{Estimativa obtida a partir de levantamento realizado diretamente com profissionais do setor durante a fase de elicitação de requisitos do projeto, considerando o volume de agendamentos informados e o tempo médio gasto em cada interação de marcação, confirmação e reagendamento manual.}. Este esforço, puramente administrativo, representa 17\% do tempo total de trabalho do barbeiro. Este tempo perdido equivale a quase uma semana inteira de trabalho (4.4 dias) que é desviada da atividade principal e geradora de receita: o atendimento ao cliente. Com a implementação do CortaAi, a plataforma automatiza a maior parte desse esforço, gerando um "Tempo Liberado" de aproximadamente 35 horas mensais (conforme o gráfico). A relevância do sistema reside na capacidade de transformar este tempo improdutivo em oportunidade de novos atendimentos ou gestão estratégica, liberando o profissional para focar no crescimento do negócio.
 
 \begin{figure}[htb]
     \centering
@@ -115,7 +115,7 @@ Conforme ilustrado no Gráfico 1.1 (Redução do Tempo Administrativo com o Sist
 \end{figure}
 
 Extensão e Importância da Solução: A Recuperação de Clientes
-A implementação do sistema de Marketplace para Barbearias se justifica, principalmente, pela sua capacidade de eliminar perdas financeiras e operacionais causadas pelo fenômeno do "no-show" (não comparecimento sem aviso). A taxa de não comparecimento em agendamentos, uma dor generalizada no setor de serviços no Brasil, representa um custo de oportunidade significativo para o Barbeiro. Com uma rotina de aproximadamente 260 agendamentos mensais, o modelo de gestão manual está exposto a uma alta taxa de falha. Conforme ilustrado no Gráfico 1.2: Redução de No-Shows após Implantação do Sistema, o impacto é o seguinte:
+A implementação do sistema de Marketplace para Barbearias se justifica, principalmente, pela sua capacidade de eliminar perdas financeiras e operacionais causadas pelo fenômeno do "no-show" (não comparecimento sem aviso). A taxa de não comparecimento em agendamentos, uma dor generalizada no setor de serviços no Brasil, representa um custo de oportunidade significativo para o Barbeiro. Com uma rotina de aproximadamente 260 agendamentos mensais\footnote{Volume informado pelo cliente-parceiro durante a fase de levantamento de requisitos e utilizado como parâmetro de base para as projeções de impacto exibidas nos gráficos.}, o modelo de gestão manual está exposto a uma alta taxa de falha. Conforme ilustrado no Gráfico 1.2: Redução de No-Shows após Implantação do Sistema, o impacto é o seguinte:
 
 \begin{figure}[htb]
     \centering
@@ -509,7 +509,33 @@ Internamente, cada microsserviço segue uma arquitetura em camadas:
 \end{figure}
 
 \section{Tecnologias}
-Esta seção descreve a pilha de tecnologia (tech stack) principal para o projeto juntamente de sua arquitetura.
+Esta seção descreve a pilha de tecnologia (\textit{tech stack}) principal para o projeto juntamente de sua arquitetura.
+
+\begin{table}[htb]
+    \centering
+    \caption{Resumo da Pilha Tecnológica}
+    \label{tab:techstack}
+    \begin{tabular}{llp{6cm}}
+        \toprule
+        \textbf{Tecnologia} & \textbf{Versão} & \textbf{Finalidade} \\
+        \midrule
+        Java & 17 & Linguagem principal do back-end \\
+        Spring Boot & 3.x & Framework base de cada microsserviço \\
+        Spring Cloud Gateway & 4.x & API Gateway, roteamento, rate limiting, validação de token \\
+        Spring Cloud OpenFeign & 4.x & Comunicação síncrona entre microsserviços \\
+        React & 18 & Interface do usuário (SPA/PWA) \\
+        Vite & 5.x & Bundler e servidor de desenvolvimento \\
+        MySQL & 8.x & Banco de dados relacional (um por microsserviço) \\
+        RabbitMQ & 3.x & Broker de mensagens para eventos assíncronos \\
+        Redis & 7.x & Cache e desduplicação de eventos \\
+        Docker / Compose & 25.x & Containerização de todos os serviços \\
+        Firebase Authentication & SDK v9+ & Autenticação, login social, gestão de sessão \\
+        Mercado Pago SDK & 2.x & Pagamentos com split (marketplace) \\
+        Cloudinary SDK & 1.x & Upload, armazenamento e CDN de imagens \\
+        MapStruct & 1.5.x & Geração de código de mapeamento entidade↔DTO \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
 \subsection{Front-end}
 \begin{itemize}
@@ -542,6 +568,8 @@ Esta seção descreve a pilha de tecnologia (tech stack) principal para o projet
 \begin{itemize}
     \item \textbf{MySQL:} Sistema de gerenciamento de banco de dados relacional.
 \end{itemize}
+
+A estratégia de versionamento e inicialização do schema adota um modelo de \textbf{DDL declarativo controlado por código}: os scripts de criação das tabelas são mantidos no arquivo \texttt{init.sql}, versionado junto ao repositório. O provisionamento é executado explicitamente durante a subida do ambiente via Docker Compose, garantindo que nenhuma alteração de schema ocorra de forma automática ou implícita pela aplicação em tempo de execução.
 
 \subsection{Infraestrutura}
 A infraestrutura do projeto é baseada em contêineres Docker, hospedados em um servidor self-hosted (ZimaOS):
@@ -830,6 +858,8 @@ Campos sensíveis (e-mail, CPF, telefone, data de nascimento, CNPJ, tokens Merca
 
 \subsection{Segurança da Infraestrutura}
 Os microsserviços são acessíveis apenas internamente via Docker network. Somente o \texttt{api-gateway} está exposto publicamente. Credenciais são gerenciadas como variáveis de ambiente.
+
+O \texttt{api-gateway} implementa \textbf{Rate Limiting} por IP e por usuário autenticado via \texttt{RequestRateLimiterGatewayFilter}, utilizando Redis como backend de contagem. Isso previne ataques de força bruta e abuso de endpoints públicos.
 
 A proteção contra \textit{Cross-Site Request Forgery} (CSRF) não é aplicável neste sistema: a arquitetura utiliza uma \textit{Single-Page Application} (SPA) que se autentica exclusivamente via token Bearer no header \texttt{Authorization}. Como navegadores não enviam headers customizados automaticamente em requisições cross-site, o vetor de ataque do CSRF é estruturalmente eliminado sem necessidade de tokens CSRF adicionais \cite{springboot}.
 
