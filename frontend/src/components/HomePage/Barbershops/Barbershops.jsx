@@ -72,25 +72,29 @@ function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const requestLocation = () => {
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        const loc = { lat: coords.latitude, lng: coords.longitude };
-        sessionStorage.setItem('userLocation', JSON.stringify(loc));
-        setUserLocation(loc);
-        toast.success('Localização obtida! Exibindo barbearias mais próximas.');
-      },
-      () => toast.info('Localização não disponível. Mostrando todas as barbearias.')
-    );
-  };
-
   const handleSortSelect = (key) => {
-    if (key === 'location' && !userLocation) {
-      requestLocation();
-    }
-    setSortKey(key);
     setDropdownOpen(false);
     setPage(1);
+
+    if (key === 'location') {
+      if (userLocation) {
+        setSortKey('location');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        ({ coords }) => {
+          const loc = { lat: coords.latitude, lng: coords.longitude };
+          sessionStorage.setItem('userLocation', JSON.stringify(loc));
+          setUserLocation(loc);
+          setSortKey('location');
+          toast.success('Localização obtida! Exibindo barbearias mais próximas.');
+        },
+        () => toast.warn('Permissão de localização negada. Não foi possível ordenar por distância.')
+      );
+      return;
+    }
+
+    setSortKey(key);
   };
 
   const sorted = useMemo(() => {
