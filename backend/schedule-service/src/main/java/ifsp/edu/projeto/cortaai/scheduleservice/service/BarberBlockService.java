@@ -8,6 +8,7 @@ import ifsp.edu.projeto.cortaai.scheduleservice.mapper.AppointmentMapper;
 import ifsp.edu.projeto.cortaai.scheduleservice.model.BarberBlock;
 import ifsp.edu.projeto.cortaai.scheduleservice.repository.BarberBlockRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,11 +20,13 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class BarberBlockService {
 
     private final BarberBlockRepository barberBlockRepository;
     private final UserServiceClient userServiceClient;
     private final AppointmentMapper appointmentMapper;
+    private final AppointmentService appointmentService;
 
     public BarberBlockDTO createBlock(String callerFirebaseUid, CreateBarberBlockDTO dto) {
         // Verificar que caller é o próprio barbeiro
@@ -52,7 +55,17 @@ public class BarberBlockService {
                 .build();
 
         BarberBlock saved = barberBlockRepository.save(block);
-        return appointmentMapper.toBlockDTO(saved);
+
+        int cancelledAppointments = appointmentService.cancelAppointmentsOverlappingBarberBlock(
+            dto.getBarberId(), dto.getStartTime(), dto.getEndTime());
+        if (cancelledAppointments > 0) {
+            log.info("Bloqueio criado para barberId={} com {} agendamentos cancelados no intervalo [{} - {}]",
+                dto.getBarberId(), cancelledAppointments, dto.getStartTime(), dto.getEndTime());
+        }
+
+        BarberBlockDTO response = appointmentMapper.toBlockDTO(saved);
+        response.setCancelledAppointmentsCount(cancelledAppointments);
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -79,4 +92,3 @@ public class BarberBlockService {
         barberBlockRepository.delete(block);
     }
 }
-

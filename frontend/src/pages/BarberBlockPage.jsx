@@ -43,6 +43,20 @@ const buildDateRange = (startDate, endDate) => {
   return dates;
 };
 
+const getCancelledAppointmentsCount = (block) => Number(block?.cancelledAppointmentsCount) || 0;
+
+const formatCancelledAppointmentsMessage = (count) => (
+  count === 1
+    ? '1 atendimento foi cancelado automaticamente.'
+    : `${count} atendimentos foram cancelados automaticamente.`
+);
+
+const buildSuccessMessage = (baseMessage, cancelledCount) => (
+  cancelledCount > 0
+    ? `${baseMessage} ${formatCancelledAppointmentsMessage(cancelledCount)}`
+    : baseMessage
+);
+
 function BarberBlockPage() {
   const navigate = useNavigate();
   const today = useMemo(() => toDateInputValue(), []);
@@ -124,7 +138,7 @@ function BarberBlockPage() {
   }, [loadBlocks]);
 
   const createBlock = async (payload) => {
-    await createBarberBlock({
+    return createBarberBlock({
       barberId,
       reason,
       ...payload,
@@ -146,12 +160,13 @@ function BarberBlockPage() {
 
     try {
       setSaving(true);
-      await createBlock({
+      const block = await createBlock({
         startTime: buildDateTime(hourDate, hourStart),
         endTime: buildDateTime(hourDate, hourEnd),
       });
+      const cancelledCount = getCancelledAppointmentsCount(block);
       setListDate(hourDate);
-      toast.success('Bloqueio criado.');
+      toast.success(buildSuccessMessage('Bloqueio criado.', cancelledCount));
       await loadBlocks(hourDate);
     } catch (error) {
       console.error('Erro ao criar bloqueio por hora:', error);
@@ -180,14 +195,19 @@ function BarberBlockPage() {
 
     try {
       setSaving(true);
+      let cancelledCount = 0;
       for (const date of dates) {
-        await createBlock({
+        const block = await createBlock({
           startTime: `${date}T00:00:00`,
           endTime: `${date}T23:59:59`,
         });
+        cancelledCount += getCancelledAppointmentsCount(block);
       }
       setListDate(startDate);
-      toast.success(dates.length === 1 ? 'Dia bloqueado.' : 'Período bloqueado.');
+      toast.success(buildSuccessMessage(
+        dates.length === 1 ? 'Dia bloqueado.' : 'Período bloqueado.',
+        cancelledCount,
+      ));
       await loadBlocks(startDate);
     } catch (error) {
       console.error('Erro ao criar bloqueio por dia:', error);
@@ -223,7 +243,7 @@ function BarberBlockPage() {
         <section className={styles.heroSection}>
           <p className={styles.heroKicker}>INDISPONIBILIDADE</p>
           <h1>Bloqueie horários, folgas e períodos fora da agenda</h1>
-          <p>Os bloqueios impedem novos agendamentos no intervalo escolhido e aparecem por data para conferência rápida.</p>
+          <p>Os bloqueios impedem novos agendamentos no intervalo escolhido, cancelam automaticamente atendimentos existentes na janela e aparecem por data para conferência rápida.</p>
         </section>
 
         <section className={styles.grid}>

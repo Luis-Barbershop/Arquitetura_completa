@@ -15,4 +15,5 @@ public class BarberBlockDTO {
     private LocalDateTime endTime;
     private String reason;
     private LocalDateTime dateCreated;
+    private int cancelledAppointmentsCount;
 }

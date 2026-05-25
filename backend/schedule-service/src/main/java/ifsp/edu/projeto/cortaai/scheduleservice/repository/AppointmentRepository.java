@@ -39,6 +39,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
                                                                              @Param("startTime") LocalDateTime startTime,
                                                                              @Param("endTime") LocalDateTime endTime);
 
+                    @Lock(LockModeType.PESSIMISTIC_WRITE)
+                    @Query("SELECT a FROM Appointment a WHERE a.barberId = :barberId " +
+                            "AND a.status NOT IN ('CANCELLED', 'NO_SHOW', 'COMPLETED', 'CONCLUDED') " +
+                            "AND a.startTime < :endTime AND a.endTime > :startTime " +
+                            "ORDER BY a.startTime ASC")
+                    List<Appointment> findAppointmentsToCancelForBarberBlock(@Param("barberId") UUID barberId,
+                                                                             @Param("startTime") LocalDateTime startTime,
+                                                                             @Param("endTime") LocalDateTime endTime);
+
     List<Appointment> findByCustomerIdOrderByStartTimeDesc(UUID customerId);
 
     List<Appointment> findByBarberIdOrderByStartTimeDesc(UUID barberId);

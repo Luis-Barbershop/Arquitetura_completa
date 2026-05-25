@@ -259,6 +259,28 @@ class AppointmentServiceInteractionsTest {
     }
 
     @Test
+    void shouldCancelAppointmentsOverlappingBarberBlockWindow() {
+        UUID appointmentId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+
+        Appointment appointment = buildAppointment(appointmentId, customerId, barberId, shopId, AppointmentStatus.WALK_IN);
+        LocalDateTime start = appointment.getStartTime().minusMinutes(5);
+        LocalDateTime end = appointment.getEndTime().plusMinutes(5);
+
+        when(appointmentRepository.findAppointmentsToCancelForBarberBlock(barberId, start, end))
+                .thenReturn(List.of(appointment));
+
+        int cancelled = appointmentService.cancelAppointmentsOverlappingBarberBlock(barberId, start, end);
+
+        assertThat(cancelled).isEqualTo(1);
+        assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.CANCELLED);
+        verify(appointmentRepository).save(appointment);
+        verify(rabbitTemplate).convertAndSend(eq(RabbitConfig.EXCHANGE), eq("appointment.cancelled"), any(AppointmentCancelledEvent.class));
+    }
+
+    @Test
     void shouldCompleteAppointmentsAfterEndTime() {
         UUID appointmentId = UUID.randomUUID();
         UUID customerId = UUID.randomUUID();

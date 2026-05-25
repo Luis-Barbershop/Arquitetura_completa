@@ -286,38 +286,20 @@ public class AppointmentService {
         UserInfoDTO caller = resolveCallerByEmail(callerEmail);
         ensureCallerCanManageAppointment(appointment, caller, "cancelar");
 
-        appointment.setStatus(AppointmentStatus.CANCELLED);
-        appointmentRepository.save(appointment);
+        cancelAppointmentAndPublishEvent(appointment, isCallerCustomer(caller, appointment) ? "CUSTOMER" : "BARBER");
+    }
 
-        // Buscar emails para o evento
-        String customerEmail = null;
-        String barberEmail = null;
-        try {
-            UserInfoDTO customerInfo = userServiceClient.getUserById(appointment.getCustomerId());
-            if (customerInfo != null) customerEmail = customerInfo.getEmail();
-        } catch (Exception e) {
-            log.warn("Não foi possível buscar email do customer: {}", e.getMessage());
-        }
-        try {
-            UserInfoDTO barberInfo = userServiceClient.getUserById(appointment.getBarberId());
-            if (barberInfo != null) barberEmail = barberInfo.getEmail();
-        } catch (Exception e) {
-            log.warn("Não foi possível buscar email do barber: {}", e.getMessage());
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public int cancelAppointmentsOverlappingBarberBlock(UUID barberId, LocalDateTime startTime, LocalDateTime endTime) {
+        List<Appointment> appointments = appointmentRepository.findAppointmentsToCancelForBarberBlock(barberId, startTime, endTime);
+        int cancelled = 0;
+
+        for (Appointment appointment : appointments) {
+            cancelAppointmentAndPublishEvent(appointment, "BARBER");
+            cancelled++;
         }
 
-        // Publicar evento
-        String cancelledBy = callerEmail;
-        AppointmentCancelledEvent event = new AppointmentCancelledEvent(
-                appointment.getId(), appointment.getCustomerId(),
-                appointment.getBarberId(), cancelledBy,
-                appointment.getCustomerName(), customerEmail,
-                appointment.getBarberName(), barberEmail,
-                appointment.getBarbershopName(), appointment.getStartTime()
-        );
-        rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.cancelled", event);
-        log.info("Evento AppointmentCancelledEvent publicado para appointment {}", appointment.getId());
-
-        evictAvailabilityCacheAfterCommit(appointment.getBarberId(), appointment.getStartTime().toLocalDate());
+        return cancelled;
     }
 
     // ========== REAGENDAMENTO ==========
@@ -781,6 +763,45 @@ public class AppointmentService {
         if (!isOwner) {
             throw new ForbiddenException("Você não tem permissão para " + action + " este agendamento.");
         }
+    }
+
+    private boolean isCallerCustomer(UserInfoDTO caller, Appointment appointment) {
+        return caller != null
+                && caller.getId() != null
+                && appointment != null
+                && caller.getId().equals(appointment.getCustomerId());
+    }
+
+    private void cancelAppointmentAndPublishEvent(Appointment appointment, String cancelledBy) {
+        appointment.setStatus(AppointmentStatus.CANCELLED);
+        appointmentRepository.save(appointment);
+
+        String customerEmail = null;
+        String barberEmail = null;
+        try {
+            UserInfoDTO customerInfo = userServiceClient.getUserById(appointment.getCustomerId());
+            if (customerInfo != null) customerEmail = customerInfo.getEmail();
+        } catch (Exception e) {
+            log.warn("Não foi possível buscar email do customer: {}", e.getMessage());
+        }
+        try {
+            UserInfoDTO barberInfo = userServiceClient.getUserById(appointment.getBarberId());
+            if (barberInfo != null) barberEmail = barberInfo.getEmail();
+        } catch (Exception e) {
+            log.warn("Não foi possível buscar email do barber: {}", e.getMessage());
+        }
+
+        AppointmentCancelledEvent event = new AppointmentCancelledEvent(
+                appointment.getId(), appointment.getCustomerId(),
+                appointment.getBarberId(), cancelledBy,
+                appointment.getCustomerName(), customerEmail,
+                appointment.getBarberName(), barberEmail,
+                appointment.getBarbershopName(), appointment.getStartTime()
+        );
+        rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.cancelled", event);
+        log.info("Evento AppointmentCancelledEvent publicado para appointment {}", appointment.getId());
+
+        evictAvailabilityCacheAfterCommit(appointment.getBarberId(), appointment.getStartTime().toLocalDate());
     }
 
     private boolean isCallerOwnerFromAppointmentBarbershop(UUID barbershopId, UUID callerId) {
