@@ -18,7 +18,14 @@ public interface BarbershopRepository extends JpaRepository<Barbershop, UUID> {
     @Query("SELECT b FROM Barbershop b WHERE b.cnpj = :cnpj")
     Optional<Barbershop> findByCnpjEncrypted(@Param("cnpj") String cnpj);
 
-    @Query(value = "SELECT * FROM barbershops WHERE cnpj = :cnpj LIMIT 1", nativeQuery = true)
+    @Query(value = """
+            SELECT b.*,
+                (SELECT avg(br.rating) FROM barbershop_reviews br WHERE br.barbershop_id = b.id) AS averageRating,
+                (SELECT count(*) FROM barbershop_reviews br WHERE br.barbershop_id = b.id) AS reviewsCount
+            FROM barbershops b
+            WHERE b.cnpj = :cnpj
+            LIMIT 1
+            """, nativeQuery = true)
     Optional<Barbershop> findByCnpjRaw(@Param("cnpj") String cnpj);
 
     @Query("SELECT b FROM Barbershop b WHERE b.ownerId = :ownerId")
@@ -38,13 +45,16 @@ public interface BarbershopRepository extends JpaRepository<Barbershop, UUID> {
     List<Barbershop> findWithLegacyPlainCnpj();
 
     @Query(value = """
-            SELECT *, (6371 * acos(
-                cos(radians(:lat)) * cos(radians(latitude)) *
-                cos(radians(longitude) - radians(:lng)) +
-                sin(radians(:lat)) * sin(radians(latitude))
-            )) AS distance_km
-            FROM barbershops
-            WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+            SELECT b.*,
+                (SELECT avg(br.rating) FROM barbershop_reviews br WHERE br.barbershop_id = b.id) AS averageRating,
+                (SELECT count(*) FROM barbershop_reviews br WHERE br.barbershop_id = b.id) AS reviewsCount,
+                (6371 * acos(
+                    cos(radians(:lat)) * cos(radians(b.latitude)) *
+                    cos(radians(b.longitude) - radians(:lng)) +
+                    sin(radians(:lat)) * sin(radians(b.latitude))
+                )) AS distance_km
+            FROM barbershops b
+            WHERE b.latitude IS NOT NULL AND b.longitude IS NOT NULL
             HAVING distance_km <= :radiusKm
             ORDER BY distance_km
             """, nativeQuery = true)
