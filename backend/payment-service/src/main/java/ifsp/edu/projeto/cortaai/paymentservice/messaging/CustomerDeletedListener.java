@@ -25,6 +25,8 @@ public class CustomerDeletedListener {
     public void onCustomerDeleted(Map<String, Object> payload) {
         try {
             UUID customerId = UUID.fromString(payload.get("customerId").toString());
+            // Naturalmente idempotente: após a primeira execução, customerId é setado para null
+            // nas transações. Redeliveries subsequentes retornam lista vazia → saveAll([]) → no-op.
             List<Transaction> transactions = transactionRepository.findByCustomerIdOrderByCreatedAtDesc(customerId);
             for (Transaction t : transactions) {
                 t.setCustomerId(null);

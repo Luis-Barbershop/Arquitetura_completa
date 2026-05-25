@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
@@ -40,6 +41,8 @@ class ScheduleMessagingTest {
     @Mock
     private RedisTemplate<String, String> redisTemplate;
     @Mock
+    private StringRedisTemplate stringRedisTemplate;
+    @Mock
     private ValueOperations<String, String> valueOperations;
     @Mock
     private AppointmentService appointmentService;
@@ -50,6 +53,7 @@ class ScheduleMessagingTest {
     void setUp() {
         reminderScheduler = new ReminderScheduler(appointmentRepository, rabbitTemplate, userServiceClient, redisTemplate);
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        lenient().when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
     @Test
@@ -106,9 +110,10 @@ class ScheduleMessagingTest {
 
     @Test
     void shouldAnonymizeCustomerAppointmentsWhenCustomerIsDeleted() {
-        CustomerDeletedListener listener = new CustomerDeletedListener(appointmentRepository);
+        CustomerDeletedListener listener = new CustomerDeletedListener(appointmentRepository, stringRedisTemplate);
         UUID customerId = UUID.randomUUID();
         Appointment appointment = appointment(customerId, LocalDateTime.now());
+        when(valueOperations.setIfAbsent(anyString(), anyString(), any(Duration.class))).thenReturn(true);
         when(appointmentRepository.findByCustomerIdOrderByStartTimeDesc(customerId)).thenReturn(List.of(appointment));
 
         listener.onCustomerDeleted(Map.of("customerId", customerId.toString()));
@@ -119,7 +124,7 @@ class ScheduleMessagingTest {
 
     @Test
     void shouldRethrowInvalidCustomerDeletedPayload() {
-        CustomerDeletedListener listener = new CustomerDeletedListener(appointmentRepository);
+        CustomerDeletedListener listener = new CustomerDeletedListener(appointmentRepository, stringRedisTemplate);
 
         assertThatThrownBy(() -> listener.onCustomerDeleted(Map.of("customerId", "invalid")))
                 .isInstanceOf(IllegalArgumentException.class);

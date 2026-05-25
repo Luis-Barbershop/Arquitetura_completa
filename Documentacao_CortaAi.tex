@@ -43,7 +43,7 @@
     \par
     Tecnologia em Análise e Desenvolvimento de Sistemas
 }
-\data{São Paulo - SP, 2025}
+\data{São Paulo - SP, 2026}
 \tipotrabalho{Trabalho de Conclusão de Curso (TCC)}
 \orientador{Marcelo Tavares de Santana}
 
@@ -602,7 +602,7 @@ O escopo funcional do assistente abrange três frentes críticas:
     \item \textbf{Monitoramento de Estoque:} Responde sobre níveis de inventário, alerta sobre necessidade de reposição e previne a escassez de materiais essenciais.
 \end{itemize}
 
-Sob a perspectiva arquitetural, o módulo Gustave está implementado no \texttt{schedule-service} como um controller dedicado (\texttt{AiChatController}), exposto no endpoint \texttt{POST /api/schedule/ai/chat}. O histórico de conversa pode ser limpo via \texttt{DELETE /api/schedule/ai/chat/history}. O fluxo de comunicação é intermediado pelo API Gateway, que valida o token do profissional (injetando \texttt{X-User-UID} e \texttt{X-User-Type}) antes de rotear a requisição ao módulo de IA. A estratégia de provedores adota \textbf{Gemini 2.0 Flash} como modelo primário, com cadeia de fallback sequencial para \textbf{Groq} (llama-3.3-70b), \textbf{OpenRouter} (meta-llama/llama-3.1-8b) e \textbf{Cohere} (command-a-03-2025), garantindo disponibilidade mesmo em caso de indisponibilidade de um provedor. Essa arquitetura garante que o assistente opere estritamente sob o escopo de permissões do usuário autenticado.
+Sob a perspectiva arquitetural, o módulo Gustave está implementado no \texttt{schedule-service} como um controller dedicado (\texttt{AiChatController}), exposto no endpoint \texttt{POST /api/schedule/ai/chat}. O histórico de conversa pode ser limpo via \texttt{DELETE /api/schedule/ai/chat/history}. O fluxo de comunicação é intermediado pelo API Gateway, que valida o token do profissional (injetando \texttt{X-User-UID} e \texttt{X-User-Type}) antes de rotear a requisição ao módulo de IA. A estratégia de provedores adota \textbf{Gemini 2.0 Flash} como modelo primário, com cadeia de fallback sequencial para \textbf{Groq} (llama-3.3-70b), \textbf{OpenRouter} (openai/gpt-oss-20b) e \textbf{Cohere} (command-a-03-2025), garantindo disponibilidade mesmo em caso de indisponibilidade de um provedor. Essa arquitetura garante que o assistente opere estritamente sob o escopo de permissões do usuário autenticado.
 
 \subsection{Integração e Entrega Contínuas (CI/CD)}
 Para suportar a arquitetura de microsserviços e garantir agilidade e segurança nas entregas, o projeto adota uma estratégia robusta de CI/CD com \textbf{GitHub Actions} como orquestrador dos pipelines.
@@ -745,6 +745,8 @@ Verificam *como* o sistema opera sob determinadas condições, focando em desemp
 \end{itemize}
 
 \subsection{Testes automatizados}
+Para garantir a qualidade do código, a suite de testes automatizados do backend atingiu \textbf{85\% de cobertura de instruções} (JaCoCo Aggregate), composta por 533 testes unitários e de integração distribuídos entre os microsserviços Java. Os serviços com maior cobertura são o \texttt{schedule-service} (90\%), \texttt{notification-service} (85\%) e \texttt{product-service} (89\%).
+
 Para a geração de arquivos de logs no backend (Java/Spring Boot), são utilizadas as ferramentas padrão SLF4J (fachada) e Logback (implementação). Os níveis de log utilizados seguem a semântica padrão:
 \begin{itemize}
     \item \textbf{ERROR:} Falhas críticas (ex: falha ao conectar no banco).
@@ -1203,8 +1205,8 @@ Por fim, a experiência reforçou que a escolha arquitetural de microsserviços 
     \item[logo\_url\_public\_id:] VARCHAR(255). Public ID logo.
     \item[banner\_url:] VARCHAR(255). URL banner Cloudinary.
     \item[banner\_url\_public\_id:] VARCHAR(255). Public ID banner.
-    \item[latitude:] DOUBLE. Geolocalização.
-    \item[longitude:] DOUBLE. Geolocalização.
+    \item[latitude:] DOUBLE. Geolocalização. Opcional no cadastro — preenchido automaticamente via geocodificação (Nominatim/OpenStreetMap) a partir do \texttt{address} se não fornecido.
+    \item[longitude:] DOUBLE. Geolocalização. Opcional no cadastro — preenchido automaticamente via geocodificação (Nominatim/OpenStreetMap) a partir do \texttt{address} se não fornecido.
     \item[average\_rating:] DOUBLE. Calculado via \texttt{@Formula} (média de \texttt{barbershop\_reviews.rating}).
     \item[reviews\_count:] BIGINT. Calculado via \texttt{@Formula} (contagem de avaliações).
     \item[date\_created:] DATETIME. Obrigatório.

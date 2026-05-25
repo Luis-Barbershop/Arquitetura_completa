@@ -1,6 +1,6 @@
 # CortaAi — Documentação Técnica Completa
 
-> **Versão:** 1.0 | **Data:** 23/05/2026  
+> **Versão:** 1.1 | **Data:** 25/05/2026  
 > **Branch:** `feature/migracao-microservicos`  
 > **Ambiente produção:** ZimaOS `10.147.19.1` | **Domínio:** `https://cortaai.shop`
 
@@ -394,10 +394,13 @@ FLUXO BARBEIRO OWNER:
 Passos 1–3 idênticos (userType: "BARBER")
 
 4. POST /api/barbershops  [Authorization: Bearer token]
-   body: { name, cnpj, address, latitude, longitude }
+   body: { name, cnpj, address, latitude?, longitude? }
    └─ barbershop-service:
       ├─ criptografa CNPJ
       ├─ cria Barbershop com owner_id = X-User-Id
+      ├─ se latitude/longitude omitidos → GeocodingService.geocode(address)
+      │    via Nominatim (OpenStreetMap), 3 tentativas em cascata
+      │    (endereço completo → rua+cidade → só CEP)
       ├─ Feign → user-service: atualiza barbers.barbershop_id
       └─ Firebase: setCustomUserClaims(uid, "ROLE_BARBER", isOwner=true)
 
@@ -423,8 +426,12 @@ POST /api/auth/verify → user-service cria/encontra usuário por firebase_uid
 ```
 CADASTRO DA BARBEARIA:
 POST /api/barbershops
-    body: { name, cnpj, address, latitude, longitude }
-    └─ cria Barbershop
+    body: { name, cnpj, address, latitude?, longitude? }
+    └─ latitude/longitude são opcionais:
+        ├─ se omitidos → geocodificação automática via Nominatim (OpenStreetMap)
+        │    3 tentativas: endereço completo → rua+cidade → CEP
+        │    falha silenciosa (não bloqueia o cadastro)
+        └─ se fornecidos → override manual (prevalece sobre geocodificação)
     └─ atualiza Firebase custom claim: isOwner = true
 
 UPLOAD DE IMAGENS (logo, banner, portfólio):
@@ -768,8 +775,8 @@ Assistente conversacional integrado ao `schedule-service`. Usa múltiplos proved
 PROVEDORES (em ordem de prioridade):
 1. Gemini 2.0 Flash (Google)     ← primário
 2. Groq llama-3.3-70b            ← fallback 1
-3. OpenRouter meta-llama          ← fallback 2
-4. Cohere command-a-03-2025       ← fallback 3
+3. OpenRouter openai/gpt-oss-20b ← fallback 2  (modelo atualizado em 25/05/2026)
+4. Cohere command-a-03-2025      ← fallback 3
 
 FLUXO:
 POST /api/appointments/gustave/chat  [Authorization: Bearer token]
@@ -956,4 +963,4 @@ Portas externas (diferentes do padrão para não conflitar com ZimaOS):
 
 ---
 
-*Documento gerado em 23/05/2026 com base em análise estática do código-fonte no branch `feature/migracao-microservicos` (HEAD: `e548934`).*
+*Documento atualizado em 25/05/2026 com base em análise estática do código-fonte no branch `feature/migracao-microservicos` (HEAD: `e548934`). Cobertura JaCoCo global: **85%** (533 testes, 3.861/25.938 instruções missed).*

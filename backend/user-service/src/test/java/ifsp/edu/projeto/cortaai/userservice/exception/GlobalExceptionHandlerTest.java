@@ -3,13 +3,19 @@ package ifsp.edu.projeto.cortaai.userservice.exception;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.MethodParameter;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -105,6 +111,41 @@ class GlobalExceptionHandlerTest {
 
     private DataIntegrityViolationException violation(String rootMessage) {
         return new DataIntegrityViolationException("integrity", new RuntimeException(rootMessage));
+    }
+
+    @Test
+    void shouldHandleValidationWithFieldErrors() throws NoSuchMethodException {
+        BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(new Object(), "customer");
+        bindingResult.addError(new org.springframework.validation.FieldError("customer", "name", "Nome obrigatório"));
+        MethodParameter mp = new MethodParameter(Object.class.getDeclaredMethod("hashCode"), -1);
+        MethodArgumentNotValidException ex = new MethodArgumentNotValidException(mp, bindingResult);
+
+        ResponseEntity<ApiErrorResponse> response = handler.handleValidation(ex, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).contains("name").contains("Nome obrigatório");
+        assertThat(response.getBody().getFieldErrors()).hasSize(1);
+        assertThat(response.getBody().getFieldErrors().get(0).field()).isEqualTo("name");
+        assertThat(response.getBody().getFieldErrors().get(0).message()).isEqualTo("Nome obrigatório");
+    }
+
+    @Test
+    void shouldHandleMissingPartStaleStateAndMissingHeader() throws NoSuchMethodException {
+        ResponseEntity<ApiErrorResponse> r1 = handler.handleMissingPart(
+                new MissingServletRequestPartException("foto"), request);
+        assertThat(r1.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(r1.getBody().getMessage()).contains("foto");
+
+        ResponseEntity<ApiErrorResponse> r2 = handler.handleStaleState(
+                new ObjectOptimisticLockingFailureException(Object.class, "id-123"), request);
+        assertThat(r2.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(r2.getBody().getMessage()).isEqualTo("Registro inconsistente no banco de dados. Tente novamente.");
+
+        MethodParameter mp = new MethodParameter(Object.class.getDeclaredMethod("hashCode"), -1);
+        MissingRequestHeaderException headerEx = new MissingRequestHeaderException("X-User-Id", mp);
+        ResponseEntity<ApiErrorResponse> r3 = handler.handleMissingHeader(headerEx, request);
+        assertThat(r3.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(r3.getBody().getMessage()).contains("X-User-Id");
     }
 
     private void assertError(ResponseEntity<ApiErrorResponse> response,
