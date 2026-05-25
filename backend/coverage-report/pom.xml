@@ -14,6 +14,43 @@
     <name>coverage-report</name>
     <description>Relatório agregado de cobertura de testes (JaCoCo) de todos os microsserviços</description>
 
+    <!--
+        report-aggregate lê os módulos via <dependencies> para localizar
+        os .exec, classes e fontes — não precisa de <fileSets> manual.
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>ifsp.edu.projeto</groupId>
+            <artifactId>user-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ifsp.edu.projeto</groupId>
+            <artifactId>barbershop-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ifsp.edu.projeto</groupId>
+            <artifactId>schedule-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ifsp.edu.projeto</groupId>
+            <artifactId>payment-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ifsp.edu.projeto</groupId>
+            <artifactId>notification-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ifsp.edu.projeto</groupId>
+            <artifactId>product-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <!-- Desabilita o repackage do Spring Boot — este módulo não tem main class -->
@@ -38,98 +75,14 @@
                         <configuration>
                             <title>CortaAi — Cobertura de Testes (todos os microsserviços)</title>
                             <outputDirectory>${project.build.directory}/site/jacoco-aggregate</outputDirectory>
-                            <dataFileIncludes>
-                                <dataFileInclude>**/target/jacoco.exec</dataFileInclude>
-                            </dataFileIncludes>
-                            <fileSets>
-                                <fileSet>
-                                    <directory>${project.basedir}/..</directory>
-                                    <includes>
-                                        <include>user-service/target/jacoco.exec</include>
-                                        <include>barbershop-service/target/jacoco.exec</include>
-                                        <include>schedule-service/target/jacoco.exec</include>
-                                        <include>payment-service/target/jacoco.exec</include>
-                                        <include>notification-service/target/jacoco.exec</include>
-                                        <include>product-service/target/jacoco.exec</include>
-                                    </includes>
-                                </fileSet>
-                            </fileSets>
-                            <sourceDirectories>
-                                <sourceDirectory>${project.basedir}/../user-service/src/main/java</sourceDirectory>
-                                <sourceDirectory>${project.basedir}/../barbershop-service/src/main/java</sourceDirectory>
-                                <sourceDirectory>${project.basedir}/../schedule-service/src/main/java</sourceDirectory>
-                                <sourceDirectory>${project.basedir}/../payment-service/src/main/java</sourceDirectory>
-                                <sourceDirectory>${project.basedir}/../notification-service/src/main/java</sourceDirectory>
-                                <sourceDirectory>${project.basedir}/../product-service/src/main/java</sourceDirectory>
-                            </sourceDirectories>
-                            <classDirectories>
-                                <classDirectory>
-                                    <directory>${project.basedir}/../user-service/target/classes</directory>
-                                    <excludes>
-                                        <exclude>**/config/**</exclude>
-                                        <exclude>**/*Application.class</exclude>
-                                        <exclude>**/dto/**</exclude>
-                                        <exclude>**/model/**</exclude>
-                                        <exclude>**/mapper/**</exclude>
-                                        <exclude>**/messaging/publisher/**</exclude>
-                                    </excludes>
-                                </classDirectory>
-                                <classDirectory>
-                                    <directory>${project.basedir}/../barbershop-service/target/classes</directory>
-                                    <excludes>
-                                        <exclude>**/config/**</exclude>
-                                        <exclude>**/*Application.class</exclude>
-                                        <exclude>**/dto/**</exclude>
-                                        <exclude>**/model/**</exclude>
-                                        <exclude>**/mapper/**</exclude>
-                                        <exclude>**/messaging/publisher/**</exclude>
-                                    </excludes>
-                                </classDirectory>
-                                <classDirectory>
-                                    <directory>${project.basedir}/../schedule-service/target/classes</directory>
-                                    <excludes>
-                                        <exclude>**/config/**</exclude>
-                                        <exclude>**/*Application.class</exclude>
-                                        <exclude>**/dto/**</exclude>
-                                        <exclude>**/model/**</exclude>
-                                        <exclude>**/mapper/**</exclude>
-                                        <exclude>**/messaging/publisher/**</exclude>
-                                    </excludes>
-                                </classDirectory>
-                                <classDirectory>
-                                    <directory>${project.basedir}/../payment-service/target/classes</directory>
-                                    <excludes>
-                                        <exclude>**/config/**</exclude>
-                                        <exclude>**/*Application.class</exclude>
-                                        <exclude>**/dto/**</exclude>
-                                        <exclude>**/model/**</exclude>
-                                        <exclude>**/mapper/**</exclude>
-                                        <exclude>**/messaging/publisher/**</exclude>
-                                    </excludes>
-                                </classDirectory>
-                                <classDirectory>
-                                    <directory>${project.basedir}/../notification-service/target/classes</directory>
-                                    <excludes>
-                                        <exclude>**/config/**</exclude>
-                                        <exclude>**/*Application.class</exclude>
-                                        <exclude>**/dto/**</exclude>
-                                        <exclude>**/model/**</exclude>
-                                        <exclude>**/mapper/**</exclude>
-                                        <exclude>**/messaging/publisher/**</exclude>
-                                    </excludes>
-                                </classDirectory>
-                                <classDirectory>
-                                    <directory>${project.basedir}/../product-service/target/classes</directory>
-                                    <excludes>
-                                        <exclude>**/config/**</exclude>
-                                        <exclude>**/*Application.class</exclude>
-                                        <exclude>**/dto/**</exclude>
-                                        <exclude>**/model/**</exclude>
-                                        <exclude>**/mapper/**</exclude>
-                                        <exclude>**/messaging/publisher/**</exclude>
-                                    </excludes>
-                                </classDirectory>
-                            </classDirectories>
+                            <excludes>
+                                <exclude>**/config/**</exclude>
+                                <exclude>**/*Application.class</exclude>
+                                <exclude>**/dto/**</exclude>
+                                <exclude>**/model/**</exclude>
+                                <exclude>**/mapper/**</exclude>
+                                <exclude>**/messaging/publisher/**</exclude>
+                            </excludes>
                         </configuration>
                     </execution>
                 </executions>
