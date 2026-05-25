@@ -23,6 +23,7 @@
         <module>payment-service</module>
         <module>notification-service</module>
         <module>product-service</module>
+        <module>coverage-report</module>
     </modules>
 
     <properties>
