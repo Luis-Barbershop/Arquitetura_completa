@@ -95,6 +95,8 @@ class BarbershopServiceTest {
     private ScheduleServiceClient scheduleServiceClient;
     @Mock
     private RabbitTemplate rabbitTemplate;
+    @Mock
+    private GeocodingService geocodingService;
 
     private BarbershopService service;
 
@@ -114,7 +116,8 @@ class BarbershopServiceTest {
                 storageService,
                 userServiceClient,
                 scheduleServiceClient,
-                rabbitTemplate
+                rabbitTemplate,
+                geocodingService
         );
     }
 
