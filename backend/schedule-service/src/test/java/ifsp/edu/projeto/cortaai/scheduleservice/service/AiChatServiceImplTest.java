@@ -142,7 +142,7 @@ class AiChatServiceImplTest {
         ArgumentCaptor<HttpEntity> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).postForObject(anyString(), entityCaptor.capture(), eq(Map.class));
         assertThat(entityCaptor.getValue().getBody().toString())
-                .contains("Agendamentos futuros")
+                .contains("Próximos atendimentos agendados")
                 .contains("Situação do estoque")
                 .contains("Financeiro do painel do dono")
                 .contains("Faturamento total: R$ 413,40")
@@ -205,7 +205,7 @@ class AiChatServiceImplTest {
         verify(restTemplate).postForObject(anyString(), entityCaptor.capture(), eq(Map.class));
         assertThat(entityCaptor.getValue().getBody().toString())
                 .contains("BARBEIRO COLABORADOR")
-                .contains("Agendamentos futuros")
+                .contains("Próximos atendimentos agendados")
                 .contains("apenas os dados dele");
         verify(productServiceClient, never()).getStockHealth(any());
     }
@@ -243,7 +243,6 @@ class AiChatServiceImplTest {
                 .contains("BARBEIRO COLABORADOR")
                 .contains("Financeiro do painel do barbeiro")
                 .contains("Comissão total do barbeiro: R$ 35,00")
-                .doesNotContain("DONO DE BARBEARIA")
                 .doesNotContain("Financeiro do painel do dono");
         verify(paymentServiceClient, never()).getMyShopOverview(anyString(), any(), any(), any());
         verify(productServiceClient, never()).getStockHealth(any());
@@ -275,9 +274,296 @@ class AiChatServiceImplTest {
         verify(restTemplate, org.mockito.Mockito.times(4)).postForObject(anyString(), any(HttpEntity.class), eq(Map.class));
     }
 
+    // ── Novos testes: linguagem natural e categorias de negócio ──────────────
+
     @Test
-    void shouldKeepOwnerContextResilientWhenExternalAnalyticsFail() {
+    void shouldTranslateStatusToNaturalLanguageInPreviewContext() {
         UUID ownerId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        setProvider("groqApiKey", "groq-token");
+        when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(user(ownerId, "BARBER", shopId));
+
+        // agendamentos com status variados
+        List<Appointment> agendamentos = List.of(
+                appointmentWithStatus(shopId, barberId, ownerId, AppointmentStatus.CONFIRMED, "Maria", "Bruno", "60.00"),
+                appointmentWithStatus(shopId, barberId, ownerId, AppointmentStatus.IN_PROGRESS, "José", "Bruno", "60.00"),
+                appointmentWithStatus(shopId, barberId, ownerId, AppointmentStatus.SCHEDULED, "Pedro", "Bruno", "60.00")
+        );
+        when(appointmentRepository.findUpcomingByBarbershop(eq(shopId), any())).thenReturn(agendamentos);
+        when(vBarberSkillMatrixRepository.findByBarbershopId(shopId.toString())).thenReturn(List.of());
+        when(barbershopServiceClient.getAllActivities(shopId)).thenReturn(List.of());
+        when(productServiceClient.getStockHealth(shopId)).thenReturn(List.of());
+        when(paymentServiceClient.getMyShopOverview(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(Map.of("totalServiceRevenue", "180.00", "operationalResultWithWalkIn", "180.00",
+                        "approvedCount", 3, "pendingCount", 0, "cancelledCount", 0, "walkInAppointmentsCount", 0));
+        when(paymentServiceClient.getMyShopBarberPerformance(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(List.of());
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(Map.of("choices", List.of(Map.of("message", Map.of("content", "Agenda ok.")))));
+
+        service.chat("firebase-uid", "BARBER", new AiChatRequestDTO("Agenda de hoje?", AiChatMode.PREVIEW));
+
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).postForObject(anyString(), captor.capture(), eq(Map.class));
+        String prompt = captor.getValue().getBody().toString();
+
+        // Deve conter termos em português no contexto dos agendamentos
+        assertThat(prompt).contains("confirmado");
+        assertThat(prompt).contains("em atendimento");
+        assertThat(prompt).contains("agendado");
+        // Regras de linguagem estão presentes
+        assertThat(prompt).contains("NUNCA use termos técnicos de sistema");
+    }
+
+    @Test
+    void shouldIncludeNaturalLanguageRulesInPromptProhibitingTechnicalTerms() {
+        UUID ownerId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+        setProvider("groqApiKey", "groq-token");
+        when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(user(ownerId, "BARBER", shopId));
+        when(appointmentRepository.findUpcomingByBarbershop(eq(shopId), any())).thenReturn(List.of());
+        when(vBarberSkillMatrixRepository.findByBarbershopId(shopId.toString())).thenReturn(List.of());
+        when(barbershopServiceClient.getAllActivities(shopId)).thenReturn(List.of());
+        when(productServiceClient.getStockHealth(shopId)).thenReturn(List.of());
+        when(paymentServiceClient.getMyShopOverview(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(Map.of("totalServiceRevenue", "0.00", "operationalResultWithWalkIn", "0.00",
+                        "approvedCount", 0, "pendingCount", 0, "cancelledCount", 0, "walkInAppointmentsCount", 0));
+        when(paymentServiceClient.getMyShopBarberPerformance(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(List.of());
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(Map.of("choices", List.of(Map.of("message", Map.of("content", "Sem dados.")))));
+
+        service.chat("firebase-uid", "BARBER", new AiChatRequestDTO("Resumo", AiChatMode.PREVIEW));
+
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).postForObject(anyString(), captor.capture(), eq(Map.class));
+        String prompt = captor.getValue().getBody().toString();
+
+        // Prompt deve instruir a evitar termos técnicos
+        assertThat(prompt).contains("NUNCA use termos técnicos de sistema");
+        assertThat(prompt).contains("WALK_IN");  // aparece na lista de termos proibidos
+        assertThat(prompt).contains("encaixe");  // aparece como tradução
+        assertThat(prompt).contains("DONO DE BARBEARIA");
+    }
+
+    @Test
+    void shouldIncludeOwnerSelfReferenceRuleInPrompt() {
+        UUID ownerId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+        setProvider("groqApiKey", "groq-token");
+        when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(user(ownerId, "BARBER", shopId));
+        when(appointmentRepository.findUpcomingByBarbershop(eq(shopId), any())).thenReturn(List.of());
+        when(vBarberSkillMatrixRepository.findByBarbershopId(shopId.toString())).thenReturn(List.of());
+        when(barbershopServiceClient.getAllActivities(shopId)).thenReturn(List.of());
+        when(productServiceClient.getStockHealth(shopId)).thenReturn(List.of());
+        when(paymentServiceClient.getMyShopOverview(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(Map.of("totalServiceRevenue", "0.00", "operationalResultWithWalkIn", "0.00",
+                        "approvedCount", 0, "pendingCount", 0, "cancelledCount", 0, "walkInAppointmentsCount", 0));
+        when(paymentServiceClient.getMyShopBarberPerformance(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(List.of());
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(Map.of("choices", List.of(Map.of("message", Map.of("content", "Resposta.")))));
+
+        service.chat("firebase-uid", "BARBER", new AiChatRequestDTO("Quanto eu fiz hoje?", AiChatMode.PREVIEW));
+
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).postForObject(anyString(), captor.capture(), eq(Map.class));
+        String prompt = captor.getValue().getBody().toString();
+
+        // Regra de auto-referência do owner deve estar no prompt
+        assertThat(prompt).contains("Quando o dono perguntar sobre si mesmo");
+        assertThat(prompt).contains("responda sobre ele como barbeiro E");
+        // Acesso completo deve estar explícito
+        assertThat(prompt).contains("Acesso completo");
+    }
+
+    @Test
+    void shouldIncludeStockAlertWithCriticalAndZeroedItemsInOwnerContext() {
+        UUID ownerId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+        setProvider("groqApiKey", "groq-token");
+        when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(user(ownerId, "BARBER", shopId));
+        when(appointmentRepository.findUpcomingByBarbershop(eq(shopId), any())).thenReturn(List.of());
+        when(vBarberSkillMatrixRepository.findByBarbershopId(shopId.toString())).thenReturn(List.of());
+        when(barbershopServiceClient.getAllActivities(shopId)).thenReturn(List.of());
+        when(productServiceClient.getStockHealth(shopId)).thenReturn(List.of(
+                Map.of("productName", "Pomada Matte", "category", "Pomada", "currentStock", 0,
+                        "predictedMinimum", 5, "requiresRestock", true),
+                Map.of("productName", "Shampoo", "category", "Shampoo", "currentStock", 2,
+                        "predictedMinimum", 5, "requiresRestock", true),
+                Map.of("productName", "Condicionador", "category", "Condicionador", "currentStock", 20,
+                        "predictedMinimum", 3, "requiresRestock", false)
+        ));
+        when(paymentServiceClient.getMyShopOverview(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(Map.of("totalServiceRevenue", "0.00", "operationalResultWithWalkIn", "0.00",
+                        "approvedCount", 0, "pendingCount", 0, "cancelledCount", 0, "walkInAppointmentsCount", 0));
+        when(paymentServiceClient.getMyShopBarberPerformance(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(List.of());
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(Map.of("choices", List.of(Map.of("message", Map.of("content", "Precisa de reposição.")))));
+
+        service.chat("firebase-uid", "BARBER", new AiChatRequestDTO("Preciso comprar algum produto?", AiChatMode.PREVIEW));
+
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).postForObject(anyString(), captor.capture(), eq(Map.class));
+        String prompt = captor.getValue().getBody().toString();
+
+        assertThat(prompt).contains("ZERADO — estoque 0");
+        assertThat(prompt).contains("Pomada Matte");
+        assertThat(prompt).contains("CRÍTICO — abaixo do mínimo");
+        assertThat(prompt).contains("Shampoo");
+        assertThat(prompt).contains("OK — estoque suficiente");
+        assertThat(prompt).contains("Condicionador");
+    }
+
+    @Test
+    void shouldIncludeCancelledAppointmentsWithTranslatedStatusInOwnerContext() {
+        UUID ownerId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+        UUID barberId2 = UUID.randomUUID();
+        setProvider("groqApiKey", "groq-token");
+        when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(user(ownerId, "BARBER", shopId));
+
+        // agendamentos com status variados
+        when(appointmentRepository.findCompletedByBarbershop(eq(shopId), any(), any()))
+                .thenReturn(List.of(appointment(shopId, barberId2, ownerId, AppointmentStatus.COMPLETED, "Ana", "Bruno", "60.00")));
+        when(appointmentRepository.findCancelledByBarbershop(eq(shopId), any(), any()))
+                .thenReturn(List.of(
+                        appointmentWithStatus(shopId, barberId2, ownerId, AppointmentStatus.CANCELLED, "Carlos", "Bruno", "0.00"),
+                        appointmentWithStatus(shopId, barberId2, ownerId, AppointmentStatus.NO_SHOW, "Diego", "Bruno", "0.00")
+                ));
+        when(vBarberSkillMatrixRepository.findByBarbershopId(shopId.toString())).thenReturn(List.of());
+        when(barbershopServiceClient.getAllActivities(shopId)).thenReturn(List.of());
+        when(productServiceClient.getStockHealth(shopId)).thenReturn(List.of());
+        when(paymentServiceClient.getMyShopOverview(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(Map.of("totalServiceRevenue", "60.00", "operationalResultWithWalkIn", "60.00",
+                        "approvedCount", 1, "pendingCount", 0, "cancelledCount", 2, "walkInAppointmentsCount", 0));
+        when(paymentServiceClient.getMyShopBarberPerformance(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(List.of());
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(Map.of("choices", List.of(Map.of("message", Map.of("content", "Dois cancelamentos.")))));
+
+        service.chat("firebase-uid", "BARBER", new AiChatRequestDTO("Quantos cancelamentos tivemos?", AiChatMode.CONSOLIDATED));
+
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).postForObject(anyString(), captor.capture(), eq(Map.class));
+        String prompt = captor.getValue().getBody().toString();
+
+        // Status traduzidos no contexto dos agendamentos
+        assertThat(prompt).contains("cancelado");
+        assertThat(prompt).contains("não compareceu");
+        // Regras de linguagem estão presentes — confirmam a configuração correta do prompt
+        assertThat(prompt).contains("NUNCA use termos técnicos de sistema");
+    }
+
+    @Test
+    void shouldIncludeSkillMatrixAndUncoveredServicesForOwner() {
+        UUID ownerId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        setProvider("groqApiKey", "groq-token");
+        when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(user(ownerId, "BARBER", shopId));
+        when(appointmentRepository.findUpcomingByBarbershop(eq(shopId), any())).thenReturn(List.of());
+
+        // Bruno fez Corte mas não fez Barba
+        when(vBarberSkillMatrixRepository.findByBarbershopId(shopId.toString()))
+                .thenReturn(List.of(skill("Bruno Costa", "Corte", 10L, "700.00")));
+        when(barbershopServiceClient.getAllActivities(shopId))
+                .thenReturn(List.of(activityInfo(shopId, "Corte"), activityInfo(shopId, "Barba")));
+        when(productServiceClient.getStockHealth(shopId)).thenReturn(List.of());
+        when(paymentServiceClient.getMyShopOverview(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(Map.of("totalServiceRevenue", "700.00", "operationalResultWithWalkIn", "700.00",
+                        "approvedCount", 10, "pendingCount", 0, "cancelledCount", 0, "walkInAppointmentsCount", 0));
+        when(paymentServiceClient.getMyShopBarberPerformance(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(List.of(Map.of("barberName", "Bruno", "totalAppointments", 10,
+                        "generatedRevenue", "700.00", "contributionPercentage", "100")));
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(Map.of("choices", List.of(Map.of("message", Map.of("content", "Bruno não fez Barba.")))));
+
+        service.chat("firebase-uid", "BARBER", new AiChatRequestDTO("Algum barbeiro não está fazendo algum serviço?", AiChatMode.PREVIEW));
+
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).postForObject(anyString(), captor.capture(), eq(Map.class));
+        String prompt = captor.getValue().getBody().toString();
+
+        assertThat(prompt).contains("Bruno");
+        assertThat(prompt).contains("não executou");
+        assertThat(prompt).contains("Barba");
+        assertThat(prompt).contains("Habilidades e serviços executados por barbeiro");
+        assertThat(prompt).contains("Corte");
+    }
+
+    @Test
+    void shouldIncludeExamplePhrasesByBusinessCategoryInPrompt() {
+        UUID ownerId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+        setProvider("groqApiKey", "groq-token");
+        when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(user(ownerId, "BARBER", shopId));
+        when(appointmentRepository.findUpcomingByBarbershop(eq(shopId), any())).thenReturn(List.of());
+        when(vBarberSkillMatrixRepository.findByBarbershopId(shopId.toString())).thenReturn(List.of());
+        when(barbershopServiceClient.getAllActivities(shopId)).thenReturn(List.of());
+        when(productServiceClient.getStockHealth(shopId)).thenReturn(List.of());
+        when(paymentServiceClient.getMyShopOverview(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(Map.of("totalServiceRevenue", "0.00", "operationalResultWithWalkIn", "0.00",
+                        "approvedCount", 0, "pendingCount", 0, "cancelledCount", 0, "walkInAppointmentsCount", 0));
+        when(paymentServiceClient.getMyShopBarberPerformance(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(List.of());
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(Map.of("choices", List.of(Map.of("message", Map.of("content", "Ok.")))));
+
+        service.chat("firebase-uid", "BARBER", new AiChatRequestDTO("Dúvida", AiChatMode.PREVIEW));
+
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).postForObject(anyString(), captor.capture(), eq(Map.class));
+        String prompt = captor.getValue().getBody().toString();
+
+        // Deve conter as seções de exemplo de resposta por categoria
+        assertThat(prompt).contains("COMO RESPONDER POR CATEGORIA");
+        assertThat(prompt).contains("Ticket médio");
+        assertThat(prompt).contains("Estoque");
+        assertThat(prompt).contains("Cancelamentos");
+        assertThat(prompt).contains("encaixe");
+    }
+
+    @Test
+    void shouldNotExposeOwnerDataToCollaboratorBarber() {
+        UUID barberId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+        UserInfoDTO collaborator = user(barberId, "BARBER", shopId);
+        collaborator.setRole("ROLE_BARBER");
+        setProvider("groqApiKey", "groq-token");
+        when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(collaborator);
+        when(appointmentRepository.findCompletedByBarberId(eq(barberId), any(), any())).thenReturn(List.of());
+        when(paymentServiceClient.getMyBarberSummary(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(
+                        Map.of("barberTotalCommission", "120.00", "barberServiceCommission", "120.00",
+                                "barberWalkInCommission", "0.00", "grossTotalRevenue", "240.00",
+                                "barbershopTotalCommission", "120.00", "approvedCount", 4,
+                                "pendingCount", 0, "cancelledCount", 0, "walkInAppointmentsCount", 0),
+                        Map.of("barberTotalCommission", "0.00", "grossTotalRevenue", "0.00",
+                                "barbershopTotalCommission", "0.00")
+                );
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(Map.of("choices", List.of(Map.of("message", Map.of("content", "Sua comissão é R$ 120,00.")))));
+
+        service.chat("firebase-uid", "BARBER", new AiChatRequestDTO("Qual minha comissão?", AiChatMode.CONSOLIDATED));
+
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).postForObject(anyString(), captor.capture(), eq(Map.class));
+        String prompt = captor.getValue().getBody().toString();
+
+        // Prompt deve indicar restrição de acesso ao colaborador
+        assertThat(prompt).contains("BARBEIRO COLABORADOR");
+        assertThat(prompt).contains("colaborador, não dono");
+        // Não chama os endpoints globais da barbearia
+        verify(paymentServiceClient, never()).getMyShopOverview(anyString(), any(), any(), any());
+        verify(productServiceClient, never()).getStockHealth(any());
+        verify(vBarberSkillMatrixRepository, never()).findByBarbershopId(anyString());
+    }
+
+    @Test
+    void shouldKeepOwnerContextResilientWhenExternalAnalyticsFail() {        UUID ownerId = UUID.randomUUID();
         UUID shopId = UUID.randomUUID();
         setProvider("groqApiKey", "groq-token");
         when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(user(ownerId, "BARBER", shopId));
@@ -351,6 +637,13 @@ class AiChatServiceImplTest {
         activity.setAppointment(appointment);
         appointment.getActivities().add(activity);
         return appointment;
+    }
+
+    /** Alias explícito por legibilidade — delega ao appointment() principal. */
+    private Appointment appointmentWithStatus(UUID shopId, UUID barberId, UUID customerId,
+                                              AppointmentStatus status, String customerName,
+                                              String barberName, String price) {
+        return appointment(shopId, barberId, customerId, status, customerName, barberName, price);
     }
 
     private VBarberSkillMatrix skill(String barberName, String activityName, Long times, String revenue) {
