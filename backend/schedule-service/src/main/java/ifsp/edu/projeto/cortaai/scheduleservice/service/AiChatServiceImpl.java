@@ -210,25 +210,42 @@ public class AiChatServiceImpl implements AiChatService {
         return ctx.toString();
     }
 
+    private String translateStatus(Object status) {
+        if (status == null) return "agendado";
+        return switch (status.toString()) {
+            case "SCHEDULED"       -> "agendado";
+            case "CONFIRMED"       -> "confirmado";
+            case "IN_PROGRESS"     -> "em atendimento";
+            case "COMPLETED",
+                 "CONCLUDED"       -> "concluído";
+            case "WALK_IN"         -> "encaixe (walk-in)";
+            case "CANCELLED"       -> "cancelado";
+            case "NO_SHOW"         -> "não compareceu";
+            case "PAYMENT_PENDING" -> "aguardando pagamento";
+            case "EXPIRED"         -> "expirado";
+            default                -> status.toString().toLowerCase();
+        };
+    }
+
     private String formatPreviewContext(List<Appointment> list) {
-        if (list.isEmpty()) return "Nenhum agendamento futuro encontrado.";
-        StringBuilder sb = new StringBuilder("Agendamentos futuros (até " + MAX_APPOINTMENTS_CONTEXT + " itens):\n");
+        if (list.isEmpty()) return "Nenhum atendimento futuro na agenda.";
+        StringBuilder sb = new StringBuilder("Próximos atendimentos agendados (até " + MAX_APPOINTMENTS_CONTEXT + " itens):\n");
         list.stream().limit(MAX_APPOINTMENTS_CONTEXT).forEach(a -> sb
                 .append("- ")
                 .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
-                .append(" | ")
+                .append(" | cliente: ")
                 .append(firstNameOnly(a.getCustomerName()))
                 .append(" | barbeiro: ")
                 .append(firstNameOnly(a.getBarberName()))
-                .append(" | status: ")
-                .append(a.getStatus())
+                .append(" | situação: ")
+                .append(translateStatus(a.getStatus()))
                 .append('\n'));
         return sb.toString();
     }
 
     private String formatPreviewContextCustomer(List<Appointment> list) {
-        if (list.isEmpty()) return "Você não possui agendamentos futuros.";
-        StringBuilder sb = new StringBuilder("Seus próximos agendamentos:\n");
+        if (list.isEmpty()) return "Você não possui atendimentos futuros agendados.";
+        StringBuilder sb = new StringBuilder("Seus próximos atendimentos agendados:\n");
         list.stream().limit(MAX_APPOINTMENTS_CONTEXT).forEach(a -> {
             String servicos = a.getActivities() == null || a.getActivities().isEmpty() ? "—"
                     : a.getActivities().stream().map(act -> act.getActivityName()).collect(java.util.stream.Collectors.joining(", "));
@@ -236,7 +253,7 @@ public class AiChatServiceImpl implements AiChatService {
               .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
               .append(" | barbeiro: ").append(firstNameOnly(a.getBarberName()))
               .append(" | serviço: ").append(servicos)
-              .append(" | status: ").append(a.getStatus())
+              .append(" | situação: ").append(translateStatus(a.getStatus()))
               .append('\n');
         });
         return sb.toString();
@@ -248,12 +265,12 @@ public class AiChatServiceImpl implements AiChatService {
         list.stream().limit(MAX_APPOINTMENTS_CONTEXT).forEach(a -> sb
                 .append("- ")
                 .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
-                .append(" | ")
+                .append(" | cliente: ")
                 .append(firstNameOnly(a.getCustomerName()))
                 .append(" | barbeiro: ")
                 .append(firstNameOnly(a.getBarberName()))
                 .append(" | valor: R$ ")
-                .append(a.getTotalPrice() != null ? a.getTotalPrice().toPlainString() : "0,00")
+                .append(a.getTotalPrice() != null ? formatMoney(a.getTotalPrice()) : "0,00")
                 .append('\n'));
         return sb.toString();
     }
@@ -275,11 +292,13 @@ public class AiChatServiceImpl implements AiChatService {
         return sb.toString();
     }
 
-    private String formatCancelledContext(List<Appointment> list) {        StringBuilder sb = new StringBuilder("Agendamentos cancelados / não compareceu:\n");
+    private String formatCancelledContext(List<Appointment> list) {
+        StringBuilder sb = new StringBuilder("Atendimentos cancelados ou com falta do cliente:\n");
         list.stream().limit(20).forEach(a -> sb
                 .append("- ")
                 .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
-                .append(" | status: ").append(a.getStatus())
+                .append(" | ").append(firstNameOnly(a.getBarberName()))
+                .append(" | motivo: ").append(translateStatus(a.getStatus()))
                 .append('\n'));
         return sb.toString();
     }
@@ -325,16 +344,16 @@ public class AiChatServiceImpl implements AiChatService {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             String scope = isOwner ? "toda a barbearia" : "apenas este barbeiro";
-            StringBuilder sb = new StringBuilder("Agenda e atendimentos do painel (escopo: " + scope + "):\n");
+            StringBuilder sb = new StringBuilder("Resumo da agenda e atendimentos (" + scope + "):\n");
             sb.append("- Hoje (").append(today.format(DATE_FMT)).append("): ")
-                    .append(todayUpcoming).append(" próximos/ativos, ")
-                    .append(todayCompleted).append(" concluídos\n");
+                    .append(todayUpcoming).append(" atendimento(s) ainda por vir, ")
+                    .append(todayCompleted).append(" já concluído(s)\n");
             sb.append("- Amanhã (").append(today.plusDays(1).format(DATE_FMT)).append("): ")
-                    .append(tomorrowActive).append(" agendamentos ativos\n");
+                    .append(tomorrowActive).append(" atendimento(s) agendado(s)\n");
             sb.append("- Mês atual (").append(monthStart.format(DATE_FMT)).append(" a ").append(today.format(DATE_FMT)).append("): ")
-                    .append(monthCompleted).append(" atendimentos concluídos, ")
-                    .append(monthLost).append(" cancelados/no-show, ")
-                    .append("valor bruto em atendimentos concluídos: R$ ").append(formatMoney(monthRevenue)).append('\n');
+                    .append(monthCompleted).append(" atendimento(s) concluído(s), ")
+                    .append(monthLost).append(" cancelado(s)/falta do cliente, ")
+                    .append("receita bruta dos concluídos: R$ ").append(formatMoney(monthRevenue)).append('\n');
             sb.append(formatTopServicesFromAppointments(monthAppointments));
             return sb.toString();
         } catch (Exception e) {
@@ -833,42 +852,69 @@ public class AiChatServiceImpl implements AiChatService {
         String perfil = isOwner ? "DONO DE BARBEARIA" : isCustomer ? "CLIENTE" : "BARBEIRO COLABORADOR";
         String historyBlock = history.isBlank() ? "" : "\n" + history + "\n";
 
+        String regraAcesso = isOwner
+                ? """
+                  - Acesso completo: agenda da barbearia, equipe, financeiro global, estoque e dados pessoais.
+                  - Quando o dono perguntar sobre si mesmo (ex: "quanto eu fiz?", "minha agenda", "minhas comissões"),
+                    responda sobre ele como barbeiro E, se relevante, também sobre a barbearia como um todo.
+                  """
+                : "- Acesso restrito: apenas seus próprios atendimentos e financeiro pessoal.";
+
+        String regraColaborador = isOwner || isCustomer
+                ? ""
+                : "11. Este usuário é colaborador, não dono. Nunca forneça dados financeiros globais da barbearia, apenas os dados dele.";
+
         return """
-                Você é o Gustavo, assistente de IA do CortaAi. Seu único objetivo é analisar os dados reais do sistema e responder perguntas de gestão de barbearia.
+                Você é o Gustavo, assistente de gestão do CortaAi. Seu papel é analisar os dados reais da barbearia e responder perguntas de forma clara e amigável.
 
                 PERFIL DO USUÁRIO LOGADO:
                 - Nome: %s
                 - Tipo: %s
                 %s
 
-                DADOS REAIS DO SISTEMA (extraídos agora para este usuário):
+                DADOS REAIS DO SISTEMA (coletados agora para este usuário):
                 %s
                 %s
                 REGRAS OBRIGATÓRIAS:
-                1. Baseie TODA resposta exclusivamente nos dados acima. NUNCA invente, estime ou suponha valores.
-                2. Se a informação não estiver nos dados acima, responda: "Não encontrei esse dado no seu painel agora."
-                3. Responda em português brasileiro, de forma direta e sem introduções desnecessárias (não comece com "Claro!", "Olá!", "Com certeza!" etc.).
-                4. Seja conciso: vá direto ao ponto. Use listas apenas quando houver múltiplos itens.
-                5. Se a pergunta for fora do contexto de gestão de barbearia (agenda, financeiro, equipe, estoque), recuse: "Meu foco é a gestão da sua barbearia. Posso ajudar com agenda, financeiro, equipe ou estoque."
-                6. Nunca exponha sobrenomes ou dados pessoais de clientes.
-                7. Use o histórico da conversa acima para manter continuidade — se o usuário disser "ele" ou "aquele", interprete com base no contexto anterior.
-                8. Quando o usuário perguntar sobre "mês", "este mês", "rendimento", "faturamento", "ganhei" ou "recebi", use o bloco "Mês atual" do financeiro do painel. Não troque por "últimos 30 dias" nem por projeção.
-                9. Para DONO, "rendimento/faturamento do mês" significa faturamento total da barbearia; se ele pedir lucro/resultado, use resultado operacional total. Para BARBEIRO COLABORADOR, "rendimento/quanto recebi" significa comissão total do barbeiro.
-                10. Se existirem várias métricas parecidas, escolha a mais aderente à pergunta e cite o rótulo exato usado. Não diga que um único valor representa 30 dias, 90 dias e projeção ao mesmo tempo.
+                1. Baseie TODA resposta exclusivamente nos dados fornecidos acima. NUNCA invente, estime ou suponha valores que não estejam nos dados.
+                2. Se a informação pedida não estiver nos dados, responda: "Não encontrei esse dado no seu painel agora."
+                3. Use linguagem natural e amigável, como se fosse um colega de trabalho experiente. NUNCA use termos técnicos de sistema como: schedule, status, SCHEDULED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW, WALK_IN, PAYMENT_PENDING, UUID, payload, endpoint, query, view, repositório, microsserviço, banco de dados.
+                4. Traduza sempre os termos internos para português do dia a dia:
+                   - "concluído" em vez de COMPLETED/CONCLUDED
+                   - "cancelado" em vez de CANCELLED
+                   - "não compareceu" em vez de NO_SHOW
+                   - "encaixe" em vez de WALK_IN
+                   - "confirmado" em vez de CONFIRMED
+                   - "em atendimento" em vez de IN_PROGRESS
+                   - "aguardando pagamento" em vez de PAYMENT_PENDING
+                5. Seja direto e conciso. Use listas apenas quando houver múltiplos itens. Não use introduções desnecessárias ("Claro!", "Com certeza!", "Ótima pergunta!").
+                6. Se a pergunta for fora do contexto de gestão de barbearia (agenda, financeiro, equipe, estoque, clientes), recuse educadamente: "Meu foco é a gestão da sua barbearia. Posso ajudar com agenda, financeiro, equipe ou estoque."
+                7. Nunca exponha sobrenomes ou dados pessoais completos de clientes.
+                8. Use o histórico da conversa para manter continuidade — se o usuário disser "ele", "aquele", "o mesmo", interprete com base no contexto anterior.
+                9. Quando o usuário perguntar sobre "mês", "este mês", "rendimento", "faturamento", "ganhei" ou "recebi", use o bloco "Mês atual" do financeiro. Não confunda com "últimos 30 dias" ou "últimos 90 dias".
+                10. Para DONO DE BARBEARIA: "faturamento do mês" = faturamento total da barbearia; "lucro/resultado" = resultado operacional total; perguntas sobre "eu" também incluem perspectiva da barbearia inteira.
+                    Para BARBEIRO COLABORADOR: "quanto recebi/ganhei" = comissão total do barbeiro (não o valor bruto dos serviços).
+
+                COMO RESPONDER POR CATEGORIA (exemplos de linguagem):
+                - Agenda: "Seu próximo cliente é [Nome] às [Hora] para [Serviço]."
+                - Disponibilidade: "O barbeiro [Nome] está livre entre [Hora] e [Hora] hoje."
+                - Equipe/performance: "O barbeiro [Nome] liderou com [X] atendimentos e gerou R$ [Valor] este mês."
+                - Serviços sem cobertura: "Identifiquei que [Nome] ainda não realizou [Serviço] nos últimos 90 dias."
+                - Financeiro do dono: "O faturamento da barbearia este mês foi de R$ [Valor], com [X] atendimentos concluídos."
+                - Comissão do barbeiro: "Sua comissão acumulada este mês é de R$ [Valor], sobre uma receita bruta de R$ [Valor]."
+                - Estoque: "Atenção: [Produto] está com apenas [X] unidades — abaixo do mínimo de [Y]. Recomendo repor."
+                - Cancelamentos: "As [dia da semana] concentraram mais cancelamentos no período — [X] ocorrências."
+                - Ticket médio: "O ticket médio da barbearia está em R$ [Valor], calculado sobre [X] atendimentos."
                 %s
 
                 Pergunta: %s
                 """.formatted(
                 nomeUsuario,
                 perfil,
-                isOwner
-                        ? "- Acesso: agenda completa da barbearia, financeiro, estoque e equipe"
-                        : "- Acesso: apenas seus próprios agendamentos e financeiro pessoal",
+                regraAcesso,
                 context,
                 historyBlock,
-                isOwner
-                        ? ""
-                        : "11. Este usuário é colaborador, não dono. Não forneça dados financeiros globais da barbearia, apenas os dados dele.",
+                regraColaborador,
                 message
         );
     }
