@@ -138,8 +138,7 @@ function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite }) {
   const paginated = sorted.slice(0, page * PAGE_SIZE);
   const hasMore   = paginated.length < sorted.length;
 
-  const currentLabel = SORT_OPTIONS.find((o) => o.key === sortKey)?.label;
-  const skeletons    = Array.from({ length: 6 });
+  const skeletons = Array.from({ length: 6 });
 
   return (
     <div>
@@ -153,7 +152,7 @@ function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite }) {
             aria-expanded={dropdownOpen}
           >
             <span className={Styles.sort_icon}>↕</span>
-            {currentLabel}
+            Ordenar
             <span className={`${Styles.sort_chevron} ${dropdownOpen ? Styles.sort_chevron_open : ''}`}>▾</span>
           </button>
 
