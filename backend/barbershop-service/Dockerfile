@@ -17,6 +17,7 @@ COPY schedule-service/pom.xml schedule-service/pom.xml
 COPY payment-service/pom.xml payment-service/pom.xml
 COPY notification-service/pom.xml notification-service/pom.xml
 COPY product-service/pom.xml product-service/pom.xml
+COPY coverage-report/pom.xml coverage-report/pom.xml
 COPY maven-settings.xml maven-settings.xml
 
 RUN chmod +x mvnw \
