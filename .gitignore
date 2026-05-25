@@ -13,3 +13,7 @@ Thumbs.db
 *.iml
 *.iws
 *.ipr
+
+node_modules/
+package-lock.json
+*.log
