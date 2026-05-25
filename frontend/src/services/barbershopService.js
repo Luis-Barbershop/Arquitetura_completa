@@ -300,6 +300,7 @@ export const geocodeAddress = async (address) => {
         .replace(/CEP:\s*[\d-]+/gi, '')       // remove "CEP: 12345-678"
         .replace(/\([^)]*\)/g, '')             // remove "(Zona Norte)", "(Zona Leste)" etc.
         .replace(/\b(casa|apto?\s*\d*|apart\w*|bloco\s*\w+|andar\s*\d+)\b/gi, '') // remove complementos
+        .replace(/\s*-\s*[A-Z]{2}\b/g, '')    // remove sufixo de UF " - SP", " - RJ" etc.
         .replace(/,\s*,/g, ',')               // remove vírgulas duplas
         .replace(/,\s*$/, '')                 // remove vírgula final
         .trim();
@@ -308,11 +309,23 @@ export const geocodeAddress = async (address) => {
     const result1 = await nominatim(cleaned);
     if (result1) return result1;
 
-    // Tentativa 2: apenas o CEP (muito preciso para o Brasil)
+    // Tentativa 2: só rua + número + cidade (remove bairro que pode não existir no OSM)
+    // Ex.: "Rua X, 123, São Paulo" — ignora nomes de bairros não mapeados
+    const streetCityMatch = cleaned.match(/^([^,]+,\s*\d+).*?([\w\s]+)$/);
+    if (streetCityMatch) {
+        const city = cleaned.split(',').pop().trim();
+        const streetNum = cleaned.split(',').slice(0, 2).join(',').trim();
+        if (city && streetNum) {
+            const result2 = await nominatim(`${streetNum}, ${city}`);
+            if (result2) return result2;
+        }
+    }
+
+    // Tentativa 3: apenas o CEP
     const cepMatch = address.match(/\b(\d{5})-?(\d{3})\b/);
     if (cepMatch) {
-        const result2 = await nominatim(`${cepMatch[1]}-${cepMatch[2]}, Brasil`);
-        if (result2) return result2;
+        const result3 = await nominatim(`${cepMatch[1]}-${cepMatch[2]}, Brasil`);
+        if (result3) return result3;
     }
 
     return null;
