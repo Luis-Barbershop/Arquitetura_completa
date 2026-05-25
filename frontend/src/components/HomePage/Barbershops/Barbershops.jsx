@@ -1,8 +1,8 @@
 import Container_Barbericons from "./Container_Barbericons"
 import Styles from "./CSS/Barbershops.module.css"
-import { getBarbershops, getShopServices } from "../../../services/barbershopService"
+import { getBarbershops, getShopServices, geocodeAddress } from "../../../services/barbershopService"
 import { getMyRecentBarbershopIds } from "../../../services/appointmentService"
-import { useEffect, useState, useMemo, useRef } from "react"
+import { useEffect, useState, useMemo, useRef, useCallback } from "react"
 import { toast } from "react-toastify"
 
 const PAGE_SIZE = 9;
@@ -34,6 +34,7 @@ function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite }) {
   const [userLocation, setUserLocation] = useState(
     () => JSON.parse(sessionStorage.getItem('userLocation') || 'null')
   );
+  const [geocoding, setGeocoding] = useState(false);
   const dropdownRef = useRef(null);
 
   // Carrega todas as barbearias uma única vez — ordenação é feita client-side
@@ -72,6 +73,47 @@ function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite }) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // Geocodifica barbearias que vieram sem coords do backend (lat/lng null no DB)
+  // Chamado apenas quando o usuário seleciona "Localização" — Nominatim exige 1 req/s
+  const enrichCoordsIfNeeded = useCallback(async (loc) => {
+    const needsGeocode = barbershops.filter(
+      (s) => (s.latitude == null || s.longitude == null) && s.address
+    );
+    if (needsGeocode.length === 0) return;
+
+    setGeocoding(true);
+    const toastId = toast.loading(`Calculando distâncias... (0/${needsGeocode.length})`);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const enriched = new Map();
+
+    for (let i = 0; i < needsGeocode.length; i++) {
+      const shop = needsGeocode[i];
+      await sleep(1200); // Nominatim rate limit: 1 req/s
+      const coords = await geocodeAddress(shop.address).catch(() => null);
+      if (coords) enriched.set(shop.id, coords);
+      toast.update(toastId, {
+        render: `Calculando distâncias... (${i + 1}/${needsGeocode.length})`,
+      });
+    }
+
+    toast.dismiss(toastId);
+    setGeocoding(false);
+
+    if (enriched.size === 0) return;
+
+    setBarbershops((prev) =>
+      prev.map((s) => {
+        const c = enriched.get(s.id);
+        return c ? { ...s, latitude: c.lat, longitude: c.lng } : s;
+      })
+    );
+
+    const withCoords = barbershops.filter((s) => s.latitude != null || enriched.has(s.id)).length;
+    if (withCoords > 0) {
+      toast.success(`Barbearias mais próximas de você!`, { autoClose: 2500 });
+    }
+  }, [barbershops]);
+
   const handleSortSelect = (key) => {
     setDropdownOpen(false);
     setPage(1);
@@ -79,6 +121,7 @@ function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite }) {
     if (key === 'location') {
       if (userLocation) {
         setSortKey('location');
+        enrichCoordsIfNeeded(userLocation);
         return;
       }
       navigator.geolocation.getCurrentPosition(
@@ -87,7 +130,8 @@ function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite }) {
           sessionStorage.setItem('userLocation', JSON.stringify(loc));
           setUserLocation(loc);
           setSortKey('location');
-          toast.success('Localização obtida! Exibindo barbearias mais próximas.');
+          enrichCoordsIfNeeded(loc);
+          toast.success('Localização obtida! Calculando distâncias...');
         },
         () => toast.warn('Permissão de localização negada. Não foi possível ordenar por distância.')
       );
@@ -165,15 +209,17 @@ function Barbershops({ searchTerm, favoriteIds = [], onToggleFavorite }) {
               {SORT_OPTIONS.map((opt) => (
                 <li
                   key={opt.key}
-                  className={`${Styles.sort_item} ${sortKey === opt.key ? Styles.sort_item_active : ''}`}
-                  onClick={() => handleSortSelect(opt.key)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSortSelect(opt.key)}
+                  className={`${Styles.sort_item} ${sortKey === opt.key ? Styles.sort_item_active : ''} ${geocoding && opt.key === 'location' ? Styles.sort_item_disabled : ''}`}
+                  onClick={() => !geocoding && handleSortSelect(opt.key)}
+                  onKeyDown={(e) => e.key === 'Enter' && !geocoding && handleSortSelect(opt.key)}
                   role="option"
                   tabIndex={0}
                   aria-selected={sortKey === opt.key}
+                  aria-disabled={geocoding && opt.key === 'location'}
                 >
                   {opt.label}
-                  {sortKey === opt.key && <span className={Styles.sort_check}>✓</span>}
+                  {geocoding && opt.key === 'location' && <span style={{ fontSize: '11px', opacity: 0.6 }}>…</span>}
+                  {!geocoding && sortKey === opt.key && <span className={Styles.sort_check}>✓</span>}
                 </li>
               ))}
             </ul>

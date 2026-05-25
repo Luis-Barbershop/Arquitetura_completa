@@ -93,6 +93,12 @@
     font-weight: 600;
 }
 
+.sort_item_disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .sort_check {
     font-size: 0.82rem;
 }
