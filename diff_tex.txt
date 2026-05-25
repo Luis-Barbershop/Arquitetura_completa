@@ -1,0 +1,1106 @@
+﻿diff --git a/Documentacao_CortaAi.tex b/Documentacao_CortaAi.tex
+index a823618..aa26990 100644
+--- a/Documentacao_CortaAi.tex
++++ b/Documentacao_CortaAi.tex
+@@ -187,7 +187,7 @@ Responsabilidades, pap├®is e atividades de cada membro da equipe.
+         Renan Ladislau & Desenvolvedor Front-end & Implementa├º├úo da interface do usu├írio. \\
+         Guilherme Chaves/Ana Clara & Desenvolvedor Back-end & Desenvolvimento da l├│gica de neg├│cios e API. \\
+         Jo├úo Paulo/Laryssa Giovanna & Banco de Dados & Modelagem e gerenciamento do banco de dados. \\
+-        Guilherme Chaves/Kaique Diniz & Hospedagem & Estudo do servi├ºo de Hospedagem para o projeto (AWS) \\
++        Guilherme Chaves/Kaique Diniz & Hospedagem & Containeriza├º├úo com Docker Compose e deploy em servidor self-hosted (ZimaOS) \\
+         \bottomrule
+     \end{tabular}
+ \end{table}
+@@ -210,59 +210,90 @@ Link do reposit├│rio:
+ \chapter{Desenvolvimento do Projeto}
+ 
+ \section{Escopo do projeto}
+-O projeto "Cortaai" consiste no desenvolvimento de um sistema de marketplace de barbearias, focado na automa├º├úo de agendamentos e na gest├úo de estabelecimentos. O escopo do produto inclui as seguintes funcionalidades, suportadas por um backend robusto em Java/Spring Boot:
++O projeto "CortaAi" consiste no desenvolvimento de um sistema de marketplace de barbearias, focado na automa├º├úo de agendamentos e na gest├úo completa de estabelecimentos. O sistema ├® implementado em arquitetura de microsservi├ºos com backend em Java/Spring Boot. O escopo inclui as seguintes funcionalidades:
+ \begin{enumerate}
+     \item \textbf{M├│dulo de Autentica├º├úo e Usu├írios (Cliente e Barbeiro):}
+         \begin{itemize}
+             \item Registro de Clientes e Barbeiros com valida├º├úo de campos ├║nicos (e-mail, telefone, CPF) e formato (CPF).
+-            \item Login seguro para ambos os tipos de usu├írio usando e-mail e senha, com criptografia BCrypt.
+-            \item Autentica├º├úo baseada em token JWT, definindo pap├®is ( ROLE\_CUSTOMER , ROLE\_BARBER , ROLE\_OWNER ).
+-            \item Gerenciamento de perfil (atualiza├º├úo de dados cadastrais) para Clientes e Barbeiros autenticados.
++            \item Login via Firebase Authentication: e-mail/senha e login social (Google).
++            \item Autentica├º├úo baseada em Firebase ID Token, com roles \texttt{ROLE\_CUSTOMER} e \texttt{ROLE\_BARBER}.
++            \item Criptografia AES/GCM para dados sens├¡veis em repouso (CPF, e-mail, telefone, data de nascimento).
++            \item Gerenciamento de perfil (atualiza├º├úo de dados cadastrais, foto de perfil via Cloudinary).
+         \end{itemize}
+     \item \textbf{M├│dulo de Gerenciamento de Barbearia (Dono):}
+         \begin{itemize}
+-            \item Um Barbeiro pode registrar uma nova barbearia, tornando-se Barbeiro Owner .
+-            \item Upload de m├¡dia (Logo, Banner, Imagens de Destaque) para o perfil da barbearia, com armazenamento no Cloudinary.
+-            \item Cadastro de servi├ºos oferecidos pela barbearia, incluindo nome, pre├ºo, dura├º├úo e foto do servi├ºo.
++            \item Um Barbeiro pode registrar uma nova barbearia, tornando-se Barbeiro Owner (\texttt{is\_owner = true}).
++            \item Upload de m├¡dia (Logo, Banner, Imagens de Destaque/Portf├│lio) via Cloudinary.
++            \item Cadastro e edi├º├úo de servi├ºos (nome, pre├ºo, dura├º├úo, foto).
++            \item Gest├úo de despesas fixas mensais categorizadas (\texttt{fixed\_expenses}).
++            \item Regras de comiss├úo por barbeiro ├ù servi├ºo (\texttt{barber\_commission\_rules}).
+         \end{itemize}
+     \item \textbf{M├│dulo de Gerenciamento de Equipe (Barbeiro e Dono):}
+         \begin{itemize}
+-            \item Barbeiro pode solicitar entrada em uma barbearia existente via CNPJ.
+-            \item Barbeiro\_Owner pode visualizar, aprovar ou rejeitar solicita├º├Áes de entrada pendentes de novos barbeiros na barbearia.
+-            \item Barbeiro pode definir seu hor├írio de trabalho (in├¡cio e fim).
+-            \item Barbeiro pode vincular a seu perfil quais servi├ºos da barbearia ele est├í apto a realizar.
+-            \item Barbeiro pode consultar seu hist├│rico de solicita├º├Áes de entrada.
++            \item Barbeiro pode solicitar entrada em uma barbearia (tipo \texttt{JOIN}) ou receber convite do dono (tipo \texttt{INVITE}).
++            \item Barbeiro Owner pode visualizar, aprovar ou rejeitar solicita├º├Áes de entrada pendentes.
++            \item Barbeiro pode definir blocos de hor├írio de trabalho por dia da semana (\texttt{barber\_work\_blocks}).
++            \item Barbeiro pode vincular ao seu perfil quais servi├ºos da barbearia est├í apto a realizar.
++            \item Barbeiro Owner pode remover barbeiros da equipe.
+         \end{itemize}
+     \item \textbf{M├│dulo de Agendamento (Core):}
+         \begin{itemize}
+-            \item C├ílculo de disponibilidade de hor├írios para um barbeiro, com base em seu hor├írio de trabalho e agendamentos existentes.
+-            \item Cria├º├úo e atualiza├º├úo de agendamentos pelo Cliente, com valida├º├úo de regras de neg├│cio.
+-            \item Cancelamento de agendamentos pelo Cliente (dono do agendamento) ou pelo Dono da barbearia.
+-            \item Consulta de agendas (listagem de agendamentos) com vis├Áes segregadas por papel.
++            \item C├ílculo de disponibilidade de hor├írios por barbeiro, data e servi├ºos selecionados.
++            \item Cria├º├úo, atualiza├º├úo e cancelamento de agendamentos pelo Cliente.
++            \item Suporte a walk-in (\texttt{status = WALK\_IN}): atendimento sem agendamento pr├®vio.
++            \item Bloqueios manuais de agenda pelo barbeiro (\texttt{barber\_blocks}).
++            \item Lembretes autom├íticos via \texttt{ReminderScheduler} com notifica├º├úo ao cliente e ao barbeiro; transi├º├Áes autom├íticas de status gerenciadas pelo \texttt{AppointmentLifecycleScheduler}.
++            \item Ciclo de vida completo: \texttt{SCHEDULED}, \texttt{PAYMENT\_PENDING}, \texttt{CONFIRMED}, \texttt{IN\_PROGRESS}, \texttt{COMPLETED}, \texttt{WALK\_IN}, \texttt{CANCELLED}, \texttt{NO\_SHOW} e \texttt{EXPIRED}.
++            \item Snapshot de dados no agendamento (nome, pre├ºo, dura├º├úo) para preservar hist├│rico.
+         \end{itemize}
+-    \item \textbf{Descoberta}
++    \item \textbf{M├│dulo de Pagamentos (Mercado Pago):}
+         \begin{itemize}
+-            \item Endpoints p├║blicos para listar barbearias, seus servi├ºos e seus barbeiros, permitindo a descoberta pelo cliente.
++            \item Gera├º├úo de prefer├¬ncia de pagamento e URL de checkout no Mercado Pago.
++            \item Suporte a PIX, cart├úo de cr├®dito e d├®bito.
++            \item Split de pagamentos entre plataforma e barbeiro (marketplace).
++            \item Processamento de webhooks com idempot├¬ncia (tabela \texttt{webhook\_logs}).
++            \item Dashboard de KPIs financeiros di├írios (\texttt{dashboard\_kpi\_daily}).
++        \end{itemize}
++    \item \textbf{M├│dulo de Estoque e Produtos:}
++        \begin{itemize}
++            \item Cadastro de produtos com categorias est├íticas e din├ómicas por barbearia.
++            \item Controle de estoque com quantidade m├¡nima e alerta de reposi├º├úo.
++            \item Auditoria completa de movimenta├º├Áes: entradas, sa├¡das, vendas, perdas e devolu├º├Áes.
++        \end{itemize}
++    \item \textbf{M├│dulo de Notifica├º├Áes:}
++        \begin{itemize}
++            \item Notifica├º├Áes in-app, e-mail transacional e push (Web Push via FCM) para eventos de neg├│cio.
++            \item \textbf{SSE (Server-Sent Events):} endpoint \texttt{GET /api/notifications/stream} mant├®m conex├úo persistente com o browser, eliminando o polling. Sempre que uma notifica├º├úo ├® salva, o servidor empurra um evento \texttt{unread-count} em tempo real.
++            \item Eventos notificados: cria├º├úo, cancelamento, conclus├úo e lembrete de agendamento; pagamento aprovado; solicita├º├úo/convite de equipe; remo├º├úo de barbeiro.
++            \item Desduplica├º├úo via Redis para garantir idempot├¬ncia.
++        \end{itemize}
++    \item \textbf{Descoberta e Marketplace:}
++        \begin{itemize}
++            \item Endpoints p├║blicos para listar barbearias, seus servi├ºos e barbeiros.
++            \item Filtro por geolocaliza├º├úo (latitude/longitude) para barbearias pr├│ximas.
++            \item Avalia├º├Áes e rating de barbearias pelos clientes (\texttt{barbershop\_reviews}).
++            \item Favoritos: cliente pode favoritar barbearias (\texttt{customer\_favorite\_barbershops}).
+         \end{itemize}
+ \end{enumerate}
+ 
+ \subsection*{Premissas}
+ O sucesso do projeto baseia-se nas seguintes premissas:
+ \begin{itemize}
+-    \item \textbf{Infraestrutura Dispon├¡vel:} Assume-se que a infraestrutura de nuvem (AWS Lambda, Amazon RDS) e os servi├ºos de terceiros estar├úo dispon├¡veis.
+-    \item \textbf{Credenciais V├ílidas:} Assume-se que as credenciais de acesso ao banco de dados e servi├ºos externos s├úo v├ílidas.
+-    \item \textbf{Consumo da API:} Assume-se que uma aplica├º├úo frontend (como a prevista em React) ser├í desenvolvida separadamente.
++    \item \textbf{Infraestrutura Dispon├¡vel:} Assume-se que o servidor ZimaOS, os servi├ºos Docker containerizados e os servi├ºos de terceiros (Firebase, Cloudinary, Mercado Pago) estar├úo dispon├¡veis.
++    \item \textbf{Credenciais V├ílidas:} Assume-se que as credenciais de acesso ao banco de dados e servi├ºos externos s├úo v├ílidas e configuradas via vari├íveis de ambiente.
++    \item \textbf{Consumo da API:} Assume-se que a aplica├º├úo frontend (React + Vite) consome a API REST exposta pelo \texttt{api-gateway}.
+     \item \textbf{Conectividade:} Assume-se que os usu├írios finais ter├úo acesso ├á internet.
+ \end{itemize}
+ 
+ \subsection*{Restri├º├Áes}
+ O projeto est├í sujeito ├ás seguintes restri├º├Áes:
+ \begin{itemize}
+-    \item \textbf{Tecnologia Backend:} O desenvolvimento est├í restrito ao ecossistema Java 17 e Spring Boot 3.3.4.
+-    \item \textbf{Persist├¬ncia de Dados:} O sistema deve utilizar o banco de dados MySQL hospedado no Amazon RDS.
+-    \item \textbf{Plataforma de Implanta├º├úo:} A arquitetura de implanta├º├úo deve ser serverless, utilizando AWS Lambda.
++    \item \textbf{Tecnologia Backend:} O desenvolvimento est├í restrito ao ecossistema Java 17 e Spring Boot 3.x com Spring Cloud.
++    \item \textbf{Persist├¬ncia de Dados:} Cada microsservi├ºo utiliza uma inst├óncia MySQL isolada, containerizada via Docker Compose.
++    \item \textbf{Plataforma de Implanta├º├úo:} A arquitetura de implanta├º├úo utiliza Docker Compose em servidor self-hosted (ZimaOS).
+     \item \textbf{Armazenamento de M├¡dia:} O armazenamento de m├¡dia est├í restrito ao uso do servi├ºo Cloudinary.
+-    \item \textbf{Seguran├ºa:} O modelo de seguran├ºa deve obrigatoriamente implementar autentica├º├úo via token JWT.
++    \item \textbf{Autentica├º├úo:} O modelo de seguran├ºa utiliza obrigatoriamente Firebase Authentication como provedor de identidade.
++    \item \textbf{Pagamentos:} A integra├º├úo de pagamentos ├® exclusivamente via Mercado Pago (split marketplace).
+ \end{itemize}
+ 
+ \subsection{Regras de neg├│cio}
+@@ -282,8 +313,8 @@ Descrever as regras que governam as opera├º├Áes do sistema.
+     \endfoot
+     RN1 & "Usu├írios n├úo autenticados podem acessar endpoints p├║blicos (listagens gerais, registro, login, Swagger)." & \\
+     RN2 & "Autentica├º├úo ├® necess├íria para acessar funcionalidades espec├¡ficas de Cliente, Barbeiro ou Dono." & \\
+-    RN3 & "A autentica├º├úo ├® realizada via e-mail e senha, retornando um token JWT." & RN2 \\
+-    RN4 & O token JWT deve ser enviado no cabe├ºalho Authorization: Bearer <token> para acessar rotas protegidas. & "RN2, RN3" \\
++    RN3 & "A autentica├º├úo ├® realizada via Firebase Authentication: e-mail/senha ou login social (Google). O cliente recebe um Firebase ID Token." & RN2 \\
++    RN4 & O Firebase ID Token deve ser enviado no cabe├ºalho Authorization: Bearer <token>. O API Gateway valida o token e injeta quatro headers internos nos microsservi├ºos: \texttt{X-User-UID} (Firebase UID), \texttt{X-User-Email}, \texttt{X-User-Type} (\texttt{ROLE\_CUSTOMER}, \texttt{ROLE\_BARBER} ou \texttt{ROLE\_OWNER}) e \texttt{X-User-Owner} (booleano ÔÇö indica se ├® dono de barbearia). & "RN2, RN3" \\
+     RN5 & Apenas o Cliente pode gerenciar seu pr├│prio perfil e agendamentos. & RN2 \\
+     RN6 & "Apenas o Barbeiro pode gerenciar seu pr├│prio perfil, solicitar entrada ou sair de uma loja." & RN2 \\
+     RN7 & Apenas o Barbeiro Owner pode gerenciar sua barbearia. & "RN2, RN6" \\
+@@ -302,6 +333,12 @@ Descrever as regras que governam as opera├º├Áes do sistema.
+     RN20 & Um Barbeiro s├│ pode solicitar entrada em uma barbearia se n├úo estiver vinculado a nenhuma. & RN6 \\
+     RN21 & Um Dono s├│ pode aprovar uma solicita├º├úo se o Barbeiro ainda estiver livre. & "RN7, RN20" \\
+     RN22 & O Dono pode rejeitar uma solicita├º├úo. & RN7 \\
++    RN23 & Um cliente pode avaliar cada barbearia no m├íximo uma vez. & RN5 \\
++    RN24 & O total do agendamento ├® calculado somando o pre├ºo snapshot de cada servi├ºo selecionado; o \texttt{end\_time} ├® calculado somando a dura├º├úo snapshot de cada servi├ºo ao \texttt{start\_time}. & RN11 \\
++    RN25 & Agendamentos com \texttt{status = PAYMENT\_PENDING} s├úo cancelados automaticamente (status ÔåÆ \texttt{CANCELLED}) pelo \texttt{AppointmentLifecycleScheduler} se tiverem sido criados h├í mais de 30 minutos (\texttt{date\_created + 30min < now}). O valor padr├úo ├® configur├ível via \texttt{APPOINTMENT\_PAYMENT\_PENDING\_TIMEOUT\_MINUTES}. & RN11 \\
++    RN26 & O split de pagamento ├® calculado como: \texttt{gross\_amount = net\_amount + mp\_fee + platform\_fee}. & \\
++    RN27 & Webhooks do Mercado Pago s├úo processados com idempot├¬ncia: o campo \texttt{mp\_resource\_id} ├® verificado antes de qualquer processamento. & \\
++    RN28 & Ao excluir um cliente (LGPD), o \texttt{user-service} publica o evento \texttt{customer.deleted} na exchange \texttt{cortaai.events}; \texttt{schedule-service}, \texttt{payment-service} e \texttt{notification-service} consomem o evento e anonimizam os dados de forma independente, preservando o hist├│rico financeiro. & \\
+ \end{longtable}
+ 
+ \subsection{Requisitos funcionais}
+@@ -321,8 +358,8 @@ Listar os requisitos que descrevem as funcionalidades que o sistema deve oferece
+     \endfoot
+     RF1 & O sistema deve permitir o registro de novos Clientes. & "RN9, RN10" \\
+     RF2 & O sistema deve permitir o registro de novos Barbeiros. & "RN9, RN10" \\
+-    RF3 & "O sistema deve permitir o login de Clientes via e-mail e senha, retornando um token JWT." & "RN3, RN4" \\
+-    RF4 & "O sistema deve permitir o login de Barbeiros via e-mail e senha, retornando um token JWT." & "RN3, RN4" \\
++    RF3 & "O sistema deve permitir o login de Clientes via Firebase Authentication (e-mail/senha ou Google), retornando um Firebase ID Token." & "RN3, RN4" \\
++    RF4 & "O sistema deve permitir o login de Barbeiros via Firebase Authentication (e-mail/senha ou Google), retornando um Firebase ID Token." & "RN3, RN4" \\
+     RF5 & Um Cliente autenticado deve poder visualizar e atualizar seus dados cadastrais (exceto senha). & "RN5, RN9, RN10" \\
+     RF6 & Um Barbeiro autenticado deve poder visualizar e atualizar seus dados cadastrais (exceto senha). & "RN6, RN9, RN10" \\
+     RF7 & Um Cliente autenticado deve poder fazer upload/atualizar sua foto de perfil. & RN5 \\
+@@ -357,18 +394,26 @@ Listar os requisitos que descrevem as funcionalidades que o sistema deve oferece
+     RF36 & Um Dono autenticado deve poder consultar a lista de todos os Agendamentos da sua loja. & RN7 \\
+     RF37 & Um Barbeiro autenticado deve poder consultar o hist├│rico das suas solicita├º├Áes de entrada. & RN6 \\
+     RF38 & O sistema deve prover documenta├º├úo da API via Swagger UI. & RN1 \\
++    RF39 & Um Cliente autenticado deve poder avaliar uma barbearia com nota e coment├írio, sendo permitida uma avalia├º├úo por barbearia. & RN23 \\
++    RF40 & Um Cliente autenticado deve poder favoritar e desfavoritar barbearias, consultando sua lista de favoritos. & RN1 \\
++    RF41 & O sistema deve gerar uma prefer├¬ncia de pagamento no Mercado Pago e retornar a URL de checkout ao cliente. & RN26 \\
++    RF42 & O sistema deve processar webhooks do Mercado Pago com garantia de idempot├¬ncia, atualizando o status da transa├º├úo. & RN27 \\
++    RF43 & Um Dono autenticado deve poder cadastrar produtos, registrar movimenta├º├Áes de estoque (entrada, sa├¡da, consumo, venda, perda, devolu├º├úo) e receber alertas de reposi├º├úo. & RN1 \\
++    RF44 & O sistema deve enviar notifica├º├Áes (push FCM, e-mail e in-app) para eventos de agendamento, pagamento e movimenta├º├úo de equipe. & RN1 \\
++    RF45 & Um Barbeiro autenticado deve poder registrar atendimentos walk-in (sem agendamento pr├®vio). & RN1 \\
++    RF46 & Um Dono autenticado deve poder convidar um barbeiro diretamente pelo sistema (tipo INVITE), sem aguardar solicita├º├úo espont├ónea. & RN6 \\
+ \end{longtable}
+ 
+ \subsection{Requisitos n├úo funcionais}
+ Listar os requisitos que descrevem as caracter├¡sticas de qualidade do sistema.
+ \begin{itemize}
+-    \item \textbf{Escalabilidade:} O sistema deve ser capaz de escalonar automaticamente utilizando AWS Lambda e RDS.
+-    \item \textbf{Seguran├ºa:} A aplica├º├úo deve garantir a autentica├º├úo via JWT e autoriza├º├úo baseada em roles. Senhas devem ser armazenadas com hash (BCrypt). Dados sens├¡veis em tr├ónsito devem usar HTTPS.
+-    \item \textbf{Usabilidade e Acessibilidade:} A interface do frontend (React - previsto) deve ser intuitiva e responsiva.
+-    \item \textbf{Desempenho:} A consulta de disponibilidade de hor├írios (getAvailableSlots) deve ter tempo de resposta otimizado.
+-    \item \textbf{Disponibilidade:} A arquitetura serverless na AWS (Lambda, RDS) visa alta disponibilidade (24/7).
+-    \item \textbf{Manutenibilidade:} O c├│digo Java deve seguir conven├º├Áes de estilo, ser modularizado (Controller/Service/Repository) e utilizar JPA e DTOs (MapStruct).
+-    \item \textbf{Registro de Logs:} A aplica├º├úo deve utilizar SLF4J/Logback para registrar eventos.
++    \item \textbf{Escalabilidade:} A arquitetura de microsservi├ºos permite escalar servi├ºos individualmente via Docker Compose, adicionando r├®plicas conforme a demanda.
++    \item \textbf{Seguran├ºa:} A autentica├º├úo ├® delegada ao Firebase Authentication. A autoriza├º├úo ├® baseada em roles (\texttt{ROLE\_CUSTOMER}, \texttt{ROLE\_BARBER}) injetadas pelo \texttt{api-gateway}. Dados sens├¡veis (CPF, e-mail, telefone, CNPJ) s├úo criptografados em repouso com AES/GCM. Dados em tr├ónsito utilizam HTTPS.
++    \item \textbf{Usabilidade e Acessibilidade:} A interface do frontend (React + Vite) deve ser intuitiva e responsiva.
++    \item \textbf{Desempenho:} A consulta de disponibilidade de hor├írios deve ter tempo de resposta otimizado. O \texttt{notification-service} utiliza Redis para evitar reprocessamento de eventos.
++    \item \textbf{Disponibilidade:} O deploy via Docker Compose no servidor ZimaOS garante que todos os servi├ºos reiniciem automaticamente (\texttt{restart: unless-stopped}).
++    \item \textbf{Manutenibilidade:} O c├│digo Java segue conven├º├Áes, ├® modularizado por microsservi├ºo (Controller/Service/Repository/DTO/Mapper) e utiliza JPA e MapStruct.
++    \item \textbf{Registro de Logs:} A aplica├º├úo utiliza SLF4J/Logback para registrar eventos.
+ \end{itemize}
+ 
+ \section{Hist├│rias de usu├írio}
+@@ -380,8 +425,8 @@ As Hist├│rias de Usu├írio foram definidas com base nos casos de uso para os tr├¬
+     \item[Crit├®rios de Aceita├º├úo:]
+     \item[Crit├®rio 1:] O usu├írio deve preencher o formul├írio de registro com dados v├ílidos.
+     \item[Crit├®rio 2:] O sistema deve validar a unicidade do e-mail, telefone e CPF.
+-    \item[Crit├®rio 3:] Ap├│s o registro, o usu├írio deve poder realizar login para obter um token JWT.
+-    \item[Crit├®rio 4:] Com o token JWT, o Cliente deve poder listar barbearias, servi├ºos, barbeiros e consultar disponibilidade.
++    \item[Crit├®rio 3:] Ap├│s o registro, o usu├írio realiza login via Firebase Authentication para obter um Firebase ID Token.
++    \item[Crit├®rio 4:] Com o Firebase ID Token, o Cliente deve poder listar barbearias, servi├ºos, barbeiros e consultar disponibilidade.
+     \item[Crit├®rio 5:] O Cliente deve poder criar um novo agendamento.
+     \item[Crit├®rio 6:] O sistema deve validar todas as regras de neg├│cio do agendamento.
+ \end{description}
+@@ -390,7 +435,7 @@ As Hist├│rias de Usu├írio foram definidas com base nos casos de uso para os tr├¬
+ \textbf{Eu como} Barbeiro cadastrado, \textbf{quero} gerenciar meu perfil, definir meus servi├ºos, meu hor├írio de trabalho e consultar minha agenda, \textbf{para} manter minhas informa├º├Áes atualizadas e organizar meu dia de trabalho.
+ \begin{description}
+     \item[Crit├®rios de Aceita├º├úo:]
+-    \item[Crit├®rio 1:] O Barbeiro deve poder fazer login para obter um token JWT.
++    \item[Crit├®rio 1:] O Barbeiro deve poder fazer login via Firebase Authentication para obter um Firebase ID Token.
+     \item[Crit├®rio 2:] O Barbeiro autenticado deve poder atualizar seus dados pessoais e foto.
+     \item[Crit├®rio 4:] O Barbeiro autenticado (vinculado a uma loja) deve poder definir quais servi├ºos da sua loja ele realiza.
+     \item[Crit├®rio 5:] O Barbeiro autenticado deve poder definir seu hor├írio de in├¡cio e fim de expediente.
+@@ -412,15 +457,48 @@ As Hist├│rias de Usu├írio foram definidas com base nos casos de uso para os tr├¬
+ \end{description}
+ 
+ \section{Arquitetura da aplica├º├úo}
+-A arquitetura do sistema adota um modelo Cliente-Servidor distribu├¡do. O frontend (cliente), previsto em React, ├® respons├ível pela interface do usu├írio e consome a API REST exposta pelo backend (servidor), que ser├í desenvolvido em Java com Spring Boot.
++A arquitetura do sistema adota o modelo de \textbf{microsservi├ºos}, onde cada dom├¡nio de neg├│cio ├® um servi├ºo independente com banco de dados pr├│prio. O frontend (cliente), desenvolvido em React, consome a API REST exposta pelo \texttt{api-gateway}, que ├® o ├║nico ponto de entrada p├║blico do sistema.
++
++A comunica├º├úo entre os servi├ºos segue dois padr├Áes:
++\begin{itemize}
++    \item \textbf{S├¡ncrona (OpenFeign):} Utilizada para consultas cross-service (ex: \texttt{schedule-service} consultando dados de barbeiro no \texttt{user-service}).
++    \item \textbf{Ass├¡ncrona (RabbitMQ):} Utilizada para muta├º├Áes cross-service via eventos de dom├¡nio publicados na exchange \texttt{cortaai.events} (TopicExchange). Ex: \texttt{appointment.created}, \texttt{payment.approved}, \texttt{customer.deleted}.
++\end{itemize}
++
++Os oito microsservi├ºos que comp├Áem o sistema s├úo:
++
++\begin{table}[htb]
++    \centering
++    \caption{Microsservi├ºos do CortaAi}
++    \label{tab:microservicos}
++    \begin{tabular}{p{4cm} p{7.5cm} p{2.5cm}}
++        \toprule
++        \textbf{Servi├ºo} & \textbf{Responsabilidade} & \textbf{Banco} \\
++        \midrule
++        \texttt{api-gateway} & Roteamento, CORS, valida├º├úo do Firebase ID Token, inje├º├úo de headers \texttt{X-User-*} & ÔÇö \\
++        \texttt{discovery-service} & Servidor Eureka (service discovery) & ÔÇö \\
++        \texttt{user-service} & Clientes, Barbeiros, perfis, favoritos, habilidades & \texttt{user\_db} \\
++        \texttt{barbershop-service} & Barbearias, servi├ºos, portf├│lio, avalia├º├Áes, comiss├Áes, despesas & \texttt{barbershop\_db} \\
++        \texttt{schedule-service} & Agendamentos, disponibilidade, bloqueios, walk-ins & \texttt{schedule\_db} \\
++        \texttt{product-service} & Estoque, produtos, movimenta├º├Áes, categorias & \texttt{product\_db} \\
++        \texttt{payment-service} & Integra├º├úo Mercado Pago, transa├º├Áes, split, webhooks & \texttt{payment\_db} \\
++        \texttt{notification-service} & E-mails transacionais, notifica├º├Áes in-app, push (FCM/Web), SSE em tempo real, desduplica├º├úo via Redis & \texttt{notification\_db} \\
++        \bottomrule
++    \end{tabular}
++\end{table}
+ 
+-O backend ├® estruturado utilizando uma arquitetura em camadas (layered architecture), um padr├úo consolidado no ecossistema Spring, que divide as responsabilidades da seguinte forma:
++Cada microsservi├ºo ├® dono exclusivo do seu banco de dados. Refer├¬ncias entre servi├ºos s├úo mantidas via UUIDs armazenados como \texttt{VARCHAR(36)}, sem FKs f├¡sicas cross-service.
++
++Internamente, cada microsservi├ºo segue uma arquitetura em camadas:
+ \begin{itemize}
+-    \item \textbf{Controllers:} Camada de entrada da API REST. ├ë respons├ível por receber as requisi├º├Áes HTTP, validar os dados de entrada (DTOs) e delegar a l├│gica de neg├│cios para a camada de servi├ºo.
+-    \item \textbf{Services:} Camada que cont├®m a l├│gica de neg├│cios principal da aplica├º├úo. Executa as regras de agendamento, valida├º├Áes complexas e orquestra as opera├º├Áes.
+-    \item \textbf{Repositories:} Camada de acesso aos dados. Utiliza o Spring Data JPA para abstrair as opera├º├Áes de persist├¬ncia (CRUD) com o banco de dados relacional (MySQL).
+-    \item \textbf{Models (Entities):} Representam as tabelas do banco de dados como objetos Java (POJOs), utilizando anota├º├Áes da JPA.
+-    \item \textbf{Mappers:} Componentes respons├íveis por converter eficientemente os objetos de Entidade em DTOs, utilizando a biblioteca MapStruct.
++    \item \textbf{Controllers:} Recebem requisi├º├Áes HTTP, validam DTOs e delegam para a camada de servi├ºo. Nunca exp├Áem entidades JPA diretamente.
++    \item \textbf{Services:} Cont├¬m a l├│gica de neg├│cio. Publicam eventos RabbitMQ e invocam FeignClients.
++    \item \textbf{Repositories:} Utilizam Spring Data JPA para persist├¬ncia.
++    \item \textbf{Models (Entities):} Mapeiam as tabelas do banco via JPA.
++    \item \textbf{DTOs:} Records imut├íveis (\texttt{XxxRequestDTO}/\texttt{XxxResponseDTO}) para entrada e sa├¡da da API.
++    \item \textbf{Mappers:} Convertem entidades em DTOs via MapStruct.
++    \item \textbf{Messaging:} Publishers e Listeners RabbitMQ para comunica├º├úo ass├¡ncrona.
++    \item \textbf{Feign:} Clients para consultas s├¡ncronas cross-service com fallback configurado.
+ \end{itemize}
+ 
+ \begin{figure}[htb]
+@@ -435,17 +513,26 @@ Esta se├º├úo descreve a pilha de tecnologia (tech stack) principal para o projet
+ 
+ \subsection{Front-end}
+ \begin{itemize}
+-    \item \textbf{React:} Biblioteca JavaScript prevista para o desenvolvimento do frontend.
+-    \item \textbf{Axios:} Biblioteca JavaScript prevista para realizar requisi├º├Áes HTTP.
++    \item \textbf{React 18:} Biblioteca JavaScript para o desenvolvimento da interface.
++    \item \textbf{Vite:} Bundler e servidor de desenvolvimento com suporte a PWA via plugin \texttt{vite-plugin-pwa}. A aplica├º├úo ├® instal├ível como \textbf{Progressive Web App (PWA)}: possui \texttt{manifest.json}, Service Worker e estrat├®gia \textit{App Shell} ÔÇö garantindo funcionamento offline parcial, instala├º├úo na tela inicial do dispositivo e experi├¬ncia pr├│xima a um aplicativo nativo.
++    \item \textbf{React Router DOM:} Roteamento client-side declarativo (SPA).
++    \item \textbf{Axios:} Biblioteca para requisi├º├Áes HTTP, encapsulada em um wrapper ├║nico (\texttt{services/api.js}) que injeta automaticamente o Firebase ID Token.
++    \item \textbf{Firebase JS SDK:} Autentica├º├úo do lado do cliente ÔÇö login com e-mail/senha, Google OAuth e opera├º├Áes de sess├úo.
++    \item \textbf{react-toastify:} Notifica├º├Áes de feedback ao usu├írio (toasts).
++    \item \textbf{CSS Modules:} Padr├úo de estiliza├º├úo por componente (\texttt{*.module.css}), garantindo escopo local de estilos.
+ \end{itemize}
+ 
+ \subsection{Back-end}
+ \begin{itemize}
+     \item \textbf{Java 17:} Linguagem principal do back-end.
+-    \item \textbf{Spring Boot 3.3.4:} Framework principal, simplificando a configura├º├úo.
++    \item \textbf{Spring Boot 3.x:} Framework principal, simplificando a configura├º├úo de cada microsservi├ºo.
++    \item \textbf{Spring Cloud:} Conjunto de m├│dulos para microsservi├ºos: Eureka (service discovery) e Spring Cloud Gateway (API Gateway).
++    \item \textbf{Spring Cloud OpenFeign:} Clients HTTP declarativos para comunica├º├úo s├¡ncrona entre microsservi├ºos.
+     \item \textbf{Spring Data JPA / Hibernate:} Camada de persist├¬ncia de dados (ORM).
+-    \item \textbf{Spring Security:} Framework para gerenciamento de autentica├º├úo e autoriza├º├úo.
+-    \item \textbf{JWT (Java Web Token):} Utilizado para a autentica├º├úo baseada em tokens stateless.
++    \item \textbf{Firebase Admin SDK:} Valida├º├úo de Firebase ID Tokens no \texttt{api-gateway}.
++    \item \textbf{RabbitMQ (Spring AMQP):} Mensageria para comunica├º├úo ass├¡ncrona entre microsservi├ºos via eventos de dom├¡nio.
++    \item \textbf{Redis (Spring Data Redis):} Cache e desduplica├º├úo de eventos no \texttt{notification-service} (desduplica├º├úo por \texttt{messageId} com TTL) e cache de hor├írios de trabalho dos barbeiros no \texttt{schedule-service} (TTL de 5 minutos).
++    \item \textbf{Mercado Pago SDK:} Integra├º├úo para split de pagamentos, gera├º├úo de prefer├¬ncias e processamento de webhooks.
+     \item \textbf{MapStruct:} Ferramenta para gera├º├úo de c├│digo de mapeamento (Entidades e DTOs).
+     \item \textbf{Jakarta Bean Validation:} Especifica├º├úo para valida├º├úo de dados em DTOs.
+     \item \textbf{SLF4J / Logback:} Facade e implementa├º├úo de logging.
+@@ -457,23 +544,59 @@ Esta se├º├úo descreve a pilha de tecnologia (tech stack) principal para o projet
+ \end{itemize}
+ 
+ \subsection{Infraestrutura}
+-A infraestrutura do projeto ├® baseada em uma arquitetura de nuvem serverless:
++A infraestrutura do projeto ├® baseada em cont├¬ineres Docker, hospedados em um servidor self-hosted (ZimaOS):
+ \begin{itemize}
+-    \item \textbf{Amazon Web Services (AWS):} Provedor de nuvem principal.
+-    \item \textbf{AWS Lambda (Computa├º├úo Serverless):} O backend Java Spring Boot ├® empacotado para rodar como uma fun├º├úo Lambda.
+-    \item \textbf{Amazon RDS (Relational Database Service):} O banco de dados MySQL ├® hospedado como um servi├ºo gerenciado.
+-    \item \textbf{Amazon API Gateway (Impl├¡cito):} Atua como o ponto de entrada da aplica├º├úo, recebendo as requisi├º├Áes HTTP.
+-    \item \textbf{Cloudinary (Plataforma de M├¡dia SaaS):} Servi├ºo de terceiros especializado em gerenciamento de m├¡dia (upload, armazenamento e entrega de imagens).
++    \item \textbf{Docker + Docker Compose:} Todos os microsservi├ºos, bancos de dados e infraestrutura de mensageria s├úo containerizados. O arquivo \texttt{docker-compose.yml} ├® utilizado para desenvolvimento local e \texttt{docker-compose.server.yml} para produ├º├úo.
++    \item \textbf{MySQL (containerizado):} Cada microsservi├ºo com banco pr├│prio possui uma inst├óncia MySQL isolada (\texttt{user\_db}, \texttt{barbershop\_db}, \texttt{schedule\_db}, \texttt{payment\_db}, \texttt{product\_db}, \texttt{notification\_db}).
++    \item \textbf{RabbitMQ (containerizado):} Broker de mensagens para comunica├º├úo ass├¡ncrona entre microsservi├ºos.
++    \item \textbf{Redis (containerizado):} Utilizado pelo \texttt{notification-service} para desduplica├º├úo de eventos e cache.
++    \item \textbf{Cloudinary (Plataforma de M├¡dia SaaS):} Servi├ºo de terceiros para gerenciamento de m├¡dia (upload, armazenamento e entrega de imagens via CDN).
++    \item \textbf{Firebase Authentication (SaaS):} Provedor de identidade para autentica├º├úo de usu├írios.
++    \item \textbf{Mercado Pago (SaaS):} Gateway de pagamentos para split de transa├º├Áes entre plataforma e barbeiro.
+ \end{itemize}
+ 
+ \subsection{Ferramentas de Apoio}
+ \begin{itemize}
+     \item \textbf{Trello (Gest├úo de Projetos e Tarefas):} Ferramenta central para o gerenciamento de tarefas e acompanhamento do progresso (Kanban).
+     \item \textbf{GitHub (Controle de Vers├úo e Reposit├│rio de C├│digo):} Sistema de controle de vers├úo (VCS) e reposit├│rio central de todo o c├│digo-fonte.
++    \item \textbf{Postman / Insomnia:} Plataformas de testes de API utilizadas para modelar contratos, simular fluxos de usu├írios e validar endpoints.
+     \item \textbf{Overleaf (Documenta├º├úo Colaborativa):} Plataforma adotada para a elabora├º├úo e manuten├º├úo da documenta├º├úo oficial do projeto (LaTeX).
+     \item \textbf{Discord (Comunica├º├úo da Equipe):} Plataforma para a comunica├º├úo s├¡ncrona (instant├ónea) da equipe.
+ \end{itemize}
+ 
++\subsection{M├│dulo de Assist├¬ncia Inteligente (Assistente Gustave)}
++Como diferencial estrat├®gico focado na usabilidade e no suporte ├á tomada de decis├úo dos profissionais, o ecossistema CortaAi incorpora um m├│dulo de intelig├¬ncia artificial generativa, denominado \textbf{Gustave}. Este assistente atua como uma interface conversacional inteligente integrada ├á console administrativa do profissional (\textit{BarberHomePage}), viabilizando intera├º├Áes em linguagem natural para a extra├º├úo r├ípida de dados e insights operacionais.
++
++O escopo funcional do assistente abrange tr├¬s frentes cr├¡ticas:
++\begin{itemize}
++    \item \textbf{Interpreta├º├úo de Dashboards e Desempenho:} Contextualiza e sumariza dados anal├¡ticos de faturamento, ticket m├®dio e gr├íficos de produtividade, traduzindo m├®tricas visuais complexas em diagn├│sticos textuais diretos.
++    \item \textbf{Consulta Din├ómica de Agendamentos:} Conectado ao \texttt{schedule-service}, permite que o barbeiro consulte sua fila de compromissos di├írios, confirme hor├írios reservados ou resgate hist├│ricos de atendimento atrav├®s de comandos de texto.
++    \item \textbf{Monitoramento de Estoque:} Responde sobre n├¡veis de invent├írio, alerta sobre necessidade de reposi├º├úo e previne a escassez de materiais essenciais.
++\end{itemize}
++
++Sob a perspectiva arquitetural, o m├│dulo Gustave est├í implementado no \texttt{schedule-service} como um controller dedicado (\texttt{AiChatController}), exposto no endpoint \texttt{POST /api/schedule/ai/chat}. O hist├│rico de conversa pode ser limpo via \texttt{DELETE /api/schedule/ai/chat/history}. O fluxo de comunica├º├úo ├® intermediado pelo API Gateway, que valida o token do profissional (injetando \texttt{X-User-UID} e \texttt{X-User-Type}) antes de rotear a requisi├º├úo ao m├│dulo de IA. A estrat├®gia de provedores adota \textbf{Gemini 2.0 Flash} como modelo prim├írio, com cadeia de fallback sequencial para \textbf{Groq} (llama-3.3-70b), \textbf{OpenRouter} (meta-llama/llama-3.1-8b) e \textbf{Cohere} (command-a-03-2025), garantindo disponibilidade mesmo em caso de indisponibilidade de um provedor. Essa arquitetura garante que o assistente opere estritamente sob o escopo de permiss├Áes do usu├írio autenticado.
++
++\subsection{Integra├º├úo e Entrega Cont├¡nuas (CI/CD)}
++Para suportar a arquitetura de microsservi├ºos e garantir agilidade e seguran├ºa nas entregas, o projeto adota uma estrat├®gia robusta de CI/CD com \textbf{GitHub Actions} como orquestrador dos pipelines.
++
++A automa├º├úo do ciclo de vida do software ├® dividida em duas esteiras principais:
++
++\subsubsection{Esteira de Integra├º├úo Cont├¡nua (CI)}
++\textbf{Gatilho:} Abertura ou atualiza├º├úo de Pull Requests contra a ramifica├º├úo principal (\texttt{main}).
++\begin{enumerate}
++    \item \textbf{Setup do Ambiente:} Provisionamento das inst├óncias de execu├º├úo, instala├º├úo do Java 17 e configura├º├úo do cache de depend├¬ncias do Maven.
++    \item \textbf{Testes Automatizados:} Execu├º├úo da su├¡te completa de testes unit├írios e de integra├º├úo, com \textbf{Testcontainers} provisionando servi├ºos ef├¬meros (MySQL, Redis e RabbitMQ) de forma transparente.
++    \item \textbf{An├ílise Est├ítica e Quality Gate:} Gera├º├úo do relat├│rio de qualidade e envio para o SonarQube. Caso o Quality Gate reprove o c├│digo (ex.: cobertura inferior a 80\% ou presen├ºa de vulnerabilidades), a integra├º├úo falha e o merge do PR ├® bloqueado.
++\end{enumerate}
++
++\subsubsection{Esteira de Entrega Cont├¡nua (CD)}
++\textbf{Gatilho:} Merge de c├│digo previamente aprovado na ramifica├º├úo principal (\texttt{main}).
++\begin{enumerate}
++    \item \textbf{Gera├º├úo de Artefatos:} Compila├º├úo final do c├│digo. No back-end, empacotamento (.jar) dos microsservi├ºos Java/Spring Boot. No front-end, build otimizado dos ativos est├íticos do React/Vite.
++    \item \textbf{Containeriza├º├úo (Build \& Push):} Cria├º├úo das imagens Docker isoladas, restritas apenas aos servi├ºos que sofreram altera├º├Áes. As imagens s├úo etiquetadas com o hash da vers├úo e enviadas ao Docker Hub.
++    \item \textbf{Deploy Automatizado:} Atualiza├º├úo cont├¡nua na infraestrutura do servidor privado. A sinergia entre o Discovery Service (Eureka) e o API Gateway garante que as novas inst├óncias sejam automaticamente registradas na malha de servi├ºos, com drenagem e desligamento das vers├Áes anteriores para transi├º├Áes est├íveis.
++\end{enumerate}
++
+ \section{Testes e manutenibilidade}
+ O Plano de Testes serve como um mapa ou guia para todo o esfor├ºo de teste do projeto. Em ess├¬ncia, ele responde ├ás seguintes perguntas:
+ \begin{itemize}
+@@ -498,13 +621,13 @@ Foi adotado uma estrat├®gia que segue a pir├ómide de testes. O escopo de teste 
+ \subsubsection{N├¡vel 2: Testes de Integra├º├úo}
+ \begin{itemize}
+     \item \textbf{Escopo e Foco:} Fluxo completo da API (Controller -> Service -> BD) e a camada de seguran├ºa.
+-    \item \textbf{Descri├º├úo e Ferramentas:} Utilizando \texttt{@SpringBootTest} e \texttt{MockMvc}, estes testes validam o fluxo CRUD, a l├│gica de seguran├ºa (JWT 401/403) e valida├º├Áes de DTO (400 Bad Request).
++    \item \textbf{Descri├º├úo e Ferramentas:} Utilizando \texttt{@SpringBootTest} e \texttt{MockMvc}, estes testes validam o fluxo CRUD, a l├│gica de seguran├ºa (Firebase ÔÇö 401 para token ausente/inv├ílido, 403 para role insuficiente) e valida├º├Áes de DTO (400 Bad Request).
+     \item \textbf{Execu├º├úo:} Automaticamente a cada build do Maven e no pipeline de CI/CD.
+ \end{itemize}
+ 
+ \subsubsection{N├¡vel 3: Testes de Componente/API}
+ \begin{itemize}
+-    \item \textbf{Escopo e Foco:} Valida├º├úo do contrato da API (JSON) e a integra├º├úo real com servi├ºos externos (Cloudinary e AWS RDS) em ambiente de homologa├º├úo (Staging).
++    \item \textbf{Escopo e Foco:} Valida├º├úo do contrato da API (JSON) e a integra├º├úo real com servi├ºos externos (Cloudinary, Firebase Authentication e MySQL containerizado) em ambiente de homologa├º├úo (Staging).
+     \item \textbf{Descri├º├úo e Ferramentas:} Ap├│s o deploy em Staging, s├úo executados testes manuais (Insomnia ou Postman) para verificar a integra├º├úo real.
+     \item \textbf{Execu├º├úo:} Manual, realizado antes de qualquer promo├º├úo do c├│digo para Produ├º├úo.
+ \end{itemize}
+@@ -519,9 +642,9 @@ Foi adotado uma estrat├®gia que segue a pir├ómide de testes. O escopo de teste 
+         \toprule
+         \textbf{Ambiente} & \textbf{Prop├│sito e Tipos de Teste} & \textbf{Infraestrutura e Banco de Dados} & \textbf{Ferramentas Aplic├íveis} \\
+         \midrule
+-        \textbf{Local} & Desenvolvimento, depura├º├úo e execu├º├úo de testes automatizados r├ípidos. \newline \textbf{Testes:} Unit├írios e Integra├º├úo. & M├íquina do Desenvolvedor \newline \textbf{BD:} H2 (Em mem├│ria) & JUnit 5, Mockito, Spring Boot Test, MockMvc \\
+-        \textbf{Staging (Homologa├º├úo)} & Simula├º├úo do ambiente de produ├º├úo para valida├º├úo final. \newline \textbf{Testes:} Componente/API e N├úo Funcionais (Carga/Estresse). & AWS Lambda + API Gateway + Cloudinary (Conta de Teste) \newline \textbf{BD:} AWS RDS (Inst├óncia de Teste) & Insomnia/Postman, JMeter/Gatling, AWS CloudWatch \\
+-        \textbf{Produ├º├úo} & Ambiente final do usu├írio. \newline \textbf{Testes:} Monitoramento e "Smoke Tests". & AWS Lambda + API Gateway + Cloudinary (Produ├º├úo) \newline \textbf{BD:} AWS RDS (Produ├º├úo) & AWS CloudWatch \\
++        \textbf{Local} & Desenvolvimento, depura├º├úo e execu├º├úo de testes automatizados r├ípidos. \newline \textbf{Testes:} Unit├írios e Integra├º├úo. & M├íquina do Desenvolvedor \newline \textbf{BD:} MySQL containerizado (local via Docker Compose) & JUnit 5, Mockito, Spring Boot Test, MockMvc \\
++        \textbf{Staging (Homologa├º├úo)} & Simula├º├úo do ambiente de produ├º├úo para valida├º├úo final. \newline \textbf{Testes:} Componente/API e N├úo Funcionais (Carga/Estresse). & Docker Compose (ZimaOS) + Cloudinary (Conta de Teste) \newline \textbf{BD:} MySQL containerizado (inst├óncia de teste) & Insomnia/Postman, JMeter/Gatling, Logback + Actuator \\
++        \textbf{Produ├º├úo} & Ambiente final do usu├írio. \newline \textbf{Testes:} Monitoramento e "Smoke Tests". & Docker Compose (ZimaOS) + Cloudinary (Produ├º├úo) \newline \textbf{BD:} MySQL containerizado (produ├º├úo) & Logback, Spring Actuator \\
+         \bottomrule
+     \end{tabular}
+     }
+@@ -543,7 +666,7 @@ A estrat├®gia de testes funcionais visa validar o software em diferentes n├¡veis
+ \subsubsection{Testes de Componente}
+ \textbf{Defini├º├úo:} Validam o comportamento de um componente ou um pequeno grupo de componentes.
+ \begin{itemize}
+-    \item \textbf{Camada de Dados:} Utiliza-se \texttt{@DataJpaTest} do Spring Boot para validar a camada de persist├¬ncia (JPA/Reposit├│rios) contra um banco H2. Foco em consultas customizadas.
++    \item \textbf{Camada de Dados:} Utiliza-se Mockito para isolar as depend├¬ncias de reposit├│rio nos testes de servi├ºo. Testes que exigem persist├¬ncia real s├úo executados com \texttt{@SpringBootTest} contra o MySQL containerizado. Foco em consultas customizadas e comportamento transacional.
+     \item \textbf{Contrato de API:} Utiliza-se Insomnia ou Postman para executar requisi├º├Áes HTTP contra a aplica├º├úo e validar os c├│digos de status (200, 400, 403) e a estrutura do JSON.
+ \end{itemize}
+ 
+@@ -552,7 +675,7 @@ A estrat├®gia de testes funcionais visa validar o software em diferentes n├¡veis
+ \textbf{Implementa├º├úo:} Utiliza-se \texttt{@SpringBootTest} para carregar o contexto completo e \texttt{MockMvc} para simular requisi├º├Áes HTTP.
+ \begin{description}
+     \item[Cen├írio de Exemplo (POST /api/appointments):]
+-    \item[Dado:] Um banco H2 pr├®-populado e um usu├írio simulado \texttt{@WithMockUser} (ROLE\_CUSTOMER).
++    \item[Dado:] Dados de teste pr├®-populados via \texttt{@BeforeEach} (Mockito) e um usu├írio simulado \texttt{@WithMockUser} (ROLE\_CUSTOMER).
+     \item[Quando (When):] MockMvc executa um POST para /api/appointments com um DTO v├ílido.
+     \item[Ent├úo (Then):] O teste afirma que a resposta HTTP ├® 201 (Created) e que o AppointmentsRepository.count() ├® 1.
+     \item[Cen├írio de Exemplo (Acesso Negado):]
+@@ -580,17 +703,17 @@ Verificam *como* o sistema opera sob determinadas condi├º├Áes, focando em desemp
+ \subsubsection{Testes de performance}
+ \textbf{Defini├º├úo:} Medem a velocidade, responsividade e estabilidade da API sob carga.
+ \begin{itemize}
+-    \item \textbf{Testes de Estresse (Stress Testing):} Aumenta progressivamente a carga al├®m do esperado, at├® o sistema falhar, identificando o ponto de ruptura (limites de concorr├¬ncia do Lambda, pool de conex├Áes do RDS).
+-    \item \textbf{Testes de "Cold Start" (Inicializa├º├úo a Frio):} Espec├¡fico para AWS Lambda. Mede o tempo que a aplica├º├úo Spring Boot leva para inicializar do zero ap├│s um per├¡odo de inatividade.
++    \item \textbf{Testes de Estresse (Stress Testing):} Aumenta progressivamente a carga al├®m do esperado, at├® o sistema falhar, identificando o ponto de ruptura (pool de conex├Áes do MySQL, limites de threads do container Spring Boot).
++    \item \textbf{Testes de Inicializa├º├úo de Cont├¬iner:} Mede o tempo que cada microsservi├ºo Spring Boot leva para inicializar via Docker Compose, validando que o tempo de startup est├í dentro do aceit├ível para a pol├¡tica \texttt{restart: unless-stopped}.
+ \end{itemize}
+ 
+ \subsubsection{Testes de configura├º├úo}
+-\textbf{Defini├º├úo:} Validam que a aplica├º├úo funciona corretamente em seu ambiente de implanta├º├úo final (AWS).
++\textbf{Defini├º├úo:} Validam que a aplica├º├úo funciona corretamente em seu ambiente de implanta├º├úo final (Docker Compose / ZimaOS).
+ \begin{itemize}
+-    \item \textbf{Valida├º├úo de Vari├íveis de Ambiente:} Verifica se a aplica├º├úo consegue ler e utilizar as vari├íveis essenciais (JDBC\_DATABASE\_URL, CLOUDINARY\_URL, JWT\_SECRET\_KEY).
+-    \item \textbf{Valida├º├úo de Conectividade de Rede (AWS):} Testa se as regras (Security Groups) permitem que o Lambda acesse o RDS e o Cloudinary.
++    \item \textbf{Valida├º├úo de Vari├íveis de Ambiente:} Verifica se cada microsservi├ºo consegue ler e utilizar as vari├íveis essenciais definidas no \texttt{docker-compose.server.yml} (ex: \texttt{SPRING\_DATASOURCE\_URL}, \texttt{CLOUDINARY\_URL}, \texttt{CORTAAI\_DATA\_CRYPTO\_KEY}, \texttt{FIREBASE\_PROJECT\_ID}).
++    \item \textbf{Valida├º├úo de Conectividade de Rede (Docker):} Testa se as regras da Docker network interna permitem que os microsservi├ºos se comuniquem entre si e acessem o MySQL, RabbitMQ e Redis containerizados.
+     \item \textbf{Valida├º├úo de Configura├º├úo da Aplica├º├úo:} Testa se as configura├º├Áes do \texttt{application.yml} (ex: \texttt{app.availability.slot-interval-minutes: 15}) est├úo sendo aplicadas.
+-    \item \textbf{Valida├º├úo de Configura├º├úo de Seguran├ºa:} Testa se as regras do \texttt{SecurityConfig} (restri├º├úo de rotas) est├úo sendo aplicadas no ambiente.
++    \item \textbf{Valida├º├úo de Configura├º├úo de Seguran├ºa:} Testa se as regras de roteamento do \texttt{api-gateway} (restri├º├úo de rotas, valida├º├úo do Firebase ID Token) est├úo sendo aplicadas corretamente.
+ \end{itemize}
+ 
+ \subsection{Testes automatizados}
+@@ -603,6 +726,21 @@ Para a gera├º├úo de arquivos de logs no backend (Java/Spring Boot), s├úo utiliza
+     \item \textbf{TRACE:} N├¡vel mais detalhado (ex: valores de par├ómetros de queries).
+ \end{itemize}
+ 
++\subsection{Testes de Transi├º├úo de Arquitetura}
++A transi├º├úo de uma arquitetura monol├¡tica para um ecossistema de microsservi├ºos introduz desafios significativos de qualidade, como lat├¬ncia de rede, falhas parciais de comunica├º├úo e a valida├º├úo da consist├¬ncia eventual. A estrat├®gia de testes do CortaAi foi reestruturada com base em uma abordagem de camadas para mitigar esses riscos.
++
++\subsubsection{Testes Unit├írios (N├¡vel de Dom├¡nio)}
++As depend├¬ncias externas (bancos de dados, clientes REST e message brokers) s├úo simuladas via Mocks (Mockito + JUnit 5). Exemplo pr├ítico: validar se o \texttt{Schedule Service} lan├ºa corretamente uma \texttt{ConflictException} ao tentar agendar um hor├írio j├í ocupado, sem consultar o banco real.
++
++\subsubsection{Testes de Integra├º├úo e Contratos}
++\begin{itemize}
++    \item \textbf{Integra├º├úo de Base de Dados:} Utiliza├º├úo do \textbf{Testcontainers} para instanciar cont├¬ineres Docker ef├¬meros (MySQL e Redis) durante a execu├º├úo dos testes, garantindo que as queries JPA sejam validadas contra uma base de dados real id├¬ntica ├á de produ├º├úo.
++    \item \textbf{Comunica├º├úo S├¡ncrona:} Valida├º├úo dos contratos de comunica├º├úo via OpenFeign, garantindo que o payload JSON esperado pelo \texttt{User Service} seja corretamente enviado e interpretado pelo \texttt{Schedule Service}.
++\end{itemize}
++
++\subsubsection{Testes de Mensageria e Eventos (Ass├¡ncronos)}
++Os testes de integra├º├úo validam o ciclo de vida completo de uma mensagem: verifica-se se o publisher formata corretamente o evento e se o listener o consome sem erros de desserializa├º├úo. Exemplo pr├ítico: quando um agendamento ├® criado, o teste valida se o evento \texttt{AppointmentCreatedEvent} ├® publicado na Exchange do RabbitMQ e se o \texttt{Notification Service} consegue recolher essa mensagem para gerar o envio de e-mail, validando assim a consist├¬ncia eventual.
++
+ \subsection{An├ílise est├ítica}
+ Visto a import├óncia de se preservar a qualidade e seguran├ºa do c├│digo, ├® essencial realizar a An├ílise Est├ítica de C├│digo e Seguran├ºa (SAST). Para isso, empregaremos a ferramenta SonarQube. O SonarQube ├® uma plataforma de c├│digo aberto para inspe├º├úo cont├¡nua da qualidade do c├│digo, integrada ao processo de build (Maven). Ele analisa o c├│digo-fonte Java em busca de:
+ \begin{itemize}
+@@ -643,24 +781,62 @@ A conven├º├úo a ser adotada ser├í o \textbf{Airbnb JavaScript Style Guide}, incl
+ \end{itemize}
+ 
+ \section{Seguran├ºa, privacidade e legisla├º├úo}
+-Para garantir a seguran├ºa dos dados e a privacidade dos usu├írios, os seguintes crit├®rios foram implementados:
++Numa arquitetura de microsservi├ºos, a seguran├ºa n├úo pode ser gerida de forma isolada por cada servi├ºo, sob pena de criar vulnerabilidades e redund├óncia de c├│digo. O CortaAi adotou um modelo de \textbf{Identidade Federada e Roteamento Seguro}, estruturado em tr├¬s pilares: Provedor de Identidade, Intercepta├º├úo no Gateway e Autoriza├º├úo Baseada em Fun├º├Áes (RBAC).
++
++\subsection{Provedor de Identidade (Firebase Authentication)}
++O sistema utiliza o \textbf{Firebase Authentication} (Google) como provedor de identidade (\textit{Identity Provider} ÔÇö IdP). O backend do CortaAi n├úo armazena senhas em nenhum dos seus bancos de dados (MySQL).
++
++O fluxo de autentica├º├úo ocorre da seguinte forma:
++\begin{enumerate}
++    \item O cliente (Frontend em React) envia as credenciais (e-mail e senha) diretamente para os servidores seguros do Firebase.
++    \item Ap├│s a valida├º├úo, o Firebase retorna um \textbf{JSON Web Token (JWT)} assinado assimetricamente ao cliente, contendo o User ID (UID) ├║nico daquele utilizador.
++    \item Este token passa a ser enviado pelo Frontend no cabe├ºalho \texttt{Authorization: Bearer <token>} em todas as requisi├º├Áes subsequentes para a API.
++\end{enumerate}
++
++\subsection{Ciclo de Vida do Token e Estrat├®gia de Renova├º├úo}
++O ecossistema adota uma abordagem estritamente \textbf{Stateless}: os microsservi├ºos n├úo armazenam estado de sess├úo; cada requisi├º├úo ├® autossuficiente, contendo um token digital assinado criptograficamente. O ciclo de vida das credenciais divide-se em dois componentes:
++\begin{itemize}
++    \item \textbf{ID Token (Access Token):} JWT emitido pelo Firebase Auth no momento do login, com validade fixa de \textbf{60 minutos}. Devido ao curto tempo de vida, a superf├¡cie de exposi├º├úo em caso de intercepta├º├úo maliciosa ├® severamente minimizada.
++    \item \textbf{Refresh Token:} Token de longa dura├º├úo persistido de forma segura pelo frontend. N├úo ├® enviado ├ás rotas operacionais dos microsservi├ºos de neg├│cio; ├® utilizado exclusivamente em segundo plano para renovar o ID Token de forma transparente (\textit{Silent Refresh}).
++\end{itemize}
++
++\subsection{Intercepta├º├úo e Prote├º├úo (API Gateway)}
++O Spring Cloud Gateway atua como o ├║nico ponto de entrada p├║blico do ecossistema e o principal guardi├úo de seguran├ºa. Foi implementado um filtro customizado (\texttt{FirebaseTokenGatewayFilter}) que analisa todas as requisi├º├Áes de entrada:
+ \begin{itemize}
+-    \item \textbf{Autentica├º├úo Robusta:} Utiliza Spring Security. Senhas s├úo armazenadas com \texttt{BCryptPasswordEncoder}. O acesso ├ás funcionalidades privadas ├® feito via JSON Web Tokens (JWT).
+-    \item \textbf{Autoriza├º├úo Baseada em Pap├®is:} A arquitetura define \textit{roles} espec├¡ficas (Cliente, Barbeiro, Barbeiro\_Owner) gerenciadas pelo Spring Security, implementando o princ├¡pio do menor privil├®gio.
+-    \item \textbf{Valida├º├úo de Entrada de Dados:} Jakarta Bean Validation ├® aplicado nos DTOs para validar os dados recebidos, incluindo valida├º├Áes customizadas para unicidade (e-mail, CPF) e formato (CPF, CNPJ).
+-    \item \textbf{Seguran├ºa na Infraestrutura:} O deployment na AWS Lambda e o acesso a servi├ºos externos (Cloudinary, RDS) ├® protegido por credenciais seguras gerenciadas como vari├íveis de ambiente.
+-    \item \textbf{Direitos do Usu├írio:} O sistema garante aos usu├írios direitos de acesso, corre├º├úo e exclus├úo de seus dados pessoais.
++    \item \textbf{Valida├º├úo da Assinatura:} O Gateway verifica a validade criptogr├ífica do JWT contra as chaves p├║blicas da Google. Se o token for inv├ílido, expirado ou ausente, a requisi├º├úo ├® bloqueada imediatamente com erro \textbf{401 Unauthorized}.
++    \item \textbf{Propaga├º├úo de Contexto:} Ap├│s valida├º├úo, o Gateway extrai o UID do utilizador e injeta-o como header HTTP interno (\texttt{X-User-UID}). Al├®m disso, injeta \texttt{X-User-Email}, \texttt{X-User-Type} (role do usu├írio: \texttt{ROLE\_CUSTOMER}, \texttt{ROLE\_BARBER} ou \texttt{ROLE\_OWNER}) e \texttt{X-User-Owner} (booleano). Headers \texttt{X-User-*} enviados pelo cliente s├úo removidos antes do roteamento para evitar spoofing. Dessa forma, microsservi├ºos como o \texttt{Schedule Service} ou \texttt{User Service} podem identificar quem est├í fazendo a requisi├º├úo sem precisar revalidar o token criptogr├ífico.
+ \end{itemize}
+ 
+-\subsection{Observ├óncia ├á Legisla├º├úo}
+-O projeto foi desenvolvido com aten├º├úo ├á conformidade com a Lei Geral de Prote├º├úo de Dados (LGPD - Lei n┬║ 13.709/2018):
++\subsection{Pol├¡tica de Senhas e Prote├º├úo de Credenciais}
++A integridade das contas ├® garantida pela pol├¡tica de senhas aplicada no Firebase Authentication:
+ \begin{itemize}
+-    \item \textbf{Finalidade Espec├¡fica e Consentimento:} A LGPD exige que dados pessoais (nome, telefone, e-mail, CPF) sejam coletados com consentimento expl├¡cito e utilizados apenas para a finalidade informada (agendamentos, gerenciamento).
+-    \item \textbf{Prote├º├úo de Dados Pessoais:} Medidas como criptografia de senhas, controle de acesso e valida├º├úo de dados s├úo implementadas para proteger os dados.
+-    \item \textbf{Direitos dos Titulares:} A LGPD garante aos titulares (usu├írios) direitos como acesso, corre├º├úo, elimina├º├úo e portabilidade de seus dados.
+-    \item \textbf{Transpar├¬ncia:} A pol├¡tica de privacidade da aplica├º├úo deve informar claramente quais dados s├úo coletados, como s├úo utilizados e por quanto tempo s├úo armazenados.
++    \item \textbf{Comprimento M├¡nimo:} 6 caracteres (padr├úo de seguran├ºa do Firebase).
++    \item \textbf{Complexidade:} Recomenda-se combina├º├úo de letras mai├║sculas, min├║sculas, n├║meros e caracteres especiais, validada via express├Áes regulares no Frontend antes do envio ao provedor.
++    \item \textbf{Hashing:} O Firebase Authentication utiliza algoritmos avan├ºados (vers├úo otimizada do \textit{scrypt}) para armazenar as credenciais de forma irrevers├¡vel.
+ \end{itemize}
+ 
++Para usu├írios que optam pelo provedor \texttt{EMAIL}, a senha local ├® armazenada com hash \texttt{BCryptPasswordEncoder}. Usu├írios de login social n├úo possuem senha local (\texttt{password = null}).
++
++\subsection{Autoriza├º├úo Baseada em Fun├º├Áes (RBAC)}
++Enquanto o Firebase resolve o problema da \textbf{Autentica├º├úo} (quem ├® o utilizador), o sistema interno resolve o problema da \textbf{Autoriza├º├úo} (o que ele pode fazer). O \texttt{User Service} mant├®m o mapeamento entre o UID do Firebase e a fun├º├úo (\textit{Role}) do utilizador. Foram definidas tr├¬s fun├º├Áes principais:
++\begin{itemize}
++    \item \textbf{ROLE\_CUSTOMER:} Acesso aos pr├│prios agendamentos e visualiza├º├úo de barbearias p├║blicas.
++    \item \textbf{ROLE\_BARBER:} Acesso ├á gest├úo da pr├│pria agenda, bloqueios de hor├írio e visualiza├º├úo de comissionamentos.
++    \item \textbf{ROLE\_OWNER:} Privil├®gios administrativos ÔÇö gest├úo de invent├írio (\texttt{Product Service}), aprova├º├úo de barbeiros e m├®tricas financeiras globais (\texttt{Payment Service}). Atribu├¡do automaticamente quando um barbeiro registra sua primeira barbearia (\texttt{is\_owner = true}). O header \texttt{X-User-Owner: true} tamb├®m ├® injetado pelo Gateway para que os microsservi├ºos possam diferenciar dono de barbeiro comum sem consultar o banco.
++\end{itemize}
++
++\subsection{Criptografia de Dados em Repouso (LGPD)}
++Campos sens├¡veis (e-mail, CPF, telefone, data de nascimento, CNPJ, tokens Mercado Pago) s├úo criptografados em repouso com \textbf{AES/GCM} via \texttt{SensitiveStringConverter}. Um campo \texttt{email\_hash} (SHA-256) permite busca sem descriptografar.
++
++\subsection{Seguran├ºa da Infraestrutura}
++Os microsservi├ºos s├úo acess├¡veis apenas internamente via Docker network. Somente o \texttt{api-gateway} est├í exposto publicamente. Credenciais s├úo gerenciadas como vari├íveis de ambiente.
++
++\subsection{Valida├º├úo de Entrada de Dados}
++Jakarta Bean Validation ├® aplicado nos DTOs para validar os dados recebidos, incluindo valida├º├Áes customizadas para unicidade (e-mail, CPF) e formato (CPF, CNPJ).
++
++\subsection{Direitos do Usu├írio (LGPD)}
++O sistema garante direitos de acesso, corre├º├úo e exclus├úo de dados pessoais. A estrat├®gia de anonimiza├º├úo (n├úo dele├º├úo f├¡sica) preserva o hist├│rico financeiro. O projeto foi desenvolvido em conformidade com a \textbf{Lei Geral de Prote├º├úo de Dados (LGPD ÔÇö Lei n┬║ 13.709/2018)}.
++
+ \section{Modelo de banco de dados}
+ Esta se├º├úo apresenta a estrutura de dados projetada para suportar a aplica├º├úo. O modelo de banco de dados ├® o alicerce do backend, sendo fundamental para garantir a integridade, consist├¬ncia e performance.
+ 
+@@ -684,30 +860,35 @@ O Diagrama Entidade-Relacionamento (DER) ├® a representa├º├úo gr├ífica e visual
+     \label{fig:der}
+ \end{figure}
+ 
+-As principais entidades (tabelas) que comp├Áem o sistema s├úo:
++As principais entidades (tabelas) que comp├Áem o sistema est├úo distribu├¡das em \textbf{seis bancos de dados isolados}, um por microsservi├ºo. As entidades centrais s├úo:
+ \begin{description}
+-    \item[BARBERSHOPS (Barbearias):] Cont├®m os dados cadastrais da barbearia (nome, CNPJ, endere├ºo).
+-    \item[CUSTOMERS (Clientes):] Armazena as informa├º├Áes dos clientes (dados pessoais, telefone, e-mail, CPF, senha).
+-    \item[BARBERS (Barbeiros):] Cont├®m os dados dos profissionais (nome, telefone, e-mail, CPF, senha). Inclui \texttt{is\_owner}, hor├írios de trabalho e \texttt{barbershop\_id}.
+-    \item[ACTIVITIES (Atividades/Servi├ºos):] Representa os servi├ºos oferecidos (nome, pre├ºo, dura├º├úo) e \texttt{barbershop\_id}.
+-    \item[APPOINTMENTS (Agendamentos):] Entidade central. Registra os hor├írios (\texttt{start\_time}, \texttt{end\_time}, \texttt{status}) e chaves estrangeiras (customer\_id, barber\_id, barbershop\_id).
+-    \item[BARBERSHOP\_JOIN\_REQUESTS:] Tabela de controle para gerenciar as solicita├º├Áes de barbeiros para se juntarem a uma barbearia.
++    \item[BARBERSHOPS (Barbearias) ÔÇö \texttt{barbershop\_db}:] Dados cadastrais da barbearia (nome, CNPJ criptografado, endere├ºo, geolocaliza├º├úo, logo, banner). Inclui m├®dia de avalia├º├Áes calculada via \texttt{@Formula}.
++    \item[CUSTOMERS (Clientes) ÔÇö \texttt{user\_db}:] Informa├º├Áes dos clientes (dados pessoais, e-mail/CPF/telefone criptografados, \texttt{firebase\_uid}, \texttt{auth\_provider}).
++    \item[BARBERS (Barbeiros) ÔÇö \texttt{user\_db}:] Dados dos profissionais (nome, e-mail/CPF/telefone criptografados, \texttt{firebase\_uid}, \texttt{is\_owner}, \texttt{act\_as\_barber}, tokens Mercado Pago criptografados).
++    \item[ACTIVITIES (Atividades/Servi├ºos) ÔÇö \texttt{barbershop\_db}:] Servi├ºos oferecidos pela barbearia (nome, pre├ºo, dura├º├úo, \texttt{barbershop\_id}).
++    \item[APPOINTMENTS (Agendamentos) ÔÇö \texttt{schedule\_db}:] Entidade central. Registra hor├írios (\texttt{start\_time}, \texttt{end\_time}, \texttt{status}) com snapshots de nomes e pre├ºos. Refer├¬ncias cross-service por UUID.
++    \item[BARBERSHOP\_JOIN\_REQUESTS ÔÇö \texttt{barbershop\_db}:] Controla solicita├º├Áes de barbeiros para ingressar em uma barbearia, bem como convites diretos do dono (\texttt{request\_type}: JOIN ou INVITE).
++    \item[TRANSACTIONS ÔÇö \texttt{payment\_db}:] Transa├º├Áes de pagamento com split (net, mp\_fee, platform\_fee) e status do Mercado Pago.
++    \item[PRODUCTS / STOCK\_MOVEMENTS ÔÇö \texttt{product\_db}:] Estoque de produtos e auditoria completa de movimenta├º├Áes (IN, OUT, LOSS, etc.).
++    \item[NOTIFICATIONS / DEVICE\_TOKENS ÔÇö \texttt{notification\_db}:] Notifica├º├Áes in-app, e-mail e push; tokens FCM dos dispositivos.
+ \end{description}
+ 
+-\subsubsection{Tabelas de Jun├º├úo ( M:N )}
++\subsubsection{Tabelas de Jun├º├úo / Cole├º├Áes}
+ \begin{description}
+-    \item[BARBER\_ACTIVITIES:] Relaciona quais atividades (\texttt{activity\_id}) um barbeiro (\texttt{barber\_id}) est├í habilitado a realizar.
+-    \item[APPOINTMENT\_ACTIVITIES:] Especifica quais atividades (\texttt{activity\_id}) est├úo inclu├¡das em um agendamento (\texttt{appointment\_id}).
++    \item[BARBER\_ASSIGNED\_ACTIVITIES:] Registra quais atividades (\texttt{activity\_id}) um barbeiro (\texttt{barber\_id}) est├í habilitado a realizar (cole├º├úo \texttt{@ElementCollection} em \texttt{user\_db}).
++    \item[APPOINTMENT\_ACTIVITIES:] Especifica quais atividades est├úo inclu├¡das em um agendamento (\texttt{appointment\_id}), com snapshot de nome, pre├ºo e dura├º├úo (em \texttt{schedule\_db}).
++    \item[CUSTOMER\_FAVORITE\_BARBERSHOPS:] Barbearias favoritadas por cada cliente (cole├º├úo em \texttt{user\_db}).
+ \end{description}
+ 
+ \subsubsection{Relacionamentos Chave ( Cardinalidade )}
+ \begin{itemize}
+-    \item \textbf{Barbearia e Barbeiro (Emprega):} Uma barbearia (BARBERSHOPS) emprega muitos barbeiros (BARBERS) (1:N).
++    \item \textbf{Barbearia e Barbeiro (Emprega):} Uma barbearia (BARBERSHOPS) emprega muitos barbeiros (BARBERS) (1:N). Refer├¬ncia mantida por UUID em \texttt{barbers.barbershop\_id}.
+     \item \textbf{Barbearia e Atividade (Oferece):} Uma barbearia (BARBERSHOPS) oferece m├║ltiplas atividades (ACTIVITIES) (1:N).
+     \item \textbf{Cliente e Agendamento (Realiza):} Um cliente (CUSTOMERS) realiza v├írios agendamentos (APPOINTMENTS) (1:N).
+     \item \textbf{Barbeiro e Agendamento (Atende):} Um barbeiro (BARBERS) pode atender a muitos agendamentos (APPOINTMENTS) (1:N).
+-    \item \textbf{Barbeiro e Atividade (├ë realizada por):} O relacionamento entre BARBERS e ACTIVITIES ├® de muitos para muitos (M:N), mediado pela tabela BARBER\_ACTIVITIES.
+-    \item \textbf{Agendamento e Atividade (Inclui):} O relacionamento entre APPOINTMENTS e ACTIVITIES ├® de muitos para muitos (M:N), resolvido pela tabela APPOINTMENT\_ACTIVITIES.
++    \item \textbf{Barbeiro e Atividade (Habilitado para):} O relacionamento entre BARBERS e ACTIVITIES ├® de muitos para muitos (M:N), registrado na cole├º├úo BARBER\_ASSIGNED\_ACTIVITIES.
++    \item \textbf{Agendamento e Atividade (Inclui):} O relacionamento entre APPOINTMENTS e ACTIVITIES ├® de muitos para muitos (M:N), resolvido pela tabela APPOINTMENT\_ACTIVITIES com snapshot de dados.
++    \item \textbf{Isolamento Cross-Service:} N├úo existem FKs f├¡sicas entre bancos. Todas as refer├¬ncias entre microsservi├ºos s├úo mantidas via UUID (\texttt{VARCHAR(36)}) armazenado localmente em cada servi├ºo.
+ \end{itemize}
+ 
+ \section{Cronograma do projeto}
+@@ -716,11 +897,11 @@ A execu├º├úo do projeto seguir├í o framework ├ígil Scrum. O cronograma n├úo ├® b
+     \item \textbf{Cad├¬ncia das Sprints:} 8 Sprints de 2 semanas (10 dias ├║teis) cada.
+     \item \textbf{Product Backlog:}
+         \begin{itemize}
+-            \item ├ëpico 1: Gest├úo de Acesso (Autentica├º├úo JWT, Perfis).
++            \item ├ëpico 1: Gest├úo de Acesso (Firebase Authentication, Perfis).
+             \item ├ëpico 2: M├│dulo de Agendamento (Visualiza├º├úo, cria├º├úo/cancelamento).
+             \item ├ëpico 3: M├│dulo de Servi├ºos e Invent├írio (Cadastro, pre├ºos, dura├º├úo).
+             \item ├ëpico 4: Painel Administrativo (Gest├úo de agenda e servi├ºos).
+-            \item ├ëpico 5: Infraestrutura e Implanta├º├úo (Configura├º├úo AWS Lambda, RDS, CI/CD).
++            \item ├ëpico 5: Infraestrutura e Implanta├º├úo (Containeriza├º├úo Docker Compose, ZimaOS, CI/CD).
+         \end{itemize}
+ \end{itemize}
+ 
+@@ -737,29 +918,63 @@ A linha do tempo do projeto ├® dividida em 8 ciclos curtos de 2 semanas cada. Ca
+         \textbf{Sprint} & \textbf{Per├¡odo (In├¡cio/Fim)} & \textbf{Meta da Sprint (Sprint Goal)} & \textbf{Marcos Equivalentes (Plano Antigo)} \\
+         \midrule
+         Sprint 1 & 15/08/2025 - 29/08/2025 & "Setup e Funda├º├úo: Configurar ambientes (Git, CI/CD, Trello), definir o Product Backlog (MVP) e criar o ""Walking Skeleton""." & M1: Requisitos e Escopo Aprovados \\
+-        Sprint 2 & 01/09/2025 - 12/09/2025 & Autentica├º├úo: Implementar o fluxo de autentica├º├úo (JWT) e o CRUD b├ísico de Usu├írios. Definir a arquitetura de base. & M2: Arquitetura e Design Conclu├¡dos \\
++        Sprint 2 & 01/09/2025 - 12/09/2025 & Autentica├º├úo: Implementar o fluxo de autentica├º├úo (Firebase Authentication) e o CRUD b├ísico de Usu├írios. Definir a arquitetura de base dos microsservi├ºos. & M2: Arquitetura e Design Conclu├¡dos \\
+         Sprint 3 & 15/09/2025 - 26/09/2025 & MVP do Agendamento (Back-end): API para l├│gica de hor├írios dispon├¡veis e cria├º├úo de agendamento. & - \\
+         Sprint 4 & 29/09/2025 - 10/10/2025 & MVP de Servi├ºos (Back-end): APIs para CRUD de Servi├ºos e Invent├írio. & M3: Desenvolvimento Back-end Conclu├¡do \\
+         Sprint 5 & 13/10/2025 - 24/10/2025 & MVP do Cliente (Front-end): Telas de Login e fluxo principal do cliente (ver hor├írios e realizar agendamento). & - \\
+         Sprint 6 & 27/10/2025 - 07/11/2025 & Painel do Barbeiro (Front-end): Telas para o barbeiro visualizar e gerenciar sua agenda e servi├ºos. & M4: Desenvolvimento Front-end Conclu├¡do \\
+         Sprint 7 & 10/11/2025 - 21/11/2025 & "Testes de Aceite (UAT): Foco em testes de integra├º├úo (E2E), corre├º├úo de bugs e valida├º├úo do fluxo com usu├írios-piloto." & M5: Ciclo de Testes (UAT) Finalizado \\
+-        Sprint 8 & 24/11/2025 - 05/12/2025 & "Hardening e Implanta├º├úo: Prepara├º├úo do ambiente de produ├º├úo (AWS), testes, deploy e documenta├º├úo final." & M6: Implanta├º├úo (Go-Live) \\
++        Sprint 8 & 24/11/2025 - 05/12/2025 & "Hardening e Implanta├º├úo: Prepara├º├úo do ambiente de produ├º├úo (Docker Compose / ZimaOS), testes finais, deploy e documenta├º├úo final." & M6: Implanta├º├úo (Go-Live) \\
++        \bottomrule
++    \end{tabular}
++    }
++\end{table}
++
++\subsection{Cronograma do projeto (Fase de Evolu├º├úo e Estabiliza├º├úo)}
++A gest├úo do projeto foi adaptada para um ciclo focado na refatora├º├úo arquitetural para microsservi├ºos e no polimento do MVP. O cronograma a seguir compreende o per├¡odo cr├¡tico iniciado em fevereiro de 2026, estendendo-se at├® a homologa├º├úo final em maio do mesmo ano.
++
++\begin{table}[htb]
++    \centering
++    \caption{Cronograma do Projeto ÔÇö Fase de Evolu├º├úo e Estabiliza├º├úo (2026)}
++    \label{tab:sprints2026}
++    \resizebox{\textwidth}{!}{%
++    \begin{tabular}{p{1.5cm} p{3.5cm} p{8.5cm} p{5cm}}
++        \toprule
++        \textbf{Sprint} & \textbf{Per├¡odo (In├¡cio/Fim)} & \textbf{Meta da Sprint (Sprint Goal)} & \textbf{Marco} \\
++        \midrule
++        Sprint 1 & 27/02 - 13/03/2026 & Desacoplamento: Fragmenta├º├úo do mon├│lito em servi├ºos independentes e configura├º├úo do API Gateway. & M7: Arquitetura Distribu├¡da Inicial \\
++        Sprint 2 & 16/03 - 27/03/2026 & Infraestrutura: Implementa├º├úo do Netflix Eureka para descoberta de servi├ºos e configura├º├úo do ambiente Docker. & M8: Orquestra├º├úo de Containers \\
++        Sprint 3 & 30/03 - 10/04/2026 & Seguran├ºa e Identidade: Migra├º├úo total para Firebase Authentication e valida├º├úo de permiss├Áes por Roles. & M9: Provedor de Identidade Migrado \\
++        Sprint 4 & 13/04 - 24/04/2026 & Estabiliza├º├úo de Dados: Sincroniza├º├úo entre servi├ºos via OpenFeign e ajustes de persist├¬ncia no cache Redis. & ÔÇö \\
++        Sprint 5 & 27/04 - 08/05/2026 & Mensageria: Implementa├º├úo do sistema de notifica├º├Áes consumindo eventos do RabbitMQ. & M10: Sistema de Eventos Conclu├¡do \\
++        Sprint 6 & 11/05 - 22/05/2026 & QA e Bug Fixing: Ciclo intensivo de corre├º├úo de bugs, testes de carga nos microsservi├ºos e refinamento da interface. & M11: Homologa├º├úo T├®cnica \\
++        Sprint 7 & 25/05 - 27/05/2026 & Homologa├º├úo Final: Prepara├º├úo do ambiente de produ├º├úo (Cloud), documenta├º├úo final e encerramento do projeto. & M12: Entrega Formal do TCC \\
+         \bottomrule
+     \end{tabular}
+     }
+ \end{table}
+ 
++\subsection{An├ílise do Caminho Cr├¡tico e Riscos}
++Nesta fase final, o caminho cr├¡tico desloca-se do desenvolvimento de novas funcionalidades para a resili├¬ncia da infraestrutura distribu├¡da. Os principais pontos de aten├º├úo s├úo:
++\begin{itemize}
++    \item \textbf{Depend├¬ncia de Integra├º├úo:} Falhas na publica├º├úo ou consumo de eventos RabbitMQ podem gerar inconsist├¬ncias na comunica├º├úo com o usu├írio final.
++    \item \textbf{Estabiliza├º├úo de Ambiente:} O per├¡odo de Bug Fixing (Sprint 6) ├® vital para garantir que a orquestra├º├úo dos cont├¬ineres Docker mantenha a performance sob carga real.
++    \item \textbf{Restri├º├úo Temporal:} A data de 27 de maio de 2026 ├® uma restri├º├úo r├¡gida, exigindo que o polimento do sistema n├úo comprometa o funcionamento dos requisitos b├ísicos de agendamento e pagamento.
++    \item \textbf{Reserva para DevOps:} 20\% do tempo ├║til de cada Sprint (2 dias ├║teis por ciclo quinzenal) ├® dedicado exclusivamente a tarefas de DevOps e manuten├º├úo de ambiente.
++\end{itemize}
++
+ \chapter{Considera├º├Áes Finais}
+-O desenvolvimento da aplica├º├úo web "Cortaai", um marketplace para gerenciamento e agendamento em barbearias, representa uma iniciativa significativa para modernizar e otimizar a opera├º├úo destes estabelecimentos, trazendo organiza├º├úo, efici├¬ncia e maior visibilidade no ambiente digital.
+-Ao adotar uma arquitetura robusta e escal├ível baseada em servi├ºos na nuvem (Java/Spring Boot backend hospedado na AWS Lambda, com frontend previsto em React e banco de dados MySQL no RDS), foi poss├¡vel estruturar uma solu├º├úo que atende ├ás complexidades do agendamento e da gest├úo de m├║ltiplos usu├írios e estabelecimentos.
++O desenvolvimento da aplica├º├úo web "CortaAi", um marketplace para gerenciamento e agendamento em barbearias, representa uma iniciativa significativa para modernizar e otimizar a opera├º├úo destes estabelecimentos, trazendo organiza├º├úo, efici├¬ncia e maior visibilidade no ambiente digital.
++
++A solu├º├úo foi constru├¡da sobre uma arquitetura de microsservi├ºos, composta por oito servi├ºos independentes (api-gateway, discovery-service, user-service, barbershop-service, schedule-service, product-service, payment-service e notification-service), todos conteinerizados via Docker Compose e hospedados em servidor pr├│prio com ZimaOS. Essa escolha arquitetural garante isolamento de dom├¡nio, escalabilidade independente por servi├ºo e resili├¬ncia a falhas parciais.
+ 
+-Ao longo do projeto, foi fundamental analisar e implementar funcionalidades que atendessem ├ás necessidades dos diferentes atores do sistema: Clientes buscando conveni├¬ncia para encontrar barbearias e agendar servi├ºos online; Barbeiros necessitando de uma ferramenta para gerenciar seu perfil, habilidades, hor├írios e agenda; e Donos de barbearias buscando controle sobre o cadastro da loja, menu de servi├ºos, equipe e fluxo de agendamentos. A implementa├º├úo da autentica├º├úo via JWT e autoriza├º├úo baseada em pap├®is garante a seguran├ºa e o acesso adequado ├ás funcionalidades.
++Ao longo do projeto, foi fundamental analisar e implementar funcionalidades que atendessem ├ás necessidades dos diferentes atores do sistema: Clientes buscando conveni├¬ncia para encontrar barbearias, favoritar estabelecimentos, avaliar servi├ºos e agendar online; Barbeiros necessitando de ferramentas para gerenciar perfil, habilidades, hor├írios e agenda, al├®m de registrar atendimentos walk-in; e Donos de barbearias buscando controle sobre cadastro da loja, menu de servi├ºos, comiss├Áes, despesas fixas, equipe e estoque. A autentica├º├úo via Firebase Authentication e a autoriza├º├úo baseada em pap├®is (ROLE\_CUSTOMER, ROLE\_BARBER), injetados pelo api-gateway como headers confi├íveis, garantem seguran├ºa e acesso adequado ├ás funcionalidades. Dados pessoais sens├¡veis (CPF, e-mail, telefone, CNPJ, tokens de pagamento) s├úo protegidos em repouso com criptografia AES/GCM, atendendo aos princ├¡pios da LGPD.
+ 
+-A aplica├º├úo "Cortaai" n├úo s├│ permite aos Clientes realizar agendamentos de forma eficiente, verificando a disponibilidade em tempo real, mas tamb├®m oferece aos Barbeiros e Donos ferramentas para facilitar o controle da agenda, a gest├úo de servi├ºos, da equipe e da imagem do estabelecimento (upload de logo, banner, destaques via Cloudinary). Espera-se que a plataforma resulte em uma melhoria significativa na experi├¬ncia dos clientes e na otimiza├º├úo dos processos de gest├úo das barbearias.
++A integra├º├úo com o Mercado Pago viabiliza o pagamento online com split autom├ítico entre a plataforma e o barbeiro, com idempot├¬ncia garantida via log de webhooks. O m├│dulo de notifica├º├Áes, baseado em RabbitMQ para consumo ass├¡ncrono de eventos de dom├¡nio e Redis para desduplica├º├úo, assegura que clientes e barbeiros sejam informados em tempo real sobre cria├º├úo, confirma├º├úo, cancelamento e conclus├úo de agendamentos, bem como sobre aprova├º├úo de pagamentos e movimenta├º├Áes de equipe.
+ 
+-Al├®m disso, a arquitetura implementada e as tecnologias utilizadas fornecem uma base s├│lida e escal├ível para iniciativas futuras, como a integra├º├úo de sistemas de pagamento online, o desenvolvimento de funcionalidades avan├ºadas de gest├úo de relacionamento com o cliente (CRM) e a implementa├º├úo de pain├®is com an├ílises e insights de neg├│cio.
++Espera-se que a plataforma resulte em melhoria significativa na experi├¬ncia dos clientes e na otimiza├º├úo dos processos de gest├úo das barbearias. A base arquitetural implementada abre caminho para evolu├º├Áes futuras, como an├ílises avan├ºadas de neg├│cio via KPIs pr├®-agregados (dashboard\_kpi\_daily), expans├úo dos canais de notifica├º├úo push, implementa├º├úo de relat├│rios financeiros detalhados e eventual extra├º├úo de insights por meio de ferramentas de Business Intelligence.
+ 
+-Em suma, o desenvolvimento desta aplica├º├úo representa um passo importante em dire├º├úo ├á transforma├º├úo digital e ao aumento da competitividade no setor de barbearias, demonstrando o potencial das tecnologias web modernas e da computa├º├úo em nuvem para resolver desafios operacionais cotidianos.
++Em suma, o desenvolvimento desta aplica├º├úo demonstra o potencial de arquiteturas distribu├¡das modernas, integradas a servi├ºos de autentica├º├úo, pagamento e CDN consolidados no mercado, para resolver desafios operacionais cotidianos do setor de barbearias.
+ 
+ % --- ELEMENTOS P├ôS-TEXTUAIS ---
+ \postextual
+@@ -810,6 +1025,27 @@ Em suma, o desenvolvimento desta aplica├º├úo representa um passo importante em d
+ 
+     \bibitem{trinks2025}
+     TRINKS. \textit{Agenda online para barbearia: o que ├® e como funciona?}. 2025. Dispon├¡vel em: \url{https://blog.trinks.com/agenda-online-para-barbearia-o-que-e-e-como-funciona/}. Acesso em: 07/09/25.
++
++    \bibitem{docker2026}
++    DOCKER. \textit{Docker Documentation}. [S.l.]: Docker Inc., [c2026]. Dispon├¡vel em: \url{https://docs.docker.com/}. Acesso em: 05/02/2026.
++
++    \bibitem{pwa2026}
++    GOOGLE DEVELOPERS. \textit{Progressive Web Apps (PWAs)}. [S.l.]: Google, [c2026]. Dispon├¡vel em: \url{https://developer.google.com/web/progressive-web-apps}. Acesso em: 14/04/2026.
++
++    \bibitem{fowler2014}
++    FOWLER, Martin; LEWIS, James. \textit{Microservices: a definition of this new architectural term}. [S.l.]: MartinFowler.com, [c2014]. Dispon├¡vel em: \url{https://martinfowler.com/articles/microservices.html}. Acesso em: 04/02/2026.
++
++    \bibitem{newman2021}
++    NEWMAN, Sam. \textit{Building Microservices: Designing Fine-Grained Systems}. 2. ed. Sebastopol: O'Reilly Media, 2021.
++
++    \bibitem{redis2026}
++    REDIS. \textit{Redis Documentation}. [S.l.]: Redis Ltd., [c2026]. Dispon├¡vel em: \url{https://redis.io/docs/}. Acesso em: 25/03/2026.
++
++    \bibitem{springgateway2026}
++    SPRING. \textit{Spring Cloud Gateway Reference Documentation}. [S.l.]: VMware, [c2026]. Dispon├¡vel em: \url{https://spring.io/projects/spring-cloud-gateway}. Acesso em: 16/02/2026.
++
++    \bibitem{walls2022}
++    WALLS, Craig. \textit{Spring in Action}. 6. ed. Shelter Island: Manning Publications, 2022.
+ \end{thebibliography}
+ 
+ % --- AP├èNDICES ---
+@@ -817,109 +1053,324 @@ Em suma, o desenvolvimento desta aplica├º├úo representa um passo importante em d
+ 
+ \chapter{Dicion├írio de Dados}
+ 
+-\section*{Tabela: barbershops}
+-\textbf{Descri├º├úo:} Armazena informa├º├Áes sobre os estabelecimentos (barbearias) cadastrados.
++\section*{Banco: \texttt{user\_db} ÔÇö user-service}
++
++\subsection*{Tabela: barbers}
++\textbf{Descri├º├úo:} Armazena informa├º├Áes dos barbeiros (incluindo propriet├írios). Campos sens├¡veis s├úo criptografados em repouso com AES/GCM.
+ \begin{description}
+-    \item[id:] VARCHAR(36). Chave Prim├íria (PK). Identificador ├║nico universal (UUID) da barbearia.
+-    \item[name:] VARCHAR(255). Obrigat├│rio (NOT NULL). Nome comercial da barbearia.
+-    \item[cnpj:] VARCHAR(14). Obrigat├│rio, ├Ünico (UNIQUE). N├║mero do CNPJ.
+-    \item[address:] VARCHAR(255). Endere├ºo completo da barbearia.
+-    \item[date\_created:] DATETIME. Obrigat├│rio. Data e hora de cria├º├úo do registro.
+-    \item[last\_updated:] DATETIME. Obrigat├│rio. Data e hora da ├║ltima atualiza├º├úo.
+-    \item[logo\_url:] VARCHAR(255). URL para o arquivo de logo da barbearia.
+-    \item[banner\_url:] VARCHAR(255). URL para o arquivo de banner da barbearia.
++    \item[id:] VARCHAR(36). Chave Prim├íria (PK). UUID gerado automaticamente.
++    \item[name:] VARCHAR(70). Obrigat├│rio. Nome completo do barbeiro.
++    \item[tell:] VARCHAR(128). ├Ünico. Telefone criptografado (AES/GCM).
++    \item[email:] VARCHAR(256). Obrigat├│rio, ├Ünico. E-mail criptografado (AES/GCM).
++    \item[email\_hash:] VARCHAR(64). ├Ünico. SHA-256 do e-mail ÔÇö permite busca sem descriptografar.
++    \item[document\_cpf:] VARCHAR(128). ├Ünico. CPF criptografado (AES/GCM).
++    \item[password:] VARCHAR(255). Nullable. Senha bcrypt (null para login social).
++    \item[firebase\_uid:] VARCHAR(128). ├Ünico, Nullable. UID do Firebase Authentication.
++    \item[auth\_provider:] VARCHAR(30). Default \texttt{EMAIL}. Valores: EMAIL, GOOGLE, FACEBOOK, APPLE.
++    \item[is\_owner:] BOOLEAN. Default false. Indica se ├® dono de barbearia.
++    \item[act\_as\_barber:] BOOLEAN. Default true. Owner tamb├®m atende como barbeiro.
++    \item[role:] VARCHAR(20). Default \texttt{ROLE\_BARBER}.
++    \item[barbershop\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{barbershops.id}. Nullable.
++    \item[birth\_date:] VARCHAR(128). Data de nascimento criptografada (AES/GCM).
++    \item[image\_url:] VARCHAR(255). URL da foto de perfil no Cloudinary.
++    \item[image\_url\_public\_id:] VARCHAR(255). Public ID Cloudinary para dele├º├úo.
++    \item[mp\_access\_token:] TEXT. Nullable. Token OAuth do Mercado Pago.
++    \item[mp\_refresh\_token:] TEXT. Nullable. Refresh token MP criptografado (AES/GCM).
++    \item[mp\_user\_id:] VARCHAR(256). Nullable. collector\_id no Mercado Pago, criptografado.
++    \item[mp\_public\_key:] VARCHAR(100). Nullable. Public key MP para tokeniza├º├úo de cart├úo.
++    \item[date\_created:] DATETIME. Obrigat├│rio. Data de cria├º├úo.
++    \item[last\_updated:] DATETIME. Nullable. Data da ├║ltima atualiza├º├úo.
+ \end{description}
+ 
+-\section*{Tabela: barbers}
+-\textbf{Descri├º├úo:} Armazena informa├º├Áes dos barbeiros (incluindo propriet├írios).
++\subsection*{Tabela: barber\_work\_blocks}
++\textbf{Descri├º├úo:} Blocos de hor├írio de trabalho do barbeiro por dia da semana.
+ \begin{description}
+-    \item[id:] VARCHAR(36). Chave Prim├íria (PK). Identificador ├║nico (UUID) do barbeiro.
+-    \item[name:] VARCHAR(70). Obrigat├│rio. Nome completo do barbeiro.
+-    \item[tell:] VARCHAR(11). Obrigat├│rio, ├Ünico. N├║mero de telefone/celular.
+-    \item[email:] VARCHAR(70). Obrigat├│rio, ├Ünico. Endere├ºo de e-mail (usado para login).
+-    \item[document\_cpf:] VARCHAR(11). Obrigat├│rio, ├Ünico. N├║mero do CPF.
+-    \item[password:] VARCHAR(255). Obrigat├│rio. Senha criptografada (hash).
+-    \item[barbershop\_id:] VARCHAR(36). Chave Estrangeira (FK) de barbershops. Indica a barbearia vinculada. Permite NULL.
+-    \item[is\_owner:] TINYINT(1). Obrigat├│rio. Flag booleana (1 para propriet├írio, 0 para funcion├írio).
+-    \item[date\_created:] DATETIME. Obrigat├│rio. Data e hora de cria├º├úo.
+-    \item[last\_updated:] DATETIME. Obrigat├│rio. Data e hora da ├║ltima atualiza├º├úo.
+-    \item[work\_start\_time:] TIME. Hora de in├¡cio da jornada de trabalho.
+-    \item[work\_end\_time:] TIME. Hora de t├®rmino da jornada de trabalho.
+-    \item[image\_url:] VARCHAR(255). URL para a foto de perfil do barbeiro.
++    \item[id:] VARCHAR(36). Chave Prim├íria (PK). UUID.
++    \item[barber\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{barbers.id}. Obrigat├│rio.
++    \item[day\_of\_week:] VARCHAR(10). Obrigat├│rio. Ex: MONDAY, TUESDAY.
++    \item[start\_time:] TIME. Obrigat├│rio. In├¡cio do bloco.
++    \item[end\_time:] TIME. Obrigat├│rio. Fim do bloco.
++\end{description}
++
++\subsection*{Tabela: barber\_assigned\_activities}
++\textbf{Descri├º├úo:} Servi├ºos que um barbeiro est├í habilitado a realizar (cole├º├úo).
++\begin{description}
++    \item[barber\_id:] VARCHAR(36). FK ÔåÆ \texttt{barbers.id}.
++    \item[activity\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{barbershop\_db.activities.id}.
++\end{description}
++
++\subsection*{Tabela: customers}
++\textbf{Descri├º├úo:} Armazena informa├º├Áes dos clientes. Campos sens├¡veis criptografados com AES/GCM.
++\begin{description}
++    \item[id:] VARCHAR(36). Chave Prim├íria (PK). UUID.
++    \item[name:] VARCHAR(70). Obrigat├│rio. Nome completo.
++    \item[tell:] VARCHAR(128). ├Ünico. Telefone criptografado.
++    \item[email:] VARCHAR(256). Obrigat├│rio, ├Ünico. E-mail criptografado.
++    \item[email\_hash:] VARCHAR(64). ├Ünico. SHA-256 do e-mail.
++    \item[document\_cpf:] VARCHAR(128). ├Ünico. CPF criptografado.
++    \item[password:] VARCHAR(255). Nullable. Senha bcrypt.
++    \item[firebase\_uid:] VARCHAR(128). ├Ünico, Nullable. UID Firebase.
++    \item[auth\_provider:] VARCHAR(30). Default \texttt{EMAIL}.
++    \item[role:] VARCHAR(20). Default \texttt{ROLE\_CUSTOMER}.
++    \item[image\_url:] VARCHAR(255). Foto de perfil Cloudinary.
++    \item[image\_url\_public\_id:] VARCHAR(255). Public ID Cloudinary.
++    \item[birth\_date:] VARCHAR(128). Data de nascimento criptografada.
++    \item[date\_created:] DATETIME. Obrigat├│rio.
++    \item[last\_updated:] DATETIME. Obrigat├│rio.
++\end{description}
++
++\subsection*{Tabela: customer\_favorite\_barbershops}
++\textbf{Descri├º├úo:} Barbearias favoritas do cliente (cole├º├úo).
++\begin{description}
++    \item[customer\_id:] VARCHAR(36). FK ÔåÆ \texttt{customers.id}.
++    \item[barbershop\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{barbershop\_db.barbershops.id}.
++\end{description}
++
++\section*{Banco: \texttt{barbershop\_db} ÔÇö barbershop-service}
++
++\subsection*{Tabela: barbershops}
++\textbf{Descri├º├úo:} Armazena informa├º├Áes sobre os estabelecimentos cadastrados.
++\begin{description}
++    \item[id:] VARCHAR(36). Chave Prim├íria (PK). UUID.
++    \item[owner\_id:] VARCHAR(36). Obrigat├│rio. FK l├│gica ÔåÆ \texttt{user\_db.barbers.id}.
++    \item[name:] VARCHAR(255). Obrigat├│rio.
++    \item[cnpj:] VARCHAR(128). Obrigat├│rio, ├Ünico. CNPJ criptografado (AES/GCM).
++    \item[address:] VARCHAR(255). Endere├ºo completo.
++    \item[logo\_url:] VARCHAR(255). URL logo Cloudinary.
++    \item[logo\_url\_public\_id:] VARCHAR(255). Public ID logo.
++    \item[banner\_url:] VARCHAR(255). URL banner Cloudinary.
++    \item[banner\_url\_public\_id:] VARCHAR(255). Public ID banner.
++    \item[latitude:] DOUBLE. Geolocaliza├º├úo.
++    \item[longitude:] DOUBLE. Geolocaliza├º├úo.
++    \item[average\_rating:] DOUBLE. Calculado via \texttt{@Formula} (m├®dia de \texttt{barbershop\_reviews.rating}).
++    \item[reviews\_count:] BIGINT. Calculado via \texttt{@Formula} (contagem de avalia├º├Áes).
++    \item[date\_created:] DATETIME. Obrigat├│rio.
++    \item[last\_updated:] DATETIME. Obrigat├│rio.
++\end{description}
++
++\subsection*{Tabela: activities}
++\textbf{Descri├º├úo:} Servi├ºos oferecidos por uma barbearia.
++\begin{description}
++    \item[id:] VARCHAR(36). Chave Prim├íria (PK). UUID.
++    \item[barbershop\_id:] VARCHAR(36). FK ÔåÆ \texttt{barbershops.id}. Obrigat├│rio.
++    \item[activity\_name:] VARCHAR(255). Obrigat├│rio. Nome do servi├ºo.
++    \item[price:] DECIMAL(10,2). Obrigat├│rio.
++    \item[duration\_minutes:] INT. Obrigat├│rio.
++    \item[image\_url:] VARCHAR(255). Imagem Cloudinary.
++    \item[image\_url\_public\_id:] VARCHAR(255).
++    \item[date\_created:] DATETIME. Obrigat├│rio.
++    \item[last\_updated:] DATETIME. Obrigat├│rio.
+ \end{description}
+ 
+-\section*{Tabela: customers}
+-\textbf{Descri├º├úo:} Armazena informa├º├Áes dos clientes usu├írios da plataforma.
++\subsection*{Tabela: barbershop\_join\_requests}
++\textbf{Descri├º├úo:} Solicita├º├Áes de vincula├º├úo entre barbeiro e barbearia.
+ \begin{description}
+-    \item[id:] VARCHAR(36). Chave Prim├íria (PK). Identificador ├║nico (UUID) do cliente.
+-    \item[name:] VARCHAR(70). Obrigat├│rio. Nome completo do cliente.
+-    \item[tell:] VARCHAR(11). Obrigat├│rio, ├Ünico. N├║mero de telefone/celular.
+-    \item[email:] VARCHAR(70). Obrigat├│rio, ├Ünico. Endere├ºo de e-mail (usado para login).
+-    \item[document\_cpf:] VARCHAR(11). Obrigat├│rio, ├Ünico. N├║mero do CPF.
+-    \item[password:] VARCHAR(255). Obrigat├│rio. Senha criptografada (hash).
+-    \item[date\_created:] DATETIME. Obrigat├│rio. Data e hora de cria├º├úo.
+-    \item[last\_updated:] DATETIME. Obrigat├│rio. Data e hora da ├║ltima atualiza├º├úo.
+-    \item[image\_url:] VARCHAR(255). URL para a foto de perfil do cliente.
++    \item[id:] VARCHAR(36). Chave Prim├íria (PK). UUID.
++    \item[barber\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{barbers.id}.
++    \item[barbershop\_id:] VARCHAR(36). FK ÔåÆ \texttt{barbershops.id}.
++    \item[status:] VARCHAR(50). Valores: PENDING, APPROVED, REJECTED.
++    \item[request\_type:] VARCHAR(20). JOIN (barbeiro solicita) ou INVITE (dono convida).
++    \item[date\_created:] DATETIME. Obrigat├│rio.
+ \end{description}
+ 
+-\section*{Tabela: activities}
+-\textbf{Descri├º├úo:} Armazena a lista de servi├ºos oferecidos por uma barbearia.
++\subsection*{Tabela: barbershop\_highlights}
++\textbf{Descri├º├úo:} Imagens de portf├│lio da barbearia.
+ \begin{description}
+-    \item[id:] VARCHAR(36). Chave Prim├íria (PK). Identificador ├║nico (UUID) da atividade/servi├ºo.
+-    \item[barbershop\_id:] VARCHAR(36). Chave Estrangeira (FK) de barbershops. Obrigat├│rio.
+-    \item[activity\_name:] VARCHAR(255). Obrigat├│rio. Nome do servi├ºo (Ex: "Corte de Cabelo").
+-    \item[price:] DECIMAL(10,2). Obrigat├│rio. Pre├ºo do servi├ºo.
+-    \item[duration\_minutes:] INT. Obrigat├│rio. Dura├º├úo estimada do servi├ºo em minutos.
+-    \item[date\_created:] DATETIME. Obrigat├│rio. Data e hora de cria├º├úo.
+-    \item[last\_updated:] DATETIME. Obrigat├│rio. Data e hora da ├║ltima atualiza├º├úo.
+-    \item[image\_url:] VARCHAR(255). URL para uma imagem representativa do servi├ºo.
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[image\_url:] VARCHAR(255). Obrigat├│rio. URL Cloudinary.
++    \item[image\_url\_public\_id:] VARCHAR(255).
++    \item[barbershop\_id:] VARCHAR(36). FK ÔåÆ \texttt{barbershops.id}.
+ \end{description}
+ 
+-\section*{Tabela: appointments}
+-\textbf{Descri├º├úo:} Armazena o registro de cada agendamento.
++\subsection*{Tabela: barbershop\_reviews}
++\textbf{Descri├º├úo:} Avalia├º├Áes dos clientes. Cada cliente avalia cada barbearia no m├íximo uma vez.
+ \begin{description}
+-    \item[id:] BIGINT. Chave Prim├íria (PK), Auto Incremento (AI).
+-    \item[barbershop\_id:] VARCHAR(36). Chave Estrangeira (FK) de barbershops. Obrigat├│rio.
+-    \item[barber\_id:] VARCHAR(36). Chave Estrangeira (FK) de barbers. Obrigat├│rio.
+-    \item[customer\_id:] VARCHAR(36). Chave Estrangeira (FK) de customers. Obrigat├│rio.
+-    \item[start\_time:] DATETIME. Obrigat├│rio. Data e hora de in├¡cio do agendamento.
+-    \item[end\_time:] DATETIME. Obrigat├│rio. Data e hora de t├®rmino do agendamento.
+-    \item[status:] VARCHAR(50). Obrigat├│rio (Padr├úo: SCHEDULED).
+-    \item[date\_created:] DATETIME. Obrigat├│rio. Data e hora de cria├º├úo.
+-    \item[last\_updated:] DATETIME. Obrigat├│rio. Data e hora da ├║ltima atualiza├º├úo.
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[customer\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{customers.id}.
++    \item[barbershop\_id:] VARCHAR(36). FK ÔåÆ \texttt{barbershops.id}.
++    \item[rating:] INT. Nota (1--5).
++    \item[comment:] VARCHAR(500). Nullable.
++    \item[created\_at:] DATETIME. Obrigat├│rio.
+ \end{description}
+ 
+-\section*{Tabela: appointment\_activities}
+-\textbf{Descri├º├úo:} Tabela de liga├º├úo N:M (agendamentos $\leftrightarrow$ activities).
++\subsection*{Tabela: barber\_commission\_rules}
++\textbf{Descri├º├úo:} Regras de comiss├úo por barbeiro ├ù servi├ºo ├ù barbearia.
+ \begin{description}
+-    \item[id:] BIGINT. Chave Prim├íria (PK), Auto Incremento (AI).
+-    \item[appointment\_id:] BIGINT. Chave Estrangeira (FK) de appointments. Obrigat├│rio.
+-    \item[activity\_id:] VARCHAR(36). Chave Estrangeira (FK) de activities.
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[barbershop\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{barbershops.id}.
++    \item[barber\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{barbers.id}.
++    \item[activity\_id:] VARCHAR(36). FK ÔåÆ \texttt{activities.id}.
++    \item[percentage:] DECIMAL(5,2). Percentual de comiss├úo (ex: 40.00 = 40\%).
++    \item[created\_at:] DATETIME. Obrigat├│rio.
+ \end{description}
+ 
+-\section*{Tabela: barber\_activities}
+-\textbf{Descri├º├úo:} Tabela de liga├º├úo N:M (barbers $\leftrightarrow$ activities).
++\subsection*{Tabela: fixed\_expenses}
++\textbf{Descri├º├úo:} Despesas fixas mensais da barbearia.
+ \begin{description}
+-    \item[barber\_id:] VARCHAR(36). Chave Prim├íria Composta, FK de barbers. Obrigat├│rio.
+-    \item[activity\_id:] VARCHAR(36). Chave Prim├íria Composta, FK de activities. Obrigat├│rio.
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[barbershop\_id:] VARCHAR(36). Barbearia dona.
++    \item[category:] VARCHAR(30). Ex: AGUA, LUZ, ALUGUEL, INTERNET, OUTROS.
++    \item[custom\_name:] VARCHAR(80). Nullable. Nome personalizado (para OUTROS).
++    \item[amount:] DECIMAL(10,2). Valor em BRL.
++    \item[month:] INT. M├¬s (1--12).
++    \item[year:] INT. Ano.
++    \item[recurring\_monthly:] BOOLEAN. Default false. Se repete mensalmente.
++    \item[created\_at:] DATETIME. Obrigat├│rio.
+ \end{description}
+ 
+-\section*{Tabela: barbershop\_join\_requests}
+-\textbf{Descri├º├úo:} Armazena os pedidos de barbeiros para se vincular a uma barbearia.
++\section*{Banco: \texttt{schedule\_db} ÔÇö schedule-service}
++
++\subsection*{Tabela: appointments}
++\textbf{Descri├º├úo:} Registro central de agendamentos. Cont├®m snapshots para preservar hist├│rico.
++\begin{description}
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[customer\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{customers.id}.
++    \item[barber\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{barbers.id}.
++    \item[barbershop\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{barbershops.id}.
++    \item[customer\_name:] VARCHAR(256). Snapshot do nome do cliente (criptografado AES/GCM).
++    \item[barber\_name:] VARCHAR(70). Snapshot do nome do barbeiro.
++    \item[barbershop\_name:] VARCHAR(255). Snapshot do nome da barbearia.
++    \item[start\_time:] DATETIME. In├¡cio do atendimento.
++    \item[end\_time:] DATETIME. Fim (calculado: start + soma das dura├º├Áes).
++    \item[total\_price:] DECIMAL(10,2). Soma dos pre├ºos snapshot.
++    \item[status:] VARCHAR(50). Valores: SCHEDULED, PAYMENT\_PENDING, CONFIRMED, IN\_PROGRESS, COMPLETED, WALK\_IN, CANCELLED, NO\_SHOW, EXPIRED.
++    \item[date\_created:] DATETIME. Obrigat├│rio.
++    \item[last\_updated:] DATETIME. Obrigat├│rio.
++\end{description}
++
++\subsection*{Tabela: appointment\_activities}
++\textbf{Descri├º├úo:} Servi├ºos inclu├¡dos em um agendamento (snapshot no momento do agendamento).
++\begin{description}
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[appointment\_id:] VARCHAR(36). FK ÔåÆ \texttt{appointments.id}.
++    \item[activity\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{activities.id}.
++    \item[activity\_name:] VARCHAR(255). Snapshot do nome do servi├ºo.
++    \item[price:] DECIMAL(10,2). Snapshot do pre├ºo.
++    \item[duration\_minutes:] INT. Snapshot da dura├º├úo.
++\end{description}
++
++\subsection*{Tabela: barber\_blocks}
++\textbf{Descri├º├úo:} Bloqueios manuais de agenda criados pelo barbeiro.
++\begin{description}
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[barber\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{barbers.id}.
++    \item[start\_time:] DATETIME. In├¡cio do bloqueio.
++    \item[end\_time:] DATETIME. Fim do bloqueio.
++    \item[reason:] VARCHAR(255). Nullable. Motivo.
++    \item[date\_created:] DATETIME. Obrigat├│rio.
++\end{description}
++
++\section*{Banco: \texttt{payment\_db} ÔÇö payment-service}
++
++\subsection*{Tabela: transactions}
++\textbf{Descri├º├úo:} Transa├º├úo de pagamento vinculada a um agendamento.
++\begin{description}
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[appointment\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{appointments.id}.
++    \item[customer\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{customers.id}.
++    \item[barbershop\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{barbershops.id}.
++    \item[amount:] DECIMAL. Valor total cobrado.
++    \item[gross\_amount:] DECIMAL(10,2). Valor bruto pago (preenchido pelo webhook).
++    \item[net\_amount:] DECIMAL(10,2). Valor l├¡quido ao barbeiro.
++    \item[mp\_fee\_amount:] DECIMAL(10,2). Taxa Mercado Pago.
++    \item[platform\_fee\_amount:] DECIMAL(10,2). Taxa CortaAi.
++    \item[payment\_method:] VARCHAR(30). PIX, CREDIT\_CARD, DEBIT\_CARD, LOCAL.
++    \item[status:] VARCHAR. Valores: PENDING, APPROVED, REJECTED, REFUNDED, CANCELLED, IN\_PROCESS.
++    \item[mp\_preference\_id:] VARCHAR. ├Ünico. ID de prefer├¬ncia no Mercado Pago.
++    \item[mp\_payment\_id:] VARCHAR. ID do pagamento no webhook.
++    \item[checkout\_url:] TEXT. URL de checkout gerado pelo MP.
++    \item[created\_at:] DATETIME. Obrigat├│rio.
++    \item[updated\_at:] DATETIME. Nullable.
++\end{description}
++
++\subsection*{Tabela: webhook\_logs}
++\textbf{Descri├º├úo:} Log de idempot├¬ncia para webhooks do Mercado Pago.
++\begin{description}
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[mp\_resource\_id:] VARCHAR. ├Ünico. Garante que o mesmo evento n├úo seja reprocessado.
++    \item[event\_type:] VARCHAR. Tipo do evento (ex: \texttt{payment}).
++    \item[raw\_payload:] TEXT. JSON bruto recebido.
++    \item[processed:] BOOLEAN. Default false.
++    \item[received\_at:] DATETIME. Data de recebimento.
++\end{description}
++
++\subsection*{Tabela: dashboard\_kpi\_daily}
++\textbf{Descri├º├úo:} KPIs financeiros di├írios pr├®-agregados por barbearia.
++\begin{description}
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[barbershop\_id:] VARCHAR(36). Barbearia.
++    \item[reference\_date:] DATE. Data de refer├¬ncia.
++    \item[approved\_revenue:] DECIMAL(12,2). Receita aprovada no dia.
++    \item[approved\_transactions\_count:] INT. Quantidade de transa├º├Áes aprovadas.
++    \item[updated\_at:] DATETIME. Atualizado a cada webhook processado.
++\end{description}
++
++\section*{Banco: \texttt{product\_db} ÔÇö product-service}
++
++\subsection*{Tabela: products}
++\textbf{Descri├º├úo:} Produtos e insumos do estoque interno da barbearia.
++\begin{description}
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[barbershop\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{barbershops.id}.
++    \item[name:] VARCHAR. Obrigat├│rio.
++    \item[description:] TEXT. Nullable.
++    \item[price:] DECIMAL. Pre├ºo de venda.
++    \item[category:] VARCHAR. Categoria est├ítica: SHAMPOO, POMADE, RAZOR, SCISSORS, OTHER, etc.
++    \item[category\_id:] VARCHAR(36). FK ÔåÆ \texttt{categories.id}. Categoria din├ómica (opcional).
++    \item[stock\_quantity:] INT. Quantidade em estoque.
++    \item[min\_stock\_quantity:] INT. Quantidade m├¡nima (alerta de reposi├º├úo).
++    \item[active:] BOOLEAN. Default true. Soft delete.
++    \item[created\_at:] DATETIME. Obrigat├│rio.
++    \item[updated\_at:] DATETIME. Nullable.
++\end{description}
++
++\subsection*{Tabela: stock\_movements}
++\textbf{Descri├º├úo:} Auditoria imut├ível de todas as movimenta├º├Áes de estoque.
++\begin{description}
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[product\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{products.id}.
++    \item[type:] VARCHAR. Valores: IN, OUT, OUT\_CONSUMPTION, OUT\_SALE, LOSS, RETURN.
++    \item[quantity:] INT. Quantidade movimentada.
++    \item[unit\_sale\_price:] DECIMAL(10,2). Nullable. Pre├ºo de venda (para OUT\_SALE).
++    \item[notes:] VARCHAR(500). Observa├º├úo.
++    \item[reason:] VARCHAR. Nullable. Motivo textual da movimenta├º├úo.
++    \item[created\_at:] DATETIME. Obrigat├│rio.
++\end{description}
++
++\subsection*{Tabela: categories}
++\textbf{Descri├º├úo:} Categorias din├ómicas de produtos criadas pela barbearia.
++\begin{description}
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[name:] VARCHAR(80). Obrigat├│rio. ├Ünico por barbearia.
++    \item[barbershop\_id:] VARCHAR(36). Barbearia dona.
++    \item[created\_at:] DATETIME. Obrigat├│rio.
++\end{description}
++
++\section*{Banco: \texttt{notification\_db} ÔÇö notification-service}
++
++\subsection*{Tabela: notifications}
++\textbf{Descri├º├úo:} Notifica├º├Áes in-app e transacionais.
+ \begin{description}
+-    \item[id:] BIGINT. Chave Prim├íria (PK), Auto Incremento (AI).
+-    \item[barber\_id:] VARCHAR(36). Chave Estrangeira (FK) de barbers. Obrigat├│rio.
+-    \item[barbershop\_id:] VARCHAR(36). Chave Estrangeira (FK) de barbershops. Obrigat├│rio.
+-    \item[status:] ENUM('PENDING','REJECTED'). Obrigat├│rio (Padr├úo: PENDING).
+-    \item[date\_created:] DATETIME. Obrigat├│rio. Data e hora da solicita├º├úo.
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[user\_id:] VARCHAR(36). FK l├│gica ÔåÆ \texttt{barbers.id} ou \texttt{customers.id}.
++    \item[type:] VARCHAR. Valores: \texttt{APPOINTMENT\_CREATED}, \texttt{APPOINTMENT\_CANCELLED}, \texttt{APPOINTMENT\_CONCLUDED}, \texttt{APPOINTMENT\_RESCHEDULED}, \texttt{APPOINTMENT\_REMINDER}, \texttt{PAYMENT\_APPROVED}, \texttt{JOIN\_REQUEST\_RECEIVED}, \texttt{INVITE\_RECEIVED}, \texttt{BARBER\_REMOVED}.
++    \item[title:] VARCHAR. Obrigat├│rio.
++    \item[message:] TEXT. Obrigat├│rio.
++    \item[channel:] VARCHAR. Valores: IN\_APP, EMAIL.
++    \item[is\_read:] BOOLEAN. Default false.
++    \item[created\_at:] DATETIME. Obrigat├│rio.
+ \end{description}
+ 
+-\section*{Tabela: barbershop\_highlights}
+-\textbf{Descri├º├úo:} Armazena imagens de destaque ou portf├│lio de uma barbearia.
++\subsection*{Tabela: device\_tokens}
++\textbf{Descri├º├úo:} Tokens de dispositivo para push notifications (FCM).
+ \begin{description}
+-    \item[id:] VARCHAR(36). Chave Prim├íria (PK). Identificador ├║nico (UUID) do destaque.
+-    \item[image\_url:] VARCHAR(255). Obrigat├│rio. URL para a imagem de destaque.
+-    \item[barbershop\_id:] VARCHAR(36). Chave Estrangeira (FK) de barbershops. Obrigat├│rio.
++    \item[id:] VARCHAR(36). PK. UUID.
++    \item[user\_id:] VARCHAR(36). FK l├│gica ÔåÆ user.
++    \item[platform:] VARCHAR. Valor atual: WEB.
++    \item[token:] VARCHAR(512). Token FCM. ├Ünico.
++    \item[active:] BOOLEAN. Default true.
++    \item[created\_at:] DATETIME. Obrigat├│rio.
++    \item[updated\_at:] DATETIME. Obrigat├│rio.
+ \end{description}
+ 
+ \end{apendicesenv}
