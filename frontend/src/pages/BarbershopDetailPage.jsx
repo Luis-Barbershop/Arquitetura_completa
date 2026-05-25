@@ -35,7 +35,9 @@ const BarbershopDetailPage = () => {
 
         // Geocodifica o endereço se lat/lng não vieram do backend
         let enrichedShop = shopData;
-        if (shopData && !shopData.latitude && !shopData.longitude && shopData.address) {
+        const noCoords = shopData && (shopData.latitude == null || shopData.longitude == null
+            || (shopData.latitude === 0 && shopData.longitude === 0));
+        if (noCoords && shopData.address) {
           const coords = await geocodeAddress(shopData.address).catch(() => null);
           if (coords) {
             enrichedShop = { ...shopData, latitude: coords.lat, longitude: coords.lng };

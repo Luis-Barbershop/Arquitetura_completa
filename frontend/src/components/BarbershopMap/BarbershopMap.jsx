@@ -20,7 +20,9 @@ L.Icon.Default.mergeOptions({
 export default function BarbershopMap({ latitude, longitude, barbershopName, address }) {
     const lat = Number(latitude);
     const lng = Number(longitude);
-    const hasCoordinates = Number.isFinite(lat) && Number.isFinite(lng);
+    const hasCoordinates = latitude != null && longitude != null
+        && Number.isFinite(lat) && Number.isFinite(lng)
+        && !(lat === 0 && lng === 0);
     const hasAddress = Boolean(address?.trim());
 
     if (!hasCoordinates && !hasAddress) return null;
