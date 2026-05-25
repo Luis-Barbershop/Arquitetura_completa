@@ -44,8 +44,10 @@ public class NotificationSseController {
 
         UUID userId = resolveUserId(firebaseUid);
 
-        // Timeout 0 = sem timeout gerenciado pelo Spring (conexão mantida até o cliente fechar)
-        SseEmitter emitter = new SseEmitter(0L);
+        // Timeout de 4 minutos — libera a thread Tomcat e força reconexão automática
+        // do cliente (EventSource reconecta sozinho ao receber onError).
+        // Sem timeout (0L), cada sessão prende 1 thread indefinidamente → pool de 20 esgota com 20 usuários.
+        SseEmitter emitter = new SseEmitter(240_000L);
 
         emitter.onCompletion(() -> sseEmitterService.remove(userId));
         emitter.onTimeout(() -> sseEmitterService.remove(userId));
