@@ -773,15 +773,14 @@ Assistente conversacional integrado ao `schedule-service`. Usa múltiplos proved
 
 ```
 PROVEDORES (em ordem de prioridade):
-1. Gemini 2.0 Flash (Google)     ← primário
-2. Groq llama-3.3-70b            ← fallback 1
-3. OpenRouter openai/gpt-oss-20b ← fallback 2  (modelo atualizado em 25/05/2026)
-4. Cohere command-a-03-2025      ← fallback 3
+1. OpenRouter openai/gpt-oss-20b ← primário   (atualizado em 25/05/2026)
+2. Cohere command-a-03-2025      ← fallback
+   (Gemini e Groq desativados: cota esgotada / bloqueio WAF permanente)
 
 FLUXO:
 POST /api/appointments/gustave/chat  [Authorization: Bearer token]
     body: { message: "Quero agendar um corte amanhã às 10h" }
-    └─ schedule-service tenta Gemini → se falhar, tenta Groq → ...
+    └─ schedule-service tenta OpenRouter → se falhar, tenta Cohere → ...
     └─ resposta em linguagem natural
     └─ pode sugerir horários disponíveis com base na agenda real
 
