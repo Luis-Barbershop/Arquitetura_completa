@@ -32,6 +32,14 @@
         <springdoc.version>2.5.0</springdoc.version>
         <caffeine.version>3.1.8</caffeine.version>
         <jacoco.version>0.8.12</jacoco.version>
+        <!-- SonarCloud -->
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.organization>appcortaai</sonar.organization>
+        <sonar.projectKey>AppCortaAi_Arquitetura_completa</sonar.projectKey>
+        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.exclusions>**/config/**,**/*Application.java,**/dto/**,**/model/**,**/mapper/**</sonar.exclusions>
+        <sonar.coverage.exclusions>**/config/**,**/*Application.java,**/dto/**,**/model/**,**/mapper/**,**/messaging/publisher/**</sonar.coverage.exclusions>
+        <sonar.java.source>17</sonar.java.source>
     </properties>
 
     <dependencyManagement>
@@ -149,6 +157,11 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>4.0.0.4121</version>
             </plugin>
         </plugins>
     </build>
