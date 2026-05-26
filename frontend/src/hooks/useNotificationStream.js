@@ -28,8 +28,9 @@ export function useNotificationStream(onUnreadCount, onNotificationCreated) {
             const token = localStorage.getItem('token');
             if (!token || !activeRef.current) return;
 
-            const baseUrl = import.meta.env.VITE_API_URL ?? '';
-            const url = `${baseUrl}/api/notifications/stream?token=${encodeURIComponent(token)}`;
+            const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.cortaai.shop/api';
+            const baseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+            const url = `${baseUrl}/notifications/stream?token=${encodeURIComponent(token)}`;
 
             const es = new EventSource(url);
             esRef.current = es;
