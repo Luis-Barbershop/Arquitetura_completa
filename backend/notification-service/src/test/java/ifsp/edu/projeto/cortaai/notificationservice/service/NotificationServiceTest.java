@@ -59,6 +59,23 @@ class NotificationServiceTest {
     }
 
     @Test
+    void shouldSendCreatedNotificationThroughSse() {
+        UUID userId = UUID.randomUUID();
+        when(notificationRepository.countByUserIdAndReadFalse(userId)).thenReturn(4L);
+
+        Notification saved = notificationService.createNotification(
+                userId,
+                NotificationType.APPOINTMENT_CREATED,
+                "Novo agendamento",
+                "Mensagem"
+        );
+
+        verify(sseEmitterService).sendUnreadCount(userId, 4L);
+        verify(sseEmitterService).sendNotificationCreated(eq(userId), any(NotificationDTO.class), eq(4L));
+        assertThat(saved.getTitle()).isEqualTo("Novo agendamento");
+    }
+
+    @Test
     void shouldSendPushForBothSidesOnAppointmentCreated() {
         UUID customerId = UUID.randomUUID();
         UUID barberId = UUID.randomUUID();

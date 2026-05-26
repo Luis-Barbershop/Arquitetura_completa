@@ -7,14 +7,16 @@ const SSE_RECONNECT_DELAY_MS = 10_000;
  * de notificações em tempo real, sem polling.
  *
  * @param {function} onUnreadCount  Callback chamado com o número de não lidas (number)
+ * @param {function} onNotificationCreated  Callback chamado com a notificação criada
  *
  * Fluxo:
  *  1. Abre EventSource para GET /api/notifications/stream?token=<firebase_token>
  *  2. Ao receber evento "unread-count", chama onUnreadCount(n)
- *  3. Em caso de erro, fecha e reconecta após SSE_RECONNECT_DELAY_MS
- *  4. Cleanup ao desmontar fecha a conexão e cancela o timeout de reconexão
+ *  3. Ao receber evento "notification-created", chama onNotificationCreated(notification, unreadCount)
+ *  4. Em caso de erro, fecha e reconecta após SSE_RECONNECT_DELAY_MS
+ *  5. Cleanup ao desmontar fecha a conexão e cancela o timeout de reconexão
  */
-export function useNotificationStream(onUnreadCount) {
+export function useNotificationStream(onUnreadCount, onNotificationCreated) {
     const esRef = useRef(null);
     const reconnectTimerRef = useRef(null);
     const activeRef = useRef(true);
@@ -42,6 +44,16 @@ export function useNotificationStream(onUnreadCount) {
                 }
             });
 
+            es.addEventListener('notification-created', (e) => {
+                if (!activeRef.current || typeof onNotificationCreated !== 'function') return;
+                try {
+                    const { notification, unreadCount } = JSON.parse(e.data);
+                    onNotificationCreated(notification, Number(unreadCount) || 0);
+                } catch {
+                    // payload malformado — ignora
+                }
+            });
+
             es.onerror = () => {
                 es.close();
                 esRef.current = null;
@@ -61,5 +73,5 @@ export function useNotificationStream(onUnreadCount) {
         };
     // onUnreadCount é passado como prop — envolver em useCallback no componente pai
     // para evitar reconexão desnecessária ao re-render
-    }, [onUnreadCount]);
+    }, [onUnreadCount, onNotificationCreated]);
 }

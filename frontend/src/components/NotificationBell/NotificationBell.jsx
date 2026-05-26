@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell } from '@phosphor-icons/react';
+import { toast } from 'react-toastify';
 import api from '../../services/api';
 import { useNotificationStream } from '../../hooks/useNotificationStream';
 import styles from './NotificationBell.module.css';
@@ -25,12 +26,56 @@ function NotificationBell({ userType = 'barber' }) {
     const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
     const dropdownRef = useRef(null);
     const buttonRef = useRef(null);
+    const openRef = useRef(false);
+
+    useEffect(() => {
+        openRef.current = open;
+    }, [open]);
+
+    const upsertNotification = useCallback((notification) => {
+        if (!notification?.id) return;
+        setNotifications((prev) => {
+            const exists = prev.some((item) => item.id === notification.id);
+            if (exists) {
+                return prev.map((item) => (item.id === notification.id ? notification : item));
+            }
+            return [notification, ...prev];
+        });
+    }, []);
+
+    const fetchNotifications = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await api.get('/notifications/my-notifications');
+            setNotifications(Array.isArray(res.data) ? res.data : []);
+        } catch {
+            setNotifications([]);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     // SSE — recebe contagem de não lidas em tempo real (sem polling)
     const handleUnreadCount = useCallback((count) => {
+        setUnreadCount((previous) => {
+            if (count > previous && openRef.current) {
+                void fetchNotifications();
+            }
+            return count;
+        });
+    }, [fetchNotifications]);
+
+    const handleNotificationCreated = useCallback((notification, count) => {
         setUnreadCount(count);
-    }, []);
-    useNotificationStream(handleUnreadCount);
+        upsertNotification(notification);
+        if (notification?.title) {
+            toast.info(`${notification.title}${notification.message ? `: ${notification.message}` : ''}`, {
+                autoClose: 6000,
+            });
+        }
+    }, [upsertNotification]);
+
+    useNotificationStream(handleUnreadCount, handleNotificationCreated);
 
     // Busca contagem inicial no mount (antes do SSE conectar)
     useEffect(() => {
@@ -63,15 +108,7 @@ function NotificationBell({ userType = 'barber' }) {
         }
 
         setOpen(true);
-        setLoading(true);
-        try {
-            const res = await api.get('/notifications/my-notifications');
-            setNotifications(Array.isArray(res.data) ? res.data : []);
-        } catch {
-            setNotifications([]);
-        } finally {
-            setLoading(false);
-        }
+        await fetchNotifications();
     };
 
     const handleMarkAsRead = async (id) => {

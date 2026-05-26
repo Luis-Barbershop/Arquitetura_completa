@@ -88,6 +88,8 @@ const parseAppointmentDate = (value) => {
     return 0;
 };
 
+const MANUAL_CONCLUSION_WINDOW_MS = 2 * 60 * 60 * 1000;
+
 const compareByStartTimeDesc = (a, b) => {
     const first = parseAppointmentDate(a?.startTime);
     const second = parseAppointmentDate(b?.startTime);
@@ -476,7 +478,33 @@ const MeusAgendamentosPage = () => {
     };
 
     const canInteractWithAppointment = (status) => {
+        return ['SCHEDULED', 'CONFIRMED', 'WALK_IN', 'IN_PROGRESS', 'PAYMENT_PENDING'].includes(status);
+    };
+
+    const canRescheduleAppointment = (status) => {
+        return ['SCHEDULED', 'CONFIRMED', 'WALK_IN', 'IN_PROGRESS', 'PAYMENT_PENDING'].includes(status);
+    };
+
+    const canConcludeAppointment = (status) => {
         return ['SCHEDULED', 'CONFIRMED', 'WALK_IN', 'IN_PROGRESS'].includes(status);
+    };
+
+    const getManualConcludeAvailability = (appointment) => {
+        const startTime = parseAppointmentDate(appointment?.startTime);
+        if (!startTime) {
+            return {
+                canConclude: false,
+                message: 'Horario do agendamento indisponivel.',
+            };
+        }
+
+        const canConclude = Date.now() >= startTime - MANUAL_CONCLUSION_WINDOW_MS;
+        return {
+            canConclude,
+            message: canConclude
+                ? 'Concluir agendamento'
+                : 'Conclusao disponivel a partir de 2 horas antes do horario marcado.',
+        };
     };
 
     const handleBarberTabChange = (tab) => {
@@ -1007,6 +1035,7 @@ const MeusAgendamentosPage = () => {
                         <div className={Styles.list}>
                             {paginatedAppointments.map(app => {
                                 const durationLabel = getDurationLabel(app);
+                                const concludeAvailability = getManualConcludeAvailability(app);
                                 const mainInfoText = isCustomer
                                     ? `Com: ${app.barberName} (${app.barbershopName})`
                                     : agendaView === 'team'
@@ -1041,35 +1070,30 @@ const MeusAgendamentosPage = () => {
 
                                     {canInteractWithAppointment(app.status) && (
                                         <div className={Styles.cardActions}>
-                                            {isCustomer && ['SCHEDULED', 'CONFIRMED'].includes(app.status) && (() => {
-                                                const horasRestantes = (new Date(app.startTime) - new Date()) / 3600000;
-                                                if (horasRestantes > 3) {
-                                                    return (
-                                                        <button
-                                                            className={Styles.rescheduleButton}
-                                                            onClick={() => handleOpenRescheduleModal(app)}
-                                                            disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule}
-                                                        >
-                                                            Reagendar
-                                                        </button>
-                                                    );
-                                                }
-                                                if (horasRestantes > 0) {
-                                                    return (
-                                                        <span className={Styles.rescheduleLockedHint} title="Reagendamento não permitido dentro de 3 horas do horário">
-                                                            <FiClock size={12} /> Reagendamento indisponível
-                                                        </span>
-                                                    );
-                                                }
-                                                return null;
-                                            })()}
-                                            <button
-                                                className={Styles.concludeButton}
-                                                onClick={() => handleOpenConcludeModal(app.id)}
-                                                disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule}
-                                            >
-                                                Concluir
-                                            </button>
+                                            {canRescheduleAppointment(app.status) && (
+                                                <button
+                                                    className={Styles.rescheduleButton}
+                                                    onClick={() => handleOpenRescheduleModal(app)}
+                                                    disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule}
+                                                >
+                                                    Reagendar
+                                                </button>
+                                            )}
+                                            {canConcludeAppointment(app.status) && (
+                                                <button
+                                                    className={Styles.concludeButton}
+                                                    onClick={() => handleOpenConcludeModal(app.id)}
+                                                    disabled={
+                                                        isSubmittingCancel
+                                                        || isSubmittingConclude
+                                                        || isSubmittingReschedule
+                                                        || !concludeAvailability.canConclude
+                                                    }
+                                                    title={concludeAvailability.message}
+                                                >
+                                                    Concluir
+                                                </button>
+                                            )}
                                             <button
                                                 className={Styles.cancelButton}
                                                 onClick={() => handleOpenCancelModal(app.id)}

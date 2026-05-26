@@ -289,6 +289,7 @@ public class NotificationService {
         // Empurra contagem atualizada via SSE (se o usuário tiver conexão ativa)
         long unreadCount = notificationRepository.countByUserIdAndReadFalse(userId);
         sseEmitterService.sendUnreadCount(userId, unreadCount);
+        sseEmitterService.sendNotificationCreated(userId, toDTO(saved), unreadCount);
 
         return saved;
     }

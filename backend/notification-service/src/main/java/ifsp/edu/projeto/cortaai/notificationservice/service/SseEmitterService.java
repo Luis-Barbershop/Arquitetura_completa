@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import ifsp.edu.projeto.cortaai.notificationservice.dto.NotificationDTO;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
@@ -42,6 +44,24 @@ public class SseEmitterService {
                     .name("unread-count")
                     .data(Map.of("unreadCount", count)));
             log.debug("SSE unread-count={} enviado para userId={}", count, userId);
+        } catch (IOException e) {
+            log.warn("Falha ao enviar SSE para userId={} — removendo emitter: {}", userId, e.getMessage());
+            emitters.remove(userId);
+        }
+    }
+
+    public void sendNotificationCreated(UUID userId, NotificationDTO notification, long unreadCount) {
+        SseEmitter emitter = emitters.get(userId);
+        if (emitter == null) return;
+
+        try {
+            emitter.send(SseEmitter.event()
+                    .name("notification-created")
+                    .data(Map.of(
+                            "notification", notification,
+                            "unreadCount", unreadCount
+                    )));
+            log.debug("SSE notification-created enviado para userId={}", userId);
         } catch (IOException e) {
             log.warn("Falha ao enviar SSE para userId={} — removendo emitter: {}", userId, e.getMessage());
             emitters.remove(userId);

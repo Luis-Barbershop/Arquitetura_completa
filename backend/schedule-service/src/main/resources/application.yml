@@ -122,6 +122,7 @@ app:
   appointments:
     payment-pending-timeout-minutes: ${APPOINTMENT_PAYMENT_PENDING_TIMEOUT_MINUTES:30}
     auto-complete-after-end-minutes: ${APPOINTMENT_AUTO_COMPLETE_AFTER_END_MINUTES:30}
+    manual-complete-before-start-minutes: ${APPOINTMENT_MANUAL_COMPLETE_BEFORE_START_MINUTES:120}
     lifecycle-scheduler-delay-ms: ${APPOINTMENT_LIFECYCLE_SCHEDULER_DELAY_MS:300000}
   security:
     crypto:

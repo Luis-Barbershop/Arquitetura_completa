@@ -9,12 +9,15 @@ import ifsp.edu.projeto.cortaai.scheduleservice.repository.AppointmentRepository
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,9 +37,12 @@ public class ReminderScheduler {
     private final RedisTemplate<String, String> stringRedisTemplate;
     private final Set<String> localReminderFallback = ConcurrentHashMap.newKeySet();
 
+    @Value("${app.timezone:America/Sao_Paulo}")
+    private String appTimezone;
+
     @Scheduled(fixedDelay = 300_000) // 5 minutos
     public void publishReminders() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = getNowInAppTimezone();
         LocalDateTime to = now.plusHours(1);
 
         List<Appointment> appointments = appointmentRepository.findAppointmentsForReminderWindow(now, to);
@@ -95,6 +101,18 @@ public class ReminderScheduler {
         } catch (Exception e) {
             log.warn("Não foi possível resolver email para userId={}: {}", userId, e.getMessage());
             return null;
+        }
+    }
+
+    private LocalDateTime getNowInAppTimezone() {
+        try {
+            String timezone = (appTimezone == null || appTimezone.isBlank())
+                    ? "America/Sao_Paulo"
+                    : appTimezone;
+            return LocalDateTime.now(ZoneId.of(timezone));
+        } catch (DateTimeException ex) {
+            log.warn("Timezone inválido em app.timezone='{}'; usando timezone padrão da JVM.", appTimezone);
+            return LocalDateTime.now();
         }
     }
 }
