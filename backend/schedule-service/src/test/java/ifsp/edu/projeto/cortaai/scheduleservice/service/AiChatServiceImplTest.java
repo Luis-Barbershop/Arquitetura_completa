@@ -4,10 +4,13 @@ import ifsp.edu.projeto.cortaai.scheduleservice.dto.ActivityInfoDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.AiChatRequestDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.AiChatResponseDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.CommissionRuleInfoDTO;
+import ifsp.edu.projeto.cortaai.scheduleservice.dto.DayScheduleDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.UserInfoDTO;
+import ifsp.edu.projeto.cortaai.scheduleservice.dto.WorkBlockDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.BarbershopServiceClient;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.PaymentServiceClient;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.ProductServiceClient;
+import ifsp.edu.projeto.cortaai.scheduleservice.feign.UserAnalyticsClient;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.UserServiceClient;
 import ifsp.edu.projeto.cortaai.scheduleservice.model.Appointment;
 import ifsp.edu.projeto.cortaai.scheduleservice.model.AppointmentActivity;
@@ -27,7 +30,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -50,6 +57,8 @@ class AiChatServiceImplTest {
     @Mock
     private UserServiceClient userServiceClient;
     @Mock
+    private UserAnalyticsClient userAnalyticsClient;
+    @Mock
     private BarbershopServiceClient barbershopServiceClient;
     @Mock
     private ProductServiceClient productServiceClient;
@@ -68,6 +77,7 @@ class AiChatServiceImplTest {
                 appointmentRepository,
                 vBarberSkillMatrixRepository,
                 userServiceClient,
+                userAnalyticsClient,
                 barbershopServiceClient,
                 productServiceClient,
                 paymentServiceClient,
@@ -528,6 +538,78 @@ class AiChatServiceImplTest {
     }
 
     @Test
+    void shouldIncludeAdvancedDecisionContextsForOwnerQuestions() {
+        UUID ownerId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+        setProvider("groqApiKey", "groq-token");
+        when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(user(ownerId, "BARBER", shopId));
+
+        Appointment progressiva1 = appointment(shopId, ownerId, customerId, AppointmentStatus.COMPLETED, "Ana Silva", "Bruno", "300.00");
+        progressiva1.setStartTime(LocalDateTime.of(2026, 5, 6, 10, 0));
+        progressiva1.getActivities().iterator().next().setActivityName("Progressiva");
+        Appointment progressiva2 = appointment(shopId, ownerId, customerId, AppointmentStatus.COMPLETED, "Ana Silva", "Bruno", "300.00");
+        progressiva2.setStartTime(LocalDateTime.of(2026, 5, 20, 10, 0));
+        progressiva2.getActivities().iterator().next().setActivityName("Progressiva");
+        Appointment cancelled = appointment(shopId, ownerId, UUID.randomUUID(), AppointmentStatus.CANCELLED, "Bia", "Bruno", "0.00");
+        cancelled.setStartTime(LocalDateTime.of(2026, 5, 21, 10, 0));
+
+        when(appointmentRepository.findCompletedByBarbershop(eq(shopId), any(), any()))
+                .thenReturn(List.of(progressiva1, progressiva2));
+        when(appointmentRepository.findCancelledByBarbershop(eq(shopId), any(), any()))
+                .thenReturn(List.of(cancelled));
+        when(appointmentRepository.findByBarbershopIdAndStartTimeBetween(eq(shopId), any(), any()))
+                .thenReturn(List.of(progressiva1, progressiva2, cancelled));
+        when(appointmentRepository.findByBarberIdAndStartTimeBetween(eq(ownerId), any(), any()))
+                .thenReturn(List.of());
+        when(userServiceClient.getBarberWorkSchedule(ownerId)).thenReturn(fullWeekSchedule());
+        when(userServiceClient.getBarbersByBarbershop(shopId)).thenReturn(List.of(user(ownerId, "BARBER", shopId)));
+        when(vBarberSkillMatrixRepository.findByBarbershopId(shopId.toString()))
+                .thenReturn(List.of(skill("Bruno", "Progressiva", 2L, "600.00")));
+        when(barbershopServiceClient.getAllActivities(shopId)).thenReturn(List.of(activityInfo(shopId, "Progressiva")));
+        when(productServiceClient.getStockHealth(shopId)).thenReturn(List.of(
+                Map.of("productName", "Creme Progressiva", "category", "Química", "currentStock", 9,
+                        "predictedMinimum", 3, "requiresRestock", false)
+        ));
+        when(paymentServiceClient.getMyShopOverview(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(Map.of("totalServiceRevenue", "600.00", "serviceRevenue", "600.00",
+                        "walkInRevenue", "0.00", "productExpenses", "30.00", "inventoryAssetValue", "30.00",
+                        "operationalResultWithWalkIn", "570.00", "approvedCount", 2,
+                        "pendingCount", 0, "cancelledCount", 1, "walkInAppointmentsCount", 0));
+        when(paymentServiceClient.getMyShopBarberPerformance(eq("firebase-uid"), eq(shopId), any(), any()))
+                .thenReturn(List.of());
+        LocalDate today = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+        when(userAnalyticsClient.getCustomerAcquisition()).thenReturn(List.of(
+                Map.of("referenceMonth", today.minusMonths(1).format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM")), "newCustomers", 4),
+                Map.of("referenceMonth", today.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM")), "newCustomers", 6)
+        ));
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(Map.of("choices", List.of(Map.of("message", Map.of("content", "Contextos ok.")))));
+
+        service.chat("firebase-uid", "BARBER", new AiChatRequestDTO("Vale promoção? Ana é frequente?", AiChatMode.CONSOLIDATED));
+
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).postForObject(anyString(), captor.capture(), eq(Map.class));
+        String prompt = captor.getValue().getBody().toString();
+
+        assertThat(prompt)
+                .contains("Data e hora de referência do sistema")
+                .contains("Agenda de trabalho e disponibilidade")
+                .contains("Amanhã às 12:00")
+                .contains("Cancelamentos por dia da semana")
+                .contains("Maior taxa")
+                .contains("Frequência de clientes")
+                .contains("Ana")
+                .contains("Análise de promoção por serviço")
+                .contains("Progressiva")
+                .contains("recorrência média")
+                .contains("Equipe da barbearia")
+                .contains("Aquisição de clientes")
+                .contains("Crescimento vs. mês passado")
+                .contains("Leitura sobre estoque alto");
+    }
+
+    @Test
     void shouldNotExposeOwnerDataToCollaboratorBarber() {
         UUID barberId = UUID.randomUUID();
         UUID shopId = UUID.randomUUID();
@@ -838,5 +920,17 @@ class AiChatServiceImplTest {
         activity.setPrice(new BigDecimal("70.00"));
         activity.setDurationMinutes(45);
         return activity;
+    }
+
+    private List<DayScheduleDTO> fullWeekSchedule() {
+        return List.of(
+                new DayScheduleDTO(DayOfWeek.MONDAY, List.of(new WorkBlockDTO(LocalTime.of(9, 0), LocalTime.of(18, 0)))),
+                new DayScheduleDTO(DayOfWeek.TUESDAY, List.of(new WorkBlockDTO(LocalTime.of(9, 0), LocalTime.of(18, 0)))),
+                new DayScheduleDTO(DayOfWeek.WEDNESDAY, List.of(new WorkBlockDTO(LocalTime.of(9, 0), LocalTime.of(18, 0)))),
+                new DayScheduleDTO(DayOfWeek.THURSDAY, List.of(new WorkBlockDTO(LocalTime.of(9, 0), LocalTime.of(18, 0)))),
+                new DayScheduleDTO(DayOfWeek.FRIDAY, List.of(new WorkBlockDTO(LocalTime.of(9, 0), LocalTime.of(18, 0)))),
+                new DayScheduleDTO(DayOfWeek.SATURDAY, List.of(new WorkBlockDTO(LocalTime.of(9, 0), LocalTime.of(14, 0)))),
+                new DayScheduleDTO(DayOfWeek.SUNDAY, List.of(new WorkBlockDTO(LocalTime.of(9, 0), LocalTime.of(14, 0))))
+        );
     }
 }

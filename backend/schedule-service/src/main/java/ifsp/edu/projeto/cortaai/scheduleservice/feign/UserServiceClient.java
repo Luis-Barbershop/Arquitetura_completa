@@ -22,6 +22,9 @@ public interface UserServiceClient {
     @GetMapping("/by-firebase-uid/{uid}")
     UserInfoDTO getUserByFirebaseUid(@PathVariable("uid") String uid);
 
+    @GetMapping("/barbers/by-barbershop/{barbershopId}")
+    List<UserInfoDTO> getBarbersByBarbershop(@PathVariable("barbershopId") UUID barbershopId);
+
     /**
      * Busca a agenda semanal (blocos de horário por dia) de um barbeiro.
      * Rota pública no BarberController: GET /api/barbers/{id}/work-schedule
@@ -32,4 +35,3 @@ public interface UserServiceClient {
     @GetMapping("/barbers/{id}/activities")
     Set<UUID> getBarberAssignedActivities(@PathVariable("id") UUID barberId);
 }
-
