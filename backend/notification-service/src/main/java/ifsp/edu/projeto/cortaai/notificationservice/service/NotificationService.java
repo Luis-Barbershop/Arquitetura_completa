@@ -73,14 +73,22 @@ public class NotificationService {
 
         // E-mail — cliente
         if (customerEmail != null && !customerEmail.isBlank()) {
-            emailService.sendAppointmentConfirmedToCustomer(
-                    customerEmail, customerName, barbershopName, barberName, startTime, totalPrice);
+            try {
+                emailService.sendAppointmentConfirmedToCustomer(
+                        customerEmail, customerName, barbershopName, barberName, startTime, totalPrice);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail appointment.created ao cliente {}: {}", customerEmail, e.getMessage());
+            }
         }
 
         // E-mail — barbeiro
         if (barberEmail != null && !barberEmail.isBlank()) {
-            emailService.sendNewAppointmentToBarber(
-                    barberEmail, barberName, customerName, startTime, totalPrice);
+            try {
+                emailService.sendNewAppointmentToBarber(
+                        barberEmail, barberName, customerName, startTime, totalPrice);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail appointment.created ao barbeiro {}: {}", barberEmail, e.getMessage());
+            }
         }
     }
 
@@ -107,8 +115,12 @@ public class NotificationService {
 
             // E-mail — barbeiro
             if (barberEmail != null && !barberEmail.isBlank()) {
-                emailService.sendCancelledByCustomerToBarber(
-                        barberEmail, barberName, customerName, startTime);
+                try {
+                    emailService.sendCancelledByCustomerToBarber(
+                            barberEmail, barberName, customerName, startTime);
+                } catch (Exception e) {
+                    log.warn("Falha ao enviar e-mail cancelled-by-customer ao barbeiro {}: {}", barberEmail, e.getMessage());
+                }
             }
         } else {
             // IN_APP — cliente
@@ -122,8 +134,12 @@ public class NotificationService {
 
             // E-mail — cliente
             if (customerEmail != null && !customerEmail.isBlank()) {
-                emailService.sendCancelledByBarberToCustomer(
-                        customerEmail, customerName, barbershopName, barberName, startTime);
+                try {
+                    emailService.sendCancelledByBarberToCustomer(
+                            customerEmail, customerName, barbershopName, barberName, startTime);
+                } catch (Exception e) {
+                    log.warn("Falha ao enviar e-mail cancelled-by-barber ao cliente {}: {}", customerEmail, e.getMessage());
+                }
             }
         }
     }
@@ -146,8 +162,12 @@ public class NotificationService {
 
         // E-mail — cliente
         if (customerEmail != null && !customerEmail.isBlank()) {
-            emailService.sendConcludedToCustomer(
-                    customerEmail, customerName, barberName, barbershopName);
+            try {
+                emailService.sendConcludedToCustomer(
+                        customerEmail, customerName, barberName, barbershopName);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail concluded ao cliente {}: {}", customerEmail, e.getMessage());
+            }
         }
     }
 
@@ -184,14 +204,22 @@ public class NotificationService {
 
         // E-mail — cliente
         if (customerEmail != null && !customerEmail.isBlank()) {
-            emailService.sendRescheduledToCustomer(
-                    customerEmail, customerName, barbershopName, barberName, oldStartTime, newStartTime);
+            try {
+                emailService.sendRescheduledToCustomer(
+                        customerEmail, customerName, barbershopName, barberName, oldStartTime, newStartTime);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail rescheduled ao cliente {}: {}", customerEmail, e.getMessage());
+            }
         }
 
         // E-mail — barbeiro
         if (barberEmail != null && !barberEmail.isBlank()) {
-            emailService.sendRescheduledToBarber(
-                    barberEmail, barberName, customerName, oldStartTime, newStartTime);
+            try {
+                emailService.sendRescheduledToBarber(
+                        barberEmail, barberName, customerName, oldStartTime, newStartTime);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail rescheduled ao barbeiro {}: {}", barberEmail, e.getMessage());
+            }
         }
     }
 
@@ -212,7 +240,11 @@ public class NotificationService {
 
         // E-mail — cliente
         if (customerEmail != null && !customerEmail.isBlank()) {
-            emailService.sendPaymentApprovedToCustomer(customerEmail, "Cliente", amount);
+            try {
+                emailService.sendPaymentApprovedToCustomer(customerEmail, "Cliente", amount);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail payment.approved ao cliente {}: {}", customerEmail, e.getMessage());
+            }
         }
 
         // IN_APP + Push — barbeiro (via feign ao schedule-service)
@@ -250,8 +282,12 @@ public class NotificationService {
                         event.getStartTime().toLocalTime().toString()),
                 pushData(NotificationType.APPOINTMENT_REMINDER, "/meus-agendamentos"));
         if (event.getCustomerEmail() != null && !event.getCustomerEmail().isBlank()) {
-            emailService.sendReminderToCustomer(event.getCustomerEmail(), event.getCustomerName(),
-                    event.getBarbershopName(), event.getBarberName(), event.getStartTime());
+            try {
+                emailService.sendReminderToCustomer(event.getCustomerEmail(), event.getCustomerName(),
+                        event.getBarbershopName(), event.getBarberName(), event.getStartTime());
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail reminder ao cliente {}: {}", event.getCustomerEmail(), e.getMessage());
+            }
         }
 
         // IN_APP + Push — barbeiro
@@ -367,7 +403,11 @@ public class NotificationService {
 
         // E-mail — dono
         if (ownerEmail != null && !ownerEmail.isBlank()) {
-            emailService.sendJoinRequestReceivedToOwner(ownerEmail, barbershopName, barberName);
+            try {
+                emailService.sendJoinRequestReceivedToOwner(ownerEmail, barbershopName, barberName);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail join-request ao owner {}: {}", ownerEmail, e.getMessage());
+            }
         }
 
         log.info("event=join-request-notification-created ownerId={} barberName={} shop={}",
@@ -388,7 +428,11 @@ public class NotificationService {
 
         // E-mail — barbeiro convidado
         if (barberEmail != null && !barberEmail.isBlank()) {
-            emailService.sendInviteReceivedToBarber(barberEmail, barbershopName);
+            try {
+                emailService.sendInviteReceivedToBarber(barberEmail, barbershopName);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail invite ao barbeiro {}: {}", barberEmail, e.getMessage());
+            }
         }
 
         log.info("event=invite-notification-created barberId={} shop={}", barberId, barbershopName);
@@ -408,7 +452,11 @@ public class NotificationService {
                 pushData(NotificationType.BARBER_REMOVED, "/barberHome/perfil"));
 
         if (barberEmail != null && !barberEmail.isBlank()) {
-            emailService.sendBarberRemovedToBarber(barberEmail, barberName, barbershopName);
+            try {
+                emailService.sendBarberRemovedToBarber(barberEmail, barberName, barbershopName);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail barber-removed ao barbeiro {}: {}", barberEmail, e.getMessage());
+            }
         }
 
         log.info("event=barber-removed-notification-created barberId={} shop={}", barberId, barbershopName);
