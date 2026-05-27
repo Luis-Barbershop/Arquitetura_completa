@@ -335,7 +335,7 @@ public class NotificationService {
         pushNotificationService.sendToUser(ownerId,
                 "Novo pedido de entrada!",
                 String.format("%s quer entrar na barbearia %s", barberName, barbershopName),
-                pushData(NotificationType.JOIN_REQUEST_RECEIVED, "/barber-team"));
+                pushData(NotificationType.JOIN_REQUEST_RECEIVED, "/barberHome/time"));
 
         // E-mail — dono
         if (ownerEmail != null && !ownerEmail.isBlank()) {
@@ -356,7 +356,7 @@ public class NotificationService {
         pushNotificationService.sendToUser(barberId,
                 "Você recebeu um convite!",
                 String.format("A barbearia %s convidou você para o time.", barbershopName),
-                pushData(NotificationType.INVITE_RECEIVED, "/barberProfile"));
+                pushData(NotificationType.INVITE_RECEIVED, "/barberHome/perfil"));
 
         // E-mail — barbeiro convidado
         if (barberEmail != null && !barberEmail.isBlank()) {
@@ -377,7 +377,7 @@ public class NotificationService {
         pushNotificationService.sendToUser(barberId,
                 "Você foi removido da barbearia",
                 String.format("Você não faz mais parte da equipe %s.", barbershopName),
-                pushData(NotificationType.BARBER_REMOVED, "/barberProfile"));
+                pushData(NotificationType.BARBER_REMOVED, "/barberHome/perfil"));
 
         if (barberEmail != null && !barberEmail.isBlank()) {
             emailService.sendBarberRemovedToBarber(barberEmail, barberName, barbershopName);

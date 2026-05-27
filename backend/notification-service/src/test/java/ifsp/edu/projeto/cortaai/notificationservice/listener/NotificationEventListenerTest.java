@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -90,6 +91,25 @@ class NotificationEventListenerTest {
 
         verify(notificationService).notifyInviteReceived(barberId, "barber@example.com", "Barbearia");
         verify(notificationService).notifyJoinRequestReceived(ownerId, "owner@example.com", "Barbearia", "Barbeiro");
+    }
+
+    @Test
+    void shouldDispatchBarberRemovedEvent() {
+        UUID barberId = UUID.randomUUID();
+        when(deduplicationService.isDuplicate(eq("BARBER_REMOVED"), anyString())).thenReturn(false);
+
+        listener.onBarberRemoved(Map.of(
+                "barberId", barberId.toString(),
+                "barberEmail", "barber@example.com",
+                "barberName", "Barbeiro",
+                "barbershopName", "Barbearia"
+        ));
+
+        verify(notificationService).notifyBarberRemoved(
+                barberId,
+                "barber@example.com",
+                "Barbeiro",
+                "Barbearia");
     }
 
     @Test

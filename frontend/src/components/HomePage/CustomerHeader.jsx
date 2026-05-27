@@ -97,7 +97,7 @@ function CustomerHeader({ activeTab = 'home', onLogout }) {
             <div className={styles.headerRight}>
 
                 {/* Sino */}
-                <NotificationBell userType="customer" />
+                <NotificationBell userType="customer" visibility="desktop" />
 
                 {/* Avatar */}
                 <div className={styles.avatarWrapper} ref={avatarRef}>

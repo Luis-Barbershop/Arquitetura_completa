@@ -243,7 +243,7 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
                         {activeBarbershopName}
                     </span>
                 )}
-                <NotificationBell userType="barber" />
+                <NotificationBell userType="barber" visibility="desktop" />
 
                 <div className={styles.avatarWrapper} ref={avatarRef}>
                     <button

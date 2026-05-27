@@ -74,6 +74,23 @@
     transition: color 0.15s, background 0.15s;
 }
 
+.notificationNavItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    width: 100%;
+    padding: 6px 4px;
+    border-radius: 10px;
+    color: #888;
+    transition: color 0.15s, background 0.15s;
+}
+
+.notificationNavItem:hover {
+    color: #ccc;
+    background: #1e1e1e;
+}
+
 .navIcon {
     display: flex;
     align-items: center;
@@ -197,4 +214,3 @@
     background: rgba(227, 109, 102, 0.12);
     color: #ff8f88;
 }
-

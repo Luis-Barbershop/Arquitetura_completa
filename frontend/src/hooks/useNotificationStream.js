@@ -16,12 +16,20 @@ const SSE_RECONNECT_DELAY_MS = 10_000;
  *  4. Em caso de erro, fecha e reconecta após SSE_RECONNECT_DELAY_MS
  *  5. Cleanup ao desmontar fecha a conexão e cancela o timeout de reconexão
  */
-export function useNotificationStream(onUnreadCount, onNotificationCreated) {
+export function useNotificationStream(onUnreadCount, onNotificationCreated, enabled = true) {
     const esRef = useRef(null);
     const reconnectTimerRef = useRef(null);
     const activeRef = useRef(true);
 
     useEffect(() => {
+        if (!enabled) {
+            activeRef.current = false;
+            clearTimeout(reconnectTimerRef.current);
+            esRef.current?.close();
+            esRef.current = null;
+            return undefined;
+        }
+
         activeRef.current = true;
 
         const connect = () => {
@@ -74,5 +82,5 @@ export function useNotificationStream(onUnreadCount, onNotificationCreated) {
         };
     // onUnreadCount é passado como prop — envolver em useCallback no componente pai
     // para evitar reconexão desnecessária ao re-render
-    }, [onUnreadCount, onNotificationCreated]);
+    }, [onUnreadCount, onNotificationCreated, enabled]);
 }

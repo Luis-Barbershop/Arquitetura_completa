@@ -11,26 +11,47 @@ import styles from './NotificationBell.module.css';
  *
  * Props:
  *   userType: 'customer' | 'barber'  — determina rota de redirect ao clicar
+ *   visibility: 'all' | 'desktop' | 'mobile' — evita conexões duplicadas quando há header e bottom bar
  *
  * Lógica de redirect por tipo:
  *   agendamentos/pagamentos → /meus-agendamentos
  *   pedido de entrada       → /barberHome/time
- *   convite                 → /barberHome/perfil
+ *   convite/remocao        → /barberHome/perfil
  */
-function NotificationBell({ userType = 'barber' }) {
+function NotificationBell({ userType = 'barber', visibility = 'all' }) {
     const navigate = useNavigate();
     const [unreadCount, setUnreadCount] = useState(0);
     const [notifications, setNotifications] = useState([]);
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0, maxHeight: 420 });
+    const [isMobileViewport, setIsMobileViewport] = useState(() => (
+        typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches
+    ));
     const dropdownRef = useRef(null);
     const buttonRef = useRef(null);
     const openRef = useRef(false);
+    const shouldRender = visibility === 'all' ||
+        (visibility === 'mobile' && isMobileViewport) ||
+        (visibility === 'desktop' && !isMobileViewport);
 
     useEffect(() => {
         openRef.current = open;
     }, [open]);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(max-width: 760px)');
+        const syncViewport = () => setIsMobileViewport(mediaQuery.matches);
+        syncViewport();
+        mediaQuery.addEventListener('change', syncViewport);
+        return () => mediaQuery.removeEventListener('change', syncViewport);
+    }, []);
+
+    useEffect(() => {
+        if (!shouldRender) {
+            setOpen(false);
+        }
+    }, [shouldRender]);
 
     const upsertNotification = useCallback((notification) => {
         if (!notification?.id) return;
@@ -75,14 +96,15 @@ function NotificationBell({ userType = 'barber' }) {
         }
     }, [upsertNotification]);
 
-    useNotificationStream(handleUnreadCount, handleNotificationCreated);
+    useNotificationStream(handleUnreadCount, handleNotificationCreated, shouldRender);
 
     // Busca contagem inicial no mount (antes do SSE conectar)
     useEffect(() => {
+        if (!shouldRender) return;
         api.get('/notifications/unread-count')
             .then((res) => setUnreadCount(res.data?.unreadCount ?? 0))
             .catch(() => {});
-    }, []);
+    }, [shouldRender]);
 
     // Fecha dropdown ao clicar fora
     useEffect(() => {
@@ -101,10 +123,16 @@ function NotificationBell({ userType = 'barber' }) {
         // Calcula posição do dropdown relativa ao viewport (escapa do stacking context do header)
         if (buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect();
-            setDropdownPos({
-                top: rect.bottom + 8,
-                right: window.innerWidth - rect.right,
-            });
+            const defaultMaxHeight = 420;
+            const maxHeight = isMobileViewport
+                ? Math.min(defaultMaxHeight, Math.max(220, rect.top - 18))
+                : defaultMaxHeight;
+            const top = isMobileViewport
+                ? Math.max(12, rect.top - maxHeight - 8)
+                : rect.bottom + 8;
+            const right = isMobileViewport ? 12 : window.innerWidth - rect.right;
+
+            setDropdownPos({ top, right, maxHeight });
         }
 
         setOpen(true);
@@ -153,7 +181,7 @@ function NotificationBell({ userType = 'barber' }) {
             return userType === 'barber' ? '/barberHome/time' : null;
         }
 
-        if (type === 'INVITE_RECEIVED') {
+        if (type === 'INVITE_RECEIVED' || type === 'BARBER_REMOVED') {
             return userType === 'barber' ? '/barberHome/perfil' : null;
         }
 
@@ -174,6 +202,10 @@ function NotificationBell({ userType = 'barber' }) {
         });
     };
 
+    if (!shouldRender) {
+        return null;
+    }
+
     return (
         <div className={styles.bellWrapper} ref={dropdownRef}>
             <button
@@ -192,7 +224,7 @@ function NotificationBell({ userType = 'barber' }) {
             {open && (
                 <div
                     className={styles.dropdown}
-                    style={{ top: dropdownPos.top, right: dropdownPos.right }}
+                    style={{ top: dropdownPos.top, right: dropdownPos.right, maxHeight: dropdownPos.maxHeight }}
                 >
                     <div className={styles.dropdownHeader}>
                         <span>Notificações</span>

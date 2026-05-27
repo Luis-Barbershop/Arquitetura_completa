@@ -110,7 +110,7 @@ class NotificationServiceTest {
                         eq("Você recebeu um convite!"),
                         contains("Barbearia Convite"),
                         argThat(data -> NotificationType.INVITE_RECEIVED.name().equals(data.get("type"))
-                                && "/barberProfile".equals(data.get("deepLink")))
+                                && "/barberHome/perfil".equals(data.get("deepLink")))
                 );
     }
 
@@ -191,6 +191,71 @@ class NotificationServiceTest {
     }
 
     @Test
+    void shouldNotifyCustomerWhenAppointmentIsConcluded() {
+        UUID customerId = UUID.randomUUID();
+
+        notificationService.notifyAppointmentConcluded(
+                customerId,
+                "customer@cortaai.com",
+                "Cliente",
+                "Barbeiro",
+                "Barbearia"
+        );
+
+        verify(pushNotificationService).sendToUser(
+                eq(customerId),
+                eq("Atendimento concluído!"),
+                contains("avaliação"),
+                argThat(data -> NotificationType.APPOINTMENT_CONCLUDED.name().equals(data.get("type"))
+                        && "/meus-agendamentos".equals(data.get("deepLink"))));
+        verify(emailService).sendConcludedToCustomer(
+                "customer@cortaai.com",
+                "Cliente",
+                "Barbeiro",
+                "Barbearia");
+    }
+
+    @Test
+    void shouldNotifyOwnerWhenBarberRequestsToJoinBarbershop() {
+        UUID ownerId = UUID.randomUUID();
+
+        notificationService.notifyJoinRequestReceived(
+                ownerId,
+                "owner@cortaai.com",
+                "Barbearia",
+                "Barbeiro"
+        );
+
+        verify(pushNotificationService).sendToUser(
+                eq(ownerId),
+                eq("Novo pedido de entrada!"),
+                contains("Barbeiro"),
+                argThat(data -> NotificationType.JOIN_REQUEST_RECEIVED.name().equals(data.get("type"))
+                        && "/barberHome/time".equals(data.get("deepLink"))));
+        verify(emailService).sendJoinRequestReceivedToOwner("owner@cortaai.com", "Barbearia", "Barbeiro");
+    }
+
+    @Test
+    void shouldNotifyBarberWhenRemovedFromBarbershop() {
+        UUID barberId = UUID.randomUUID();
+
+        notificationService.notifyBarberRemoved(
+                barberId,
+                "barber@cortaai.com",
+                "Barbeiro",
+                "Barbearia"
+        );
+
+        verify(pushNotificationService).sendToUser(
+                eq(barberId),
+                eq("Você foi removido da barbearia"),
+                contains("Barbearia"),
+                argThat(data -> NotificationType.BARBER_REMOVED.name().equals(data.get("type"))
+                        && "/barberHome/perfil".equals(data.get("deepLink"))));
+        verify(emailService).sendBarberRemovedToBarber("barber@cortaai.com", "Barbeiro", "Barbearia");
+    }
+
+    @Test
     void shouldCreateReminderNotificationAndEmailWhenCustomerEmailIsPresent() {
         AppointmentReminderEvent event = new AppointmentReminderEvent(
                 UUID.randomUUID(),
@@ -213,6 +278,31 @@ class NotificationServiceTest {
                 eq("Barbearia"),
                 eq("Barbeiro"),
                 eq(LocalDateTime.of(2026, 5, 21, 16, 30)));
+    }
+
+    @Test
+    void shouldCreateReminderNotificationForBarberWhenBarberIdIsPresent() {
+        AppointmentReminderEvent event = new AppointmentReminderEvent(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "Cliente",
+                "",
+                UUID.randomUUID(),
+                "barber@cortaai.com",
+                "Barbearia",
+                "Barbeiro",
+                LocalDateTime.of(2026, 5, 21, 16, 30)
+        );
+
+        notificationService.notifyAppointmentReminder(event);
+
+        verify(pushNotificationService).sendToUser(
+                eq(event.getBarberId()),
+                eq("Lembrete de atendimento"),
+                contains("Cliente"),
+                argThat(data -> NotificationType.APPOINTMENT_REMINDER.name().equals(data.get("type"))
+                        && "/barberHome".equals(data.get("deepLink"))));
+        verify(emailService, never()).sendReminderToCustomer(anyString(), anyString(), anyString(), anyString(), any());
     }
 
     @Test
