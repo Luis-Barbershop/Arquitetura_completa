@@ -35,7 +35,6 @@
 
         <!-- SonarQube -->
         <sonar.java.source>${java.version}</sonar.java.source>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.exclusions>**/config/**,**/*Application.java,**/dto/**,**/model/**,**/mapper/**,**/messaging/publisher/**</sonar.exclusions>
         <sonar.cpd.exclusions>**/security/crypto/DataCrypto.java,**/exception/ApiErrorResponse.java,**/event/JoinRequestCreatedEvent.java,**/exception/GlobalExceptionHandler.java,**/validator/CPF.java,**/validator/CPFValidator.java,**/repository/CustomerRepository.java,**/repository/BarberRepository.java,**/service/EmailService.java,**/service/AppointmentService.java,**/service/BarbershopService.java,**/controller/MercadoPagoOAuthController.java</sonar.cpd.exclusions>
     </properties>
@@ -163,26 +162,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <!--
-        O módulo raiz (packaging=pom) não tem src/main/java e não gera
-        target/site/jacoco/jacoco.xml. O sonar-maven-plugin 4.x falha com
-        "The 'report' parameter is missing" quando o arquivo não existe.
-        Este profile ativa sonar.skip=true apenas para o aggregator raiz;
-        os módulos filhos têm src/main/java e não ativam este profile.
-    -->
-    <profiles>
-        <profile>
-            <id>skip-sonar-aggregator</id>
-            <activation>
-                <file>
-                    <missing>src/main/java</missing>
-                </file>
-            </activation>
-            <properties>
-                <sonar.skip>true</sonar.skip>
-            </properties>
-        </profile>
-    </profiles>
 
 </project>
