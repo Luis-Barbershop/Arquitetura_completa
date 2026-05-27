@@ -8,5 +8,15 @@ import java.util.List;
 
 @Repository
 public interface VStockHealthAlertRepository extends JpaRepository<VStockHealthAlert, String> {
-    List<VStockHealthAlert> findByBarbershopId(String barbershopId);
+
+    List<StockHealthAlertProjection> findByBarbershopId(String barbershopId);
+
+    interface StockHealthAlertProjection {
+        String getProductId();
+        String getProductName();
+        String getCategory();
+        Integer getCurrentStock();
+        Integer getPredictedMinimum();
+        Integer getRequiresRestock();
+    }
 }
