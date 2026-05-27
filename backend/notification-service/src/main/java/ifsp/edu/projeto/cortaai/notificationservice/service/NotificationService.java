@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -286,10 +288,25 @@ public class NotificationService {
         Notification saved = notificationRepository.save(notification);
         log.info("Notificação criada [{}] para userId={}: {}", type, userId, title);
 
-        // Empurra contagem atualizada via SSE (se o usuário tiver conexão ativa)
+        // Captura count e DTO ainda dentro da transação (leitura consistente)
         long unreadCount = notificationRepository.countByUserIdAndReadFalse(userId);
-        sseEmitterService.sendUnreadCount(userId, unreadCount);
-        sseEmitterService.sendNotificationCreated(userId, toDTO(saved), unreadCount);
+        NotificationDTO dto = toDTO(saved);
+
+        // Dispara SSE APÓS o commit para evitar race condition:
+        // sem isso, o cliente recebe o evento e chama fetchNotifications antes do
+        // banco confirmar a gravação, retornando lista vazia.
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sseEmitterService.sendUnreadCount(userId, unreadCount);
+                    sseEmitterService.sendNotificationCreated(userId, dto, unreadCount);
+                }
+            });
+        } else {
+            sseEmitterService.sendUnreadCount(userId, unreadCount);
+            sseEmitterService.sendNotificationCreated(userId, dto, unreadCount);
+        }
 
         return saved;
     }
@@ -305,14 +322,25 @@ public class NotificationService {
     @Transactional
     public NotificationDTO markAsRead(UUID notificationId, UUID userId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notificação não encontrada: " + notificationId));
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Notificação não encontrada: " + notificationId));
         if (!notification.getUserId().equals(userId)) {
-            throw new RuntimeException("Notificação não pertence ao usuário");
+            throw new IllegalArgumentException("Notificação não pertence ao usuário solicitante");
         }
         notification.setRead(true);
         Notification saved = notificationRepository.save(notification);
         long unreadCount = notificationRepository.countByUserIdAndReadFalse(userId);
-        sseEmitterService.sendUnreadCount(userId, unreadCount);
+
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sseEmitterService.sendUnreadCount(userId, unreadCount);
+                }
+            });
+        } else {
+            sseEmitterService.sendUnreadCount(userId, unreadCount);
+        }
+
         return toDTO(saved);
     }
 

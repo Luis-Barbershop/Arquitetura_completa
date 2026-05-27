@@ -70,7 +70,7 @@ function NotificationBell({ userType = 'barber', visibility = 'all' }) {
             const res = await api.get('/notifications/my-notifications');
             setNotifications(Array.isArray(res.data) ? res.data : []);
         } catch {
-            setNotifications([]);
+            // Mantém o estado existente — preserva notificações adicionadas via SSE
         } finally {
             setLoading(false);
         }

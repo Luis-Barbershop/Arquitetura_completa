@@ -63,6 +63,7 @@ const SILENT_URLS = [
     '/auth/email/forgot-password',
     '/auth/email/resend-forgot-password',
     '/barbershops/my-invites',
+    '/appointments/availability',
 ];
 const isSilentUrl = (url = '') => SILENT_URLS.some(u => url.includes(u));
 

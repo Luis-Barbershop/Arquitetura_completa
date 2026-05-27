@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.notificationservice.controller;
 
+import feign.FeignException;
 import ifsp.edu.projeto.cortaai.notificationservice.dto.RegisterDeviceTokenRequestDTO;
 import ifsp.edu.projeto.cortaai.notificationservice.feign.UserInfoDTO;
 import ifsp.edu.projeto.cortaai.notificationservice.feign.UserServiceClient;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +19,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/notifications/device-tokens")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Device Tokens", description = "Endpoints para registro de token push do dispositivo")
 public class DeviceTokenController {
 
@@ -46,9 +49,16 @@ public class DeviceTokenController {
     }
 
     private UUID resolveUserId(String firebaseUid) {
-        UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        UserInfoDTO user;
+        try {
+            user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        } catch (FeignException e) {
+            log.warn("Falha ao resolver userId via user-service para UID={}: {} {}",
+                    firebaseUid, e.status(), e.getMessage());
+            throw new jakarta.persistence.EntityNotFoundException("Usuário não encontrado para o UID: " + firebaseUid);
+        }
         if (user == null || user.getId() == null) {
-            throw new IllegalArgumentException("Usuário não encontrado para o UID informado.");
+            throw new jakarta.persistence.EntityNotFoundException("Usuário não encontrado para o UID: " + firebaseUid);
         }
         return user.getId();
     }

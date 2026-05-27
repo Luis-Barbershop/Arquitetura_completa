@@ -5,6 +5,7 @@ import ifsp.edu.projeto.cortaai.notificationservice.feign.UserInfoDTO;
 import ifsp.edu.projeto.cortaai.notificationservice.feign.UserServiceClient;
 import ifsp.edu.projeto.cortaai.notificationservice.model.PushPlatform;
 import ifsp.edu.projeto.cortaai.notificationservice.service.DeviceTokenService;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,7 +63,7 @@ class DeviceTokenControllerTest {
         when(userServiceClient.getUserByFirebaseUid("missing-uid")).thenReturn(new UserInfoDTO());
 
         assertThatThrownBy(() -> controller.unregisterToken("missing-uid", "push-token"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(EntityNotFoundException.class)
                 .hasMessageContaining("Usuário não encontrado");
     }
 

@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.notificationservice.controller;
 
+import feign.FeignException;
 import ifsp.edu.projeto.cortaai.notificationservice.feign.UserInfoDTO;
 import ifsp.edu.projeto.cortaai.notificationservice.feign.UserServiceClient;
 import ifsp.edu.projeto.cortaai.notificationservice.service.NotificationService;
@@ -74,9 +75,16 @@ public class NotificationSseController {
     }
 
     private UUID resolveUserId(String firebaseUid) {
-        UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        UserInfoDTO user;
+        try {
+            user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        } catch (FeignException e) {
+            log.warn("Falha ao resolver userId via user-service para UID={}: {} {}",
+                    firebaseUid, e.status(), e.getMessage());
+            throw new jakarta.persistence.EntityNotFoundException("Usuário não encontrado para o UID: " + firebaseUid);
+        }
         if (user == null || user.getId() == null) {
-            throw new RuntimeException("Usuário não encontrado para o UID: " + firebaseUid);
+            throw new jakarta.persistence.EntityNotFoundException("Usuário não encontrado para o UID: " + firebaseUid);
         }
         return user.getId();
     }

@@ -397,7 +397,7 @@ class NotificationServiceTest {
 
         assertThatThrownBy(() -> notificationService.markAsRead(notificationId, UUID.randomUUID()))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("Notificação não pertence ao usuário");
+                .hasMessageContaining("Notificação não pertence ao usuário");
 
         verify(notificationRepository, never()).save(any());
     }

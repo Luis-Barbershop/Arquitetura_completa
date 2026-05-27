@@ -1,5 +1,6 @@
 package ifsp.edu.projeto.cortaai.notificationservice.controller;
 
+import feign.FeignException;
 import ifsp.edu.projeto.cortaai.notificationservice.dto.NotificationDTO;
 import ifsp.edu.projeto.cortaai.notificationservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.notificationservice.feign.UserInfoDTO;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +29,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
+@Slf4j
 @Tag(name = "Notifications", description = "Endpoints para consulta e gestão de notificações dos usuários")
 public class NotificationController {
 
@@ -37,9 +40,16 @@ public class NotificationController {
      * Resolve o Firebase UID para o UUID interno do banco.
      */
     private UUID resolveUserId(String firebaseUid) {
-        UserInfoDTO user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        UserInfoDTO user;
+        try {
+            user = userServiceClient.getUserByFirebaseUid(firebaseUid);
+        } catch (FeignException e) {
+            log.warn("Falha ao resolver userId via user-service para UID={}: {} {}",
+                    firebaseUid, e.status(), e.getMessage());
+            throw new jakarta.persistence.EntityNotFoundException("Usuário não encontrado para o UID: " + firebaseUid);
+        }
         if (user == null || user.getId() == null) {
-            throw new RuntimeException("Usuário não encontrado para o UID: " + firebaseUid);
+            throw new jakarta.persistence.EntityNotFoundException("Usuário não encontrado para o UID: " + firebaseUid);
         }
         return user.getId();
     }

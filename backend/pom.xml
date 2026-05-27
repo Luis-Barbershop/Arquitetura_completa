@@ -35,6 +35,8 @@
 
         <!-- SonarQube -->
         <sonar.java.source>${java.version}</sonar.java.source>
+        <!-- Working dir dentro do container Docker (não persiste no volume montado) -->
+        <sonar.working.directory>/tmp/sonar-scanner-work</sonar.working.directory>
         <!-- Glob ** encontra os jacoco.xml de cada módulo filho -->
         <sonar.coverage.jacoco.xmlReportPaths>**/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.exclusions>**/config/**,**/*Application.java,**/dto/**,**/model/**,**/mapper/**,**/messaging/publisher/**</sonar.exclusions>
