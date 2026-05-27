@@ -185,7 +185,7 @@ function BarberDashboardPage() {
                             style={{ fontSize: '0.9rem', padding: '0.55rem 1.2rem' }}
                             type="button"
                         >
-                            📄 Exportar PDF
+                            Exportar PDF
                         </button>
                         <button
                             onClick={fetchAll}
@@ -193,7 +193,7 @@ function BarberDashboardPage() {
                             style={{ fontSize: '0.9rem', padding: '0.55rem 1.2rem', background: '#333', color: '#fff' }}
                             type="button"
                         >
-                            � Atualizar dados
+                            Atualizar dados
                         </button>
                     </div>
                 </section>
