@@ -22,7 +22,7 @@ echo "[0/8] Corrigindo permissoes do Docker config..."
 DOCKER_CONFIG_DIR="/DATA/.docker"
 if [ -d "$DOCKER_CONFIG_DIR" ]; then
     CURRENT_USER=$(whoami)
-    sudo chown -R "$CURRENT_USER":"$CURRENT_USER" "$DOCKER_CONFIG_DIR"
+    sudo chown -R "$CURRENT_USER" "$DOCKER_CONFIG_DIR" 2>/dev/null || true
     sudo chmod 700 "$DOCKER_CONFIG_DIR"
     [ -f "$DOCKER_CONFIG_DIR/config.json" ] && sudo chmod 600 "$DOCKER_CONFIG_DIR/config.json"
     echo "  OK - Permissoes Docker config corrigidas para: $CURRENT_USER"
