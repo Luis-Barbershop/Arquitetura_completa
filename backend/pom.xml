@@ -163,4 +163,26 @@
             </plugin>
         </plugins>
     </build>
+
+    <!--
+        O módulo raiz (packaging=pom) não tem src/main/java e não gera
+        target/site/jacoco/jacoco.xml. O sonar-maven-plugin 4.x falha com
+        "The 'report' parameter is missing" quando o arquivo não existe.
+        Este profile ativa sonar.skip=true apenas para o aggregator raiz;
+        os módulos filhos têm src/main/java e não ativam este profile.
+    -->
+    <profiles>
+        <profile>
+            <id>skip-sonar-aggregator</id>
+            <activation>
+                <file>
+                    <missing>src/main/java</missing>
+                </file>
+            </activation>
+            <properties>
+                <sonar.skip>true</sonar.skip>
+            </properties>
+        </profile>
+    </profiles>
+
 </project>
