@@ -74,13 +74,15 @@ public class GeocodingService {
     // ---------- helpers ----------
 
     private String clean(String address) {
-        return address
-                .replaceAll("(?i)CEP:\\s*[\\d-]+", "")
-                .replaceAll("\\([^)]*\\)", "")
-                .replaceAll("(?i)\\b(casa|apto?\\s*\\d*|apart\\w*|bloco\\s*\\w+|andar\\s*\\d+)\\b", "")
-                .replaceAll("\\s*-\\s*[A-Z]{2}\\b", "")
-                .replaceAll(",\\s*,", ",")
-                .replaceAll(",\\s*$", "")
+        // Trunca para evitar ReDoS com inputs maliciosos
+        String safe = address.length() > 300 ? address.substring(0, 300) : address;
+        return safe
+                .replaceAll("(?i)CEP:\\s{0,5}[\\d-]{0,15}", "")
+                .replaceAll("\\([^)]{0,100}\\)", "")
+                .replaceAll("(?i)\\b(casa|apto?\\s{0,5}\\d{0,10}|apart\\w{0,20}|bloco\\s{0,5}\\w{1,20}|andar\\s{0,5}\\d{1,5})\\b", "")
+                .replaceAll("\\s{0,3}-\\s{0,3}[A-Z]{2}\\b", "")
+                .replaceAll(",\\s{0,10},", ",")
+                .replaceAll(",\\s{0,10}$", "")
                 .trim();
     }
 

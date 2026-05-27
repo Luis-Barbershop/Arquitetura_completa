@@ -290,6 +290,18 @@ class BarbershopServiceEdgeCasesTest {
                 .hasMessage("Não foi possível consultar o barbeiro no momento.");
     }
 
+    @Test
+    void shouldRejectNullCpfWhenInvitingBarber() {
+        UUID ownerId = UUID.randomUUID();
+        Barbershop shop = shop(UUID.randomUUID(), ownerId);
+        when(userServiceClient.getUserByFirebaseUid("owner-uid")).thenReturn(barber(ownerId, shop.getId()));
+        when(barbershopRepository.findByOwnerId(ownerId)).thenReturn(Optional.of(shop));
+
+        assertThatThrownBy(() -> service.inviteBarberByCpf("owner-uid", null))
+                .isInstanceOf(DomainConflictException.class)
+                .hasMessage("CPF inválido. Informe 11 dígitos.");
+    }
+
     // ─── requestToJoinBarbershop: ramos de CNPJ e request duplicada ──────────
 
     @Test

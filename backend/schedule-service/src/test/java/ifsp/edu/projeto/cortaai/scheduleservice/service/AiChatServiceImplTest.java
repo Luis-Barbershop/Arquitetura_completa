@@ -851,6 +851,28 @@ class AiChatServiceImplTest {
                 .contains("barbeiro: —");  // null barberName → firstNameOnly retorna "—"
     }
 
+    @Test
+    void shouldFallbackWhenAllProvidersReturnNullResponse() {
+        UUID customerId = UUID.randomUUID();
+        setProvider("geminiApiKey", "gemini-token");
+        setProvider("groqApiKey", "groq-token");
+        setProvider("openrouterApiKey", "openrouter-token");
+        setProvider("cohereApiKey", "cohere-token");
+        when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(user(customerId, "CUSTOMER", null));
+        when(appointmentRepository.findUpcomingByCustomerId(eq(customerId), any())).thenReturn(List.of());
+        // Todos os provedores retornam null — dispara IllegalStateException em cada callXxx()
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class))).thenReturn(null);
+
+        AiChatResponseDTO response = service.chat(
+                "firebase-uid",
+                "CUSTOMER",
+                new AiChatRequestDTO("Teste null response", AiChatMode.PREVIEW)
+        );
+
+        assertThat(response.source()).isEqualTo("fallback");
+        assertThat(response.message()).contains("temporariamente indisponível");
+    }
+
     private void setProvider(String field, String value) {
         ReflectionTestUtils.setField(service, field, value);
     }
