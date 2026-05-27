@@ -3,6 +3,7 @@ package ifsp.edu.projeto.cortaai.notificationservice.config;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
@@ -133,9 +134,18 @@ public class RabbitConfig {
     }
 
     // --- JSON converter ---
+    // TypePrecedence.INFERRED ignora o header __TypeId__ (que aponta para classes do
+    // schedule-service) e usa o tipo do parâmetro do @RabbitListener para deserializar.
+    // Sem isso, Jackson2JsonMessageConverter tenta Class.forName do header e lança
+    // ClassNotFoundException → MessageConversionException → mensagem descartada silenciosamente.
     @Bean
     public MessageConverter jsonMessageConverter() {
-        return new Jackson2JsonMessageConverter();
+        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
+        DefaultJackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
+        typeMapper.setTypePrecedence(DefaultJackson2JavaTypeMapper.TypePrecedence.INFERRED);
+        typeMapper.setTrustedPackages("*");
+        converter.setJavaTypeMapper(typeMapper);
+        return converter;
     }
 
     @Bean
