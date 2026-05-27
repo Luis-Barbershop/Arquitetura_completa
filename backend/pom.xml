@@ -23,7 +23,6 @@
         <module>payment-service</module>
         <module>notification-service</module>
         <module>product-service</module>
-        <module>coverage-report</module>
     </modules>
 
     <properties>
@@ -33,6 +32,11 @@
         <springdoc.version>2.5.0</springdoc.version>
         <caffeine.version>3.1.8</caffeine.version>
         <jacoco.version>0.8.12</jacoco.version>
+
+        <!-- SonarQube -->
+        <sonar.java.source>${java.version}</sonar.java.source>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.exclusions>**/config/**,**/*Application.java,**/dto/**,**/model/**,**/mapper/**,**/messaging/publisher/**</sonar.exclusions>
     </properties>
 
     <dependencyManagement>
@@ -150,6 +154,11 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>4.0.0.4121</version>
             </plugin>
         </plugins>
     </build>
