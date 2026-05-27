@@ -37,7 +37,7 @@ WITH gross_by_barber AS (
         COUNT(t.id) AS total_appointments
     FROM payment_db.transactions t
     JOIN schedule_db.appointments a
-        ON a.id = BIN_TO_UUID(t.appointment_id)
+        ON a.id = t.appointment_id
     WHERE t.status = 'APPROVED'
     GROUP BY a.barber_id, a.barber_name, t.barbershop_id
 ),
@@ -49,7 +49,7 @@ commission_by_barber AS (
         COUNT(bcr.id) AS commission_rule_count
     FROM payment_db.transactions t
     JOIN schedule_db.appointments a
-        ON a.id = BIN_TO_UUID(t.appointment_id)
+        ON a.id = t.appointment_id
     JOIN schedule_db.appointment_activities aa
         ON aa.appointment_id = a.id
     LEFT JOIN barbershop_db.barber_commission_rules bcr
@@ -96,6 +96,7 @@ CREATE OR REPLACE VIEW schedule_db.v_barber_skill_matrix AS
 SELECT
     a.barber_id,
     a.barber_name,
+    a.barbershop_id,
     aa.activity_name,
     COUNT(aa.id)      AS times_executed,
     SUM(aa.price)     AS total_generated_by_activity
@@ -103,7 +104,7 @@ FROM schedule_db.appointments a
 JOIN schedule_db.appointment_activities aa
     ON a.id = aa.appointment_id
 WHERE a.status IN ('COMPLETED', 'CONCLUDED', 'WALK_IN')
-GROUP BY a.barber_id, a.barber_name, aa.activity_name;
+GROUP BY a.barber_id, a.barber_name, a.barbershop_id, aa.activity_name;
 
 
 -- =======================================================================
@@ -134,6 +135,7 @@ GROUP BY DATE(start_time), barbershop_id;
 CREATE OR REPLACE VIEW product_db.v_stock_health_alert AS
 SELECT
     id                                                                    AS product_id,
+    barbershop_id,
     name                                                                  AS product_name,
     category,
     stock_quantity                                                        AS current_stock,

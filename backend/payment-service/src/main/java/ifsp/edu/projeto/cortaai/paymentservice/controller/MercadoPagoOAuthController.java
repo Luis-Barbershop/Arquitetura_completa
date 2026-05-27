@@ -192,6 +192,9 @@ public class MercadoPagoOAuthController {
                         log.error("event=mp-oauth-invalid-state state={}", maskIdentifier(state));
             throw new RuntimeException("Parâmetro state inválido.");
         } catch (Exception e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
                         log.error("event=mp-oauth-callback-error cause={}", e.getClass().getSimpleName());
             throw new RuntimeException("Erro ao processar callback do Mercado Pago: " + e.getMessage());
         }

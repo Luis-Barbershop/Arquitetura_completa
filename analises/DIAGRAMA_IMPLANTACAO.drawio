@@ -107,7 +107,7 @@
         <mxCell id="smtp" value="&amp;lt;&amp;lt;external system&amp;gt;&amp;gt;&lt;br&gt;SMTP / email&lt;br&gt;provider" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" parent="external_node" vertex="1">
           <mxGeometry x="765" y="65" width="190" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="ai" value="&amp;lt;&amp;lt;external system&amp;gt;&amp;gt;&lt;br&gt;Provedores IA&lt;br&gt;Gemini / Groq / OpenRouter / Cohere" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" parent="external_node" vertex="1">
+        <mxCell id="ai" value="&amp;lt;&amp;lt;external system&amp;gt;&amp;gt;&lt;br&gt;Provedores IA&lt;br&gt;OpenRouter / Cohere" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" parent="external_node" vertex="1">
           <mxGeometry x="1005" y="65" width="190" height="60" as="geometry" />
         </mxCell>
         <mxCell id="e_user_frontend" value="HTTPS / SPA" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=none;strokeWidth=2;" parent="1" source="user_device" target="web_artifact" edge="1">

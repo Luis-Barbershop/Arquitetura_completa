@@ -1,4 +1,4 @@
-import { getMessaging, getToken, isSupported } from 'firebase/messaging'
+import { getMessaging, getToken, isSupported, deleteToken } from 'firebase/messaging'
 import api from './api'
 import firebaseApp from './firebase'
 
@@ -14,6 +14,9 @@ const canAttemptPushRegistration = async () => {
   if (!VAPID_KEY) return false
   return isSupported()
 }
+
+export const isPushRegisteredLocally = () =>
+  Notification.permission === 'granted' && !!localStorage.getItem(PUSH_TOKEN_STORAGE_KEY)
 
 export const canPromptForPushNotifications = async () => {
   if (!(await canAttemptPushRegistration())) {
@@ -77,17 +80,27 @@ export const requestPushNotificationsPermissionAndRegister = () =>
 
 export const unregisterPushNotificationsIfPossible = async () => {
   const token = localStorage.getItem(PUSH_TOKEN_STORAGE_KEY)
-  if (!token) {
-    return
+
+  if (token) {
+    try {
+      await api.delete('/notifications/device-tokens', {
+        params: { token },
+      })
+    } catch {
+      // best-effort
+    } finally {
+      localStorage.removeItem(PUSH_TOKEN_STORAGE_KEY)
+    }
   }
 
+  // Revoga a subscrição push no Firebase para garantir estado limpo na próxima ativação.
+  // Sem isso, getToken() tenta reaproveitar o token revogado e falha silenciosamente.
   try {
-    await api.delete('/notifications/device-tokens', {
-      params: { token },
-    })
+    if (await isSupported()) {
+      const messaging = getMessaging(firebaseApp)
+      await deleteToken(messaging)
+    }
   } catch {
-    // best-effort
-  } finally {
-    localStorage.removeItem(PUSH_TOKEN_STORAGE_KEY)
+    // best-effort — pode não ter subscrição ativa para revogar
   }
 }

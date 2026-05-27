@@ -63,6 +63,9 @@ public class AppointmentService {
     @Value("${app.appointments.auto-complete-after-end-minutes:30}")
     private long autoCompleteAfterEndMinutes = 30;
 
+    @Value("${app.appointments.manual-complete-before-start-minutes:120}")
+    private long manualCompleteBeforeStartMinutes = 120;
+
     // ========== CRIAÇÃO ==========
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -286,38 +289,20 @@ public class AppointmentService {
         UserInfoDTO caller = resolveCallerByEmail(callerEmail);
         ensureCallerCanManageAppointment(appointment, caller, "cancelar");
 
-        appointment.setStatus(AppointmentStatus.CANCELLED);
-        appointmentRepository.save(appointment);
+        cancelAppointmentAndPublishEvent(appointment, isCallerCustomer(caller, appointment) ? "CUSTOMER" : "BARBER");
+    }
 
-        // Buscar emails para o evento
-        String customerEmail = null;
-        String barberEmail = null;
-        try {
-            UserInfoDTO customerInfo = userServiceClient.getUserById(appointment.getCustomerId());
-            if (customerInfo != null) customerEmail = customerInfo.getEmail();
-        } catch (Exception e) {
-            log.warn("Não foi possível buscar email do customer: {}", e.getMessage());
-        }
-        try {
-            UserInfoDTO barberInfo = userServiceClient.getUserById(appointment.getBarberId());
-            if (barberInfo != null) barberEmail = barberInfo.getEmail();
-        } catch (Exception e) {
-            log.warn("Não foi possível buscar email do barber: {}", e.getMessage());
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public int cancelAppointmentsOverlappingBarberBlock(UUID barberId, LocalDateTime startTime, LocalDateTime endTime) {
+        List<Appointment> appointments = appointmentRepository.findAppointmentsToCancelForBarberBlock(barberId, startTime, endTime);
+        int cancelled = 0;
+
+        for (Appointment appointment : appointments) {
+            cancelAppointmentAndPublishEvent(appointment, "BARBER");
+            cancelled++;
         }
 
-        // Publicar evento
-        String cancelledBy = callerEmail;
-        AppointmentCancelledEvent event = new AppointmentCancelledEvent(
-                appointment.getId(), appointment.getCustomerId(),
-                appointment.getBarberId(), cancelledBy,
-                appointment.getCustomerName(), customerEmail,
-                appointment.getBarberName(), barberEmail,
-                appointment.getBarbershopName(), appointment.getStartTime()
-        );
-        rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.cancelled", event);
-        log.info("Evento AppointmentCancelledEvent publicado para appointment {}", appointment.getId());
-
-        evictAvailabilityCacheAfterCommit(appointment.getBarberId(), appointment.getStartTime().toLocalDate());
+        return cancelled;
     }
 
     // ========== REAGENDAMENTO ==========
@@ -429,29 +414,34 @@ public class AppointmentService {
 
         UserInfoDTO caller = resolveCallerByEmail(callerEmail);
         ensureCallerCanManageAppointment(appointment, caller, "concluir");
+        ensureManualCompletionWindow(appointment);
 
         appointment.setStatus(AppointmentStatus.COMPLETED);
         appointmentRepository.save(appointment);
 
-        // Buscar email do customer para o evento
-        String customerEmail = null;
-        try {
-            UserInfoDTO customerInfo = userServiceClient.getUserById(appointment.getCustomerId());
-            if (customerInfo != null) customerEmail = customerInfo.getEmail();
-        } catch (Exception e) {
-            log.warn("Não foi possível buscar email do customer: {}", e.getMessage());
+        publishAppointmentConcludedEvent(appointment);
+    }
+
+    private void ensureManualCompletionWindow(Appointment appointment) {
+        LocalDateTime now = getNowInAppTimezone();
+        LocalDateTime completionWindowStart = appointment.getStartTime().minusMinutes(manualCompleteBeforeStartMinutes);
+
+        if (now.isBefore(completionWindowStart)) {
+            throw new ConflictException(
+                    "A conclusão manual só é permitida a partir de "
+                            + formatMinutesAsDuration(manualCompleteBeforeStartMinutes)
+                            + " antes do horário marcado."
+            );
+        }
+    }
+
+    private String formatMinutesAsDuration(long minutes) {
+        if (minutes % 60 == 0) {
+            long hours = minutes / 60;
+            return hours + (hours == 1 ? " hora" : " horas");
         }
 
-        // Publicar evento
-        AppointmentConcludedEvent event = new AppointmentConcludedEvent(
-                appointment.getId(), appointment.getCustomerId(),
-                appointment.getBarberId(), appointment.getBarbershopId(),
-                appointment.getCustomerName(), customerEmail,
-                appointment.getBarberName(), appointment.getBarbershopName(),
-                appointment.getStartTime()
-        );
-        rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.concluded", event);
-        log.info("Evento AppointmentConcludedEvent publicado para appointment {}", appointment.getId());
+        return minutes + (minutes == 1 ? " minuto" : " minutos");
     }
 
     // ========== CONFIRMAÇÃO ==========
@@ -783,6 +773,45 @@ public class AppointmentService {
         }
     }
 
+    private boolean isCallerCustomer(UserInfoDTO caller, Appointment appointment) {
+        return caller != null
+                && caller.getId() != null
+                && appointment != null
+                && caller.getId().equals(appointment.getCustomerId());
+    }
+
+    private void cancelAppointmentAndPublishEvent(Appointment appointment, String cancelledBy) {
+        appointment.setStatus(AppointmentStatus.CANCELLED);
+        appointmentRepository.save(appointment);
+
+        String customerEmail = null;
+        String barberEmail = null;
+        try {
+            UserInfoDTO customerInfo = userServiceClient.getUserById(appointment.getCustomerId());
+            if (customerInfo != null) customerEmail = customerInfo.getEmail();
+        } catch (Exception e) {
+            log.warn("Não foi possível buscar email do customer: {}", e.getMessage());
+        }
+        try {
+            UserInfoDTO barberInfo = userServiceClient.getUserById(appointment.getBarberId());
+            if (barberInfo != null) barberEmail = barberInfo.getEmail();
+        } catch (Exception e) {
+            log.warn("Não foi possível buscar email do barber: {}", e.getMessage());
+        }
+
+        AppointmentCancelledEvent event = new AppointmentCancelledEvent(
+                appointment.getId(), appointment.getCustomerId(),
+                appointment.getBarberId(), cancelledBy,
+                appointment.getCustomerName(), customerEmail,
+                appointment.getBarberName(), barberEmail,
+                appointment.getBarbershopName(), appointment.getStartTime()
+        );
+        rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.cancelled", event);
+        log.info("Evento AppointmentCancelledEvent publicado para appointment {}", appointment.getId());
+
+        evictAvailabilityCacheAfterCommit(appointment.getBarberId(), appointment.getStartTime().toLocalDate());
+    }
+
     private boolean isCallerOwnerFromAppointmentBarbershop(UUID barbershopId, UUID callerId) {
         if (barbershopId == null || callerId == null) {
             return false;
@@ -897,6 +926,7 @@ public class AppointmentService {
         for (Appointment appointment : appointmentsToComplete) {
             appointment.setStatus(AppointmentStatus.COMPLETED);
             appointmentRepository.save(appointment);
+            publishAppointmentConcludedEvent(appointment);
             log.info(
                     "Agendamento {} concluido automaticamente {} minutos apos o horario final estipulado.",
                     appointment.getId(),
@@ -905,6 +935,26 @@ public class AppointmentService {
         }
 
         return appointmentsToComplete.size();
+    }
+
+    private void publishAppointmentConcludedEvent(Appointment appointment) {
+        String customerEmail = null;
+        try {
+            UserInfoDTO customerInfo = userServiceClient.getUserById(appointment.getCustomerId());
+            if (customerInfo != null) customerEmail = customerInfo.getEmail();
+        } catch (Exception e) {
+            log.warn("Não foi possível buscar email do customer: {}", e.getMessage());
+        }
+
+        AppointmentConcludedEvent event = new AppointmentConcludedEvent(
+                appointment.getId(), appointment.getCustomerId(),
+                appointment.getBarberId(), appointment.getBarbershopId(),
+                appointment.getCustomerName(), customerEmail,
+                appointment.getBarberName(), appointment.getBarbershopName(),
+                appointment.getStartTime()
+        );
+        rabbitTemplate.convertAndSend(RabbitConfig.EXCHANGE, "appointment.concluded", event);
+        log.info("Evento AppointmentConcludedEvent publicado para appointment {}", appointment.getId());
     }
 
     // ========== CACHE ==========

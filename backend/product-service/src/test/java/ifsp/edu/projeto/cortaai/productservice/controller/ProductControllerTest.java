@@ -35,6 +35,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ProductControllerTest {
 
+    private static final String FIREBASE_UID = "firebase-uid";
+
     @Mock
     private ProductService productService;
 
@@ -52,9 +54,9 @@ class ProductControllerTest {
                 new BigDecimal("30.00"), null, ProductCategory.OTHER, 5, 1, null);
         ProductDTO dto = productDto(productId, shopId);
 
-        when(productService.createProduct(request)).thenReturn(dto);
+        when(productService.createProduct(FIREBASE_UID, request)).thenReturn(dto);
 
-        ResponseEntity<ProductDTO> response = productController.createProduct(request);
+        ResponseEntity<ProductDTO> response = productController.createProduct(FIREBASE_UID, request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).isEqualTo(dto);
@@ -72,27 +74,27 @@ class ProductControllerTest {
         UpdateProductDTO update = new UpdateProductDTO("Nova", null, null, null,
                 null, null, null, null, null);
 
-        when(productService.getProductsByBarbershop(shopId)).thenReturn(List.of(dto));
-        when(productService.getInventoryPage(shopId, "pom", ProductCategory.OTHER, categoryId, true, 0, 20))
+        when(productService.getProductsByBarbershop(FIREBASE_UID, shopId)).thenReturn(List.of(dto));
+        when(productService.getInventoryPage(FIREBASE_UID, shopId, "pom", ProductCategory.OTHER, categoryId, true, 0, 20))
                 .thenReturn(page);
-        when(productService.getById(productId)).thenReturn(dto);
-        when(productService.updateProduct(productId, update)).thenReturn(dto);
+        when(productService.getById(FIREBASE_UID, productId)).thenReturn(dto);
+        when(productService.updateProduct(FIREBASE_UID, productId, update)).thenReturn(dto);
 
-        assertThat(productController.getProductsByBarbershop(shopId).getBody()).containsExactly(dto);
-        assertThat(productController.getInventoryPage(shopId, "pom", ProductCategory.OTHER, categoryId, true, 0, 20).getBody())
+        assertThat(productController.getProductsByBarbershop(FIREBASE_UID, shopId).getBody()).containsExactly(dto);
+        assertThat(productController.getInventoryPage(FIREBASE_UID, shopId, "pom", ProductCategory.OTHER, categoryId, true, 0, 20).getBody())
                 .isEqualTo(page);
-        assertThat(productController.getById(productId).getBody()).isEqualTo(dto);
-        assertThat(productController.updateProduct(productId, update).getBody()).isEqualTo(dto);
+        assertThat(productController.getById(FIREBASE_UID, productId).getBody()).isEqualTo(dto);
+        assertThat(productController.updateProduct(FIREBASE_UID, productId, update).getBody()).isEqualTo(dto);
     }
 
     @Test
     void shouldDeleteProductWithNoContentStatus() {
         UUID productId = UUID.randomUUID();
 
-        ResponseEntity<Void> response = productController.deleteProduct(productId);
+        ResponseEntity<Void> response = productController.deleteProduct(FIREBASE_UID, productId);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        verify(productService).deleteProduct(productId);
+        verify(productService).deleteProduct(FIREBASE_UID, productId);
     }
 
     @Test
@@ -102,11 +104,11 @@ class ProductControllerTest {
                 4, null, "Compra", "Entrada", LocalDateTime.of(2026, 5, 22, 9, 0));
         StockMovementRequestDTO request = new StockMovementRequestDTO(productId, MovementType.IN, 4, null, "Compra");
 
-        when(productService.getStockMovementHistory(productId, 0, 50)).thenReturn(List.of(movement));
-        when(productService.createStockMovement(request)).thenReturn(movement);
+        when(productService.getStockMovementHistory(FIREBASE_UID, productId, 0, 50)).thenReturn(List.of(movement));
+        when(productService.createStockMovement(FIREBASE_UID, request)).thenReturn(movement);
 
-        assertThat(productController.getStockMovements(productId, 0, 50).getBody()).containsExactly(movement);
-        ResponseEntity<StockMovementDTO> response = productController.createStockMovement(request);
+        assertThat(productController.getStockMovements(FIREBASE_UID, productId, 0, 50).getBody()).containsExactly(movement);
+        ResponseEntity<StockMovementDTO> response = productController.createStockMovement(FIREBASE_UID, request);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).isEqualTo(movement);
     }
@@ -118,18 +120,18 @@ class ProductControllerTest {
         CategoryRequestDTO request = new CategoryRequestDTO("Pomadas");
         CategoryResponseDTO responseDto = new CategoryResponseDTO(categoryId, "Pomadas", shopId);
 
-        when(productService.getCategories(shopId)).thenReturn(List.of(responseDto));
-        when(productService.createCategory(shopId, request)).thenReturn(responseDto);
-        when(productService.updateCategory(shopId, categoryId, request)).thenReturn(responseDto);
+        when(productService.getCategories(FIREBASE_UID, shopId)).thenReturn(List.of(responseDto));
+        when(productService.createCategory(FIREBASE_UID, shopId, request)).thenReturn(responseDto);
+        when(productService.updateCategory(FIREBASE_UID, shopId, categoryId, request)).thenReturn(responseDto);
 
-        assertThat(productController.getCategories(shopId).getBody()).containsExactly(responseDto);
-        assertThat(productController.createCategory(shopId, request).getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(productController.createCategory(shopId, request).getBody()).isEqualTo(responseDto);
-        assertThat(productController.updateCategory(shopId, categoryId, request).getBody()).isEqualTo(responseDto);
+        assertThat(productController.getCategories(FIREBASE_UID, shopId).getBody()).containsExactly(responseDto);
+        assertThat(productController.createCategory(FIREBASE_UID, shopId, request).getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(productController.createCategory(FIREBASE_UID, shopId, request).getBody()).isEqualTo(responseDto);
+        assertThat(productController.updateCategory(FIREBASE_UID, shopId, categoryId, request).getBody()).isEqualTo(responseDto);
 
-        ResponseEntity<Void> deleteResponse = productController.deleteCategory(shopId, categoryId);
+        ResponseEntity<Void> deleteResponse = productController.deleteCategory(FIREBASE_UID, shopId, categoryId);
         assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        verify(productService).deleteCategory(shopId, categoryId);
+        verify(productService).deleteCategory(FIREBASE_UID, shopId, categoryId);
     }
 
     @Test
@@ -142,10 +144,10 @@ class ProductControllerTest {
         InventoryFinancialSummaryDTO summary = new InventoryFinancialSummaryDTO(shopId,
                 new BigDecimal("50.00"), new BigDecimal("120.00"));
 
-        when(productService.getStockHealthAlert(shopId)).thenReturn(List.of(alert));
+        when(productService.getStockHealthAlert(FIREBASE_UID, shopId)).thenReturn(List.of(alert));
         when(productService.getFinancialSummary(shopId, from, to)).thenReturn(summary);
 
-        assertThat(productController.getStockHealthAlert(shopId).getBody()).containsExactly(alert);
+        assertThat(productController.getStockHealthAlert(FIREBASE_UID, shopId).getBody()).containsExactly(alert);
         assertThat(internalProductController.getFinancialSummary(shopId, from, to).getBody()).isEqualTo(summary);
     }
 

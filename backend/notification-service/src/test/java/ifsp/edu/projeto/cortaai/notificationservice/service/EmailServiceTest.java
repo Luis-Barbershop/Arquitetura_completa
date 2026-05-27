@@ -75,6 +75,29 @@ class EmailServiceTest {
     }
 
     @Test
+    void shouldSendJoinInviteAndRemovalEmails() throws Exception {
+        emailService.sendJoinRequestReceivedToOwner("owner@example.com", "Barbearia Top", "Barbeiro Silva");
+        emailService.sendInviteReceivedToBarber("barber@example.com", "Barbearia Top");
+        emailService.sendBarberRemovedToBarber("barber@example.com", "Barbeiro Silva", "Barbearia Top");
+
+        ArgumentCaptor<MimeMessage> captor = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(mailSender, times(3)).send(captor.capture());
+
+        MimeMessage joinMsg = captor.getAllValues().get(0);
+        assertThat(joinMsg.getSubject()).contains("pedido de entrada").contains("CortaAI");
+        assertThat(joinMsg.getAllRecipients()[0].toString()).isEqualTo("owner@example.com");
+        assertThat(messageText(joinMsg)).contains("Barbeiro Silva").contains("Barbearia Top").contains("barber-team");
+
+        MimeMessage inviteMsg = captor.getAllValues().get(1);
+        assertThat(inviteMsg.getSubject()).contains("convite").contains("CortaAI");
+        assertThat(messageText(inviteMsg)).contains("Barbearia Top").contains("barberProfile");
+
+        MimeMessage removedMsg = captor.getAllValues().get(2);
+        assertThat(removedMsg.getSubject()).contains("removido").contains("CortaAI");
+        assertThat(messageText(removedMsg)).contains("Barbeiro Silva").contains("Barbearia Top").contains("marketplace");
+    }
+
+    @Test
     void shouldLogAndSkipSendWhenMessageCannotBeBuilt() {
         ReflectionTestUtils.setField(emailService, "fromEmail", "invalid from address");
 

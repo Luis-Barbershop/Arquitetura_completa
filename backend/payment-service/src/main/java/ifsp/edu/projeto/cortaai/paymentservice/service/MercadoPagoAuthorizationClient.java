@@ -65,6 +65,9 @@ public class MercadoPagoAuthorizationClient {
         } catch (ResponseStatusException ex) {
             throw ex;
         } catch (Exception ex) {
+            if (ex instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             log.warn("event=mp-oauth-authorization-revoke-error cause={}", ex.getClass().getSimpleName());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Nao foi possivel revogar a autorizacao no Mercado Pago.", ex);
         }

@@ -1,6 +1,7 @@
 package ifsp.edu.projeto.cortaai.barbershopservice.mapper;
 
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.BarbershopDTO;
+import ifsp.edu.projeto.cortaai.barbershopservice.dto.BarbershopPublicDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.CreateBarbershopDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.model.Barbershop;
 import ifsp.edu.projeto.cortaai.barbershopservice.model.BarbershopHighlight;
@@ -17,6 +18,9 @@ public interface BarbershopMapper {
     @Mapping(source = "highlights", target = "highlightUrls")
     BarbershopDTO toDTO(Barbershop barbershop);
 
+    @Mapping(source = "highlights", target = "highlightUrls")
+    BarbershopPublicDTO toPublicDTO(Barbershop barbershop);
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "ownerId", ignore = true)
     @Mapping(target = "logoUrl", ignore = true)
@@ -29,6 +33,8 @@ public interface BarbershopMapper {
     @Mapping(target = "joinRequests", ignore = true)
     @Mapping(target = "averageRating", ignore = true)
     @Mapping(target = "reviewsCount", ignore = true)
+    @Mapping(target = "latitude", ignore = true)
+    @Mapping(target = "longitude", ignore = true)
     @Mapping(target = "dateCreated", ignore = true)
     @Mapping(target = "lastUpdated", ignore = true)
     Barbershop toEntity(CreateBarbershopDTO dto);
@@ -42,4 +48,3 @@ public interface BarbershopMapper {
                 .collect(Collectors.toList());
     }
 }
-

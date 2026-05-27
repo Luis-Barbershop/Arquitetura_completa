@@ -5,6 +5,7 @@ import ifsp.edu.projeto.cortaai.barbershopservice.dto.AppointmentSummaryDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.BarberJoinRequestDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.BarberPublicDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.BarbershopDTO;
+import ifsp.edu.projeto.cortaai.barbershopservice.dto.BarbershopPublicDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.BarbershopSummaryDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.CloseBarbershopRequestDTO;
 import ifsp.edu.projeto.cortaai.barbershopservice.dto.CommissionRuleDTO;
@@ -53,7 +54,7 @@ class BarbershopControllerTest {
 
     @Test
     void shouldListAllBarbershopsWithAndWithoutProximity() {
-        BarbershopDTO shop = barbershop();
+        BarbershopPublicDTO shop = publicBarbershop();
         BarbershopSummaryDTO summary = new BarbershopSummaryDTO(
                 shop.getId(), "Shop", "Rua 1", "logo.png", 4.8, 11L, -23.5, -46.6, 1.25);
         when(service.listBarbershops()).thenReturn(List.of(shop));
@@ -68,7 +69,7 @@ class BarbershopControllerTest {
         UUID shopId = UUID.randomUUID();
         ActivityDTO activity = activity();
         BarberPublicDTO barber = new BarberPublicDTO(UUID.randomUUID(), "Ana", "ana.png");
-        when(service.getBarbershop(shopId)).thenReturn(barbershop());
+        when(service.getBarbershop(shopId)).thenReturn(publicBarbershop());
         when(service.listActivities(shopId)).thenReturn(List.of(activity));
         when(service.listBarbers(shopId)).thenReturn(List.of(barber));
         when(service.hasCustomerReviewed("firebase-uid", shopId)).thenReturn(true);
@@ -191,6 +192,15 @@ class BarbershopControllerTest {
         BarbershopDTO dto = new BarbershopDTO();
         dto.setId(UUID.randomUUID());
         dto.setName("Shop");
+        return dto;
+    }
+
+    private BarbershopPublicDTO publicBarbershop() {
+        BarbershopPublicDTO dto = new BarbershopPublicDTO();
+        dto.setId(UUID.randomUUID());
+        dto.setName("Shop");
+        dto.setAddress("Rua 1");
+        dto.setLogoUrl("logo.png");
         return dto;
     }
 

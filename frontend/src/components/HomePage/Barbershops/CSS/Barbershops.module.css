@@ -9,6 +9,133 @@
     padding: 0 0 1rem 0;
 }
 
+/* ── Sort Bar ── */
+.sort_bar {
+    display: flex;
+    justify-content: flex-end;
+    width: min(1180px, 94%);
+    margin: 0 auto 0.5rem auto;
+}
+
+.sort_dropdown_wrap {
+    position: relative;
+}
+
+.sort_button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 0.84rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s;
+}
+
+.sort_button:hover {
+    border-color: var(--ca-color-brand, #c19006);
+    background: rgba(193, 144, 6, 0.08);
+}
+
+.sort_icon {
+    font-size: 0.9rem;
+    color: var(--ca-color-brand, #c19006);
+}
+
+.sort_chevron {
+    font-size: 0.72rem;
+    transition: transform 0.18s;
+    margin-left: 2px;
+}
+
+.sort_chevron_open {
+    transform: rotate(180deg);
+}
+
+.sort_menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 10px;
+    min-width: 190px;
+    z-index: 200;
+    list-style: none;
+    padding: 6px;
+    margin: 0;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+}
+
+.sort_item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 7px;
+    font-size: 0.88rem;
+    color: #ccc;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.sort_item:hover {
+    background: #2a2218;
+    color: #f5f5f5;
+}
+
+.sort_item_active {
+    color: var(--ca-color-brand, #c19006);
+    font-weight: 600;
+}
+
+.sort_item_disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.sort_check {
+    font-size: 0.82rem;
+}
+
+/* ── Paginação ── */
+.pagination_wrap {
+    display: flex;
+    justify-content: center;
+    width: min(1180px, 94%);
+    margin: 1.5rem auto 0.5rem auto;
+}
+
+.load_more_btn {
+    padding: 10px 30px;
+    background: transparent;
+    border: 1px solid var(--ca-color-brand, #c19006);
+    border-radius: 20px;
+    color: var(--ca-color-brand, #c19006);
+    font-size: 0.9rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.18s;
+}
+
+.load_more_btn:hover {
+    background: rgba(193, 144, 6, 0.12);
+}
+
+.empty_message {
+    color: #888;
+    font-size: 0.95rem;
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 2rem 0;
+}
+
 /* ── Skeleton ── */
 .skeleton_card {
     background: #1a1a1a;
@@ -40,17 +167,9 @@
     animation: shimmer 1.4s infinite;
 }
 
-.skeleton_line_short {
-    width: 55%;
-}
-
-.skeleton_line_medium {
-    width: 75%;
-}
-
-.skeleton_line_long {
-    width: 90%;
-}
+.skeleton_line_short  { width: 55%; }
+.skeleton_line_medium { width: 75%; }
+.skeleton_line_long   { width: 90%; }
 
 @keyframes shimmer {
     0%   { background-position: 200% 0; }
@@ -61,6 +180,11 @@
     .barbershops_container {
         grid-template-columns: 1fr;
         gap: 14px;
+        width: min(1180px, 96%);
+    }
+
+    .sort_bar,
+    .pagination_wrap {
         width: min(1180px, 96%);
     }
 }

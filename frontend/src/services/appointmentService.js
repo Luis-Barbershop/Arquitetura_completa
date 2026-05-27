@@ -118,6 +118,28 @@ export const rescheduleAppointment = async (id, newStartTime, barberId = null) =
     return response.data;
 };
 
+// Retorna lista de barbershopIds únicos ordenados por agendamento mais recente do cliente
+export const getMyRecentBarbershopIds = async () => {
+    try {
+        const response = await api.get('/appointments/my-appointments');
+        const appointments = Array.isArray(response.data) ? response.data : [];
+        const sorted = [...appointments].sort(
+            (a, b) => new Date(b.startTime) - new Date(a.startTime)
+        );
+        const seen = new Set();
+        const ids = [];
+        for (const apt of sorted) {
+            if (apt.barbershopId && !seen.has(apt.barbershopId)) {
+                seen.add(apt.barbershopId);
+                ids.push(apt.barbershopId);
+            }
+        }
+        return ids;
+    } catch {
+        return [];
+    }
+};
+
 export const getBarbershopSchedule = async (shopId, dateOrRange) => {
     try {
         const params = typeof dateOrRange === 'string'

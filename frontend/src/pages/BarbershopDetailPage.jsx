@@ -35,7 +35,9 @@ const BarbershopDetailPage = () => {
 
         // Geocodifica o endereço se lat/lng não vieram do backend
         let enrichedShop = shopData;
-        if (shopData && !shopData.latitude && !shopData.longitude && shopData.address) {
+        const noCoords = shopData && (shopData.latitude == null || shopData.longitude == null
+            || (shopData.latitude === 0 && shopData.longitude === 0));
+        if (noCoords && shopData.address) {
           const coords = await geocodeAddress(shopData.address).catch(() => null);
           if (coords) {
             enrichedShop = { ...shopData, latitude: coords.lat, longitude: coords.lng };
@@ -77,6 +79,11 @@ const BarbershopDetailPage = () => {
 
   const formatCurrency = (v) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+
+  const hasLocation = Boolean(
+    shopInfo?.address ||
+    (Number.isFinite(Number(shopInfo?.latitude)) && Number.isFinite(Number(shopInfo?.longitude)))
+  );
 
   if (loading) {
     return (
@@ -187,27 +194,17 @@ const BarbershopDetailPage = () => {
         )}
 
         {/* Mapa / Localização */}
-        <section className={Styles.section}>
-          <h2 className={Styles.sectionTitle}><FiMapPin size={16} /> Localização</h2>
-          {shopInfo.latitude && shopInfo.longitude && (
+        {hasLocation && (
+          <section className={Styles.section}>
+            <h2 className={Styles.sectionTitle}><FiMapPin size={16} /> Localização</h2>
             <BarbershopMap
               latitude={shopInfo.latitude}
               longitude={shopInfo.longitude}
               barbershopName={shopInfo.name}
+              address={shopInfo.address}
             />
-          )}
-          {shopInfo.address && (
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shopInfo.address)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={Styles.mapsLink}
-            >
-              📍 {shopInfo.address} — Abrir no Google Maps
-            </a>
-          )}
-          {!shopInfo.latitude && !shopInfo.longitude && !shopInfo.address && null}
-        </section>
+          </section>
+        )}
 
         {/* CTA Agendar */}
         <div className={Styles.ctaBar}>

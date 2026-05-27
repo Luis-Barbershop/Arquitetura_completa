@@ -147,3 +147,17 @@
     background: #e53e3e;
     border-radius: 50%;
 }
+
+@media (max-width: 760px) {
+    .bellButton {
+        padding: 0;
+        min-width: 24px;
+        min-height: 24px;
+    }
+
+    .dropdown {
+        width: calc(100vw - 24px);
+        max-width: 360px;
+        border-radius: 12px;
+    }
+}

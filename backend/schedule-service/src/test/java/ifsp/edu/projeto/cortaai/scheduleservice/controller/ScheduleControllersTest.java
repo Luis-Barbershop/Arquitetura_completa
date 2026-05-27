@@ -122,15 +122,15 @@ class ScheduleControllersTest {
 
         when(barberBlockService.createBlock("firebase-uid", createBlock)).thenReturn(block);
         when(barberBlockService.getBlocks(barberId, date)).thenReturn(List.of(block));
-        when(analyticsService.getAgendaThermometer("shop-1")).thenReturn(List.of(thermometer));
-        when(analyticsService.getBarberSkillMatrix("shop-1")).thenReturn(List.of(skill));
+        when(analyticsService.getAgendaThermometer("firebase-uid", "shop-1")).thenReturn(List.of(thermometer));
+        when(analyticsService.getBarberSkillMatrix("firebase-uid", "shop-1")).thenReturn(List.of(skill));
         when(aiChatService.chat("firebase-uid", "OWNER", chatRequest)).thenReturn(chatResponse);
 
         assertThat(barberBlockController.createBlock("firebase-uid", createBlock).getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(barberBlockController.getBlocks(barberId, date).getBody()).containsExactly(block);
         assertThat(barberBlockController.deleteBlock("firebase-uid", blockId).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        assertThat(analyticsController.getAgendaThermometer("shop-1").getBody()).containsExactly(thermometer);
-        assertThat(analyticsController.getBarberSkillMatrix("shop-1").getBody()).containsExactly(skill);
+        assertThat(analyticsController.getAgendaThermometer("firebase-uid", "shop-1").getBody()).containsExactly(thermometer);
+        assertThat(analyticsController.getBarberSkillMatrix("firebase-uid", "shop-1").getBody()).containsExactly(skill);
         assertThat(aiChatController.chat("firebase-uid", "OWNER", chatRequest).getBody()).isEqualTo(chatResponse);
         assertThat(aiChatController.clearHistory("firebase-uid").getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 

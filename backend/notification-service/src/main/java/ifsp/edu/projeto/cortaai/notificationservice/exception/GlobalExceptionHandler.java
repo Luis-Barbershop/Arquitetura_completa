@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.util.List;
@@ -88,6 +89,16 @@ public class GlobalExceptionHandler {
     }
 
     // ─── 500 ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Broken pipe no stream SSE — cliente fechou a conexão enquanto o servidor escrevia.
+     * Não tenta escrever resposta (o stream já está fechado) e não polui o log com ERROR.
+     */
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleAsyncNotUsable(AsyncRequestNotUsableException ex) {
+        log.debug("SSE stream fechado pelo cliente (broken pipe): {}", ex.getMessage());
+        // retorna void — Spring não tenta serializar nenhuma resposta
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {

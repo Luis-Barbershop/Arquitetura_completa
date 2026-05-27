@@ -53,7 +53,7 @@ public class BarbershopController {
                     content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
     })
     @GetMapping("/{shopId}")
-    public ResponseEntity<BarbershopDTO> getBarbershop(
+    public ResponseEntity<BarbershopPublicDTO> getBarbershop(
             @Parameter(description = "UUID da barbearia") @PathVariable UUID shopId) {
         return ResponseEntity.ok(barbershopService.getBarbershop(shopId));
     }

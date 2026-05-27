@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
@@ -71,8 +72,7 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
             "/webjars/**",
             "/actuator/**",
         "/api/payments/mp-callback", "/api/payments/mp-callback/",
-            "/api/payments/webhook", "/api/payments/webhook/",
-            "/api/internal/**"
+            "/api/payments/webhook", "/api/payments/webhook/"
     );
 
     /**
@@ -113,6 +113,7 @@ public class FirebaseTokenGatewayFilter implements GlobalFilter, Ordered {
     private final TokenVerifier tokenVerifier;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
+    @Autowired
     public FirebaseTokenGatewayFilter(FirebaseAuth firebaseAuth) {
         this(firebaseAuth, token -> firebaseAuth.verifyIdToken(token));
     }

@@ -105,6 +105,7 @@ export const fetchAvailabilitySlots = async ({
       date: formatDateToApi(dateObj),
       duration: durationMinutes || 30,
     },
+    timeout: 31000,
   })
     .then((response) => {
       const slots = normalizeAvailabilitySlots(response.data);

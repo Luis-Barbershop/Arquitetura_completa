@@ -9,6 +9,7 @@ import {
     Lock,
     SignOut,
 } from '@phosphor-icons/react';
+import NotificationBell from '../NotificationBell/NotificationBell';
 import styles from './CSS/CustomerNavbar.module.css';
 
 /**
@@ -71,6 +72,13 @@ function CustomerNavbar({ activeTab = 'home', onLogout }) {
                             </button>
                         </li>
                     ))}
+
+                    <li>
+                        <div className={styles.notificationNavItem}>
+                            <NotificationBell userType="customer" visibility="mobile" />
+                            <span className={styles.navLabel}>Avisos</span>
+                        </div>
+                    </li>
 
                     <li>
                         <button

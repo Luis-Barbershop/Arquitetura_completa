@@ -59,6 +59,23 @@ class NotificationServiceTest {
     }
 
     @Test
+    void shouldSendCreatedNotificationThroughSse() {
+        UUID userId = UUID.randomUUID();
+        when(notificationRepository.countByUserIdAndReadFalse(userId)).thenReturn(4L);
+
+        Notification saved = notificationService.createNotification(
+                userId,
+                NotificationType.APPOINTMENT_CREATED,
+                "Novo agendamento",
+                "Mensagem"
+        );
+
+        verify(sseEmitterService).sendUnreadCount(userId, 4L);
+        verify(sseEmitterService).sendNotificationCreated(eq(userId), any(NotificationDTO.class), eq(4L));
+        assertThat(saved.getTitle()).isEqualTo("Novo agendamento");
+    }
+
+    @Test
     void shouldSendPushForBothSidesOnAppointmentCreated() {
         UUID customerId = UUID.randomUUID();
         UUID barberId = UUID.randomUUID();
@@ -85,7 +102,7 @@ class NotificationServiceTest {
     void shouldIncludeDeepLinkAndTypeInPushDataForInvite() {
         UUID barberId = UUID.randomUUID();
 
-        notificationService.notifyInviteReceived(barberId, "Barbearia Convite");
+        notificationService.notifyInviteReceived(barberId, "barber@cortaai.com", "Barbearia Convite");
 
         verify(pushNotificationService)
                 .sendToUser(
@@ -93,7 +110,7 @@ class NotificationServiceTest {
                         eq("Você recebeu um convite!"),
                         contains("Barbearia Convite"),
                         argThat(data -> NotificationType.INVITE_RECEIVED.name().equals(data.get("type"))
-                                && "/barberProfile".equals(data.get("deepLink")))
+                                && "/barberHome/perfil".equals(data.get("deepLink")))
                 );
     }
 
@@ -174,12 +191,79 @@ class NotificationServiceTest {
     }
 
     @Test
+    void shouldNotifyCustomerWhenAppointmentIsConcluded() {
+        UUID customerId = UUID.randomUUID();
+
+        notificationService.notifyAppointmentConcluded(
+                customerId,
+                "customer@cortaai.com",
+                "Cliente",
+                "Barbeiro",
+                "Barbearia"
+        );
+
+        verify(pushNotificationService).sendToUser(
+                eq(customerId),
+                eq("Atendimento concluído!"),
+                contains("avaliação"),
+                argThat(data -> NotificationType.APPOINTMENT_CONCLUDED.name().equals(data.get("type"))
+                        && "/meus-agendamentos".equals(data.get("deepLink"))));
+        verify(emailService).sendConcludedToCustomer(
+                "customer@cortaai.com",
+                "Cliente",
+                "Barbeiro",
+                "Barbearia");
+    }
+
+    @Test
+    void shouldNotifyOwnerWhenBarberRequestsToJoinBarbershop() {
+        UUID ownerId = UUID.randomUUID();
+
+        notificationService.notifyJoinRequestReceived(
+                ownerId,
+                "owner@cortaai.com",
+                "Barbearia",
+                "Barbeiro"
+        );
+
+        verify(pushNotificationService).sendToUser(
+                eq(ownerId),
+                eq("Novo pedido de entrada!"),
+                contains("Barbeiro"),
+                argThat(data -> NotificationType.JOIN_REQUEST_RECEIVED.name().equals(data.get("type"))
+                        && "/barberHome/time".equals(data.get("deepLink"))));
+        verify(emailService).sendJoinRequestReceivedToOwner("owner@cortaai.com", "Barbearia", "Barbeiro");
+    }
+
+    @Test
+    void shouldNotifyBarberWhenRemovedFromBarbershop() {
+        UUID barberId = UUID.randomUUID();
+
+        notificationService.notifyBarberRemoved(
+                barberId,
+                "barber@cortaai.com",
+                "Barbeiro",
+                "Barbearia"
+        );
+
+        verify(pushNotificationService).sendToUser(
+                eq(barberId),
+                eq("Você foi removido da barbearia"),
+                contains("Barbearia"),
+                argThat(data -> NotificationType.BARBER_REMOVED.name().equals(data.get("type"))
+                        && "/barberHome/perfil".equals(data.get("deepLink"))));
+        verify(emailService).sendBarberRemovedToBarber("barber@cortaai.com", "Barbeiro", "Barbearia");
+    }
+
+    @Test
     void shouldCreateReminderNotificationAndEmailWhenCustomerEmailIsPresent() {
         AppointmentReminderEvent event = new AppointmentReminderEvent(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
                 "Cliente",
                 "customer@cortaai.com",
+                UUID.randomUUID(),
+                "barber@cortaai.com",
                 "Barbearia",
                 "Barbeiro",
                 LocalDateTime.of(2026, 5, 21, 16, 30)
@@ -194,6 +278,31 @@ class NotificationServiceTest {
                 eq("Barbearia"),
                 eq("Barbeiro"),
                 eq(LocalDateTime.of(2026, 5, 21, 16, 30)));
+    }
+
+    @Test
+    void shouldCreateReminderNotificationForBarberWhenBarberIdIsPresent() {
+        AppointmentReminderEvent event = new AppointmentReminderEvent(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "Cliente",
+                "",
+                UUID.randomUUID(),
+                "barber@cortaai.com",
+                "Barbearia",
+                "Barbeiro",
+                LocalDateTime.of(2026, 5, 21, 16, 30)
+        );
+
+        notificationService.notifyAppointmentReminder(event);
+
+        verify(pushNotificationService).sendToUser(
+                eq(event.getBarberId()),
+                eq("Lembrete de atendimento"),
+                contains("Cliente"),
+                argThat(data -> NotificationType.APPOINTMENT_REMINDER.name().equals(data.get("type"))
+                        && "/barberHome".equals(data.get("deepLink"))));
+        verify(emailService, never()).sendReminderToCustomer(anyString(), anyString(), anyString(), anyString(), any());
     }
 
     @Test
@@ -288,7 +397,7 @@ class NotificationServiceTest {
 
         assertThatThrownBy(() -> notificationService.markAsRead(notificationId, UUID.randomUUID()))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("Notificação não pertence ao usuário");
+                .hasMessageContaining("Notificação não pertence ao usuário");
 
         verify(notificationRepository, never()).save(any());
     }

@@ -412,6 +412,21 @@
     transform: translateY(-1px);
 }
 
+.rescheduleButton:disabled,
+.concludeButton:disabled,
+.cancelButton:disabled {
+    opacity: 0.48;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.rescheduleButton:disabled:hover,
+.concludeButton:disabled:hover,
+.cancelButton:disabled:hover {
+    background-color: transparent;
+    transform: none;
+}
+
 .rescheduleLockedHint {
     display: inline-flex;
     align-items: center;

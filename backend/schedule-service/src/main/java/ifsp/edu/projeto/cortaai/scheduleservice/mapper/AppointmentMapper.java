@@ -25,6 +25,7 @@ public interface AppointmentMapper {
 
     List<AppointmentActivityDTO> toActivityDTOList(Set<AppointmentActivity> activities);
 
+    @Mapping(target = "cancelledAppointmentsCount", ignore = true)
     BarberBlockDTO toBlockDTO(BarberBlock block);
 
     List<BarberBlockDTO> toBlockDTOList(List<BarberBlock> blocks);

@@ -109,10 +109,10 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
     @Value("${firebase.web-api-key:}")
     private String firebaseWebApiKey;
 
-    @Value("${app.web-base-url:https://web.cortaai.shop}")
+    @Value("${app.web-base-url}")
     private String appWebBaseUrl;
 
-    @Value("${app.forgot-password-continue-url:https://web.cortaai.shop/change-password}")
+    @Value("${app.forgot-password-continue-url}")
     private String forgotPasswordContinueUrl;
 
     private final Map<String, Instant> forgotPasswordLastRequestByEmail = new ConcurrentHashMap<>();
@@ -222,8 +222,8 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
 
             // ── 2. Enviar e-mail de verificação (melhor-esforço, não bloqueia) ─
             try {
-                // continueUrl: Firebase redireciona para esta URL após o clique no link,
-                // com os parâmetros mode=verifyEmail&oobCode=XXXX&apiKey=...
+                // A URL de ação que recebe mode/oobCode é configurada no template do
+                // Firebase Console. O continueUrl abaixo é apenas anexado ao link.
                 Map<String, Object> verifyPayload = new java.util.HashMap<>();
                 verifyPayload.put("requestType", "VERIFY_EMAIL");
                 verifyPayload.put("idToken", idToken);
@@ -236,6 +236,9 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                         .build();
                 httpClient.send(verifyRequest, HttpResponse.BodyHandlers.ofString());
                 log.info("event=verification-email-sent uid={}", localId);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("event=verification-email-failed uid={} reason=interrupted", localId);
             } catch (Exception e) {
                 log.warn("event=verification-email-failed uid={} reason={}", localId, e.getMessage());
                 // Não cancela o cadastro — e-mail pode ser reenviado depois
@@ -560,7 +563,8 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                 throw new SecurityException("Não foi possível obter o token de autenticação.");
             }
 
-            // 2. Enviar e-mail de verificação
+            // 2. Enviar e-mail de verificação. A URL de ação fica no template do
+            // Firebase Console; o continueUrl abaixo é apenas anexado ao link.
             Map<String, Object> verifyPayload = new java.util.HashMap<>();
             verifyPayload.put("requestType", "VERIFY_EMAIL");
             verifyPayload.put("idToken", idToken);

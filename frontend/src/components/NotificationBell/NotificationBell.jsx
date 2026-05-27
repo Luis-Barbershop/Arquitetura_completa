@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell } from '@phosphor-icons/react';
+import { toast } from 'react-toastify';
 import api from '../../services/api';
 import { useNotificationStream } from '../../hooks/useNotificationStream';
 import styles from './NotificationBell.module.css';
@@ -10,34 +11,100 @@ import styles from './NotificationBell.module.css';
  *
  * Props:
  *   userType: 'customer' | 'barber'  — determina rota de redirect ao clicar
+ *   visibility: 'all' | 'desktop' | 'mobile' — evita conexões duplicadas quando há header e bottom bar
  *
  * Lógica de redirect por tipo:
  *   agendamentos/pagamentos → /meus-agendamentos
  *   pedido de entrada       → /barberHome/time
- *   convite                 → /barberHome/perfil
+ *   convite/remocao        → /barberHome/perfil
  */
-function NotificationBell({ userType = 'barber' }) {
+function NotificationBell({ userType = 'barber', visibility = 'all' }) {
     const navigate = useNavigate();
     const [unreadCount, setUnreadCount] = useState(0);
     const [notifications, setNotifications] = useState([]);
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0, maxHeight: 420 });
+    const [isMobileViewport, setIsMobileViewport] = useState(() => (
+        typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches
+    ));
     const dropdownRef = useRef(null);
     const buttonRef = useRef(null);
+    const openRef = useRef(false);
+    const shouldRender = visibility === 'all' ||
+        (visibility === 'mobile' && isMobileViewport) ||
+        (visibility === 'desktop' && !isMobileViewport);
+
+    useEffect(() => {
+        openRef.current = open;
+    }, [open]);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(max-width: 760px)');
+        const syncViewport = () => setIsMobileViewport(mediaQuery.matches);
+        syncViewport();
+        mediaQuery.addEventListener('change', syncViewport);
+        return () => mediaQuery.removeEventListener('change', syncViewport);
+    }, []);
+
+    useEffect(() => {
+        if (!shouldRender) {
+            setOpen(false);
+        }
+    }, [shouldRender]);
+
+    const upsertNotification = useCallback((notification) => {
+        if (!notification?.id) return;
+        setNotifications((prev) => {
+            const exists = prev.some((item) => item.id === notification.id);
+            if (exists) {
+                return prev.map((item) => (item.id === notification.id ? notification : item));
+            }
+            return [notification, ...prev];
+        });
+    }, []);
+
+    const fetchNotifications = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await api.get('/notifications/my-notifications');
+            setNotifications(Array.isArray(res.data) ? res.data : []);
+        } catch {
+            // Mantém o estado existente — preserva notificações adicionadas via SSE
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     // SSE — recebe contagem de não lidas em tempo real (sem polling)
     const handleUnreadCount = useCallback((count) => {
+        setUnreadCount((previous) => {
+            if (count > previous && openRef.current) {
+                void fetchNotifications();
+            }
+            return count;
+        });
+    }, [fetchNotifications]);
+
+    const handleNotificationCreated = useCallback((notification, count) => {
         setUnreadCount(count);
-    }, []);
-    useNotificationStream(handleUnreadCount);
+        upsertNotification(notification);
+        if (notification?.title) {
+            toast.info(`${notification.title}${notification.message ? `: ${notification.message}` : ''}`, {
+                autoClose: 6000,
+            });
+        }
+    }, [upsertNotification]);
+
+    useNotificationStream(handleUnreadCount, handleNotificationCreated, shouldRender);
 
     // Busca contagem inicial no mount (antes do SSE conectar)
     useEffect(() => {
+        if (!shouldRender) return;
         api.get('/notifications/unread-count')
             .then((res) => setUnreadCount(res.data?.unreadCount ?? 0))
             .catch(() => {});
-    }, []);
+    }, [shouldRender]);
 
     // Fecha dropdown ao clicar fora
     useEffect(() => {
@@ -56,22 +123,20 @@ function NotificationBell({ userType = 'barber' }) {
         // Calcula posição do dropdown relativa ao viewport (escapa do stacking context do header)
         if (buttonRef.current) {
             const rect = buttonRef.current.getBoundingClientRect();
-            setDropdownPos({
-                top: rect.bottom + 8,
-                right: window.innerWidth - rect.right,
-            });
+            const defaultMaxHeight = 420;
+            const maxHeight = isMobileViewport
+                ? Math.min(defaultMaxHeight, Math.max(220, rect.top - 18))
+                : defaultMaxHeight;
+            const top = isMobileViewport
+                ? Math.max(12, rect.top - maxHeight - 8)
+                : rect.bottom + 8;
+            const right = isMobileViewport ? 12 : window.innerWidth - rect.right;
+
+            setDropdownPos({ top, right, maxHeight });
         }
 
         setOpen(true);
-        setLoading(true);
-        try {
-            const res = await api.get('/notifications/my-notifications');
-            setNotifications(Array.isArray(res.data) ? res.data : []);
-        } catch {
-            setNotifications([]);
-        } finally {
-            setLoading(false);
-        }
+        await fetchNotifications();
     };
 
     const handleMarkAsRead = async (id) => {
@@ -116,7 +181,7 @@ function NotificationBell({ userType = 'barber' }) {
             return userType === 'barber' ? '/barberHome/time' : null;
         }
 
-        if (type === 'INVITE_RECEIVED') {
+        if (type === 'INVITE_RECEIVED' || type === 'BARBER_REMOVED') {
             return userType === 'barber' ? '/barberHome/perfil' : null;
         }
 
@@ -137,6 +202,10 @@ function NotificationBell({ userType = 'barber' }) {
         });
     };
 
+    if (!shouldRender) {
+        return null;
+    }
+
     return (
         <div className={styles.bellWrapper} ref={dropdownRef}>
             <button
@@ -155,7 +224,7 @@ function NotificationBell({ userType = 'barber' }) {
             {open && (
                 <div
                     className={styles.dropdown}
-                    style={{ top: dropdownPos.top, right: dropdownPos.right }}
+                    style={{ top: dropdownPos.top, right: dropdownPos.right, maxHeight: dropdownPos.maxHeight }}
                 >
                     <div className={styles.dropdownHeader}>
                         <span>Notificações</span>

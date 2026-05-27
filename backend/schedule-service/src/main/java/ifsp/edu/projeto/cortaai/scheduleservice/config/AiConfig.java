@@ -7,7 +7,7 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class AiConfig {
 
-    /** RestTemplate usado pelo AiChatServiceImpl para chamadas às APIs Gemini e Groq. */
+    /** RestTemplate usado pelo AiChatServiceImpl para chamadas às APIs OpenRouter e Cohere. */
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();

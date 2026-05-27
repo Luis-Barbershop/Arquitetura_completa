@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   canPromptForPushNotifications,
+  isPushRegisteredLocally,
   requestPushNotificationsPermissionAndRegister,
   unregisterPushNotificationsIfPossible,
 } from '../../services/pushNotificationService'
@@ -11,8 +12,11 @@ const ENABLE_PUSH = import.meta.env.VITE_ENABLE_PUSH === 'true'
 const resolveState = async () => {
   if (!ENABLE_PUSH) return 'unavailable'
   if (!('Notification' in window)) return 'unavailable'
-  if (Notification.permission === 'granted') return 'granted'
   if (Notification.permission === 'denied') return 'denied'
+  if (Notification.permission === 'granted') {
+    // Só exibe como ativo se o token foi efetivamente registrado no backend
+    return isPushRegisteredLocally() ? 'granted' : 'default'
+  }
   const canPrompt = await canPromptForPushNotifications()
   return canPrompt ? 'default' : 'unavailable'
 }

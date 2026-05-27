@@ -9,7 +9,6 @@ import ifsp.edu.projeto.cortaai.paymentservice.dto.FinancialSeriesPointDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.MpConnectionStatusDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.dto.TransactionDTO;
 import ifsp.edu.projeto.cortaai.paymentservice.model.PaymentStatus;
-import ifsp.edu.projeto.cortaai.paymentservice.service.PaymentAnalyticsService;
 import ifsp.edu.projeto.cortaai.paymentservice.service.PaymentService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,9 +32,6 @@ class PaymentControllerTest {
 
     @Mock
     private PaymentService paymentService;
-
-    @Mock
-    private PaymentAnalyticsService paymentAnalyticsService;
 
     @InjectMocks
     private PaymentController paymentController;
@@ -109,13 +105,14 @@ class PaymentControllerTest {
 
     @Test
     void shouldDelegateAnalyticsController() {
+        String firebaseUid = "owner-uid";
         UUID shopId = UUID.randomUUID();
         BarberFinancialPerformanceResponseDTO performance = new BarberFinancialPerformanceResponseDTO(
                 "barber-1", "Ana", 2L, new BigDecimal("80.00"), new BigDecimal("100.00"));
 
-        when(paymentAnalyticsService.getBarberFinancialPerformance(shopId)).thenReturn(List.of(performance));
+        when(paymentService.getBarberFinancialPerformance(firebaseUid, shopId)).thenReturn(List.of(performance));
 
-        assertThat(paymentAnalyticsController.getBarberPerformance(shopId).getBody()).containsExactly(performance);
+        assertThat(paymentAnalyticsController.getBarberPerformance(firebaseUid, shopId).getBody()).containsExactly(performance);
     }
 
     private TransactionDTO transactionDto(UUID transactionId, UUID appointmentId) {

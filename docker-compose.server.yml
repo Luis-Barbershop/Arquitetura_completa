@@ -301,6 +301,44 @@ services:
       resources:
         limits: { cpus: "1", memory: 320M }
 
+  # ======== QUALIDADE DE CÓDIGO ========
+
+  sonarqube-db:
+    image: postgres:15-alpine
+    container_name: sonarqube-db
+    environment:
+      POSTGRES_USER: ${SONAR_DB_USER:-sonar}
+      POSTGRES_PASSWORD: ${SONAR_DB_PASSWORD:-sonar}
+      POSTGRES_DB: sonarqube
+    volumes:
+      - /DATA/cortaai/sonarqube/db:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 256M
+
+  sonarqube:
+    image: sonarqube:10-community
+    container_name: sonarqube
+    depends_on:
+      - sonarqube-db
+    ports:
+      - "9001:9000"
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonarqube
+      SONAR_JDBC_USERNAME: ${SONAR_DB_USER:-sonar}
+      SONAR_JDBC_PASSWORD: ${SONAR_DB_PASSWORD:-sonar}
+    volumes:
+      - /DATA/cortaai/sonarqube/data:/opt/sonarqube/data
+      - /DATA/cortaai/sonarqube/logs:/opt/sonarqube/logs
+      - /DATA/cortaai/sonarqube/extensions:/opt/sonarqube/extensions
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+
   frontend:
     build:
       context: ./frontend

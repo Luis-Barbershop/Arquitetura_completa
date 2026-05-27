@@ -30,6 +30,7 @@ import org.springframework.cache.CacheManager;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -78,8 +79,11 @@ class AppointmentServiceInteractionsTest {
         UUID customerId = UUID.randomUUID();
         UUID barberId = UUID.randomUUID();
         UUID shopId = UUID.randomUUID();
+        LocalDateTime startTime = LocalDateTime.now(ZoneId.of("America/Sao_Paulo")).plusMinutes(90);
 
         Appointment appointment = buildAppointment(appointmentId, customerId, barberId, shopId, AppointmentStatus.SCHEDULED);
+        appointment.setStartTime(startTime);
+        appointment.setEndTime(startTime.plusMinutes(30));
 
         UserInfoDTO caller = new UserInfoDTO();
         caller.setId(customerId);
@@ -222,6 +226,33 @@ class AppointmentServiceInteractionsTest {
     }
 
     @Test
+    void shouldDenyManualConclusionBeforeAllowedWindow() {
+        UUID appointmentId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+        LocalDateTime startTime = LocalDateTime.now(ZoneId.of("America/Sao_Paulo")).plusHours(3);
+
+        Appointment appointment = buildAppointment(appointmentId, customerId, barberId, shopId, AppointmentStatus.SCHEDULED);
+        appointment.setStartTime(startTime);
+        appointment.setEndTime(startTime.plusMinutes(30));
+
+        UserInfoDTO barber = new UserInfoDTO();
+        barber.setId(barberId);
+        barber.setEmail("barber@cortaai.com");
+
+        when(appointmentRepository.findById(appointmentId)).thenReturn(Optional.of(appointment));
+        when(userServiceClient.getUserByEmail("barber@cortaai.com")).thenReturn(barber);
+
+        assertThatThrownBy(() -> appointmentService.concludeAppointment("barber@cortaai.com", appointmentId))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("A conclusão manual só é permitida a partir de 2 horas antes do horário marcado.");
+
+        verify(appointmentRepository, never()).save(any(Appointment.class));
+        verify(rabbitTemplate, never()).convertAndSend(any(String.class), any(String.class), any(Object.class));
+    }
+
+    @Test
     void shouldUpdateAppointmentToPaymentPendingFromPaymentService() {
         UUID appointmentId = UUID.randomUUID();
         UUID customerId = UUID.randomUUID();
@@ -259,6 +290,28 @@ class AppointmentServiceInteractionsTest {
     }
 
     @Test
+    void shouldCancelAppointmentsOverlappingBarberBlockWindow() {
+        UUID appointmentId = UUID.randomUUID();
+        UUID customerId = UUID.randomUUID();
+        UUID barberId = UUID.randomUUID();
+        UUID shopId = UUID.randomUUID();
+
+        Appointment appointment = buildAppointment(appointmentId, customerId, barberId, shopId, AppointmentStatus.WALK_IN);
+        LocalDateTime start = appointment.getStartTime().minusMinutes(5);
+        LocalDateTime end = appointment.getEndTime().plusMinutes(5);
+
+        when(appointmentRepository.findAppointmentsToCancelForBarberBlock(barberId, start, end))
+                .thenReturn(List.of(appointment));
+
+        int cancelled = appointmentService.cancelAppointmentsOverlappingBarberBlock(barberId, start, end);
+
+        assertThat(cancelled).isEqualTo(1);
+        assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.CANCELLED);
+        verify(appointmentRepository).save(appointment);
+        verify(rabbitTemplate).convertAndSend(eq(RabbitConfig.EXCHANGE), eq("appointment.cancelled"), any(AppointmentCancelledEvent.class));
+    }
+
+    @Test
     void shouldCompleteAppointmentsAfterEndTime() {
         UUID appointmentId = UUID.randomUUID();
         UUID customerId = UUID.randomUUID();
@@ -275,6 +328,7 @@ class AppointmentServiceInteractionsTest {
         assertThat(completed).isEqualTo(1);
         assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.COMPLETED);
         verify(appointmentRepository).save(appointment);
+        verify(rabbitTemplate).convertAndSend(eq(RabbitConfig.EXCHANGE), eq("appointment.concluded"), any(AppointmentConcludedEvent.class));
     }
 
     private Appointment buildAppointment(UUID appointmentId,

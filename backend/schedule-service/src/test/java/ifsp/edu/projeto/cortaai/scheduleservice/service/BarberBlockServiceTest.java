@@ -42,6 +42,9 @@ class BarberBlockServiceTest {
     @Mock
     private AppointmentMapper appointmentMapper;
 
+    @Mock
+    private AppointmentService appointmentService;
+
     @InjectMocks
     private BarberBlockService service;
 
@@ -67,15 +70,19 @@ class BarberBlockServiceTest {
         when(barberBlockRepository.existsByBarberIdAndStartTimeLessThanAndEndTimeGreaterThan(
                 barberId, request.getEndTime(), request.getStartTime())).thenReturn(false);
         when(barberBlockRepository.save(any(BarberBlock.class))).thenReturn(saved);
+        when(appointmentService.cancelAppointmentsOverlappingBarberBlock(
+            barberId, request.getStartTime(), request.getEndTime())).thenReturn(2);
         when(appointmentMapper.toBlockDTO(saved)).thenReturn(response);
 
         BarberBlockDTO result = service.createBlock("firebase-1", request);
 
         assertThat(result).isEqualTo(response);
+        assertThat(result.getCancelledAppointmentsCount()).isEqualTo(2);
         ArgumentCaptor<BarberBlock> captor = ArgumentCaptor.forClass(BarberBlock.class);
         verify(barberBlockRepository).save(captor.capture());
         assertThat(captor.getValue().getBarberId()).isEqualTo(barberId);
         assertThat(captor.getValue().getReason()).isEqualTo("Consulta");
+        verify(appointmentService).cancelAppointmentsOverlappingBarberBlock(barberId, request.getStartTime(), request.getEndTime());
     }
 
     @Test

@@ -17,6 +17,7 @@ import {
 } from '@phosphor-icons/react';
 import { isOwnerUser, getBarbershopId } from '../../services/userContext';
 import { logoutUser } from '../../services/authService';
+import NotificationBell from '../NotificationBell/NotificationBell';
 import styles from './CSS/BarberNavbar.module.css';
 
 /**
@@ -112,6 +113,13 @@ function BarberNavbar({ activeTab, onTabChange, onLogout }) {
                             </button>
                         </li>
                     ))}
+
+                    <li>
+                        <div className={styles.notificationNavItem}>
+                            <NotificationBell userType="barber" visibility="mobile" />
+                            <span className={styles.navLabel}>Avisos</span>
+                        </div>
+                    </li>
 
                     {/* BotÃ£o GestÃ£o (owner) ou Mais (colaborador) */}
                     <li>

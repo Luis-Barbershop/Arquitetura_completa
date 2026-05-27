@@ -7,27 +7,38 @@ const SSE_RECONNECT_DELAY_MS = 10_000;
  * de notificações em tempo real, sem polling.
  *
  * @param {function} onUnreadCount  Callback chamado com o número de não lidas (number)
+ * @param {function} onNotificationCreated  Callback chamado com a notificação criada
  *
  * Fluxo:
  *  1. Abre EventSource para GET /api/notifications/stream?token=<firebase_token>
  *  2. Ao receber evento "unread-count", chama onUnreadCount(n)
- *  3. Em caso de erro, fecha e reconecta após SSE_RECONNECT_DELAY_MS
- *  4. Cleanup ao desmontar fecha a conexão e cancela o timeout de reconexão
+ *  3. Ao receber evento "notification-created", chama onNotificationCreated(notification, unreadCount)
+ *  4. Em caso de erro, fecha e reconecta após SSE_RECONNECT_DELAY_MS
+ *  5. Cleanup ao desmontar fecha a conexão e cancela o timeout de reconexão
  */
-export function useNotificationStream(onUnreadCount) {
+export function useNotificationStream(onUnreadCount, onNotificationCreated, enabled = true) {
     const esRef = useRef(null);
     const reconnectTimerRef = useRef(null);
     const activeRef = useRef(true);
 
     useEffect(() => {
+        if (!enabled) {
+            activeRef.current = false;
+            clearTimeout(reconnectTimerRef.current);
+            esRef.current?.close();
+            esRef.current = null;
+            return undefined;
+        }
+
         activeRef.current = true;
 
         const connect = () => {
             const token = localStorage.getItem('token');
             if (!token || !activeRef.current) return;
 
-            const baseUrl = import.meta.env.VITE_API_URL ?? '';
-            const url = `${baseUrl}/api/notifications/stream?token=${encodeURIComponent(token)}`;
+            const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.cortaai.shop/api';
+            const baseUrl = rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl;
+            const url = `${baseUrl}/notifications/stream?token=${encodeURIComponent(token)}`;
 
             const es = new EventSource(url);
             esRef.current = es;
@@ -37,6 +48,16 @@ export function useNotificationStream(onUnreadCount) {
                 try {
                     const { unreadCount } = JSON.parse(e.data);
                     onUnreadCount(Number(unreadCount) || 0);
+                } catch {
+                    // payload malformado — ignora
+                }
+            });
+
+            es.addEventListener('notification-created', (e) => {
+                if (!activeRef.current || typeof onNotificationCreated !== 'function') return;
+                try {
+                    const { notification, unreadCount } = JSON.parse(e.data);
+                    onNotificationCreated(notification, Number(unreadCount) || 0);
                 } catch {
                     // payload malformado — ignora
                 }
@@ -61,5 +82,5 @@ export function useNotificationStream(onUnreadCount) {
         };
     // onUnreadCount é passado como prop — envolver em useCallback no componente pai
     // para evitar reconexão desnecessária ao re-render
-    }, [onUnreadCount]);
+    }, [onUnreadCount, onNotificationCreated, enabled]);
 }

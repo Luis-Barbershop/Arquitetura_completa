@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -71,14 +73,22 @@ public class NotificationService {
 
         // E-mail — cliente
         if (customerEmail != null && !customerEmail.isBlank()) {
-            emailService.sendAppointmentConfirmedToCustomer(
-                    customerEmail, customerName, barbershopName, barberName, startTime, totalPrice);
+            try {
+                emailService.sendAppointmentConfirmedToCustomer(
+                        customerEmail, customerName, barbershopName, barberName, startTime, totalPrice);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail appointment.created ao cliente {}: {}", customerEmail, e.getMessage());
+            }
         }
 
         // E-mail — barbeiro
         if (barberEmail != null && !barberEmail.isBlank()) {
-            emailService.sendNewAppointmentToBarber(
-                    barberEmail, barberName, customerName, startTime, totalPrice);
+            try {
+                emailService.sendNewAppointmentToBarber(
+                        barberEmail, barberName, customerName, startTime, totalPrice);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail appointment.created ao barbeiro {}: {}", barberEmail, e.getMessage());
+            }
         }
     }
 
@@ -105,8 +115,12 @@ public class NotificationService {
 
             // E-mail — barbeiro
             if (barberEmail != null && !barberEmail.isBlank()) {
-                emailService.sendCancelledByCustomerToBarber(
-                        barberEmail, barberName, customerName, startTime);
+                try {
+                    emailService.sendCancelledByCustomerToBarber(
+                            barberEmail, barberName, customerName, startTime);
+                } catch (Exception e) {
+                    log.warn("Falha ao enviar e-mail cancelled-by-customer ao barbeiro {}: {}", barberEmail, e.getMessage());
+                }
             }
         } else {
             // IN_APP — cliente
@@ -120,8 +134,12 @@ public class NotificationService {
 
             // E-mail — cliente
             if (customerEmail != null && !customerEmail.isBlank()) {
-                emailService.sendCancelledByBarberToCustomer(
-                        customerEmail, customerName, barbershopName, barberName, startTime);
+                try {
+                    emailService.sendCancelledByBarberToCustomer(
+                            customerEmail, customerName, barbershopName, barberName, startTime);
+                } catch (Exception e) {
+                    log.warn("Falha ao enviar e-mail cancelled-by-barber ao cliente {}: {}", customerEmail, e.getMessage());
+                }
             }
         }
     }
@@ -144,8 +162,12 @@ public class NotificationService {
 
         // E-mail — cliente
         if (customerEmail != null && !customerEmail.isBlank()) {
-            emailService.sendConcludedToCustomer(
-                    customerEmail, customerName, barberName, barbershopName);
+            try {
+                emailService.sendConcludedToCustomer(
+                        customerEmail, customerName, barberName, barbershopName);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail concluded ao cliente {}: {}", customerEmail, e.getMessage());
+            }
         }
     }
 
@@ -182,14 +204,22 @@ public class NotificationService {
 
         // E-mail — cliente
         if (customerEmail != null && !customerEmail.isBlank()) {
-            emailService.sendRescheduledToCustomer(
-                    customerEmail, customerName, barbershopName, barberName, oldStartTime, newStartTime);
+            try {
+                emailService.sendRescheduledToCustomer(
+                        customerEmail, customerName, barbershopName, barberName, oldStartTime, newStartTime);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail rescheduled ao cliente {}: {}", customerEmail, e.getMessage());
+            }
         }
 
         // E-mail — barbeiro
         if (barberEmail != null && !barberEmail.isBlank()) {
-            emailService.sendRescheduledToBarber(
-                    barberEmail, barberName, customerName, oldStartTime, newStartTime);
+            try {
+                emailService.sendRescheduledToBarber(
+                        barberEmail, barberName, customerName, oldStartTime, newStartTime);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail rescheduled ao barbeiro {}: {}", barberEmail, e.getMessage());
+            }
         }
     }
 
@@ -210,7 +240,11 @@ public class NotificationService {
 
         // E-mail — cliente
         if (customerEmail != null && !customerEmail.isBlank()) {
-            emailService.sendPaymentApprovedToCustomer(customerEmail, "Cliente", amount);
+            try {
+                emailService.sendPaymentApprovedToCustomer(customerEmail, "Cliente", amount);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail payment.approved ao cliente {}: {}", customerEmail, e.getMessage());
+            }
         }
 
         // IN_APP + Push — barbeiro (via feign ao schedule-service)
@@ -248,8 +282,12 @@ public class NotificationService {
                         event.getStartTime().toLocalTime().toString()),
                 pushData(NotificationType.APPOINTMENT_REMINDER, "/meus-agendamentos"));
         if (event.getCustomerEmail() != null && !event.getCustomerEmail().isBlank()) {
-            emailService.sendReminderToCustomer(event.getCustomerEmail(), event.getCustomerName(),
-                    event.getBarbershopName(), event.getBarberName(), event.getStartTime());
+            try {
+                emailService.sendReminderToCustomer(event.getCustomerEmail(), event.getCustomerName(),
+                        event.getBarbershopName(), event.getBarberName(), event.getStartTime());
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail reminder ao cliente {}: {}", event.getCustomerEmail(), e.getMessage());
+            }
         }
 
         // IN_APP + Push — barbeiro
@@ -286,9 +324,25 @@ public class NotificationService {
         Notification saved = notificationRepository.save(notification);
         log.info("Notificação criada [{}] para userId={}: {}", type, userId, title);
 
-        // Empurra contagem atualizada via SSE (se o usuário tiver conexão ativa)
+        // Captura count e DTO ainda dentro da transação (leitura consistente)
         long unreadCount = notificationRepository.countByUserIdAndReadFalse(userId);
-        sseEmitterService.sendUnreadCount(userId, unreadCount);
+        NotificationDTO dto = toDTO(saved);
+
+        // Dispara SSE APÓS o commit para evitar race condition:
+        // sem isso, o cliente recebe o evento e chama fetchNotifications antes do
+        // banco confirmar a gravação, retornando lista vazia.
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sseEmitterService.sendUnreadCount(userId, unreadCount);
+                    sseEmitterService.sendNotificationCreated(userId, dto, unreadCount);
+                }
+            });
+        } else {
+            sseEmitterService.sendUnreadCount(userId, unreadCount);
+            sseEmitterService.sendNotificationCreated(userId, dto, unreadCount);
+        }
 
         return saved;
     }
@@ -304,14 +358,25 @@ public class NotificationService {
     @Transactional
     public NotificationDTO markAsRead(UUID notificationId, UUID userId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notificação não encontrada: " + notificationId));
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Notificação não encontrada: " + notificationId));
         if (!notification.getUserId().equals(userId)) {
-            throw new RuntimeException("Notificação não pertence ao usuário");
+            throw new IllegalArgumentException("Notificação não pertence ao usuário solicitante");
         }
         notification.setRead(true);
         Notification saved = notificationRepository.save(notification);
         long unreadCount = notificationRepository.countByUserIdAndReadFalse(userId);
-        sseEmitterService.sendUnreadCount(userId, unreadCount);
+
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sseEmitterService.sendUnreadCount(userId, unreadCount);
+                }
+            });
+        } else {
+            sseEmitterService.sendUnreadCount(userId, unreadCount);
+        }
+
         return toDTO(saved);
     }
 
@@ -334,11 +399,15 @@ public class NotificationService {
         pushNotificationService.sendToUser(ownerId,
                 "Novo pedido de entrada!",
                 String.format("%s quer entrar na barbearia %s", barberName, barbershopName),
-                pushData(NotificationType.JOIN_REQUEST_RECEIVED, "/barber-team"));
+                pushData(NotificationType.JOIN_REQUEST_RECEIVED, "/barberHome/time"));
 
         // E-mail — dono
         if (ownerEmail != null && !ownerEmail.isBlank()) {
-            emailService.sendJoinRequestReceivedToOwner(ownerEmail, barbershopName, barberName);
+            try {
+                emailService.sendJoinRequestReceivedToOwner(ownerEmail, barbershopName, barberName);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail join-request ao owner {}: {}", ownerEmail, e.getMessage());
+            }
         }
 
         log.info("event=join-request-notification-created ownerId={} barberName={} shop={}",
@@ -355,11 +424,15 @@ public class NotificationService {
         pushNotificationService.sendToUser(barberId,
                 "Você recebeu um convite!",
                 String.format("A barbearia %s convidou você para o time.", barbershopName),
-                pushData(NotificationType.INVITE_RECEIVED, "/barberProfile"));
+                pushData(NotificationType.INVITE_RECEIVED, "/barberHome/perfil"));
 
         // E-mail — barbeiro convidado
         if (barberEmail != null && !barberEmail.isBlank()) {
-            emailService.sendInviteReceivedToBarber(barberEmail, barbershopName);
+            try {
+                emailService.sendInviteReceivedToBarber(barberEmail, barbershopName);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail invite ao barbeiro {}: {}", barberEmail, e.getMessage());
+            }
         }
 
         log.info("event=invite-notification-created barberId={} shop={}", barberId, barbershopName);
@@ -376,10 +449,14 @@ public class NotificationService {
         pushNotificationService.sendToUser(barberId,
                 "Você foi removido da barbearia",
                 String.format("Você não faz mais parte da equipe %s.", barbershopName),
-                pushData(NotificationType.BARBER_REMOVED, "/barberProfile"));
+                pushData(NotificationType.BARBER_REMOVED, "/barberHome/perfil"));
 
         if (barberEmail != null && !barberEmail.isBlank()) {
-            emailService.sendBarberRemovedToBarber(barberEmail, barberName, barbershopName);
+            try {
+                emailService.sendBarberRemovedToBarber(barberEmail, barberName, barbershopName);
+            } catch (Exception e) {
+                log.warn("Falha ao enviar e-mail barber-removed ao barbeiro {}: {}", barberEmail, e.getMessage());
+            }
         }
 
         log.info("event=barber-removed-notification-created barberId={} shop={}", barberId, barbershopName);

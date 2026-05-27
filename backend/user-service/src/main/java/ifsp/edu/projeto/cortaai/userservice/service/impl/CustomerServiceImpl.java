@@ -63,7 +63,7 @@ public class CustomerServiceImpl implements CustomerService {
      * Usado nos endpoints de favoritos para evitar 404 em usuários com perfil incompleto.
      */
     @Transactional
-    private Customer findOrCreateByFirebaseUid(String firebaseUid) {
+    public Customer findOrCreateByFirebaseUid(String firebaseUid) {
         return customerRepository.findByFirebaseUid(firebaseUid).orElseGet(() -> {
             Customer novo = new Customer();
             novo.setFirebaseUid(firebaseUid);

@@ -4,7 +4,7 @@ import ifsp.edu.projeto.cortaai.scheduleservice.model.enums.AiChatMode;
 
 public record AiChatResponseDTO(
         String message,
-        /** "gemini" | "groq" | "fallback" */
+        /** "openrouter" | "cohere" | "fallback" */
         String source,
         AiChatMode mode
 ) {}

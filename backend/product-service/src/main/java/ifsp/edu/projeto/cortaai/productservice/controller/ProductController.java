@@ -53,8 +53,9 @@ public class ProductController {
     })
     @PostMapping
     public ResponseEntity<ProductDTO> createProduct(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @Parameter(description = "Dados de criação do produto") @Valid @RequestBody CreateProductDTO dto) {
-        ProductDTO product = productService.createProduct(dto);
+        ProductDTO product = productService.createProduct(firebaseUid, dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(product);
     }
 
@@ -64,13 +65,15 @@ public class ProductController {
     @Operation(summary = "Listar produtos de uma barbearia", description = "Retorna todos os produtos ativos que pertencem ao catálogo de uma barbearia específica.")
     @GetMapping
     public ResponseEntity<List<ProductDTO>> getProductsByBarbershop(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @Parameter(description = "UUID da barbearia") @RequestParam UUID barbershopId) {
-        return ResponseEntity.ok(productService.getProductsByBarbershop(barbershopId));
+        return ResponseEntity.ok(productService.getProductsByBarbershop(firebaseUid, barbershopId));
     }
 
     @Operation(summary = "Inventário paginado", description = "Lista produtos ativos com paginação e filtros de busca, categoria e estoque baixo.")
     @GetMapping("/inventory")
     public ResponseEntity<InventoryPageDTO> getInventoryPage(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @Parameter(description = "UUID da barbearia") @RequestParam UUID barbershopId,
             @Parameter(description = "Busca por nome/descricao") @RequestParam(required = false) String search,
             @Parameter(description = "Categoria do produto") @RequestParam(required = false) ProductCategory category,
@@ -78,7 +81,7 @@ public class ProductController {
             @Parameter(description = "Filtrar apenas estoque baixo") @RequestParam(required = false) Boolean lowStock,
             @Parameter(description = "Página (base 0)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Tamanho da página") @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(productService.getInventoryPage(barbershopId, search, category, categoryId, lowStock, page, size));
+        return ResponseEntity.ok(productService.getInventoryPage(firebaseUid, barbershopId, search, category, categoryId, lowStock, page, size));
     }
 
     /**
@@ -92,8 +95,9 @@ public class ProductController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<ProductDTO> getById(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @Parameter(description = "UUID do produto") @PathVariable UUID id) {
-        return ResponseEntity.ok(productService.getById(id));
+        return ResponseEntity.ok(productService.getById(firebaseUid, id));
     }
 
     /**
@@ -109,9 +113,10 @@ public class ProductController {
     })
     @PutMapping("/{id}")
     public ResponseEntity<ProductDTO> updateProduct(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @Parameter(description = "UUID do produto") @PathVariable UUID id,
             @Parameter(description = "Novos dados do produto") @RequestBody UpdateProductDTO dto) {
-        return ResponseEntity.ok(productService.updateProduct(id, dto));
+        return ResponseEntity.ok(productService.updateProduct(firebaseUid, id, dto));
     }
 
     /**
@@ -125,63 +130,72 @@ public class ProductController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @Parameter(description = "UUID do produto") @PathVariable UUID id) {
-        productService.deleteProduct(id);
+        productService.deleteProduct(firebaseUid, id);
         return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Histórico de movimentações", description = "Retorna histórico paginado de entradas/saídas de estoque de um produto.")
     @GetMapping("/{id}/movements")
     public ResponseEntity<List<StockMovementDTO>> getStockMovements(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @Parameter(description = "UUID do produto") @PathVariable UUID id,
             @Parameter(description = "Página (base 0)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Tamanho da página") @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(productService.getStockMovementHistory(id, page, size));
+        return ResponseEntity.ok(productService.getStockMovementHistory(firebaseUid, id, page, size));
     }
 
     @Operation(summary = "Registra movimentação de estoque", description = "Registra entrada, consumo interno, venda, perda ou devolução e atualiza a quantidade do produto.")
     @PostMapping("/stock-movements")
     public ResponseEntity<StockMovementDTO> createStockMovement(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @RequestBody @Valid StockMovementRequestDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(productService.createStockMovement(dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.createStockMovement(firebaseUid, dto));
     }
 
     @Operation(summary = "Lista categorias dinâmicas", description = "Retorna categorias criadas pelo owner para a barbearia.")
     @GetMapping("/categories")
-    public ResponseEntity<List<CategoryResponseDTO>> getCategories(@RequestParam UUID barbershopId) {
-        return ResponseEntity.ok(productService.getCategories(barbershopId));
+    public ResponseEntity<List<CategoryResponseDTO>> getCategories(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
+            @RequestParam UUID barbershopId) {
+        return ResponseEntity.ok(productService.getCategories(firebaseUid, barbershopId));
     }
 
     @Operation(summary = "Cria categoria dinâmica", description = "Cria uma categoria de estoque no escopo da barbearia.")
     @PostMapping("/categories")
     public ResponseEntity<CategoryResponseDTO> createCategory(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @RequestParam UUID barbershopId,
             @RequestBody @Valid CategoryRequestDTO dto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(productService.createCategory(barbershopId, dto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(productService.createCategory(firebaseUid, barbershopId, dto));
     }
 
     @Operation(summary = "Atualiza categoria dinâmica", description = "Renomeia uma categoria de estoque da barbearia.")
     @PutMapping("/categories/{id}")
     public ResponseEntity<CategoryResponseDTO> updateCategory(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @RequestParam UUID barbershopId,
             @PathVariable UUID id,
             @RequestBody @Valid CategoryRequestDTO dto) {
-        return ResponseEntity.ok(productService.updateCategory(barbershopId, id, dto));
+        return ResponseEntity.ok(productService.updateCategory(firebaseUid, barbershopId, id, dto));
     }
 
     @Operation(summary = "Exclui categoria dinâmica", description = "Exclui categoria se não houver produto ativo vinculado.")
     @DeleteMapping("/categories/{id}")
     public ResponseEntity<Void> deleteCategory(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @RequestParam UUID barbershopId,
             @PathVariable UUID id) {
-        productService.deleteCategory(barbershopId, id);
+        productService.deleteCategory(firebaseUid, barbershopId, id);
         return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Alertas de saúde do estoque", description = "Retorna todos os produtos com indicação de estoque crítico via view v_stock_health_alert.")
     @GetMapping("/analytics/stock-health")
     public ResponseEntity<List<StockHealthAlertResponseDTO>> getStockHealthAlert(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
             @RequestParam UUID barbershopId) {
-        return ResponseEntity.ok(productService.getStockHealthAlert(barbershopId));
+        return ResponseEntity.ok(productService.getStockHealthAlert(firebaseUid, barbershopId));
     }
 }

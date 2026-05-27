@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.GCMParameterSpec;
@@ -17,7 +18,7 @@ public final class DataCrypto {
     private static final String CIPHER_ALGORITHM = "AES/GCM/NoPadding";
     private static final int IV_LENGTH_BYTES = 12;
     private static final int TAG_LENGTH_BITS = 128;
-    private static volatile SecretKeySpec keySpec;
+    private static final AtomicReference<SecretKeySpec> keySpec = new AtomicReference<>();
 
     private DataCrypto() {
     }
@@ -31,7 +32,7 @@ public final class DataCrypto {
         if (key.length != 16 && key.length != 24 && key.length != 32) {
             throw new IllegalStateException("CORTAAI_DATA_CRYPTO_KEY deve ser Base64 de uma chave AES de 16, 24 ou 32 bytes.");
         }
-        keySpec = new SecretKeySpec(key, "AES");
+        keySpec.set(new SecretKeySpec(key, "AES"));
     }
 
     public static String encrypt(String plaintext) {
@@ -43,7 +44,7 @@ public final class DataCrypto {
         try {
             byte[] iv = deterministicIv(plaintext);
             Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec, new GCMParameterSpec(TAG_LENGTH_BITS, iv));
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec.get(), new GCMParameterSpec(TAG_LENGTH_BITS, iv));
             byte[] ciphertext = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
             byte[] payload = ByteBuffer.allocate(iv.length + ciphertext.length)
                     .put(iv)
@@ -66,7 +67,7 @@ public final class DataCrypto {
             byte[] iv = Arrays.copyOfRange(payload, 0, IV_LENGTH_BYTES);
             byte[] ciphertext = Arrays.copyOfRange(payload, IV_LENGTH_BYTES, payload.length);
             Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, keySpec, new GCMParameterSpec(TAG_LENGTH_BITS, iv));
+            cipher.init(Cipher.DECRYPT_MODE, keySpec.get(), new GCMParameterSpec(TAG_LENGTH_BITS, iv));
             return new String(cipher.doFinal(ciphertext), StandardCharsets.UTF_8);
         } catch (GeneralSecurityException | IllegalArgumentException ex) {
             throw new IllegalStateException("Falha ao descriptografar dado sensível.", ex);
@@ -81,7 +82,7 @@ public final class DataCrypto {
 
         try {
             Mac mac = Mac.getInstance(HMAC_ALGORITHM);
-            mac.init(new SecretKeySpec(keySpec.getEncoded(), HMAC_ALGORITHM));
+            mac.init(new SecretKeySpec(keySpec.get().getEncoded(), HMAC_ALGORITHM));
             byte[] digest = mac.doFinal(value.getBytes(StandardCharsets.UTF_8));
             StringBuilder hex = new StringBuilder(digest.length * 2);
             for (byte b : digest) {
@@ -95,13 +96,13 @@ public final class DataCrypto {
 
     private static byte[] deterministicIv(String plaintext) throws GeneralSecurityException {
         Mac mac = Mac.getInstance(HMAC_ALGORITHM);
-        mac.init(new SecretKeySpec(keySpec.getEncoded(), HMAC_ALGORITHM));
+        mac.init(new SecretKeySpec(keySpec.get().getEncoded(), HMAC_ALGORITHM));
         byte[] digest = mac.doFinal(("cortaai-data-v1:" + plaintext).getBytes(StandardCharsets.UTF_8));
         return Arrays.copyOf(digest, IV_LENGTH_BYTES);
     }
 
     private static void ensureConfigured() {
-        if (keySpec == null) {
+        if (keySpec.get() == null) {
             throw new IllegalStateException("Criptografia de dados sensíveis não foi inicializada.");
         }
     }

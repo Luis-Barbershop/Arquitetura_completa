@@ -24,7 +24,8 @@ function VerifyEmailPage() {
     const locationMode = location.state?.mode;
     const queryMode    = searchParams.get("mode");
     const isWaiting    = locationMode === 'waiting';
-    const isVerify     = queryMode === 'verifyEmail';
+    const isVerify     = queryMode === 'verifyEmail' || queryMode === 'verifyAndChangeEmail';
+    const isReset      = queryMode === 'resetPassword';
 
     // ─────────────────────────────────────────────────────────────────────────
     // MODO: WAITING — aguardando o usuário clicar no link enviado por e-mail
@@ -67,6 +68,11 @@ function VerifyEmailPage() {
     const [errorMsg, setErrorMsg] = useState("");
 
     useEffect(() => {
+        if (isReset) {
+            navigate(`/change-password${location.search}`, { replace: true });
+            return;
+        }
+
         if (!isVerify) {
             // Nem modo waiting nem oobCode → acesso direto inválido
             if (!isWaiting) {
@@ -89,7 +95,7 @@ function VerifyEmailPage() {
                 setStatus("error");
                 setErrorMsg("Parece que este e-mail já foi verificado! :(");
             });
-    }, [searchParams, isVerify, isWaiting]);
+    }, [searchParams, isVerify, isWaiting, isReset, navigate, location.search]);
 
     // ─────────────────────────────────────────────────────────────────────────
     // RENDER: modo "waiting"

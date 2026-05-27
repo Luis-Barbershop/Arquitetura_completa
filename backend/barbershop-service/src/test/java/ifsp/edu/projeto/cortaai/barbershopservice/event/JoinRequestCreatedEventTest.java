@@ -23,6 +23,7 @@ class JoinRequestCreatedEventTest {
                 shopId,
                 "Barbearia Centro",
                 ownerId,
+                "owner@example.com",
                 "JOIN"
         );
 
@@ -33,6 +34,7 @@ class JoinRequestCreatedEventTest {
         assertThat(event.getBarbershopId()).isEqualTo(shopId);
         assertThat(event.getBarbershopName()).isEqualTo("Barbearia Centro");
         assertThat(event.getOwnerId()).isEqualTo(ownerId);
+        assertThat(event.getOwnerEmail()).isEqualTo("owner@example.com");
         assertThat(event.getRequestType()).isEqualTo("JOIN");
     }
 
@@ -51,6 +53,7 @@ class JoinRequestCreatedEventTest {
         event.setBarbershopId(shopId);
         event.setBarbershopName("Studio Bia");
         event.setOwnerId(ownerId);
+        event.setOwnerEmail("owner-bia@example.com");
         event.setRequestType("INVITE");
 
         assertThat(event.getRequestId()).isEqualTo(requestId);
@@ -60,6 +63,7 @@ class JoinRequestCreatedEventTest {
         assertThat(event.getBarbershopId()).isEqualTo(shopId);
         assertThat(event.getBarbershopName()).isEqualTo("Studio Bia");
         assertThat(event.getOwnerId()).isEqualTo(ownerId);
+        assertThat(event.getOwnerEmail()).isEqualTo("owner-bia@example.com");
         assertThat(event.getRequestType()).isEqualTo("INVITE");
     }
 }

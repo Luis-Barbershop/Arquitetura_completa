@@ -5,8 +5,11 @@ import ifsp.edu.projeto.cortaai.scheduleservice.dto.ActivityInfoDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.AiChatRequestDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.AiChatResponseDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.CommissionRuleInfoDTO;
+import ifsp.edu.projeto.cortaai.scheduleservice.dto.DayScheduleDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.dto.UserInfoDTO;
+import ifsp.edu.projeto.cortaai.scheduleservice.dto.WorkBlockDTO;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.BarbershopServiceClient;
+import ifsp.edu.projeto.cortaai.scheduleservice.feign.UserAnalyticsClient;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.UserServiceClient;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.ProductServiceClient;
 import ifsp.edu.projeto.cortaai.scheduleservice.feign.PaymentServiceClient;
@@ -26,9 +29,14 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -41,11 +49,13 @@ public class AiChatServiceImpl implements AiChatService {
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
     private static final int MAX_APPOINTMENTS_CONTEXT = 50;
 
     private final AppointmentRepository appointmentRepository;
     private final VBarberSkillMatrixRepository vBarberSkillMatrixRepository;
     private final UserServiceClient userServiceClient;
+    private final UserAnalyticsClient userAnalyticsClient;
     private final BarbershopServiceClient barbershopServiceClient;
     private final ProductServiceClient productServiceClient;
     private final PaymentServiceClient paymentServiceClient;
@@ -55,13 +65,13 @@ public class AiChatServiceImpl implements AiChatService {
     @Value("${ai.gemini.api-key:}")
     private String geminiApiKey;
 
-    @Value("${ai.gemini.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent}")
+    @Value("${ai.gemini.url}")
     private String geminiUrl;
 
     @Value("${ai.groq.api-key:}")
     private String groqApiKey;
 
-    @Value("${ai.groq.url:https://api.groq.com/openai/v1/chat/completions}")
+    @Value("${ai.groq.url}")
     private String groqUrl;
 
     @Value("${ai.groq.model:llama-3.3-70b-versatile}")
@@ -70,20 +80,23 @@ public class AiChatServiceImpl implements AiChatService {
     @Value("${ai.openrouter.api-key:}")
     private String openrouterApiKey;
 
-    @Value("${ai.openrouter.url:https://openrouter.ai/api/v1/chat/completions}")
+    @Value("${ai.openrouter.url}")
     private String openrouterUrl;
 
-    @Value("${ai.openrouter.model:mistralai/mistral-7b-instruct:free}")
+    @Value("${ai.openrouter.model}")
     private String openrouterModel;
 
     @Value("${ai.cohere.api-key:}")
     private String cohereApiKey;
 
-    @Value("${ai.cohere.url:https://api.cohere.com/v2/chat}")
+    @Value("${ai.cohere.url}")
     private String cohereUrl;
 
     @Value("${ai.cohere.model:command-r}")
     private String cohereModel;
+
+    @Value("${app.timezone:America/Sao_Paulo}")
+    private String appTimezone = "America/Sao_Paulo";
 
     @Override
     @Transactional(readOnly = true)
@@ -145,10 +158,19 @@ public class AiChatServiceImpl implements AiChatService {
         UUID barbershopId = user != null ? user.getBarbershopId() : null;
         boolean isCustomer = user != null && "CUSTOMER".equalsIgnoreCase(user.getUserType());
         boolean isOwner    = isOwnerUser(user, userRole);
-        LocalDateTime now  = LocalDateTime.now();
-        LocalDate today = LocalDate.now();
+        LocalDateTime now  = getNowInAppTimezone();
+        LocalDate today = now.toLocalDate();
 
         StringBuilder ctx = new StringBuilder();
+        ctx.append("Data e hora de referência do sistema para o usuário: ")
+                .append(now.format(FMT))
+                .append(" (fuso ")
+                .append(resolveZoneId().getId())
+                .append("). Hoje é ")
+                .append(today.format(DATE_FMT))
+                .append("; amanhã é ")
+                .append(today.plusDays(1).format(DATE_FMT))
+                .append(".\n\n");
 
         // 1. Agenda (sempre incluída — requer internalId válido)
         if (internalId != null) {
@@ -193,6 +215,9 @@ public class AiChatServiceImpl implements AiChatService {
 
         if (!isCustomer && internalId != null) {
             ctx.append("\n\n").append(formatOperationalAppointmentMetrics(internalId, barbershopId, isOwner, today, now));
+            ctx.append("\n\n").append(formatWorkScheduleAndAvailability(internalId, barbershopId, isOwner, today, now));
+            ctx.append("\n\n").append(formatCancellationByWeekdayMetrics(internalId, barbershopId, isOwner, today, now));
+            ctx.append("\n\n").append(formatCustomerFrequencyContext(internalId, barbershopId, isOwner, now));
         }
 
         if (!isCustomer && barbershopId != null) {
@@ -203,32 +228,68 @@ public class AiChatServiceImpl implements AiChatService {
         if (isOwner) {
             ctx.append("\n\n").append(formatSkillMatrix(barbershopId));
             ctx.append("\n\n").append(formatServiceRevenueContext(barbershopId));
+            ctx.append("\n\n").append(formatServicePromotionContext(barbershopId, now));
             ctx.append("\n\n").append(formatUncoveredServicesContext(barbershopId));
+            ctx.append("\n\n").append(formatTeamContext(barbershopId, internalId));
+            ctx.append("\n\n").append(formatCustomerAcquisitionContext(today));
             ctx.append("\n\n").append(formatStockContext(barbershopId));
         }
 
         return ctx.toString();
     }
 
+    private LocalDateTime getNowInAppTimezone() {
+        return LocalDateTime.now(resolveZoneId());
+    }
+
+    private ZoneId resolveZoneId() {
+        try {
+            String timezone = appTimezone == null || appTimezone.isBlank()
+                    ? "America/Sao_Paulo"
+                    : appTimezone;
+            return ZoneId.of(timezone);
+        } catch (Exception e) {
+            log.warn("gustavo: timezone inválido em app.timezone='{}'; usando America/Sao_Paulo", appTimezone);
+            return ZoneId.of("America/Sao_Paulo");
+        }
+    }
+
+    private String translateStatus(Object status) {
+        if (status == null) return "agendado";
+        return switch (status.toString()) {
+            case "SCHEDULED"       -> "agendado";
+            case "CONFIRMED"       -> "confirmado";
+            case "IN_PROGRESS"     -> "em atendimento";
+            case "COMPLETED",
+                 "CONCLUDED"       -> "concluído";
+            case "WALK_IN"         -> "encaixe (walk-in)";
+            case "CANCELLED"       -> "cancelado";
+            case "NO_SHOW"         -> "não compareceu";
+            case "PAYMENT_PENDING" -> "aguardando pagamento";
+            case "EXPIRED"         -> "expirado";
+            default                -> status.toString().toLowerCase();
+        };
+    }
+
     private String formatPreviewContext(List<Appointment> list) {
-        if (list.isEmpty()) return "Nenhum agendamento futuro encontrado.";
-        StringBuilder sb = new StringBuilder("Agendamentos futuros (até " + MAX_APPOINTMENTS_CONTEXT + " itens):\n");
+        if (list.isEmpty()) return "Nenhum atendimento futuro na agenda.";
+        StringBuilder sb = new StringBuilder("Próximos atendimentos agendados (até " + MAX_APPOINTMENTS_CONTEXT + " itens):\n");
         list.stream().limit(MAX_APPOINTMENTS_CONTEXT).forEach(a -> sb
                 .append("- ")
                 .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
-                .append(" | ")
+                .append(" | cliente: ")
                 .append(firstNameOnly(a.getCustomerName()))
                 .append(" | barbeiro: ")
                 .append(firstNameOnly(a.getBarberName()))
-                .append(" | status: ")
-                .append(a.getStatus())
+                .append(" | situação: ")
+                .append(translateStatus(a.getStatus()))
                 .append('\n'));
         return sb.toString();
     }
 
     private String formatPreviewContextCustomer(List<Appointment> list) {
-        if (list.isEmpty()) return "Você não possui agendamentos futuros.";
-        StringBuilder sb = new StringBuilder("Seus próximos agendamentos:\n");
+        if (list.isEmpty()) return "Você não possui atendimentos futuros agendados.";
+        StringBuilder sb = new StringBuilder("Seus próximos atendimentos agendados:\n");
         list.stream().limit(MAX_APPOINTMENTS_CONTEXT).forEach(a -> {
             String servicos = a.getActivities() == null || a.getActivities().isEmpty() ? "—"
                     : a.getActivities().stream().map(act -> act.getActivityName()).collect(java.util.stream.Collectors.joining(", "));
@@ -236,7 +297,7 @@ public class AiChatServiceImpl implements AiChatService {
               .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
               .append(" | barbeiro: ").append(firstNameOnly(a.getBarberName()))
               .append(" | serviço: ").append(servicos)
-              .append(" | status: ").append(a.getStatus())
+              .append(" | situação: ").append(translateStatus(a.getStatus()))
               .append('\n');
         });
         return sb.toString();
@@ -248,12 +309,12 @@ public class AiChatServiceImpl implements AiChatService {
         list.stream().limit(MAX_APPOINTMENTS_CONTEXT).forEach(a -> sb
                 .append("- ")
                 .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
-                .append(" | ")
+                .append(" | cliente: ")
                 .append(firstNameOnly(a.getCustomerName()))
                 .append(" | barbeiro: ")
                 .append(firstNameOnly(a.getBarberName()))
                 .append(" | valor: R$ ")
-                .append(a.getTotalPrice() != null ? a.getTotalPrice().toPlainString() : "0,00")
+                .append(a.getTotalPrice() != null ? formatMoney(a.getTotalPrice()) : "0,00")
                 .append('\n'));
         return sb.toString();
     }
@@ -275,11 +336,13 @@ public class AiChatServiceImpl implements AiChatService {
         return sb.toString();
     }
 
-    private String formatCancelledContext(List<Appointment> list) {        StringBuilder sb = new StringBuilder("Agendamentos cancelados / não compareceu:\n");
+    private String formatCancelledContext(List<Appointment> list) {
+        StringBuilder sb = new StringBuilder("Atendimentos cancelados ou com falta do cliente:\n");
         list.stream().limit(20).forEach(a -> sb
                 .append("- ")
                 .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
-                .append(" | status: ").append(a.getStatus())
+                .append(" | ").append(firstNameOnly(a.getBarberName()))
+                .append(" | motivo: ").append(translateStatus(a.getStatus()))
                 .append('\n'));
         return sb.toString();
     }
@@ -307,9 +370,10 @@ public class AiChatServiceImpl implements AiChatService {
             LocalDateTime monthStartDateTime = monthStart.atStartOfDay();
             LocalDateTime monthEnd = today.plusDays(1).atStartOfDay().minusNanos(1);
 
-            List<Appointment> todayAppointments = findScopedAppointments(barberId, barbershopId, isOwner, todayStart, todayEnd);
-            List<Appointment> tomorrowAppointments = findScopedAppointments(barberId, barbershopId, isOwner, tomorrowStart, tomorrowEnd);
-            List<Appointment> monthAppointments = findScopedAppointments(barberId, barbershopId, isOwner, monthStartDateTime, monthEnd);
+            List<Appointment> todayAppointments = safeList(findScopedAppointments(barberId, barbershopId, isOwner, todayStart, todayEnd));
+            List<Appointment> tomorrowAppointments = safeList(findScopedAppointments(barberId, barbershopId, isOwner, tomorrowStart, tomorrowEnd));
+            List<Appointment> monthAppointments = safeList(findScopedAppointments(barberId, barbershopId, isOwner, monthStartDateTime, monthEnd));
+            List<Appointment> upcomingAppointments = safeList(findScopedAppointments(barberId, barbershopId, isOwner, now, now.plusDays(14)));
 
             long todayUpcoming = todayAppointments.stream()
                     .filter(a -> a.getStartTime() != null && !a.getStartTime().isBefore(now))
@@ -325,16 +389,17 @@ public class AiChatServiceImpl implements AiChatService {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             String scope = isOwner ? "toda a barbearia" : "apenas este barbeiro";
-            StringBuilder sb = new StringBuilder("Agenda e atendimentos do painel (escopo: " + scope + "):\n");
+            StringBuilder sb = new StringBuilder("Resumo da agenda e atendimentos (" + scope + "):\n");
             sb.append("- Hoje (").append(today.format(DATE_FMT)).append("): ")
-                    .append(todayUpcoming).append(" próximos/ativos, ")
-                    .append(todayCompleted).append(" concluídos\n");
+                    .append(todayUpcoming).append(" atendimento(s) ainda por vir, ")
+                    .append(todayCompleted).append(" já concluído(s)\n");
             sb.append("- Amanhã (").append(today.plusDays(1).format(DATE_FMT)).append("): ")
-                    .append(tomorrowActive).append(" agendamentos ativos\n");
+                    .append(tomorrowActive).append(" atendimento(s) agendado(s)\n");
             sb.append("- Mês atual (").append(monthStart.format(DATE_FMT)).append(" a ").append(today.format(DATE_FMT)).append("): ")
-                    .append(monthCompleted).append(" atendimentos concluídos, ")
-                    .append(monthLost).append(" cancelados/no-show, ")
-                    .append("valor bruto em atendimentos concluídos: R$ ").append(formatMoney(monthRevenue)).append('\n');
+                    .append(monthCompleted).append(" atendimento(s) concluído(s), ")
+                    .append(monthLost).append(" cancelado(s)/falta do cliente, ")
+                    .append("receita bruta dos concluídos: R$ ").append(formatMoney(monthRevenue)).append('\n');
+            sb.append(formatUpcomingAppointments(upcomingAppointments));
             sb.append(formatTopServicesFromAppointments(monthAppointments));
             return sb.toString();
         } catch (Exception e) {
@@ -348,6 +413,26 @@ public class AiChatServiceImpl implements AiChatService {
             return appointmentRepository.findByBarbershopIdAndStartTimeBetween(barbershopId, from, to);
         }
         return appointmentRepository.findByBarberIdAndStartTimeBetween(barberId, from, to);
+    }
+
+    private String formatUpcomingAppointments(List<Appointment> appointments) {
+        List<Appointment> active = safeList(appointments).stream()
+                .filter(a -> !isLostStatus(a) && !isCompletedStatus(a))
+                .sorted(java.util.Comparator.comparing(Appointment::getStartTime, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
+                .limit(10)
+                .toList();
+        if (active.isEmpty()) {
+            return "- Próximos 14 dias: nenhum atendimento ativo encontrado.\n";
+        }
+        StringBuilder sb = new StringBuilder("- Próximos 14 dias:\n");
+        active.forEach(a -> sb
+                .append("  · ")
+                .append(a.getStartTime() != null ? a.getStartTime().format(FMT) : "?")
+                .append(" | cliente: ").append(firstNameOnly(a.getCustomerName()))
+                .append(" | barbeiro: ").append(firstNameOnly(a.getBarberName()))
+                .append(" | situação: ").append(translateStatus(a.getStatus()))
+                .append('\n'));
+        return sb.toString();
     }
 
     private boolean isCompletedStatus(Appointment appointment) {
@@ -368,7 +453,7 @@ public class AiChatServiceImpl implements AiChatService {
 
     private String formatTopServicesFromAppointments(List<Appointment> appointments) {
         Map<String, ServiceStats> stats = new java.util.LinkedHashMap<>();
-        appointments.stream()
+        safeList(appointments).stream()
                 .filter(this::isCompletedStatus)
                 .filter(a -> a.getActivities() != null)
                 .flatMap(a -> a.getActivities().stream())
@@ -518,14 +603,177 @@ public class AiChatServiceImpl implements AiChatService {
         }
     }
 
+    private int intValueAny(Object value) {
+        if (value == null) return 0;
+        if (value instanceof Number number) return number.intValue();
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     private String formatMoney(BigDecimal value) {
         BigDecimal safe = value != null ? value : BigDecimal.ZERO;
         return safe.setScale(2, RoundingMode.HALF_UP).toPlainString().replace('.', ',');
     }
 
+    private BigDecimal percent(long numerator, long denominator) {
+        if (denominator <= 0) return BigDecimal.ZERO;
+        return BigDecimal.valueOf(numerator)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(denominator), 2, RoundingMode.HALF_UP);
+    }
+
+    private <T> List<T> safeList(List<T> list) {
+        return list != null ? list : List.of();
+    }
+
+    private String displayDay(DayOfWeek day) {
+        if (day == null) return "dia não informado";
+        return day.getDisplayName(TextStyle.FULL, Locale.forLanguageTag("pt-BR"));
+    }
+
+    private String formatBlocks(List<WorkBlockDTO> blocks) {
+        return safeList(blocks).stream()
+                .map(b -> formatTime(b.getStartTime()) + "-" + formatTime(b.getEndTime()))
+                .collect(java.util.stream.Collectors.joining(", "));
+    }
+
+    private String formatTime(LocalTime time) {
+        return time != null ? time.format(TIME_FMT) : "?";
+    }
+
+    private List<WorkBlockDTO> blocksForDay(List<DayScheduleDTO> schedule, DayOfWeek day) {
+        return safeList(schedule).stream()
+                .filter(d -> day.equals(d.getDayOfWeek()))
+                .findFirst()
+                .map(DayScheduleDTO::getBlocks)
+                .map(this::safeList)
+                .orElse(List.of());
+    }
+
+    private String formatOccupiedWindows(List<Appointment> appointments) {
+        List<Appointment> active = safeList(appointments).stream()
+                .filter(a -> !isLostStatus(a) && !isCompletedStatus(a))
+                .sorted(java.util.Comparator.comparing(Appointment::getStartTime, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
+                .toList();
+        if (active.isEmpty()) return "sem atendimentos ativos";
+        return active.stream()
+                .map(a -> formatTime(a.getStartTime() != null ? a.getStartTime().toLocalTime() : null)
+                        + "-" + formatTime(a.getEndTime() != null ? a.getEndTime().toLocalTime() : null)
+                        + " com " + firstNameOnly(a.getCustomerName()))
+                .collect(java.util.stream.Collectors.joining("; "));
+    }
+
+    private String formatLunchAvailability(List<WorkBlockDTO> blocks, List<Appointment> appointments, LocalDate date) {
+        if (safeList(blocks).isEmpty()) return "sem expediente cadastrado para hoje";
+        LocalTime lunchStart = LocalTime.of(11, 0);
+        LocalTime lunchEnd = LocalTime.of(14, 0);
+        boolean hasWindow = safeList(blocks).stream()
+                .anyMatch(b -> intervalsOverlap(b.getStartTime(), b.getEndTime(), lunchStart, lunchEnd));
+        if (!hasWindow) return "fora do expediente cadastrado";
+
+        LocalDateTime check = date.atTime(LocalTime.NOON);
+        boolean noonBusy = safeList(appointments).stream()
+                .filter(a -> !isLostStatus(a) && !isCompletedStatus(a))
+                .anyMatch(a -> containsInstant(a.getStartTime(), a.getEndTime(), check));
+        if (!noonBusy && isInsideAnyBlock(blocks, LocalTime.NOON)) {
+            return "12:00 está livre; há espaço para almoço nesse intervalo";
+        }
+        return "há expediente nesse intervalo, mas 12:00 está ocupado ou fora de bloco; confira os horários ocupados acima";
+    }
+
+    private String formatExactAvailability(List<WorkBlockDTO> blocks, List<Appointment> appointments, LocalDate date, LocalTime time) {
+        if (safeList(blocks).isEmpty()) return "sem expediente cadastrado para esse dia";
+        if (!isInsideAnyBlock(blocks, time)) return "fora do expediente cadastrado";
+        LocalDateTime dateTime = date.atTime(time);
+        boolean busy = safeList(appointments).stream()
+                .filter(a -> !isLostStatus(a) && !isCompletedStatus(a))
+                .anyMatch(a -> containsInstant(a.getStartTime(), a.getEndTime(), dateTime));
+        return busy ? "ocupado por atendimento já marcado" : "livre dentro do expediente";
+    }
+
+    private boolean isInsideAnyBlock(List<WorkBlockDTO> blocks, LocalTime time) {
+        return safeList(blocks).stream()
+                .anyMatch(b -> b.getStartTime() != null && b.getEndTime() != null
+                        && !time.isBefore(b.getStartTime())
+                        && time.isBefore(b.getEndTime()));
+    }
+
+    private boolean intervalsOverlap(LocalTime startA, LocalTime endA, LocalTime startB, LocalTime endB) {
+        if (startA == null || endA == null || startB == null || endB == null) return false;
+        return startA.isBefore(endB) && endA.isAfter(startB);
+    }
+
+    private boolean containsInstant(LocalDateTime start, LocalDateTime end, LocalDateTime instant) {
+        if (start == null || end == null || instant == null) return false;
+        return !instant.isBefore(start) && instant.isBefore(end);
+    }
+
+    private BigDecimal averageIntervalDays(List<LocalDate> dates) {
+        if (dates == null || dates.size() < 2) return null;
+        dates.sort(java.util.Comparator.naturalOrder());
+        long total = 0;
+        int intervals = 0;
+        for (int i = 1; i < dates.size(); i++) {
+            total += ChronoUnit.DAYS.between(dates.get(i - 1), dates.get(i));
+            intervals++;
+        }
+        if (intervals == 0) return null;
+        return BigDecimal.valueOf(total).divide(BigDecimal.valueOf(intervals), 2, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal averageServiceRecurrence(Map<UUID, List<LocalDate>> customerDates) {
+        long totalDays = 0;
+        int intervals = 0;
+        for (List<LocalDate> dates : customerDates.values()) {
+            if (dates == null || dates.size() < 2) continue;
+            dates.sort(java.util.Comparator.naturalOrder());
+            for (int i = 1; i < dates.size(); i++) {
+                totalDays += ChronoUnit.DAYS.between(dates.get(i - 1), dates.get(i));
+                intervals++;
+            }
+        }
+        if (intervals == 0) return null;
+        return BigDecimal.valueOf(totalDays).divide(BigDecimal.valueOf(intervals), 2, RoundingMode.HALF_UP);
+    }
+
+    private long acquisitionValue(List<Map<String, Object>> rows, String month) {
+        return safeList(rows).stream()
+                .filter(row -> month.equals(String.valueOf(row.get("referenceMonth"))))
+                .findFirst()
+                .map(row -> {
+                    Object value = row.get("newCustomers");
+                    if (value instanceof Number number) return number.longValue();
+                    try {
+                        return Long.parseLong(String.valueOf(value));
+                    } catch (NumberFormatException e) {
+                        return 0L;
+                    }
+                })
+                .orElse(0L);
+    }
+
     private static class ServiceStats {
         long count;
         BigDecimal revenue = BigDecimal.ZERO;
+    }
+
+    private static class WeekdayStats {
+        long total;
+        long lost;
+    }
+
+    private static class CustomerStats {
+        long completed;
+        List<LocalDate> dates = new java.util.ArrayList<>();
+    }
+
+    private static class ServicePromotionStats {
+        long count;
+        BigDecimal revenue = BigDecimal.ZERO;
+        Map<UUID, List<LocalDate>> customerDates = new java.util.LinkedHashMap<>();
     }
 
     private String formatSkillMatrix(UUID barbershopId) {
@@ -647,6 +895,28 @@ public class AiChatServiceImpl implements AiChatService {
             if (items == null || items.isEmpty()) return "Estoque: sem produtos cadastrados ou sem alertas no momento.";
 
             StringBuilder sb = new StringBuilder("Situação do estoque:\n");
+            int totalProducts = items.size();
+            int totalUnits = items.stream().mapToInt(i -> intValueAny(i.get("currentStock"))).sum();
+            long aboveMinimum = items.stream()
+                    .filter(i -> intValueAny(i.get("currentStock")) > intValueAny(i.get("predictedMinimum")))
+                    .count();
+            long veryHigh = items.stream()
+                    .filter(i -> {
+                        int minimum = intValueAny(i.get("predictedMinimum"));
+                        int current = intValueAny(i.get("currentStock"));
+                        return minimum > 0 && current >= minimum * 3;
+                    })
+                    .count();
+            sb.append("- Resumo: ").append(totalProducts).append(" produto(s), ")
+                    .append(totalUnits).append(" unidade(s) em estoque, ")
+                    .append(aboveMinimum).append(" acima do mínimo e ")
+                    .append(veryHigh).append(" muito acima do mínimo (3x ou mais).\n");
+            if (veryHigh == 0) {
+                sb.append("- Leitura sobre estoque alto: não há sinal de estoque alto pelos mínimos cadastrados.\n");
+            } else {
+                sb.append("- Leitura sobre estoque alto: há ").append(veryHigh)
+                        .append(" produto(s) muito acima do mínimo; vale revisar giro antes de comprar mais.\n");
+            }
             List<Map<String, Object>> zerados = items.stream()
                     .filter(i -> {
                         Object qty = i.get("currentStock");
@@ -687,6 +957,263 @@ public class AiChatServiceImpl implements AiChatService {
         } catch (Exception e) {
             log.warn("gustavo: não foi possível obter estoque — {}", e.getMessage());
             return "Estoque: dados temporariamente indisponíveis.";
+        }
+    }
+
+    private String formatWorkScheduleAndAvailability(UUID barberId, UUID barbershopId, boolean isOwner, LocalDate today, LocalDateTime now) {
+        try {
+            List<DayScheduleDTO> schedule = safeList(userServiceClient.getBarberWorkSchedule(barberId));
+            List<Appointment> todayAppointments = safeList(findScopedAppointments(
+                    barberId, barbershopId, false, today.atStartOfDay(), today.plusDays(1).atStartOfDay().minusNanos(1)));
+            List<Appointment> tomorrowAppointments = safeList(findScopedAppointments(
+                    barberId, barbershopId, false, today.plusDays(1).atStartOfDay(), today.plusDays(2).atStartOfDay().minusNanos(1)));
+
+            StringBuilder sb = new StringBuilder("Agenda de trabalho e disponibilidade do usuário logado:\n");
+            if (schedule.isEmpty()) {
+                sb.append("- Dias de trabalho cadastrados: não encontrei blocos de horário.\n");
+            } else {
+                sb.append("- Dias de trabalho cadastrados:\n");
+                schedule.stream()
+                        .filter(d -> d.getBlocks() != null && !d.getBlocks().isEmpty())
+                        .forEach(d -> sb.append("  · ")
+                                .append(displayDay(d.getDayOfWeek()))
+                                .append(": ")
+                                .append(formatBlocks(d.getBlocks()))
+                                .append('\n'));
+            }
+
+            sb.append("- Ocupação de hoje (").append(today.format(DATE_FMT)).append("): ")
+                    .append(formatOccupiedWindows(todayAppointments))
+                    .append('\n');
+            sb.append("- Ocupação de amanhã (").append(today.plusDays(1).format(DATE_FMT)).append("): ")
+                    .append(formatOccupiedWindows(tomorrowAppointments))
+                    .append('\n');
+
+            var todayBlocks = blocksForDay(schedule, today.getDayOfWeek());
+            var tomorrowBlocks = blocksForDay(schedule, today.plusDays(1).getDayOfWeek());
+            sb.append("- Janela de almoço hoje (11:00-14:00): ")
+                    .append(formatLunchAvailability(todayBlocks, todayAppointments, today))
+                    .append('\n');
+            sb.append("- Amanhã às 12:00: ")
+                    .append(formatExactAvailability(tomorrowBlocks, tomorrowAppointments, today.plusDays(1), LocalTime.NOON))
+                    .append('\n');
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustavo: não foi possível obter agenda de trabalho — {}", e.getMessage());
+            return "Agenda de trabalho: dados temporariamente indisponíveis.";
+        }
+    }
+
+    private String formatCancellationByWeekdayMetrics(UUID barberId, UUID barbershopId, boolean isOwner, LocalDate today, LocalDateTime now) {
+        try {
+            List<Appointment> appointments = safeList(findScopedAppointments(
+                    barberId, barbershopId, isOwner, today.minusDays(90).atStartOfDay(), now));
+            if (appointments.isEmpty()) {
+                return "Cancelamentos por dia da semana (últimos 90 dias): sem agendamentos no período.";
+            }
+
+            Map<DayOfWeek, WeekdayStats> stats = new java.util.EnumMap<>(DayOfWeek.class);
+            for (Appointment appointment : appointments) {
+                if (appointment.getStartTime() == null) continue;
+                DayOfWeek day = appointment.getStartTime().getDayOfWeek();
+                WeekdayStats row = stats.computeIfAbsent(day, ignored -> new WeekdayStats());
+                row.total++;
+                if (isLostStatus(appointment)) row.lost++;
+            }
+
+            var top = stats.entrySet().stream()
+                    .filter(e -> e.getValue().lost > 0)
+                    .sorted((a, b) -> {
+                        int rateCompare = percent(b.getValue().lost, b.getValue().total)
+                                .compareTo(percent(a.getValue().lost, a.getValue().total));
+                        if (rateCompare != 0) return rateCompare;
+                        return Long.compare(b.getValue().lost, a.getValue().lost);
+                    })
+                    .findFirst();
+
+            StringBuilder sb = new StringBuilder("Cancelamentos por dia da semana (últimos 90 dias):\n");
+            if (top.isPresent()) {
+                WeekdayStats row = top.get().getValue();
+                sb.append("- Maior taxa: ").append(displayDay(top.get().getKey()))
+                        .append(" com ").append(formatMoney(percent(row.lost, row.total)))
+                        .append("% (").append(row.lost).append(" de ").append(row.total).append(" agendamentos).\n");
+            } else {
+                sb.append("- Não houve cancelamentos ou faltas no período.\n");
+            }
+            stats.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(e -> sb.append("  · ")
+                            .append(displayDay(e.getKey())).append(": ")
+                            .append(e.getValue().lost).append(" cancelamento(s)/falta em ")
+                            .append(e.getValue().total).append(" agendamento(s), taxa ")
+                            .append(formatMoney(percent(e.getValue().lost, e.getValue().total))).append("%\n"));
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustavo: não foi possível calcular cancelamentos por dia — {}", e.getMessage());
+            return "Cancelamentos por dia da semana: dados temporariamente indisponíveis.";
+        }
+    }
+
+    private String formatCustomerFrequencyContext(UUID barberId, UUID barbershopId, boolean isOwner, LocalDateTime now) {
+        try {
+            List<Appointment> appointments = safeList(findScopedAppointments(barberId, barbershopId, isOwner, now.minusDays(180), now));
+            Map<String, CustomerStats> stats = new java.util.LinkedHashMap<>();
+            appointments.stream()
+                    .filter(this::isCompletedStatus)
+                    .filter(a -> a.getCustomerName() != null && !a.getCustomerName().isBlank())
+                    .forEach(a -> {
+                        String customerName = firstNameOnly(a.getCustomerName());
+                        CustomerStats row = stats.computeIfAbsent(customerName, ignored -> new CustomerStats());
+                        row.completed++;
+                        if (a.getStartTime() != null) row.dates.add(a.getStartTime().toLocalDate());
+                    });
+            if (stats.isEmpty()) {
+                return "Frequência de clientes (últimos 180 dias): sem clientes com atendimentos concluídos.";
+            }
+
+            StringBuilder sb = new StringBuilder("Frequência de clientes (últimos 180 dias):\n");
+            stats.entrySet().stream()
+                    .sorted((a, b) -> Long.compare(b.getValue().completed, a.getValue().completed))
+                    .limit(20)
+                    .forEach(e -> {
+                        CustomerStats row = e.getValue();
+                        row.dates.sort(java.util.Comparator.naturalOrder());
+                        sb.append("- ").append(e.getKey())
+                                .append(": ").append(row.completed).append(" atendimento(s) concluído(s)");
+                        if (!row.dates.isEmpty()) {
+                            sb.append(", última visita em ").append(row.dates.get(row.dates.size() - 1).format(DATE_FMT));
+                        }
+                        BigDecimal avgInterval = averageIntervalDays(row.dates);
+                        if (avgInterval != null) {
+                            sb.append(", recorrência média de ").append(formatMoney(avgInterval)).append(" dia(s)");
+                        } else {
+                            sb.append(", recorrência ainda insuficiente para média");
+                        }
+                        sb.append('\n');
+                    });
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustavo: não foi possível calcular frequência de clientes — {}", e.getMessage());
+            return "Frequência de clientes: dados temporariamente indisponíveis.";
+        }
+    }
+
+    private String formatServicePromotionContext(UUID barbershopId, LocalDateTime now) {
+        try {
+            List<Appointment> appointments = safeList(appointmentRepository.findByBarbershopIdAndStartTimeBetween(
+                    barbershopId, now.minusDays(90), now));
+            Map<String, ServicePromotionStats> stats = new java.util.LinkedHashMap<>();
+            BigDecimal totalRevenue = BigDecimal.ZERO;
+
+            for (Appointment appointment : appointments) {
+                if (!isCompletedStatus(appointment) || appointment.getActivities() == null) continue;
+                for (var activity : appointment.getActivities()) {
+                    String name = activity.getActivityName() != null ? activity.getActivityName() : "Serviço sem nome";
+                    BigDecimal price = activity.getPrice() != null ? activity.getPrice() : BigDecimal.ZERO;
+                    totalRevenue = totalRevenue.add(price);
+                    ServicePromotionStats row = stats.computeIfAbsent(name, ignored -> new ServicePromotionStats());
+                    row.count++;
+                    row.revenue = row.revenue.add(price);
+                    row.customerDates.computeIfAbsent(appointment.getCustomerId(), ignored -> new java.util.ArrayList<>());
+                    if (appointment.getStartTime() != null) {
+                        row.customerDates.get(appointment.getCustomerId()).add(appointment.getStartTime().toLocalDate());
+                    }
+                }
+            }
+
+            if (stats.isEmpty()) {
+                return "Análise de promoção por serviço (últimos 90 dias): sem serviços concluídos no período.";
+            }
+
+            StringBuilder sb = new StringBuilder("Análise de promoção por serviço (últimos 90 dias):\n");
+            BigDecimal revenueBase = totalRevenue.compareTo(BigDecimal.ZERO) > 0 ? totalRevenue : BigDecimal.ONE;
+            stats.entrySet().stream()
+                    .sorted((a, b) -> b.getValue().revenue.compareTo(a.getValue().revenue))
+                    .limit(12)
+                    .forEach(e -> {
+                        ServicePromotionStats row = e.getValue();
+                        BigDecimal avgTicket = row.count > 0
+                                ? row.revenue.divide(BigDecimal.valueOf(row.count), 2, RoundingMode.HALF_UP)
+                                : BigDecimal.ZERO;
+                        BigDecimal contribution = row.revenue.multiply(BigDecimal.valueOf(100))
+                                .divide(revenueBase, 2, RoundingMode.HALF_UP);
+                        BigDecimal recurrence = averageServiceRecurrence(row.customerDates);
+                        sb.append("- ").append(e.getKey())
+                                .append(" | execuções: ").append(row.count)
+                                .append(" | receita: R$ ").append(formatMoney(row.revenue))
+                                .append(" | ticket médio: R$ ").append(formatMoney(avgTicket))
+                                .append(" | participação no faturamento dos serviços: ").append(formatMoney(contribution)).append("%");
+                        if (recurrence != null) {
+                            sb.append(" | recorrência média: ").append(formatMoney(recurrence)).append(" dia(s)");
+                        } else {
+                            sb.append(" | recorrência média: dados insuficientes");
+                        }
+                        sb.append(" | simulação: desconto de 10% reduz o ticket médio para R$ ")
+                                .append(formatMoney(avgTicket.multiply(new BigDecimal("0.90"))))
+                                .append('\n');
+                    });
+            sb.append("- Observação: margem real de contribuição por custo de insumos não está disponível neste contexto; use a participação no faturamento como proxy, sem chamar de lucro.\n");
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustavo: não foi possível calcular análise de promoção — {}", e.getMessage());
+            return "Análise de promoção por serviço: dados temporariamente indisponíveis.";
+        }
+    }
+
+    private String formatTeamContext(UUID barbershopId, UUID currentUserId) {
+        try {
+            List<UserInfoDTO> team = safeList(userServiceClient.getBarbersByBarbershop(barbershopId));
+            if (team.isEmpty()) {
+                return "Equipe: não encontrei barbeiros vinculados à barbearia.";
+            }
+            long collaborators = team.stream()
+                    .filter(u -> u.getId() != null && !u.getId().equals(currentUserId))
+                    .count();
+            StringBuilder sb = new StringBuilder("Equipe da barbearia:\n");
+            if (collaborators == 0) {
+                sb.append("- Você trabalha sozinho nesta barbearia; não há colaboradores ativos além de você.\n");
+            } else {
+                sb.append("- Há ").append(collaborators).append(" colaborador(es) ativo(s) além de você.\n");
+            }
+            team.stream().limit(10).forEach(u -> sb
+                    .append("  · ").append(firstNameOnly(u.getName()))
+                    .append(u.getId() != null && u.getId().equals(currentUserId) ? " (você)" : "")
+                    .append('\n'));
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustavo: não foi possível obter equipe — {}", e.getMessage());
+            return "Equipe: dados temporariamente indisponíveis.";
+        }
+    }
+
+    private String formatCustomerAcquisitionContext(LocalDate today) {
+        try {
+            List<Map<String, Object>> rows = safeList(userAnalyticsClient.getCustomerAcquisition());
+            if (rows.isEmpty()) {
+                return "Aquisição de clientes: sem dados disponíveis.";
+            }
+            String currentMonth = today.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+            String previousMonth = today.minusMonths(1).format(DateTimeFormatter.ofPattern("yyyy-MM"));
+            long current = acquisitionValue(rows, currentMonth);
+            long previous = acquisitionValue(rows, previousMonth);
+
+            StringBuilder sb = new StringBuilder("Aquisição de clientes (novos clientes por mês):\n");
+            sb.append("- Mês atual (").append(currentMonth).append("): ").append(current).append(" novo(s) cliente(s).\n");
+            sb.append("- Mês passado (").append(previousMonth).append("): ").append(previous).append(" novo(s) cliente(s).\n");
+            if (previous > 0) {
+                BigDecimal growth = BigDecimal.valueOf(current - previous)
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(BigDecimal.valueOf(previous), 2, RoundingMode.HALF_UP);
+                sb.append("- Crescimento vs. mês passado: ").append(formatMoney(growth)).append("%.\n");
+            } else if (current > 0) {
+                sb.append("- Crescimento vs. mês passado: não dá para calcular percentual porque o mês passado teve 0 novos clientes.\n");
+            } else {
+                sb.append("- Crescimento vs. mês passado: 0,00%.\n");
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            log.warn("gustavo: não foi possível obter aquisição de clientes — {}", e.getMessage());
+            return "Aquisição de clientes: dados temporariamente indisponíveis.";
         }
     }
 
@@ -833,42 +1360,74 @@ public class AiChatServiceImpl implements AiChatService {
         String perfil = isOwner ? "DONO DE BARBEARIA" : isCustomer ? "CLIENTE" : "BARBEIRO COLABORADOR";
         String historyBlock = history.isBlank() ? "" : "\n" + history + "\n";
 
+        String regraAcesso = isOwner
+                ? """
+                  - Acesso completo: agenda da barbearia, equipe, financeiro global, estoque e dados pessoais.
+                  - Quando o dono perguntar sobre si mesmo (ex: "quanto eu fiz?", "minha agenda", "minhas comissões"),
+                    responda sobre ele como barbeiro E, se relevante, também sobre a barbearia como um todo.
+                  """
+                : "- Acesso restrito: apenas seus próprios atendimentos e financeiro pessoal.";
+
+        String regraColaborador = isOwner || isCustomer
+                ? ""
+                : "11. Este usuário é colaborador, não dono. Nunca forneça dados financeiros globais da barbearia, apenas os dados dele.";
+
         return """
-                Você é o Gustavo, assistente de IA do CortaAi. Seu único objetivo é analisar os dados reais do sistema e responder perguntas de gestão de barbearia.
+                Você é o Gustavo, assistente de gestão do CortaAi. Seu papel é analisar os dados reais da barbearia e responder perguntas de forma clara e amigável.
 
                 PERFIL DO USUÁRIO LOGADO:
                 - Nome: %s
                 - Tipo: %s
                 %s
 
-                DADOS REAIS DO SISTEMA (extraídos agora para este usuário):
+                DADOS REAIS DO SISTEMA (coletados agora para este usuário):
                 %s
                 %s
                 REGRAS OBRIGATÓRIAS:
-                1. Baseie TODA resposta exclusivamente nos dados acima. NUNCA invente, estime ou suponha valores.
-                2. Se a informação não estiver nos dados acima, responda: "Não encontrei esse dado no seu painel agora."
-                3. Responda em português brasileiro, de forma direta e sem introduções desnecessárias (não comece com "Claro!", "Olá!", "Com certeza!" etc.).
-                4. Seja conciso: vá direto ao ponto. Use listas apenas quando houver múltiplos itens.
-                5. Se a pergunta for fora do contexto de gestão de barbearia (agenda, financeiro, equipe, estoque), recuse: "Meu foco é a gestão da sua barbearia. Posso ajudar com agenda, financeiro, equipe ou estoque."
-                6. Nunca exponha sobrenomes ou dados pessoais de clientes.
-                7. Use o histórico da conversa acima para manter continuidade — se o usuário disser "ele" ou "aquele", interprete com base no contexto anterior.
-                8. Quando o usuário perguntar sobre "mês", "este mês", "rendimento", "faturamento", "ganhei" ou "recebi", use o bloco "Mês atual" do financeiro do painel. Não troque por "últimos 30 dias" nem por projeção.
-                9. Para DONO, "rendimento/faturamento do mês" significa faturamento total da barbearia; se ele pedir lucro/resultado, use resultado operacional total. Para BARBEIRO COLABORADOR, "rendimento/quanto recebi" significa comissão total do barbeiro.
-                10. Se existirem várias métricas parecidas, escolha a mais aderente à pergunta e cite o rótulo exato usado. Não diga que um único valor representa 30 dias, 90 dias e projeção ao mesmo tempo.
+                1. Baseie TODA resposta exclusivamente nos dados fornecidos acima. NUNCA invente, estime ou suponha valores que não estejam nos dados.
+                2. Se a informação pedida não estiver nos dados, responda: "Não encontrei esse dado no seu painel agora."
+                   Se houver dado parcial relacionado, responda com o que existe e indique apenas o campo que falta. Não comece com "não encontrei" quando o próprio contexto trouxer o dado pedido.
+                3. Use linguagem natural e amigável, como se fosse um colega de trabalho experiente. NUNCA use termos técnicos de sistema como: schedule, status, SCHEDULED, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW, WALK_IN, PAYMENT_PENDING, UUID, payload, endpoint, query, view, repositório, microsserviço, banco de dados.
+                4. Traduza sempre os termos internos para português do dia a dia:
+                   - "concluído" em vez de COMPLETED/CONCLUDED
+                   - "cancelado" em vez de CANCELLED
+                   - "não compareceu" em vez de NO_SHOW
+                   - "encaixe" em vez de WALK_IN
+                   - "confirmado" em vez de CONFIRMED
+                   - "em atendimento" em vez de IN_PROGRESS
+                   - "aguardando pagamento" em vez de PAYMENT_PENDING
+                5. Seja direto e conciso. Use listas apenas quando houver múltiplos itens. Não use introduções desnecessárias ("Claro!", "Com certeza!", "Ótima pergunta!").
+                6. Se a pergunta for fora do contexto de gestão de barbearia (agenda, financeiro, equipe, estoque, clientes), recuse educadamente: "Meu foco é a gestão da sua barbearia. Posso ajudar com agenda, financeiro, equipe ou estoque."
+                7. Nunca exponha sobrenomes ou dados pessoais completos de clientes.
+                8. Use o histórico da conversa para manter continuidade — se o usuário disser "ele", "aquele", "o mesmo", interprete com base no contexto anterior.
+                9. Quando o usuário perguntar sobre "mês", "este mês", "rendimento", "faturamento", "ganhei" ou "recebi", use o bloco "Mês atual" do financeiro. Não confunda com "últimos 30 dias" ou "últimos 90 dias".
+                10. Para DONO DE BARBEARIA: "faturamento do mês" = faturamento total da barbearia; "lucro/resultado" = resultado operacional total; perguntas sobre "eu" também incluem perspectiva da barbearia inteira.
+                    Para BARBEIRO COLABORADOR: "quanto recebi/ganhei" = comissão total do barbeiro (não o valor bruto dos serviços).
+                12. Para perguntas de data como "que dia é hoje?", use somente o bloco "Data e hora de referência do sistema" e o fuso informado nele.
+                13. Para disponibilidade ("estou livre?", "horário vago?", "almoçar hoje?"), cruze a agenda de trabalho com a ocupação do dia. Se estiver fora do expediente, diga que não é horário de trabalho cadastrado.
+                14. Para promoção de serviços, use a análise de promoção por serviço. Se margem real de custo não estiver disponível, diga "participação no faturamento" em vez de inventar lucro ou margem.
+                15. Para perguntas de frequência de cliente, use o bloco "Frequência de clientes" e considere frequente quem tem 2 ou mais atendimentos concluídos no período.
+
+                COMO RESPONDER POR CATEGORIA (exemplos de linguagem):
+                - Agenda: "Seu próximo cliente é [Nome] às [Hora] para [Serviço]."
+                - Disponibilidade: "O barbeiro [Nome] está livre entre [Hora] e [Hora] hoje."
+                - Equipe/performance: "O barbeiro [Nome] liderou com [X] atendimentos e gerou R$ [Valor] este mês."
+                - Serviços sem cobertura: "Identifiquei que [Nome] ainda não realizou [Serviço] nos últimos 90 dias."
+                - Financeiro do dono: "O faturamento da barbearia este mês foi de R$ [Valor], com [X] atendimentos concluídos."
+                - Comissão do barbeiro: "Sua comissão acumulada este mês é de R$ [Valor], sobre uma receita bruta de R$ [Valor]."
+                - Estoque: "Atenção: [Produto] está com apenas [X] unidades — abaixo do mínimo de [Y]. Recomendo repor."
+                - Cancelamentos: "As [dia da semana] concentraram mais cancelamentos no período — [X] ocorrências."
+                - Ticket médio: "O ticket médio da barbearia está em R$ [Valor], calculado sobre [X] atendimentos."
                 %s
 
                 Pergunta: %s
                 """.formatted(
                 nomeUsuario,
                 perfil,
-                isOwner
-                        ? "- Acesso: agenda completa da barbearia, financeiro, estoque e equipe"
-                        : "- Acesso: apenas seus próprios agendamentos e financeiro pessoal",
+                regraAcesso,
                 context,
                 historyBlock,
-                isOwner
-                        ? ""
-                        : "11. Este usuário é colaborador, não dono. Não forneça dados financeiros globais da barbearia, apenas os dados dele.",
+                regraColaborador,
                 message
         );
     }
@@ -888,6 +1447,7 @@ public class AiChatServiceImpl implements AiChatService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
         Map<String, Object> response = restTemplate.postForObject(url, entity, Map.class);
+        if (response == null) throw new IllegalStateException("Resposta nula do Gemini");
 
         List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
         Map<String, Object> first    = candidates.get(0);
@@ -911,6 +1471,7 @@ public class AiChatServiceImpl implements AiChatService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
         Map<String, Object> response = restTemplate.postForObject(groqUrl, entity, Map.class);
+        if (response == null) throw new IllegalStateException("Resposta nula do Groq");
 
         List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
         Map<String, Object> msg = (Map<String, Object>) choices.get(0).get("message");

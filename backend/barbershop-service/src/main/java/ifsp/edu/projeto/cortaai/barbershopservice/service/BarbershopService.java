@@ -53,6 +53,7 @@ public class BarbershopService {
     private final UserServiceClient userServiceClient;
     private final ScheduleServiceClient scheduleServiceClient;
     private final RabbitTemplate rabbitTemplate;
+    private final GeocodingService geocodingService;
 
     // ========== HELPERS ==========
 
@@ -161,9 +162,9 @@ public class BarbershopService {
     // ========== LEITURA PÚBLICA ==========
 
     @Transactional(readOnly = true)
-    public List<BarbershopDTO> listBarbershops() {
+    public List<BarbershopPublicDTO> listBarbershops() {
         return barbershopRepository.findAll().stream()
-                .map(barbershopMapper::toDTO)
+                .map(barbershopMapper::toPublicDTO)
                 .collect(Collectors.toList());
     }
 
@@ -219,10 +220,10 @@ public class BarbershopService {
     }
 
     @Transactional(readOnly = true)
-    public BarbershopDTO getBarbershop(UUID shopId) {
+    public BarbershopPublicDTO getBarbershop(UUID shopId) {
         Barbershop shop = barbershopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Barbearia não encontrada."));
-        return barbershopMapper.toDTO(shop);
+        return barbershopMapper.toPublicDTO(shop);
     }
 
     public void createReview(String customerUid, UUID shopId, CreateBarbershopReviewDTO dto) {
@@ -282,6 +283,17 @@ public class BarbershopService {
         shop.setCnpj(cnpj);
         shop.setOwnerId(owner.getId());
 
+        // Geocodificação automática ao cadastrar
+        if (dto.getAddress() != null && !dto.getAddress().isBlank()
+                && (shop.getLatitude() == null || shop.getLongitude() == null)) {
+            GeocodingService.Coords coords = geocodingService.geocode(dto.getAddress());
+            if (coords != null) {
+                shop.setLatitude(coords.lat());
+                shop.setLongitude(coords.lng());
+                log.info("Geocoding barbearia '{}': lat={}, lng={}", dto.getName(), coords.lat(), coords.lng());
+            }
+        }
+
         Barbershop saved = barbershopRepository.save(shop);
 
         // Upload de logo se enviado
@@ -308,7 +320,21 @@ public class BarbershopService {
         Barbershop shop = findOwnerShop(owner.getId());
 
         if (dto.getName() != null) shop.setName(dto.getName());
-        if (dto.getAddress() != null) shop.setAddress(dto.getAddress());
+        if (dto.getAddress() != null) {
+            boolean addressChanged = !dto.getAddress().equals(shop.getAddress());
+            shop.setAddress(dto.getAddress());
+            // Regeocodifica se endereço mudou ou coords ainda nulas, e não foram fornecidas manualmente
+            if (addressChanged || shop.getLatitude() == null || shop.getLongitude() == null) {
+                if (dto.getLatitude() == null && dto.getLongitude() == null) {
+                    GeocodingService.Coords coords = geocodingService.geocode(dto.getAddress());
+                    if (coords != null) {
+                        shop.setLatitude(coords.lat());
+                        shop.setLongitude(coords.lng());
+                        log.info("Geocoding atualizado '{}': lat={}, lng={}", shop.getName(), coords.lat(), coords.lng());
+                    }
+                }
+            }
+        }
         if (dto.getLatitude() != null) shop.setLatitude(dto.getLatitude());
         if (dto.getLongitude() != null) shop.setLongitude(dto.getLongitude());
 
@@ -470,7 +496,7 @@ public class BarbershopService {
             throw new ForbiddenException("Este barbeiro nao pertence a sua barbearia.");
         }
         if ("REDISTRIBUTE".equals(action)) {
-            if (dto.redistributeToId() == null) {
+            if (dto == null || dto.redistributeToId() == null) {
                 throw new DomainConflictException("Escolha um barbeiro de destino para redistribuir.");
             }
             if (dto.redistributeToId().equals(barberId)) {
@@ -642,7 +668,7 @@ public class BarbershopService {
         Barbershop shop = findOwnerShop(owner.getId());
 
         String cleanCpf = onlyDigits(cpf);
-        if (cleanCpf.length() != 11) {
+        if (cleanCpf == null || cleanCpf.length() != 11) {
             throw new DomainConflictException("CPF inválido. Informe 11 dígitos.");
         }
 

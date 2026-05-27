@@ -26,6 +26,9 @@ public class VBarberSkillMatrix {
     @Column(name = "activity_name")
     private String activityName;
 
+    @Column(name = "barbershop_id")
+    private String barbershopId;
+
     @Column(name = "barber_name")
     private String barberName;
 

@@ -251,7 +251,7 @@ public class EmailService {
         send(toEmail, subject, body);
     }
 
-    // ─── Lembrete 24h antes → cliente ───────────────────────────────────────────
+    // ─── Lembrete de agendamento próximo → cliente ──────────────────────────────
 
     @Async
     public void sendReminderToCustomer(
@@ -259,12 +259,12 @@ public class EmailService {
             String barbershopName, String barberName,
             LocalDateTime startTime) {
 
-        String subject = "⏰ Lembrete: seu agendamento é amanhã — CortaAI";
+        String subject = "⏰ Lembrete: seu agendamento está chegando — CortaAI";
         String body = baseTemplate(
                 "Lembrete de agendamento",
                 String.format("Olá, <strong>%s</strong>!", customerName),
                 String.format("""
-                        Este é um lembrete de que você tem um agendamento <strong>amanhã</strong>:
+                        Este é um lembrete de que seu agendamento está chegando:
                         <br><br>
                         <table style="width:100%%;border-collapse:collapse;">
                           <tr><td style="padding:6px 0;color:#888;">Barbearia</td>
@@ -293,8 +293,10 @@ public class EmailService {
             helper.setText(htmlBody, true);
             mailSender.send(message);
             log.info("E-mail enviado para {}: {}", to, subject);
-        } catch (MessagingException e) {
-            log.error("Falha ao enviar e-mail para {}: {}", to, e.getMessage());
+        } catch (MessagingException | org.springframework.mail.MailException e) {
+            log.warn("Falha ao enviar e-mail para {}: {}", to, e.getMessage());
+        } catch (Exception e) {
+            log.warn("Erro inesperado ao enviar e-mail para {}: {}", to, e.getMessage());
         }
     }
 

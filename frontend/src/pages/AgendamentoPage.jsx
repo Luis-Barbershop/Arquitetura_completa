@@ -106,6 +106,10 @@ const AgendamentoPage = () => {
       // Garante dados frescos do backend sempre que barbeiro/serviços mudam
       clearAvailabilitySlotsCache();
 
+      const serverErrorToastId = setTimeout(() => {
+        toast.error('Erro interno do servidor. Tente novamente mais tarde.');
+      }, 30000);
+
       try {
         const baseOptions = createDateOptionsBase(30).map((option, i) => ({
           ...option,
@@ -139,6 +143,7 @@ const AgendamentoPage = () => {
         setSelectedDate(null);
         setSelectedTime("");
       } finally {
+        clearTimeout(serverErrorToastId);
         setIsLoadingDateOptions(false);
       }
     };
@@ -569,6 +574,7 @@ const AgendamentoPage = () => {
               latitude={shopInfo.latitude}
               longitude={shopInfo.longitude}
               barbershopName={shopInfo.name}
+              address={shopInfo.address}
             />
           </section>
         )}
