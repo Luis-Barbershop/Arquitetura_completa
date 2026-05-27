@@ -293,8 +293,10 @@ public class EmailService {
             helper.setText(htmlBody, true);
             mailSender.send(message);
             log.info("E-mail enviado para {}: {}", to, subject);
-        } catch (MessagingException e) {
-            log.error("Falha ao enviar e-mail para {}: {}", to, e.getMessage());
+        } catch (MessagingException | org.springframework.mail.MailException e) {
+            log.warn("Falha ao enviar e-mail para {}: {}", to, e.getMessage());
+        } catch (Exception e) {
+            log.warn("Erro inesperado ao enviar e-mail para {}: {}", to, e.getMessage());
         }
     }
 
