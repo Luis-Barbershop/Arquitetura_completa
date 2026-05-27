@@ -35,8 +35,9 @@
 
         <!-- SonarQube -->
         <sonar.java.source>${java.version}</sonar.java.source>
-        <!-- Glob ** encontra os jacoco.xml de cada módulo filho; root não gera o arquivo
-             mas a presença de arquivos nos filhos impede o erro "report parameter missing" -->
+        <!-- Working dir dentro do container Docker (não persiste no volume montado) -->
+        <sonar.working.directory>/tmp/sonar-scanner-work</sonar.working.directory>
+        <!-- Glob ** encontra os jacoco.xml de cada módulo filho -->
         <sonar.coverage.jacoco.xmlReportPaths>**/target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.exclusions>**/config/**,**/*Application.java,**/dto/**,**/model/**,**/mapper/**,**/messaging/publisher/**</sonar.exclusions>
         <sonar.cpd.exclusions>**/security/crypto/DataCrypto.java,**/exception/ApiErrorResponse.java,**/event/JoinRequestCreatedEvent.java,**/exception/GlobalExceptionHandler.java,**/validator/CPF.java,**/validator/CPFValidator.java,**/repository/CustomerRepository.java,**/repository/BarberRepository.java,**/service/EmailService.java,**/service/AppointmentService.java,**/service/BarbershopService.java,**/controller/MercadoPagoOAuthController.java</sonar.cpd.exclusions>
@@ -161,7 +162,7 @@
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
-                <version>3.11.0.3922</version>
+                <version>4.0.0.4121</version>
             </plugin>
         </plugins>
     </build>
