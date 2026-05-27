@@ -1,6 +1,6 @@
 # CortaAi — Documentação Técnica Completa
 
-> **Versão:** 1.1 | **Data:** 25/05/2026  
+> **Versão:** 1.2 | **Data:** 27/05/2026  
 > **Branch:** `feature/migracao-microservicos`  
 > **Ambiente produção:** ZimaOS `10.147.19.1` | **Domínio:** `https://cortaai.shop`
 
@@ -126,7 +126,7 @@ CortaAi é um **marketplace SaaS multi-tenant para barbearias**. Conecta três p
 | `user-service` | `barbers`, `customers`, `barber_work_blocks` | — | — |
 | `barbershop-service` | `barbershops`, `activities`, `join_requests` | `user-service` | `barbershop.join-request.created` |
 | `schedule-service` | `appointments`, `barber_blocks` | `user-service`, `barbershop-service` | `appointment.*` |
-| `payment-service` | `transactions`, `webhook_logs`, `dashboard_kpi_daily` | — | `payment.approved` |
+| `payment-service` | `transactions`, `webhook_logs`, `dashboard_kpi_daily` | `user-service`, `schedule-service`, `barbershop-service`, `product-service` | `payment.approved` |
 | `notification-service` | `notifications`, `device_tokens` | — | consome tudo |
 | `product-service` | `products`, `stock_movements`, `categories` | — | — |
 
@@ -332,16 +332,17 @@ barbershop-service──► routing key: "barbershop.join-request.created"
 user-service      ──► routing key: "customer.deleted"         ← LGPD
 
 CONSUMIDORES (filas):
-notification.appointment.created      ──► notification-service
-notification.appointment.cancelled    ──► notification-service
-notification.appointment.concluded    ──► notification-service
-notification.appointment.rescheduled  ──► notification-service
-notification.appointment.reminder     ──► notification-service
-notification.payment.approved         ──► notification-service
-notification.barbershop.join-request  ──► notification-service
-schedule.customer.deleted             ──► schedule-service    ← anonimiza agendamentos
-payment.customer.deleted              ──► payment-service     ← anonimiza transações
-notification.customer.deleted         ──► notification-service
+notification.appointment.created              ──► notification-service
+notification.appointment.cancelled            ──► notification-service
+notification.appointment.concluded            ──► notification-service
+notification.appointment.rescheduled          ──► notification-service
+notification.appointment.reminder             ──► notification-service
+notification.payment.approved                 ──► notification-service
+notification.barbershop.join-request.created  ──► notification-service
+notification.barber.removed                   ──► notification-service
+schedule.customer.deleted                     ──► schedule-service    ← anonimiza agendamentos
+payment.customer.deleted                      ──► payment-service     ← anonimiza transações
+notification.customer.deleted                 ──► notification-service
 ```
 
 **Garantias:**
@@ -772,22 +773,30 @@ POST /api/notifications/device-tokens
 Assistente conversacional integrado ao `schedule-service`. Usa múltiplos provedores com fallback automático.
 
 ```
-PROVEDORES (em ordem de prioridade):
-1. OpenRouter openai/gpt-oss-20b ← primário   (atualizado em 25/05/2026)
-2. Cohere command-a-03-2025      ← fallback
-   (Gemini e Groq desativados: cota esgotada / bloqueio WAF permanente)
+PROVEDORES (4 configurados, ativados via variável de ambiente):
+1. Gemini   — gemini-2.0-flash (GEMINI_API_KEY)
+2. Groq     — llama-3.3-70b-versatile (GROQ_API_KEY + GROQ_MODEL)
+3. OpenRouter — meta-llama/llama-3.1-8b-instruct:free (OPENROUTER_API_KEY + OPENROUTER_MODEL)
+4. Cohere   — command-a-03-2025 (COHERE_API_KEY + COHERE_MODEL)
+
+A ordem de tentativa e quais provedores estão ativos depende das chaves
+configadas no .env.prod. A lógica de fallback percorre os provedores em
+ordem até obter resposta.
 
 FLUXO:
-POST /api/appointments/gustave/chat  [Authorization: Bearer token]
+POST /api/schedule/ai/chat  [Authorization: Bearer token]
     body: { message: "Quero agendar um corte amanhã às 10h" }
-    └─ schedule-service tenta OpenRouter → se falhar, tenta Cohere → ...
+    └─ schedule-service tenta provedores configurados em sequência
     └─ resposta em linguagem natural
     └─ pode sugerir horários disponíveis com base na agenda real
+
+DELETE /api/schedule/ai/chat/history  ← limpa histórico do usuário (Redis)
 
 CONTEXTO DISPONÍVEL PARA A IA:
     ├─ agenda do barbeiro (via banco local)
     ├─ serviços da barbearia (via Feign → barbershop-service)
     └─ horários disponíveis (cálculo interno)
+    └─ histórico da conversa armazenado no Redis (ChatHistoryService)
 ```
 
 ---
@@ -962,4 +971,4 @@ Portas externas (diferentes do padrão para não conflitar com ZimaOS):
 
 ---
 
-*Documento atualizado em 25/05/2026 com base em análise estática do código-fonte no branch `feature/migracao-microservicos` (HEAD: `e548934`). Cobertura JaCoCo global: **85%** (533 testes, 3.861/25.938 instruções missed).*
+*Documento atualizado em 27/05/2026 com base em análise estática do código-fonte no branch `feature/migracao-microservicos`. Cobertura JaCoCo global: **85%** (533 testes, 3.861/25.938 instruções missed).*

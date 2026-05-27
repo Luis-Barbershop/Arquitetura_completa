@@ -1,6 +1,6 @@
 # 📋 Documentação Técnica e de Negócio — CortaAí
 
-> **Versão:** 1.0 | **Branch:** `feature/migracao-microservicos` | **Data:** Março/2026
+> **Versão:** 1.1 | **Branch:** `feature/migracao-microservicos` | **Data:** 27/05/2026
 
 ---
 
@@ -148,19 +148,15 @@ O **CortaAí** é uma plataforma digital de **agendamento de serviços de barbea
 
 ---
 
-### 2.8 JWT (JSON Web Token)
+### 2.8 Firebase Authentication
 
-**O que é:** Padrão de token de autenticação que carrega informações do usuário de forma segura e assinada digitalmente.
+**O que é:** Serviço de autenticação gerenciado pelo Google. O CortaAi **não gerencia senhas** — toda identidade é delegada ao Firebase.
 
-**Para que serve:** Após o login, o servidor gera um token JWT contendo o e-mail, ID, tipo de usuário (`CUSTOMER` ou `BARBER`) e a flag `isOwner`. O frontend armazena esse token e o envia em cada requisição no header `Authorization: Bearer <token>`. O Gateway valida a assinatura do token antes de encaminhar a requisição.
+**Para que serve:** O usuário faz login via Firebase SDK (email/senha ou Google). O Firebase retorna um **Firebase ID Token** (JWT assinado com chave RSA do Google, expira em 1h). Esse token é enviado em toda requisição e validado pelo API Gateway.
 
-**Claims contidos no token:**
-- `sub` → e-mail do usuário
-- `userId` → UUID do usuário
-- `userType` → `CUSTOMER` ou `BARBER`
-- `isOwner` → `true/false` (apenas para barbeiros)
+**Custom Claims:** O `user-service` grava no Firebase `custom claims` com `role` (`ROLE_CUSTOMER` ou `ROLE_BARBER`) e `isOwner` (boolean). O API Gateway extrai esses claims e injeta nos headers `X-User-Role` e `X-User-Owner`.
 
-**Onde está configurado:** `user-service/service/impl/JwtTokenServiceImpl.java` | Chave secreta: variável `JWT_SECRET_KEY` no `.env`
+**Onde está configurado:** `api-gateway/config/FirebaseAuthFilter.java` | Credenciais: arquivo `firebase-adminsdk.json` mapeado no container via volume | Variável: `FIREBASE_CREDENTIALS_PATH`
 
 ---
 
@@ -298,14 +294,18 @@ Microserviços
 - Gestão de perfil (atualizar dados, foto de perfil via Cloudinary)
 - **Endpoint interno** `/api/internal/users/{id}` usado pelos demais serviços via Feign para buscar dados de usuários
 
-**Portas e endpoints públicos:**
-- `POST /api/auth/customers/login` → login do cliente
-- `POST /api/auth/barbers/login` → login do barbeiro
-- `POST /api/customers` → cadastro de cliente
-- `POST /api/barbers` → cadastro de barbeiro
-- `GET /api/customers/{id}` → buscar cliente
-- `GET /api/barbers/{id}` → buscar barbeiro
-- `PUT /api/customers/me` → atualizar perfil do cliente autenticado
+**Portas e endpoints principais:**
+- `POST /api/auth/verify` — valida token Firebase e cria/encontra usuário no banco
+- `POST /api/auth/email/login` — login por email/senha via Firebase
+- `POST /api/auth/email/register` — registro via Firebase
+- `POST /api/auth/customers/complete-profile` — completa perfil após cadastro
+- `POST /api/auth/barbers/complete-profile` — completa perfil do barbeiro
+- `GET /api/customers/{id}` — buscar cliente
+- `GET /api/barbers/{id}` — buscar barbeiro
+- `PUT /api/customers/me` — atualizar perfil do cliente autenticado
+- `DELETE /api/customers/me` — solicitar exclusão (LGPD)
+- `GET /api/customers/me/favorites` — barbearias favoritas
+- `POST/DELETE /api/customers/me/favorites/{barbershopId}` — gerenciar favoritos
 
 ---
 
@@ -441,17 +441,21 @@ Microserviços
 ### 5.1 Autenticação e Segurança
 
 **Como funciona:**
-1. O usuário envia e-mail e senha para `POST /api/auth/*/login`.
-2. O sistema verifica a senha contra o hash BCrypt armazenado no banco.
-3. Se válido, gera um JWT assinado com a chave secreta (`JWT_SECRET_KEY`).
-4. O frontend armazena o token e o envia em toda requisição como `Authorization: Bearer <token>`.
-5. O API Gateway intercepta cada requisição, valida a assinatura do JWT e extrai os dados do usuário antes de encaminhar.
+1. O usuário faz login pelo Firebase SDK (`signInWithEmailAndPassword` ou `signInWithPopup` para Google).
+2. O Firebase retorna um **Firebase ID Token** (JWT assinado com chaves RSA públicas do Google, expira em 1h).
+3. O frontend envia o token em toda requisição: `Authorization: Bearer <Firebase ID Token>`.
+4. O **API Gateway é o único ponto** que valida a assinatura do token (chaves públicas Google, via Firebase Admin SDK).
+5. Após validação, o Gateway injeta headers confiáveis para os serviços downstream:
+   - `X-User-Id` — Firebase UID
+   - `X-User-Email` — email do usuário
+   - `X-User-Role` — `ROLE_CUSTOMER` ou `ROLE_BARBER` (extraído do custom claim)
+   - `X-User-Owner` — `true` ou `false`
+6. Os microsserviços **confiam nesses headers** — não revalidam o token.
 
 **Regras:**
-- Senhas são **sempre** armazenadas como hash BCrypt — nunca em texto puro.
-- O JWT carrega `userType` (`CUSTOMER` ou `BARBER`) para que cada serviço possa fazer autorização sem consultar o banco de usuários.
-- O JWT carrega `isOwner` para que operações restritas ao dono da barbearia sejam validadas.
-- Tokens têm prazo de expiração configurável via `app.security.jwt.expiration-ms`.
+- O CortaAi **não armazena senhas**. Toda autenticação é delegada ao Firebase.
+- O custom claim `isOwner` é gravado pelo `user-service` via Firebase Admin SDK ao criar barbearia.
+- Rotas públicas (sem auth obrigatório): `POST /api/auth/verify`, `POST /api/auth/email/**`, `POST /api/payments/webhook`, `GET /api/payments/mp-callback`, `GET /api/barbershops/{id}`.
 
 ---
 
@@ -504,17 +508,28 @@ Microserviços
 **Status do Agendamento:**
 
 ```
-SCHEDULED → CONFIRMED → CONCLUDED
+PAYMENT_PENDING → (pagamento aprovado) → SCHEDULED
+        ↓ (30min sem pagamento)
+     CANCELLED
+
+SCHEDULED → CONFIRMED → IN_PROGRESS → COMPLETED
     ↓            ↓
-CANCELLED    CANCELLED
+ CANCELLED    CANCELLED
+
+WALK_IN   → IN_PROGRESS → COMPLETED  (atendimento imediato)
+NO_SHOW                                 (cliente não compareceu)
+EXPIRED                                 (PAYMENT_PENDING + start_time passado, lazy)
 ```
 
-- `SCHEDULED` → agendamento criado, aguardando confirmação
-- `CONFIRMED` → barbeiro ou dono confirmou
-- `CONCLUDED` → barbeiro marcou como atendido (dispara notificação de avaliação)
-- `CANCELLED` → cliente, barbeiro ou dono cancelou
-- `NO_SHOW` → cliente não compareceu (não ocupa slots em futuras consultas de disponibilidade)
-- `PAID` → status atualizado pelo `payment-service` após pagamento aprovado
+- `PAYMENT_PENDING` → agendamento criado aguardando pagamento online
+- `SCHEDULED` → agendamento confirmado (local ou após pagamento aprovado)
+- `CONFIRMED` → barbeiro/dono confirmou explicitamente
+- `IN_PROGRESS` → atendimento em andamento
+- `COMPLETED` → atendimento concluído (dispara notificação de avaliação)
+- `CANCELLED` → cancelado por cliente, barbeiro ou dono
+- `WALK_IN` → atendimento imediato sem agendamento prévio
+- `NO_SHOW` → cliente não compareceu (não bloqueia slots futuros)
+- `EXPIRED` → projeção lazy (PAYMENT_PENDING + start_time passado)
 
 **Quem pode cancelar:**
 - O próprio **cliente** do agendamento
@@ -617,20 +632,22 @@ CANCELLED    CANCELLED
 ### UC-01: Cliente se cadastra na plataforma
 **Ator:** Cliente  
 **Fluxo:**
-1. Preenche formulário com nome, telefone, e-mail, CPF, senha (e opcionalmente foto de perfil).
-2. Sistema valida unicidade de e-mail, telefone e CPF.
-3. Sistema armazena senha como hash BCrypt.
-4. Se foto enviada, faz upload para Cloudinary e salva a URL.
-5. Retorna o UUID do cliente criado.
+1. Faz login pelo Firebase SDK (email/senha ou Google).
+2. Sistema chama `POST /api/auth/verify` com o Firebase ID Token.
+3. `user-service` valida o token via Firebase Admin SDK e cria o registro no banco.
+4. Cliente completa perfil em `POST /api/auth/customers/complete-profile` com nome, telefone, CPF.
+5. `user-service` criptografa CPF, email e telefone (AES/GCM) e grava `email_hash`.
+6. Retorna o UUID do cliente criado.
 
 ---
 
 ### UC-02: Barbeiro se cadastra na plataforma
 **Ator:** Barbeiro  
 **Fluxo:**
-1. Preenche dados pessoais e **horário de trabalho** (ex.: 08h00 às 18h00).
-2. Sistema valida unicidade de e-mail e CPF.
-3. Cria conta com `role = ROLE_BARBER` e `isOwner = false`.
+1. Faz login pelo Firebase SDK.
+2. Sistema chama `POST /api/auth/verify` com `userType: BARBER`.
+3. Completa perfil em `POST /api/auth/barbers/complete-profile` com dados pessoais e horário de trabalho.
+4. Cria conta com `role = ROLE_BARBER` e `isOwner = false` (custom claim no Firebase).
 
 ---
 
@@ -778,10 +795,17 @@ payment-service → schedule-service
 Exchange: `cortaai.events` (TopicExchange)
 
 ```
-schedule-service  →[appointment.created]→   notification-service
-schedule-service  →[appointment.cancelled]→  notification-service
-schedule-service  →[appointment.concluded]→  notification-service
-payment-service   →[payment.approved]→       notification-service
+schedule-service    →[appointment.created]→     notification-service
+schedule-service    →[appointment.cancelled]→   notification-service
+schedule-service    →[appointment.concluded]→   notification-service
+schedule-service    →[appointment.rescheduled]→ notification-service
+schedule-service    →[appointment.reminder]→    notification-service  (scheduler — 5min)
+payment-service     →[payment.approved]→        notification-service
+barbershop-service  →[barbershop.join-request.created]→ notification-service
+barbershop-service  →[barber.removed]→          notification-service
+user-service        →[customer.deleted]→        schedule-service      (anonimiza agendamentos)
+user-service        →[customer.deleted]→        payment-service       (anonimiza transações)
+user-service        →[customer.deleted]→        notification-service  (deleta notificações)
 ```
 
 As filas são **durable** (sobrevivem a restart do RabbitMQ) e as mensagens são serializadas em JSON via `Jackson2JsonMessageConverter`.
@@ -796,12 +820,12 @@ Existe **1 instância MySQL** com **6 bancos lógicos** separados (um por micros
 
 | Banco | Dono | Tabelas |
 |---|---|---|
-| `user_db` | user-service | `customers`, `barbers` |
-| `barbershop_db` | barbershop-service | `barbershops`, `activities`, `barbershop_join_requests`, `barbershop_highlights` |
+| `user_db` | user-service | `customers`, `barbers`, `customer_favorite_barbershops` |
+| `barbershop_db` | barbershop-service | `barbershops`, `activities`, `barbershop_join_requests`, `barbershop_highlights`, `barber_commission_rules`, `fixed_expenses`, `barbershop_reviews` |
 | `schedule_db` | schedule-service | `appointments`, `appointment_activities`, `barber_blocks` |
-| `payment_db` | payment-service | `transactions`, `webhook_logs` |
-| `product_db` | product-service | `products`, `orders`, `order_items`, `stock_movements` |
-| `notification_db` | notification-service | `notifications` |
+| `payment_db` | payment-service | `transactions`, `webhook_logs`, `dashboard_kpi_daily` |
+| `product_db` | product-service | `products`, `categories`, `stock_movements` |
+| `notification_db` | notification-service | `notifications`, `device_tokens` |
 
 Além do MySQL, o **Redis** é usado como armazenamento em memória por dois serviços (`schedule-service` e `notification-service`).
 
@@ -880,23 +904,29 @@ GET "nome-da-chave"
 ```bash
 # MySQL
 MYSQL_ROOT_PASSWORD=   # Senha root do MySQL
-DB_USERNAME=           # Usuário das aplicações (root ou outro)
+DB_USERNAME=           # Usuário das aplicações
 DB_PASSWORD=           # Senha do usuário das aplicações
 
-# JWT
-JWT_SECRET_KEY=        # Chave secreta ≥ 256 bits para assinar tokens
+# Firebase
+FIREBASE_CREDENTIALS_PATH= # Caminho para o arquivo firebase-adminsdk.json
 
 # RabbitMQ
 RABBITMQ_USER=         # Usuário do RabbitMQ
 RABBITMQ_PASS=         # Senha do RabbitMQ
 
 # Mercado Pago
-MP_ACCESS_TOKEN=       # Token de acesso da conta do Mercado Pago
+MP_ACCESS_TOKEN=       # Token da plataforma CortaAi no Mercado Pago
+MP_CLIENT_ID=          # Client ID para OAuth do lojista
+MP_CLIENT_SECRET=      # Client Secret para OAuth do lojista
+MP_MARKETPLACE_FEE_PERCENT= # Taxa da plataforma (padrão: 5.0)
 
 # Cloudinary (armazenamento de imagens)
 CLOUDINARY_CLOUD_NAME= # Nome do cloud no Cloudinary
 CLOUDINARY_API_KEY=    # API Key do Cloudinary
 CLOUDINARY_API_SECRET= # API Secret do Cloudinary
+
+# Criptografia de dados PII (LGPD)
+CORTAAI_DATA_CRYPTO_KEY= # Chave AES/GCM para campos sensíveis (CPF, email, telefone)
 
 # E-mail (SMTP)
 MAIL_HOST=             # Host SMTP (ex: smtp.gmail.com)
