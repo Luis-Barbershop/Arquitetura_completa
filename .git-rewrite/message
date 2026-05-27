@@ -1,1 +1,0 @@
-fix(infra): adiciona JAVA_TOOL_OPTIONS e aumenta limites de memoria para evitar OOM kill nos servicos
