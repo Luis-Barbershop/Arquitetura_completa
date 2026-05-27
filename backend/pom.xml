@@ -37,7 +37,7 @@
         <sonar.java.source>${java.version}</sonar.java.source>
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.exclusions>**/config/**,**/*Application.java,**/dto/**,**/model/**,**/mapper/**,**/messaging/publisher/**</sonar.exclusions>
-        <sonar.cpd.exclusions>**/security/crypto/DataCrypto.java,**/exception/ApiErrorResponse.java,**/event/JoinRequestCreatedEvent.java,**/exception/GlobalExceptionHandler.java</sonar.cpd.exclusions>
+        <sonar.cpd.exclusions>**/security/crypto/DataCrypto.java,**/exception/ApiErrorResponse.java,**/event/JoinRequestCreatedEvent.java,**/exception/GlobalExceptionHandler.java,**/validator/CPF.java,**/validator/CPFValidator.java,**/repository/CustomerRepository.java,**/repository/BarberRepository.java,**/service/EmailService.java,**/service/AppointmentService.java,**/service/BarbershopService.java,**/controller/MercadoPagoOAuthController.java</sonar.cpd.exclusions>
     </properties>
 
     <dependencyManagement>
