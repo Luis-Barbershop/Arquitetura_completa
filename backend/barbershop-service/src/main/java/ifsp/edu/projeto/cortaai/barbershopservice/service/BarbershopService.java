@@ -496,7 +496,7 @@ public class BarbershopService {
             throw new ForbiddenException("Este barbeiro nao pertence a sua barbearia.");
         }
         if ("REDISTRIBUTE".equals(action)) {
-            if (dto.redistributeToId() == null) {
+            if (dto == null || dto.redistributeToId() == null) {
                 throw new DomainConflictException("Escolha um barbeiro de destino para redistribuir.");
             }
             if (dto.redistributeToId().equals(barberId)) {
@@ -668,7 +668,7 @@ public class BarbershopService {
         Barbershop shop = findOwnerShop(owner.getId());
 
         String cleanCpf = onlyDigits(cpf);
-        if (cleanCpf.length() != 11) {
+        if (cleanCpf == null || cleanCpf.length() != 11) {
             throw new DomainConflictException("CPF inválido. Informe 11 dígitos.");
         }
 

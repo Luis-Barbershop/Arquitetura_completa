@@ -109,10 +109,10 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
     @Value("${firebase.web-api-key:}")
     private String firebaseWebApiKey;
 
-    @Value("${app.web-base-url:https://web.cortaai.shop}")
+    @Value("${app.web-base-url}")
     private String appWebBaseUrl;
 
-    @Value("${app.forgot-password-continue-url:https://web.cortaai.shop/change-password}")
+    @Value("${app.forgot-password-continue-url}")
     private String forgotPasswordContinueUrl;
 
     private final Map<String, Instant> forgotPasswordLastRequestByEmail = new ConcurrentHashMap<>();
@@ -236,6 +236,9 @@ public class FirebaseDebugServiceImpl implements FirebaseDebugService {
                         .build();
                 httpClient.send(verifyRequest, HttpResponse.BodyHandlers.ofString());
                 log.info("event=verification-email-sent uid={}", localId);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.warn("event=verification-email-failed uid={} reason=interrupted", localId);
             } catch (Exception e) {
                 log.warn("event=verification-email-failed uid={} reason={}", localId, e.getMessage());
                 // Não cancela o cadastro — e-mail pode ser reenviado depois

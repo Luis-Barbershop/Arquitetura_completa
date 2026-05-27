@@ -65,13 +65,13 @@ public class AiChatServiceImpl implements AiChatService {
     @Value("${ai.gemini.api-key:}")
     private String geminiApiKey;
 
-    @Value("${ai.gemini.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent}")
+    @Value("${ai.gemini.url}")
     private String geminiUrl;
 
     @Value("${ai.groq.api-key:}")
     private String groqApiKey;
 
-    @Value("${ai.groq.url:https://api.groq.com/openai/v1/chat/completions}")
+    @Value("${ai.groq.url}")
     private String groqUrl;
 
     @Value("${ai.groq.model:llama-3.3-70b-versatile}")
@@ -80,16 +80,16 @@ public class AiChatServiceImpl implements AiChatService {
     @Value("${ai.openrouter.api-key:}")
     private String openrouterApiKey;
 
-    @Value("${ai.openrouter.url:https://openrouter.ai/api/v1/chat/completions}")
+    @Value("${ai.openrouter.url}")
     private String openrouterUrl;
 
-    @Value("${ai.openrouter.model:mistralai/mistral-7b-instruct:free}")
+    @Value("${ai.openrouter.model}")
     private String openrouterModel;
 
     @Value("${ai.cohere.api-key:}")
     private String cohereApiKey;
 
-    @Value("${ai.cohere.url:https://api.cohere.com/v2/chat}")
+    @Value("${ai.cohere.url}")
     private String cohereUrl;
 
     @Value("${ai.cohere.model:command-r}")
@@ -1447,6 +1447,7 @@ public class AiChatServiceImpl implements AiChatService {
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
         Map<String, Object> response = restTemplate.postForObject(url, entity, Map.class);
+        if (response == null) throw new IllegalStateException("Resposta nula do Gemini");
 
         List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
         Map<String, Object> first    = candidates.get(0);
@@ -1470,6 +1471,7 @@ public class AiChatServiceImpl implements AiChatService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
         Map<String, Object> response = restTemplate.postForObject(groqUrl, entity, Map.class);
+        if (response == null) throw new IllegalStateException("Resposta nula do Groq");
 
         List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
         Map<String, Object> msg = (Map<String, Object>) choices.get(0).get("message");
