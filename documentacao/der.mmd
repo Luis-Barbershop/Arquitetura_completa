@@ -5,9 +5,15 @@ erDiagram
         varchar name
         varchar tell UK
         varchar email UK
+        varchar email_hash UK
         varchar document_cpf UK
-        varchar password
+        varchar firebase_uid UK
         varchar role
+    }
+
+    CUSTOMER_FAVORITE_BARBERSHOPS {
+        uuid customer_id FK
+        uuid barbershop_id "ref BARBERSHOPS"
     }
 
     BARBERS {
@@ -15,13 +21,28 @@ erDiagram
         varchar name
         varchar tell UK
         varchar email UK
+        varchar email_hash UK
         varchar document_cpf UK
-        varchar password
+        varchar firebase_uid UK
         boolean is_owner
+        boolean act_as_barber
         varchar role
         uuid barbershop_id "ref BARBERSHOPS"
         time work_start_time
         time work_end_time
+    }
+
+    BARBER_ASSIGNED_ACTIVITIES {
+        uuid barber_id FK
+        uuid activity_id "ref ACTIVITIES"
+    }
+
+    BARBER_WORK_BLOCKS {
+        uuid id PK
+        uuid barber_id "ref BARBERS"
+        varchar day_of_week
+        time start_time
+        time end_time
     }
 
     BARBERSHOPS {
@@ -30,6 +51,8 @@ erDiagram
         varchar name
         varchar cnpj UK
         varchar address
+        double latitude
+        double longitude
     }
 
     ACTIVITIES {
@@ -45,12 +68,40 @@ erDiagram
         uuid barber_id "ref BARBERS"
         uuid barbershop_id FK
         varchar status
+        varchar request_type
     }
 
     BARBERSHOP_HIGHLIGHTS {
         uuid id PK
         uuid barbershop_id FK
         varchar image_url
+    }
+
+    BARBERSHOP_REVIEWS {
+        uuid id PK
+        uuid customer_id "ref CUSTOMERS"
+        uuid barbershop_id FK
+        int rating
+        varchar comment
+    }
+
+    BARBER_COMMISSION_RULES {
+        uuid id PK
+        uuid barbershop_id "ref BARBERSHOPS"
+        uuid barber_id "ref BARBERS"
+        uuid activity_id FK
+        decimal percentage
+    }
+
+    FIXED_EXPENSES {
+        uuid id PK
+        uuid barbershop_id "ref BARBERSHOPS"
+        varchar category
+        varchar custom_name
+        decimal amount
+        int month
+        int year
+        boolean recurring_monthly
     }
 
     APPOINTMENTS {
@@ -88,7 +139,13 @@ erDiagram
         uuid id PK
         uuid appointment_id "ref APPOINTMENTS"
         uuid customer_id "ref CUSTOMERS"
+        uuid barbershop_id "ref BARBERSHOPS"
         decimal amount
+        decimal gross_amount
+        decimal net_amount
+        decimal mp_fee_amount
+        decimal platform_fee_amount
+        varchar payment_method
         varchar status
         varchar mp_preference_id UK
         varchar mp_payment_id
@@ -103,6 +160,20 @@ erDiagram
         boolean processed
     }
 
+    DASHBOARD_KPI_DAILY {
+        uuid id PK
+        uuid barbershop_id "ref BARBERSHOPS"
+        date reference_date
+        decimal approved_revenue
+        int approved_transactions_count
+    }
+
+    CATEGORIES {
+        uuid id PK
+        varchar name
+        uuid barbershop_id "ref BARBERSHOPS"
+    }
+
     PRODUCTS {
         uuid id PK
         uuid barbershop_id "ref BARBERSHOPS"
@@ -110,25 +181,11 @@ erDiagram
         text description
         decimal price
         varchar category
+        uuid category_id FK
         int stock_quantity
+        int min_stock_quantity
+        varchar image_url
         boolean active
-    }
-
-    ORDERS {
-        uuid id PK
-        uuid customer_id "ref CUSTOMERS"
-        uuid barbershop_id "ref BARBERSHOPS"
-        varchar status
-        decimal total_price
-    }
-
-    ORDER_ITEMS {
-        uuid id PK
-        uuid order_id FK
-        uuid product_id "ref PRODUCTS"
-        varchar product_name "snapshot"
-        decimal price "snapshot"
-        int quantity
     }
 
     STOCK_MOVEMENTS {
@@ -136,7 +193,8 @@ erDiagram
         uuid product_id "ref PRODUCTS"
         varchar type
         int quantity
-        uuid order_id "ref ORDERS"
+        decimal unit_sale_price
+        varchar notes
         varchar reason
     }
 
@@ -150,27 +208,45 @@ erDiagram
         boolean is_read
     }
 
-    BARBERS ||..o| BARBERSHOPS : "e dono de"
+    DEVICE_TOKENS {
+        uuid id PK
+        uuid user_id "ref CUSTOMERS ou BARBERS"
+        varchar platform
+        varchar token UK
+        boolean active
+    }
+
+    CUSTOMERS ||--o{ CUSTOMER_FAVORITE_BARBERSHOPS : "favorita"
+    BARBERS ||--o{ BARBER_ASSIGNED_ACTIVITIES : "executa"
+    BARBERS ||..o{ BARBER_WORK_BLOCKS : "define jornada"
+
+    BARBERS ||..o| BARBERSHOPS : "e dono"
     BARBERSHOPS ||--o{ ACTIVITIES : "oferece"
-    BARBERSHOPS ||--o{ BARBERSHOP_JOIN_REQUESTS : "recebe pedido"
-    BARBERSHOPS ||--o{ BARBERSHOP_HIGHLIGHTS : "destaque"
-    BARBERS ||..o{ BARBERSHOP_JOIN_REQUESTS : "solicita entrada"
+    BARBERSHOPS ||--o{ BARBERSHOP_JOIN_REQUESTS : "recebe"
+    BARBERSHOPS ||--o{ BARBERSHOP_HIGHLIGHTS : "possui"
+    BARBERSHOPS ||--o{ BARBERSHOP_REVIEWS : "recebe"
+    BARBERS ||..o{ BARBERSHOP_JOIN_REQUESTS : "participa"
+    CUSTOMERS ||..o{ BARBERSHOP_REVIEWS : "avalia"
+    ACTIVITIES ||--o{ BARBER_COMMISSION_RULES : "parametriza"
 
     CUSTOMERS ||..o{ APPOINTMENTS : "agenda"
     BARBERS ||..o{ APPOINTMENTS : "atende"
-    BARBERSHOPS ||..o{ APPOINTMENTS : "local"
+    BARBERSHOPS ||..o{ APPOINTMENTS : "sedia"
     APPOINTMENTS ||--o{ APPOINTMENT_ACTIVITIES : "inclui"
-    ACTIVITIES ||..o{ APPOINTMENT_ACTIVITIES : "servico"
-    BARBERS ||..o{ BARBER_BLOCKS : "bloqueia horario"
+    ACTIVITIES ||..o{ APPOINTMENT_ACTIVITIES : "origina"
+    BARBERS ||..o{ BARBER_BLOCKS : "bloqueia"
 
-    APPOINTMENTS ||..o| TRANSACTIONS : "gera pagamento"
+    APPOINTMENTS ||..o| TRANSACTIONS : "gera"
     CUSTOMERS ||..o{ TRANSACTIONS : "paga"
+    BARBERSHOPS ||..o{ TRANSACTIONS : "recebe"
+    BARBERSHOPS ||..o{ DASHBOARD_KPI_DAILY : "consolida"
 
-    BARBERSHOPS ||..o{ PRODUCTS : "vende"
-    PRODUCTS ||--o{ ORDER_ITEMS : "compoe"
-    PRODUCTS ||--o{ STOCK_MOVEMENTS : "movimenta estoque"
-    CUSTOMERS ||..o{ ORDERS : "compra"
-    BARBERSHOPS ||..o{ ORDERS : "recebe pedido"
-    ORDERS ||--o{ ORDER_ITEMS : "contem"
+    BARBERSHOPS ||..o{ CATEGORIES : "define"
+    CATEGORIES ||--o{ PRODUCTS : "classifica"
+    BARBERSHOPS ||..o{ PRODUCTS : "mantem"
+    PRODUCTS ||..o{ STOCK_MOVEMENTS : "movimenta"
 
     CUSTOMERS ||..o{ NOTIFICATIONS : "recebe"
+    BARBERS ||..o{ NOTIFICATIONS : "recebe"
+    CUSTOMERS ||..o{ DEVICE_TOKENS : "usa"
+    BARBERS ||..o{ DEVICE_TOKENS : "usa"
