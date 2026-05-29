@@ -145,6 +145,7 @@ function OnboardingTour({
   const [cardPosition, setCardPosition] = useState({ top: VIEWPORT_PADDING, left: VIEWPORT_PADDING });
   const cardRef = useRef(null);
   const rafRef = useRef(null);
+  const wasOpenRef = useRef(false);
   const maskId = useId().replace(/:/g, '');
 
   const totalSteps = steps.length;
@@ -163,15 +164,22 @@ function OnboardingTour({
   const isLastStep = findNextValidStep(resolvedSteps, currentStepIndex + 1, 1) === -1;
 
   useEffect(() => {
-    if (open) {
-      const firstValidStep = findNextValidStep(resolvedSteps, 0, 1);
-      if (firstValidStep === -1) {
-        onClose?.();
-        return;
-      }
-      setCurrentStepIndex(firstValidStep);
-      setLayoutVersion((prev) => prev + 1);
+    if (!open) {
+      wasOpenRef.current = false;
+      return;
     }
+
+    if (wasOpenRef.current) return;
+
+    const firstValidStep = findNextValidStep(resolvedSteps, 0, 1);
+    if (firstValidStep === -1) {
+      onClose?.();
+      return;
+    }
+
+    setCurrentStepIndex(firstValidStep);
+    setLayoutVersion((prev) => prev + 1);
+    wasOpenRef.current = true;
   }, [open, resolvedSteps, onClose]);
 
   useEffect(() => {
@@ -205,7 +213,6 @@ function OnboardingTour({
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-      attributes: true,
     });
 
     return () => {

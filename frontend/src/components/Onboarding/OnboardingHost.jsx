@@ -20,6 +20,7 @@ const PAGE_TITLES = {
   'customer-appointments': 'Sua agenda',
   'customer-profile': 'Seu perfil',
   'barber-home': 'Painel rápido',
+  'barber-home-unlinked': 'Começo do pro',
   'barber-services': 'Seus serviços',
   'owner-services': 'Catálogo da loja',
   'barber-unavailability': 'Bloqueios',

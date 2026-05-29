@@ -3,7 +3,7 @@ import styles from '../../pages/CSS/BarberHomePage.module.css';
 
 function NoBarbershopPanel({ onCreateShop, onGoToProfile }) {
     return (
-        <section className={styles.noBarbershopPanel}>
+        <section className={styles.noBarbershopPanel} data-onboarding-id="barber-home-unlinked-panel">
             <p className={styles.noBarbershopKicker}>PAINEL DO PROFISSIONAL</p>
             <h2 className={styles.noBarbershopTitle}>Você ainda não está vinculado a uma barbearia</h2>
             <p className={styles.noBarbershopSubtitle}>Crie seu proprio espaco ou aguarde o convite de um dono de barbearia pelo seu CPF.</p>

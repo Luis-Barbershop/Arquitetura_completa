@@ -114,6 +114,11 @@ export const getCurrentRoleVariant = () => {
   return null;
 };
 
+const hasLinkedBarbershop = () => {
+  const barbershopId = localStorage.getItem('barbershopId');
+  return Boolean(barbershopId && String(barbershopId).trim() !== '');
+};
+
 export const resolvePageKeyFromLocation = ({ pathname, search }, roleVariant) => {
   if (!pathname || !roleVariant) return null;
 
@@ -131,7 +136,7 @@ export const resolvePageKeyFromLocation = ({ pathname, search }, roleVariant) =>
     return 'barber-appointments';
   }
 
-  if (pathname === '/barberHome') return 'barber-home';
+  if (pathname === '/barberHome') return hasLinkedBarbershop() ? 'barber-home' : 'barber-home-unlinked';
   if (pathname === '/barberHome/servicos') return roleVariant === 'owner' ? 'owner-services' : 'barber-services';
   if (pathname === '/barber/indisponibilidade') return 'barber-unavailability';
   if (pathname === '/barberHome/perfil') return 'barber-profile';

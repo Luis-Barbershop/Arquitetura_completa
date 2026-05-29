@@ -33,6 +33,11 @@ const PAGE_TARGETS = {
     '[data-onboarding-id="barber-home-actions"]',
     '[data-onboarding-id="barber-home-next"]',
   ],
+  'barber-home-unlinked': [
+    '[data-onboarding-id="barber-home-unlinked-panel"]',
+    '[data-onboarding-id="barber-home-unlinked-panel"]',
+    '[data-onboarding-id="barber-home-unlinked-panel"]',
+  ],
   'barber-services': [
     '[data-onboarding-id="barber-services-page"]',
     '[data-onboarding-id="barber-services-page"]',
@@ -148,6 +153,11 @@ export const ONBOARDING_STEPS = {
     { title: 'Home do profissional', description: 'Este painel centraliza visão rápida do dia, próximos atendimentos e atalhos operacionais.' },
     { title: 'Prioridades', description: 'Use os cards para agir rápido em agenda, serviços e rotinas do seu fluxo diário.' },
     { title: 'Navegação', description: `As demais funções ficam no menu superior/inferior por aba. ${shared.replayHint}` },
+  ],
+  'barber-home-unlinked': [
+    { title: 'Bem-vindo ao painel pro', description: 'Você ainda não está vinculado a uma barbearia, então o foco aqui é concluir sua entrada no ecossistema.' },
+    { title: 'Dois caminhos rápidos', description: 'Você pode criar sua própria barbearia agora ou abrir o perfil para aceitar um convite pendente.' },
+    { title: 'Depois do vínculo', description: `Assim que houver vínculo, sua home muda para visão operacional completa de agenda e rotina. ${shared.replayHint}` },
   ],
   'barber-services': [
     { title: 'Serviços e habilidades', description: 'Nesta tela você gerencia serviços visíveis e, para colaborador, habilidades atribuídas.' },
