@@ -6,6 +6,7 @@ import { BrowserRouter as Router, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import UpdateAvailableBanner from './components/UpdateAvailableBanner';
 import GustaveChat from './components/GustaveChat/GustaveChat';
+import OnboardingHost from './components/Onboarding/OnboardingHost';
 import {
   applyServiceWorkerUpdate,
   requestPwaInstall,
@@ -79,6 +80,7 @@ function AppShell() {
           onDismiss={handleDismissUpdate}
         />
       )}
+      <OnboardingHost />
       <ToastContainer
         position="top-right"
         autoClose={4000}

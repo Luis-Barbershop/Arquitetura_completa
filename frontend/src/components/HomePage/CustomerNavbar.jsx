@@ -6,10 +6,12 @@ import {
     DotsThreeOutline,
     X,
     UserCircle,
+    Question,
     Lock,
     SignOut,
 } from '@phosphor-icons/react';
 import NotificationBell from '../NotificationBell/NotificationBell';
+import { requestOnboardingReplay } from '../../services/onboardingService';
 import styles from './CSS/CustomerNavbar.module.css';
 
 /**
@@ -32,6 +34,7 @@ function CustomerNavbar({ activeTab = 'home', onLogout }) {
 
     const drawerItems = [
         { id: 'perfil', label: 'Meu Perfil', Icon: UserCircle, path: '/homepage/perfil' },
+        { id: 'onboarding', label: 'Rever onboarding', Icon: Question, action: requestOnboardingReplay },
         ...(canChangePassword
             ? [{ id: 'senha',  label: 'Alterar Senha', Icon: Lock,        path: '/change-password' }]
             : []),
@@ -46,6 +49,8 @@ function CustomerNavbar({ activeTab = 'home', onLogout }) {
         setDrawerOpen(false);
         if (item.id === 'sair') {
             if (typeof onLogout === 'function') onLogout();
+        } else if (typeof item.action === 'function') {
+            item.action();
         } else if (item.path) {
             navigate(item.path);
         }

@@ -1,0 +1,123 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(0, 0, 0, 0.66);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.card {
+  width: min(560px, 100%);
+  border-radius: 16px;
+  background: linear-gradient(145deg, #101010, #181818);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  color: #f5f5f5;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.kicker {
+  margin: 0;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.progress {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.title {
+  margin: 14px 0 8px;
+  font-size: clamp(1.05rem, 2.5vw, 1.35rem);
+  line-height: 1.25;
+}
+
+.description {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.84);
+  line-height: 1.52;
+  font-size: 0.96rem;
+}
+
+.footer {
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.leftActions,
+.rightActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.button {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  background: transparent;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.primaryButton {
+  border: 0;
+  color: #0f0f0f;
+  background: #f6c24f;
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primaryButton:hover {
+  filter: brightness(1.03);
+}
+
+.primaryButton:disabled,
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .footer {
+    align-items: stretch;
+  }
+
+  .leftActions,
+  .rightActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

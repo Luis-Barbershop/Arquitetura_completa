@@ -12,6 +12,7 @@ import {
     Package,
     CaretDown,
     UserCircle,
+    Question,
     Lock,
     CreditCard,
     SignOut,
@@ -21,6 +22,7 @@ import cortaAiLogo from '/CortaAiLogo.png';
 import api from '../../services/api';
 import NotificationBell from '../NotificationBell/NotificationBell';
 import { isOwnerUser, getBarbershopId, getHomeRouteByRole } from '../../services/userContext';
+import { requestOnboardingReplay } from '../../services/onboardingService';
 import styles from './CSS/BarberHeader.module.css';
 
 /**
@@ -268,6 +270,9 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
                             <div className={styles.dropdownDivider} />
                             <button className={styles.dropdownItem} onClick={() => { onTabChange('perfil'); setAvatarOpen(false); }}>
                                 <UserCircle size={15} weight="duotone" /> Meu Perfil
+                            </button>
+                            <button className={styles.dropdownItem} onClick={() => { requestOnboardingReplay(); setAvatarOpen(false); }}>
+                                <Question size={15} weight="duotone" /> Rever onboarding
                             </button>
                             {canChangePassword && (
                                 <button className={styles.dropdownItem} onClick={() => { navigate('/change-password'); setAvatarOpen(false); }}>

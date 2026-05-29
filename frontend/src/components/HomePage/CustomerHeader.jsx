@@ -5,12 +5,14 @@ import {
     CalendarBlank,
     CaretDown,
     UserCircle,
+    Question,
     Lock,
     SignOut,
 } from '@phosphor-icons/react';
 import cortaAiLogo from '/CortaAiLogo.png';
 import NotificationBell from '../NotificationBell/NotificationBell';
 import { getHomeRouteByRole } from '../../services/userContext';
+import { requestOnboardingReplay } from '../../services/onboardingService';
 import styles from './CSS/CustomerHeader.module.css';
 
 /**
@@ -126,6 +128,12 @@ function CustomerHeader({ activeTab = 'home', onLogout }) {
                                 onClick={() => { navigate('/homepage/perfil'); setAvatarOpen(false); }}
                             >
                                 <UserCircle size={15} weight="duotone" /> Meu Perfil
+                            </button>
+                            <button
+                                className={styles.dropdownItem}
+                                onClick={() => { requestOnboardingReplay(); setAvatarOpen(false); }}
+                            >
+                                <Question size={15} weight="duotone" /> Rever onboarding
                             </button>
                             {canChangePassword && (
                                 <button

@@ -59,6 +59,7 @@ const SILENT_URLS = [
     '/auth/email/login',
     '/auth/email/register',
     '/auth/verify',
+    '/auth/me/onboarding-progress',
     '/auth/email/exists',
     '/auth/email/forgot-password',
     '/auth/email/resend-forgot-password',

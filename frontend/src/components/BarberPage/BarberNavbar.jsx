@@ -10,6 +10,7 @@ import {
     Package,
     PlusCircle,
     UserCircle,
+    Question,
     Storefront,
     ChartLineUp,
     X,
@@ -17,6 +18,7 @@ import {
 } from '@phosphor-icons/react';
 import { isOwnerUser, getBarbershopId } from '../../services/userContext';
 import { logoutUser } from '../../services/authService';
+import { requestOnboardingReplay } from '../../services/onboardingService';
 import NotificationBell from '../NotificationBell/NotificationBell';
 import styles from './CSS/BarberNavbar.module.css';
 
@@ -81,12 +83,14 @@ function BarberNavbar({ activeTab, onTabChange, onLogout }) {
             { id: 'novo-agendamento',    label: 'Novo Encaixe',        Icon: PlusCircle },
             { id: 'indisponibilidade',   label: 'Indisponibilidade',   Icon: CalendarX },
             { id: 'perfil',              label: 'Meu Perfil',          Icon: UserCircle },
+            { id: 'onboarding',          label: 'Rever onboarding',    Icon: Question, action: requestOnboardingReplay },
             { id: 'logout',              label: 'Sair',                Icon: SignOut, danger: true },
         ]
         : [
             ...(hasShop ? [{ id: 'novo-agendamento',  label: 'Novo Encaixe',      Icon: PlusCircle }] : []),
             ...(hasShop ? [{ id: 'indisponibilidade', label: 'Indisponibilidade', Icon: CalendarX }] : []),
             ...(!mainItems.some(i => i.id === 'perfil') ? [{ id: 'perfil', label: 'Meu Perfil', Icon: UserCircle }] : []),
+            { id: 'onboarding', label: 'Rever onboarding', Icon: Question, action: requestOnboardingReplay },
             { id: 'logout', label: 'Sair', Icon: SignOut, danger: true },
         ];
 
@@ -162,7 +166,19 @@ function BarberNavbar({ activeTab, onTabChange, onLogout }) {
                                                     ? styles.drawerItemActive
                                                     : styles.drawerItem
                                         }
-                                        onClick={() => (id === 'logout' ? handleLogout() : handleTab(id))}
+                                        onClick={() => {
+                                            const item = drawerItems.find((drawerItem) => drawerItem.id === id);
+                                            if (id === 'logout') {
+                                                handleLogout();
+                                                return;
+                                            }
+                                            if (typeof item?.action === 'function') {
+                                                setDrawerOpen(false);
+                                                item.action();
+                                                return;
+                                            }
+                                            handleTab(id);
+                                        }}
                                     >
                                         {React.createElement(Icon, {
                                             size: 20,
