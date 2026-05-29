@@ -585,7 +585,7 @@ const AgendamentoPage = () => {
           </p>
         )}
 
-        <section className={Styles.section}>
+        <section className={Styles.section} data-onboarding-id="booking-services">
           <h3 className={Styles.section_title}>1. Serviços</h3>
           {selectedBarber && isLoadingBarberActivities && (
             <p className={Styles.info_text}>Carregando serviços que este barbeiro executa...</p>
@@ -612,7 +612,10 @@ const AgendamentoPage = () => {
         </section>
 
         {selectedServices.length > 0 && (
-        <section className={`${Styles.section} ${Styles.sectionReveal}`}>
+        <section
+          className={`${Styles.section} ${Styles.sectionReveal}`}
+          data-onboarding-id="booking-professional"
+        >
           <h3 className={Styles.section_title}>2. Profissional</h3>
           {barbersList.length > 0 ? (
             <>
@@ -841,7 +844,7 @@ const AgendamentoPage = () => {
         </section>
         )}
 
-        <div className={Styles.footer}>
+        <div className={Styles.footer} data-onboarding-id="booking-confirm">
           <div className={Styles.totalInfo}>
             <span>Total estimado</span>
             <strong>{formatCurrency(totalPrice)}</strong>

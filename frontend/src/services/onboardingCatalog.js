@@ -2,6 +2,122 @@ const shared = {
   replayHint: 'Você pode rever este onboarding a qualquer momento no menu do perfil.',
 };
 
+const PAGE_TARGETS = {
+  'customer-home': [
+    '[data-onboarding-id="customer-home-hero"]',
+    '[data-onboarding-id="customer-home-search"]',
+    '[data-onboarding-id="customer-home-list"]',
+  ],
+  'customer-barbershop-detail': [
+    '[data-onboarding-id="shop-detail-banner"]',
+    '[data-onboarding-id="shop-detail-services"]',
+    '[data-onboarding-id="shop-detail-cta"]',
+  ],
+  'customer-booking': [
+    '[data-onboarding-id="booking-services"]',
+    '[data-onboarding-id="booking-professional"]',
+    '[data-onboarding-id="booking-confirm"]',
+  ],
+  'customer-appointments': [
+    '[data-onboarding-id="appointments-hero"]',
+    '[data-onboarding-id="appointments-filters"]',
+    '[data-onboarding-id="appointments-list"]',
+  ],
+  'customer-profile': [
+    '[data-onboarding-id="customer-profile-card"]',
+    '[data-onboarding-id="customer-profile-form"]',
+    '[data-onboarding-id="customer-profile-notifications"]',
+  ],
+  'barber-home': [
+    '[data-onboarding-id="barber-home-hero"]',
+    '[data-onboarding-id="barber-home-actions"]',
+    '[data-onboarding-id="barber-home-next"]',
+  ],
+  'barber-services': [
+    '[data-onboarding-id="barber-services-page"]',
+    '[data-onboarding-id="barber-services-page"]',
+    '[data-onboarding-id="barber-services-page"]',
+  ],
+  'owner-services': [
+    '[data-onboarding-id="barber-services-page"]',
+    '[data-onboarding-id="barber-services-page"]',
+    '[data-onboarding-id="barber-services-page"]',
+  ],
+  'barber-unavailability': [
+    '[data-onboarding-id="barber-unavailability-page"]',
+    '[data-onboarding-id="barber-unavailability-page"]',
+    '[data-onboarding-id="barber-unavailability-page"]',
+  ],
+  'barber-profile': [
+    '[data-onboarding-id="barber-profile-page"]',
+    '[data-onboarding-id="barber-profile-page"]',
+    '[data-onboarding-id="barber-profile-page"]',
+  ],
+  'barber-manual-booking': [
+    '[data-onboarding-id="barber-manual-booking-page"]',
+    '[data-onboarding-id="barber-manual-booking-page"]',
+    '[data-onboarding-id="barber-manual-booking-page"]',
+  ],
+  'barber-appointments': [
+    '[data-onboarding-id="appointments-hero"]',
+    '[data-onboarding-id="appointments-filters"]',
+    '[data-onboarding-id="appointments-list"]',
+  ],
+  'owner-stock': [
+    '[data-onboarding-id="owner-stock-page"]',
+    '[data-onboarding-id="owner-stock-page"]',
+    '[data-onboarding-id="owner-stock-page"]',
+  ],
+  'owner-team': [
+    '[data-onboarding-id="owner-team-page"]',
+    '[data-onboarding-id="owner-team-page"]',
+    '[data-onboarding-id="owner-team-page"]',
+  ],
+  'owner-dashboard': [
+    '[data-onboarding-id="owner-dashboard-page"]',
+    '[data-onboarding-id="owner-dashboard-page"]',
+    '[data-onboarding-id="owner-dashboard-page"]',
+  ],
+  'owner-manage-shop': [
+    '[data-onboarding-id="owner-manage-shop-page"]',
+    '[data-onboarding-id="owner-manage-shop-page"]',
+    '[data-onboarding-id="owner-manage-shop-page"]',
+  ],
+  'owner-team-agenda': [
+    '[data-onboarding-id="appointments-hero"]',
+    '[data-onboarding-id="appointments-filters"]',
+    '[data-onboarding-id="appointments-list"]',
+  ],
+  'barber-create-shop': [
+    '[data-onboarding-id="barber-create-shop-page"]',
+    '[data-onboarding-id="barber-create-shop-page"]',
+    '[data-onboarding-id="barber-create-shop-page"]',
+  ],
+};
+
+const DEFAULT_FALLBACK_SELECTORS = [
+  '[data-onboarding-id="global-header"]',
+  'main h1',
+  'h1',
+  'header',
+];
+
+const DEFAULT_PLACEMENTS = ['bottom', 'right', 'top'];
+
+const withAnchors = (pageKey, steps) => {
+  const targets = PAGE_TARGETS[pageKey] || [];
+
+  return steps.map((step, index) => ({
+    ...step,
+    selector: step.selector || targets[index] || targets[targets.length - 1] || DEFAULT_FALLBACK_SELECTORS[0],
+    fallbackSelectors: step.fallbackSelectors || DEFAULT_FALLBACK_SELECTORS,
+    placement: step.placement || DEFAULT_PLACEMENTS[index % DEFAULT_PLACEMENTS.length],
+    offset: step.offset || 14,
+    spotlightPadding: step.spotlightPadding || 10,
+    spotlightRadius: step.spotlightRadius || 14,
+  }));
+};
+
 export const ONBOARDING_STEPS = {
   'customer-home': [
     { title: 'Bem-vindo ao painel do cliente', description: 'Aqui você encontra barbearias, pesquisa por nome e acompanha suas favoritas com acesso rápido.' },
@@ -95,4 +211,7 @@ export const ONBOARDING_STEPS = {
   ],
 };
 
-export const getOnboardingSteps = (pageKey) => ONBOARDING_STEPS[pageKey] || [];
+export const getOnboardingSteps = (pageKey) => {
+  const steps = ONBOARDING_STEPS[pageKey] || [];
+  return withAnchors(pageKey, steps);
+};

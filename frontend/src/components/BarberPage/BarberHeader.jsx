@@ -136,7 +136,7 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
     };
 
     return (
-        <header className={styles.header}>
+        <header className={styles.header} data-onboarding-id="global-header">
             {/* ── Brand ─── */}
             <div className={styles.brand}>
                 <button

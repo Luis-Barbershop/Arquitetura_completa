@@ -66,7 +66,7 @@ function CustomerHeader({ activeTab = 'home', onLogout }) {
         .toUpperCase();
 
     return (
-        <header className={styles.header}>
+        <header className={styles.header} data-onboarding-id="global-header">
             {/* ── Brand ─── */}
             <div className={styles.brand}>
                 <button

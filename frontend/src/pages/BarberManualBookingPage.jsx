@@ -258,7 +258,10 @@ function BarberManualBookingPage() {
     const hasLinkedBarbershop = Boolean(barber?.barbershopId);
 
     return (
-        <div className={`${styles.pageContainer} ${hasLinkedBarbershop ? styles.withNavbar : styles.withoutNavbar}`}>
+        <div
+            className={`${styles.pageContainer} ${hasLinkedBarbershop ? styles.withNavbar : styles.withoutNavbar}`}
+            data-onboarding-id="barber-manual-booking-page"
+        >
             <div className={styles.contentWrapper}>
                 <BarberHeader
                     barber={barber}

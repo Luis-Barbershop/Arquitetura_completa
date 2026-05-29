@@ -72,14 +72,20 @@ function HomePage() {
       <div className={Styles.glow_top} />
 
       <div className={Styles.content_wrapper}>
-        <section className={`${Styles.hero_section} ${Styles.animate_item} ${Styles.delay_1}`}>
+        <section
+          className={`${Styles.hero_section} ${Styles.animate_item} ${Styles.delay_1}`}
+          data-onboarding-id="customer-home-hero"
+        >
           <div className={Styles.hero_text}>
             <span className={Styles.hero_badge}>Painel do Cliente</span>
             <h1>Pronto para o seu <br/><span className={Styles.highlight}>próximo estilo?</span></h1>
             <p>Explore barbearias premium, compare serviços e agende no horário ideal para você.</p>
           </div>
 
-          <div className={`${Styles.search_wrapper} ${Styles.animate_item} ${Styles.delay_2}`}>
+          <div
+            className={`${Styles.search_wrapper} ${Styles.animate_item} ${Styles.delay_2}`}
+            data-onboarding-id="customer-home-search"
+          >
             <SearchBar searchTerm={searchTerm} onSearchChange={setSearchTerm} />
           </div>
         </section>
@@ -94,7 +100,10 @@ function HomePage() {
           </section>
         )}
 
-        <section className={`${Styles.list_section} ${Styles.animate_item} ${Styles.delay_4}`}>
+        <section
+          className={`${Styles.list_section} ${Styles.animate_item} ${Styles.delay_4}`}
+          data-onboarding-id="customer-home-list"
+        >
           <div className={Styles.section_header}>
             <h3>Descobrir Barbearias</h3>
             <span className={Styles.section_subtitle}>Perto de você</span>

@@ -171,7 +171,7 @@ function BarberDashboardPage() {
     const estimatedResult = grossRevenue - productExpenses - fixedExpensesTotal;
 
     return (
-        <div className={`${styles.pageContainer} ${styles.withNavbar}`}>
+        <div className={`${styles.pageContainer} ${styles.withNavbar}`} data-onboarding-id="owner-dashboard-page">
             <div className={styles.contentWrapper}>
                 <BarberHeader barber={barber} onLogout={handleLogout} activeTab="dashboards" onTabChange={handleTabChange} isOwner={true} barbershopId={barbershopId} />
 

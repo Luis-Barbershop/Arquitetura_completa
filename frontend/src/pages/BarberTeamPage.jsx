@@ -188,7 +188,7 @@ function BarberTeamPage() {
     if (loading) return <div className={styles.loadingContainer}>Carregando...</div>;
 
     return (
-        <div className={`${styles.pageContainer} ${styles.withNavbar}`}>
+        <div className={`${styles.pageContainer} ${styles.withNavbar}`} data-onboarding-id="owner-team-page">
             <div className={styles.contentWrapper}>
                 <BarberHeader barber={barber} onLogout={handleLogout} activeTab="time" onTabChange={handleTabChange} isOwner={true} barbershopId={barber?.barbershopId} />
 

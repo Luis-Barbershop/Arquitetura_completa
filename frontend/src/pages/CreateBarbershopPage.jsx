@@ -116,7 +116,7 @@ function CreateBarbershopPage() {
     };
 
     return (
-        <div className={styles.stage}>
+        <div className={styles.stage} data-onboarding-id="barber-create-shop-page">
             <div className={styles.shell}>
                 {/* Painel de branding */}
                 <aside className={styles.brandPanel}>

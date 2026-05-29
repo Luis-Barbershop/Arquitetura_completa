@@ -269,7 +269,7 @@ function BarberServicesPage() {
   }
 
   return (
-    <div className={styles.pageContainer}>
+    <div className={styles.pageContainer} data-onboarding-id="barber-services-page">
       <div className={styles.contentWrapper}>
         <BarberHeader
           barber={barber}

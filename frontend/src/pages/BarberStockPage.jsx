@@ -264,7 +264,7 @@ function BarberStockPage() {
   }
 
   return (
-    <div className={styles.pageContainer}>
+    <div className={styles.pageContainer} data-onboarding-id="owner-stock-page">
       <div className={styles.contentWrapper}>
         <BarberHeader
           barber={barber}

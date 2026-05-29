@@ -231,7 +231,7 @@ function BarberBlockPage() {
   }
 
   return (
-    <div className={`${styles.pageContainer} ${styles.withNavbar}`}>
+    <div className={`${styles.pageContainer} ${styles.withNavbar}`} data-onboarding-id="barber-unavailability-page">
       <div className={styles.contentWrapper}>
         <BarberHeader
           barber={barber}

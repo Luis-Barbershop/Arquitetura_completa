@@ -127,7 +127,10 @@ function BarberHomePage() {
           />
         ) : (
             <>
-            <section className={`${styles.heroSection} ${styles.animateItem} ${styles.delay1}`}>
+            <section
+              className={`${styles.heroSection} ${styles.animateItem} ${styles.delay1}`}
+              data-onboarding-id="barber-home-hero"
+            >
               <p className={styles.heroKicker}>HOME DO PROFISSIONAL</p>
               <h1>Ola, {firstName}. Vamos fazer o dia render.</h1>
               <p>Confira os numeros da barbearia, priorize os agendamentos e mantenha os servicos mais procurados em destaque.</p>
@@ -147,7 +150,10 @@ function BarberHomePage() {
             />
             </section>
 
-            <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay4}`}>
+            <section
+              className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay4}`}
+              data-onboarding-id="barber-home-actions"
+            >
             <ActionsBarber
               onNavigateToStock={() => navigate('/barberHome/estoque')}
               barbershopId={barber?.barbershopId}
@@ -155,7 +161,10 @@ function BarberHomePage() {
             />
             </section>
 
-            <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay5}`}>
+            <section
+              className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay5}`}
+              data-onboarding-id="barber-home-next"
+            >
             <NextScheduling onViewAll={() => navigate('/meus-agendamentos')} />
             </section>
 

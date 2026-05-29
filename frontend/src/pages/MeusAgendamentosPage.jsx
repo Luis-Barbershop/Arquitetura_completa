@@ -797,7 +797,7 @@ const MeusAgendamentosPage = () => {
                     <CustomerNavbar activeTab="agendamentos" onLogout={handleCustomerLogout} />
                 )}
 
-                <section className={Styles.heroBlock}>
+                <section className={Styles.heroBlock} data-onboarding-id="appointments-hero">
                     <p className={Styles.kicker}>{isCustomer ? 'PAINEL DE AGENDAMENTOS' : (agendaView === 'team' ? 'AGENDA DA EQUIPE' : 'MINHA AGENDA')}</p>
                     <h1 className={Styles.title}>
                         {isCustomer
@@ -883,7 +883,7 @@ const MeusAgendamentosPage = () => {
 
                 {/* ── Seletor mine/team + navegação de data ── */}
                 {!isCustomer && (
-                    <div className={Styles.controlsWrapper}>
+                    <div className={Styles.controlsWrapper} data-onboarding-id="appointments-filters">
                         {/* mine/equipe */}
                         {isOwner && (
                             <div className={Styles.viewToggle}>
@@ -1031,7 +1031,7 @@ const MeusAgendamentosPage = () => {
                 )}
 
                 {(isCustomer || viewMode === 'list') && !loading && filteredAppointments.length > 0 && (
-                    <div>
+                    <div data-onboarding-id="appointments-list">
                         <div className={Styles.list}>
                             {paginatedAppointments.map(app => {
                                 const durationLabel = getDurationLabel(app);

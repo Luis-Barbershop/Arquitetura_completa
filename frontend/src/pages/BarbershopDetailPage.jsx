@@ -112,7 +112,7 @@ const BarbershopDetailPage = () => {
         <CustomerNavbar activeTab="agendamentos" onLogout={handleLogout} />
 
         {/* Banner */}
-        <div className={Styles.banner}>
+        <div className={Styles.banner} data-onboarding-id="shop-detail-banner">
           {shopInfo.bannerUrl ? (
             <img src={shopInfo.bannerUrl} alt={`Banner de ${shopInfo.name}`} className={Styles.bannerImg} />
           ) : (
@@ -153,7 +153,7 @@ const BarbershopDetailPage = () => {
 
         {/* Serviços */}
         {services.length > 0 && (
-          <section className={Styles.section}>
+          <section className={Styles.section} data-onboarding-id="shop-detail-services">
             <h2 className={Styles.sectionTitle}><FiScissors size={16} /> Serviços</h2>
             <div className={Styles.serviceGrid}>
               {services.map((s) => (
@@ -207,7 +207,7 @@ const BarbershopDetailPage = () => {
         )}
 
         {/* CTA Agendar */}
-        <div className={Styles.ctaBar}>
+        <div className={Styles.ctaBar} data-onboarding-id="shop-detail-cta">
           <button
             className={Styles.ctaBtn}
             onClick={() => navigate(`/agendamentoPage/${barbershopId}`)}

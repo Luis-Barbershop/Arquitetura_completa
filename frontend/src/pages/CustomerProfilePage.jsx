@@ -132,7 +132,7 @@ function CustomerProfilePage() {
       <CustomerHeader activeTab="perfil" onLogout={handleLogout} />
       <CustomerNavbar activeTab="perfil" onLogout={handleLogout} />
 
-      <section className={styles.card}>
+      <section className={styles.card} data-onboarding-id="customer-profile-card">
         <div className={styles.cardHeader}>
           <h1>Meu Perfil</h1>
           <p>Atualize sua foto e seus dados para manter sua conta em dia.</p>
@@ -170,7 +170,7 @@ function CustomerProfilePage() {
           </button>
         </div>
 
-        <form className={styles.form} onSubmit={handleSaveProfile}>
+        <form className={styles.form} onSubmit={handleSaveProfile} data-onboarding-id="customer-profile-form">
           <label className={styles.field}>
             <span>Nome</span>
             <input
@@ -204,7 +204,7 @@ function CustomerProfilePage() {
         </form>
       </section>
 
-      <section className={styles.card}>
+      <section className={styles.card} data-onboarding-id="customer-profile-notifications">
         <div className={styles.cardHeader}>
           <h1>Notificações</h1>
           <p>Gerencie como você recebe alertas do CortaAi.</p>
