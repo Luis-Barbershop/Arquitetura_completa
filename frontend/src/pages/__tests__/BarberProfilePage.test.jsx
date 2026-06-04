@@ -53,6 +53,7 @@ vi.mock('../../components/BarberPage/BarberHeader', () => ({
     <div>
       <button type="button" onClick={onLogout}>Header logout</button>
       <button type="button" onClick={() => onTabChange('time')}>Header time</button>
+      <button type="button" onClick={() => onTabChange('gerenciar-barbearia')}>Header gerenciar</button>
     </div>
   ),
 }));
@@ -177,6 +178,9 @@ describe('BarberProfilePage', () => {
     expect(navigate).toHaveBeenCalledWith('/barberHome/time');
     fireEvent.click(screen.getByText('Navbar agenda equipe'));
     expect(navigate).toHaveBeenCalledWith('/meus-agendamentos?view=team');
+
+    fireEvent.click(screen.getByText('Header gerenciar'));
+    expect(navigate).toHaveBeenCalledWith('/barberHome/gerenciar-barbearia');
   });
 
   it('shows pending invites for barbers without shop and rejects an invite', async () => {

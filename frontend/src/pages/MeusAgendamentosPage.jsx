@@ -508,6 +508,11 @@ const MeusAgendamentosPage = () => {
     };
 
     const handleBarberTabChange = (tab) => {
+        if (tab === 'gerenciar-barbearia') {
+            navigate('/barberHome/gerenciar-barbearia');
+            return;
+        }
+
         if (tab === 'agenda') {
             setAgendaView('mine');
             navigate('/meus-agendamentos');

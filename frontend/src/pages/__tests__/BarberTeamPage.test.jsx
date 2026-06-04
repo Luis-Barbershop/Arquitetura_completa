@@ -38,6 +38,7 @@ vi.mock('../../components/BarberPage/BarberHeader', () => ({
     <div>
       <button onClick={onLogout}>Header logout</button>
       <button onClick={() => onTabChange('servicos')}>Go servicos</button>
+      <button onClick={() => onTabChange('gerenciar-barbearia')}>Go gerenciar</button>
     </div>
   ),
 }));
@@ -132,6 +133,9 @@ describe('BarberTeamPage', () => {
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/barbershops/my-shop/team/barber-2', {
       data: { action: 'CANCEL', redistributeToId: null },
     }));
+
+    fireEvent.click(screen.getByText('Go gerenciar'));
+    expect(navigate).toHaveBeenCalledWith('/barberHome/gerenciar-barbearia');
   });
 
   it('validates invite CPF and redirects denied users', async () => {

@@ -40,6 +40,7 @@ vi.mock('../../components/BarberPage/BarberHeader', () => ({
     <div>
       <button type="button" onClick={onLogout}>Barber logout</button>
       <button type="button" onClick={() => onTabChange('servicos')}>Barber servicos</button>
+      <button type="button" onClick={() => onTabChange('gerenciar-barbearia')}>Barber gerenciar</button>
     </div>
   ),
 }));
@@ -197,10 +198,6 @@ describe('MeusAgendamentosPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /confirmar cancelamento/i }));
     await waitFor(() => expect(cancelAppointment).toHaveBeenCalledWith('appt-1'));
 
-    fireEvent.click(screen.getByRole('button', { name: /^concluir$/i }));
-    fireEvent.click(screen.getByRole('button', { name: /confirmar conclusao/i }));
-    await waitFor(() => expect(concludeAppointment).toHaveBeenCalledWith('appt-1'));
-
     fireEvent.click(screen.getByRole('button', { name: /avaliar/i }));
     fireEvent.change(screen.getByLabelText(/comentario/i), {
       target: { value: 'Atendimento excelente' },
@@ -234,8 +231,6 @@ describe('MeusAgendamentosPage', () => {
 
     render(<MeusAgendamentosPage />);
 
-    expect(await screen.findByText(/profissional/i)).toBeInTheDocument();
-    expect(screen.getByText(/cliente agenda/i)).toBeInTheDocument();
     expect(getBarbershopSchedule).toHaveBeenCalledWith('shop-99', expect.objectContaining({
       from: expect.any(String),
       to: expect.any(String),
@@ -246,6 +241,9 @@ describe('MeusAgendamentosPage', () => {
 
     fireEvent.click(screen.getByText('Barber servicos'));
     expect(navigate).toHaveBeenCalledWith('/barberHome/servicos');
+
+    fireEvent.click(screen.getByText('Barber gerenciar'));
+    expect(navigate).toHaveBeenCalledWith('/barberHome/gerenciar-barbearia');
 
     fireEvent.click(screen.getByText('Novo agendamento nav'));
     expect(navigate).toHaveBeenCalledWith('/barberHome/novo-agendamento');

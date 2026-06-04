@@ -97,6 +97,11 @@ function BarberServicesPage() {
       return;
     }
 
+    if (tab === 'gerenciar-barbearia') {
+      navigate('/barberHome/gerenciar-barbearia');
+      return;
+    }
+
     if (tab === 'agenda-equipe') {
       navigate('/meus-agendamentos?view=team');
     }

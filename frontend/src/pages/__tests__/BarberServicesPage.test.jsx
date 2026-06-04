@@ -34,6 +34,7 @@ vi.mock('../../components/BarberPage/BarberHeader', () => ({
     <div>
       <button onClick={onLogout}>Header logout</button>
       <button onClick={() => onTabChange('estoque')}>Go estoque</button>
+      <button onClick={() => onTabChange('gerenciar-barbearia')}>Go gerenciar</button>
     </div>
   ),
 }));
@@ -123,6 +124,9 @@ describe('BarberServicesPage', () => {
 
     fireEvent.click(screen.getByText('Go estoque'));
     expect(navigate).toHaveBeenCalledWith('/barberHome/estoque');
+
+    fireEvent.click(screen.getByText('Go gerenciar'));
+    expect(navigate).toHaveBeenCalledWith('/barberHome/gerenciar-barbearia');
   });
 
   it('redirects customer users before loading page', () => {

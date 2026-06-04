@@ -480,6 +480,11 @@ function BarberProfilePage() {
     const cpfValue = formatCpfForProfile(barber?.documentCPF || barber?.documentCpf || barber?.cpf);
 
     const handleTabChange = (tab) => {
+        if (tab === 'gerenciar-barbearia') {
+            navigate('/barberHome/gerenciar-barbearia');
+            return;
+        }
+
         if (tab === 'home')              navigate('/barberHome');
         else if (tab === 'perfil')       navigate('/barberHome/perfil');
         else if (tab === 'agenda')       navigate('/meus-agendamentos');

@@ -41,6 +41,7 @@ vi.mock('../../components/BarberPage/BarberHeader', () => ({
     <div>
       <button onClick={onLogout}>Header logout</button>
       <button onClick={() => onTabChange('servicos')}>Go servicos</button>
+      <button onClick={() => onTabChange('gerenciar-barbearia')}>Go gerenciar</button>
     </div>
   ),
 }));
@@ -177,6 +178,9 @@ describe('BarberStockPage', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: /excluir item/i })[0]);
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/products/p1'));
+
+    fireEvent.click(screen.getByText('Go gerenciar'));
+    expect(navigate).toHaveBeenCalledWith('/barberHome/gerenciar-barbearia');
   });
 
   it('redirects customer or non-owner users', () => {

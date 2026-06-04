@@ -53,6 +53,7 @@ function BarberStockPage() {
     if (tab === 'perfil') navigate('/barberHome/perfil');
     if (tab === 'time') navigate('/barberHome/time');
     if (tab === 'dashboards') navigate('/barberHome/dashboard');
+    if (tab === 'gerenciar-barbearia') navigate('/barberHome/gerenciar-barbearia');
     if (tab === 'agenda-equipe') navigate('/meus-agendamentos?view=team');
     if (tab === 'indisponibilidade') navigate('/barber/indisponibilidade');
   };
