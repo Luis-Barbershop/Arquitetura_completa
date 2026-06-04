@@ -105,6 +105,10 @@ public class Barber implements UserDetails {
     @Column(name = "birth_date", length = 128)
     private LocalDate birthDate;
 
+    @Lob
+    @Column(name = "onboarding_progress_json", columnDefinition = "LONGTEXT")
+    private String onboardingProgressJson;
+
     @Column(name = "image_url")
     private String imageUrl;
 

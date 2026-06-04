@@ -103,9 +103,7 @@ function OnboardingHost() {
     return () => window.removeEventListener(ONBOARDING_REPLAY_EVENT, handleReplay);
   }, [pageKey, steps.length]);
 
-  const close = () => setIsOpen(false);
-
-  const complete = () => {
+  const persistCompletion = () => {
     if (userScope && roleVariant && pageKey) {
       markPageOnboardingCompleted({
         userScope,
@@ -114,6 +112,15 @@ function OnboardingHost() {
       });
       void syncOnboardingToRemote({ userScope });
     }
+  };
+
+  const close = () => {
+    persistCompletion();
+    setIsOpen(false);
+  };
+
+  const complete = () => {
+    persistCompletion();
     setIsOpen(false);
   };
 

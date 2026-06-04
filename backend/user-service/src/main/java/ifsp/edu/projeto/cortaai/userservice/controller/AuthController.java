@@ -4,6 +4,7 @@ import ifsp.edu.projeto.cortaai.userservice.dto.AuthResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileCustomerDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseAuthRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.OnboardingProgressDTO;
 import ifsp.edu.projeto.cortaai.userservice.exception.ApiErrorResponse;
 import ifsp.edu.projeto.cortaai.userservice.service.FirebaseAuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -93,6 +94,39 @@ public class AuthController {
     public ResponseEntity<AuthResponseDTO> me(
             @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
         return ResponseEntity.ok(firebaseAuthService.getMe(firebaseUid));
+    }
+
+    @Operation(
+            summary = "Retorna o progresso de onboarding da conta autenticada",
+            description = "Lê o snapshot persistido por conta (não por sessão), identificado pelo header `X-User-UID`."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Progresso retornado com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    @GetMapping("/me/onboarding-progress")
+    public ResponseEntity<OnboardingProgressDTO> getOnboardingProgress(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
+        return ResponseEntity.ok(firebaseAuthService.getOnboardingProgress(firebaseUid));
+    }
+
+    @Operation(
+            summary = "Atualiza o progresso de onboarding da conta autenticada",
+            description = "Sobrescreve o snapshot persistido por conta. Use no skip/concluir onboarding e no replay manual."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Progresso atualizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Payload inválido",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Usuário não encontrado",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class)))
+    })
+    @PutMapping("/me/onboarding-progress")
+    public ResponseEntity<OnboardingProgressDTO> updateOnboardingProgress(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid,
+            @RequestBody OnboardingProgressDTO dto) {
+        return ResponseEntity.ok(firebaseAuthService.updateOnboardingProgress(firebaseUid, dto));
     }
 
     @Operation(

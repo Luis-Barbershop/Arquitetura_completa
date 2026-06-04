@@ -1,5 +1,7 @@
 package ifsp.edu.projeto.cortaai.userservice.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -9,6 +11,9 @@ import ifsp.edu.projeto.cortaai.userservice.dto.BarbershopInfoDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileCustomerDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseAuthRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.OnboardingPageProgressDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.OnboardingProgressDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.OnboardingRoleProgressDTO;
 import ifsp.edu.projeto.cortaai.userservice.exception.ExternalServiceUnavailableException;
 import ifsp.edu.projeto.cortaai.userservice.exception.NotFoundException;
 import ifsp.edu.projeto.cortaai.userservice.exception.RoleConflictException;
@@ -27,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -34,12 +40,14 @@ import java.util.Optional;
 public class FirebaseAuthServiceImpl implements FirebaseAuthService {
 
     private static final Logger log = LoggerFactory.getLogger(FirebaseAuthServiceImpl.class);
+    private static final int ONBOARDING_VERSION = 1;
 
     private final FirebaseAuth firebaseAuth;
     private final CustomerRepository customerRepository;
     private final BarberRepository barberRepository;
     private final BarbershopServiceClient barbershopServiceClient;
     private final TokenVerifier tokenVerifier;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     public FirebaseAuthServiceImpl(
@@ -310,6 +318,51 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
         throw new NotFoundException("Usuário não encontrado para o UID: " + firebaseUid);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public OnboardingProgressDTO getOnboardingProgress(String firebaseUid) {
+        Optional<Customer> customer = customerRepository.findByFirebaseUid(firebaseUid);
+        if (customer.isPresent()) {
+            return deserializeOnboarding(customer.get().getOnboardingProgressJson());
+        }
+
+        Optional<Barber> barber = barberRepository.findByFirebaseUid(firebaseUid);
+        if (barber.isPresent()) {
+            return deserializeOnboarding(barber.get().getOnboardingProgressJson());
+        }
+
+        throw new NotFoundException("Usuário não encontrado para o UID: " + firebaseUid);
+    }
+
+    @Override
+    @Transactional
+    public OnboardingProgressDTO updateOnboardingProgress(String firebaseUid, OnboardingProgressDTO dto) {
+        if (dto == null) {
+            throw new IllegalArgumentException("Payload de onboarding é obrigatório.");
+        }
+
+        OnboardingProgressDTO normalized = normalizeOnboarding(dto);
+        String serialized = serializeOnboarding(normalized);
+
+        Optional<Customer> customer = customerRepository.findByFirebaseUid(firebaseUid);
+        if (customer.isPresent()) {
+            Customer entity = customer.get();
+            entity.setOnboardingProgressJson(serialized);
+            customerRepository.save(entity);
+            return normalized;
+        }
+
+        Optional<Barber> barber = barberRepository.findByFirebaseUid(firebaseUid);
+        if (barber.isPresent()) {
+            Barber entity = barber.get();
+            entity.setOnboardingProgressJson(serialized);
+            barberRepository.save(entity);
+            return normalized;
+        }
+
+        throw new NotFoundException("Usuário não encontrado para o UID: " + firebaseUid);
+    }
+
 
     @Override
     public void setCustomUserClaims(String uid, String role, boolean isOwner) {
@@ -373,6 +426,69 @@ public class FirebaseAuthServiceImpl implements FirebaseAuthService {
 
     private String onlyDigits(String value) {
         return value == null ? null : value.replaceAll("\\D", "");
+    }
+
+    private OnboardingProgressDTO defaultOnboarding() {
+        return new OnboardingProgressDTO(ONBOARDING_VERSION, Map.of());
+    }
+
+    private OnboardingProgressDTO deserializeOnboarding(String rawJson) {
+        if (rawJson == null || rawJson.isBlank()) {
+            return defaultOnboarding();
+        }
+
+        try {
+            OnboardingProgressDTO parsed = objectMapper.readValue(rawJson, OnboardingProgressDTO.class);
+            return normalizeOnboarding(parsed);
+        } catch (JsonProcessingException ex) {
+            log.warn("event=onboarding-progress-invalid-json reason={}", sanitizeMessage(ex.getMessage()));
+            return defaultOnboarding();
+        }
+    }
+
+    private String serializeOnboarding(OnboardingProgressDTO dto) {
+        try {
+            return objectMapper.writeValueAsString(dto);
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("Falha ao serializar progresso de onboarding.", ex);
+        }
+    }
+
+    private OnboardingProgressDTO normalizeOnboarding(OnboardingProgressDTO dto) {
+        int version = dto.version() == null ? ONBOARDING_VERSION : dto.version();
+        if (version <= 0) {
+            throw new IllegalArgumentException("Campo version deve ser maior que zero.");
+        }
+
+        Map<String, OnboardingRoleProgressDTO> sanitizedRoles = new LinkedHashMap<>();
+        Map<String, OnboardingRoleProgressDTO> roles = dto.progressByRole() == null ? Map.of() : dto.progressByRole();
+
+        for (Map.Entry<String, OnboardingRoleProgressDTO> roleEntry : roles.entrySet()) {
+            String roleKey = roleEntry.getKey();
+            if (roleKey == null || roleKey.isBlank()) {
+                continue;
+            }
+
+            OnboardingRoleProgressDTO roleValue = roleEntry.getValue();
+            Map<String, OnboardingPageProgressDTO> completedPages =
+                    roleValue == null || roleValue.completedPages() == null ? Map.of() : roleValue.completedPages();
+
+            Map<String, OnboardingPageProgressDTO> sanitizedPages = new LinkedHashMap<>();
+            for (Map.Entry<String, OnboardingPageProgressDTO> pageEntry : completedPages.entrySet()) {
+                String pageKey = pageEntry.getKey();
+                if (pageKey == null || pageKey.isBlank()) {
+                    continue;
+                }
+
+                OnboardingPageProgressDTO pageValue = pageEntry.getValue();
+                String completedAt = pageValue == null ? null : pageValue.completedAt();
+                sanitizedPages.put(pageKey, new OnboardingPageProgressDTO(completedAt));
+            }
+
+            sanitizedRoles.put(roleKey, new OnboardingRoleProgressDTO(sanitizedPages));
+        }
+
+        return new OnboardingProgressDTO(version, sanitizedRoles);
     }
 
     /**

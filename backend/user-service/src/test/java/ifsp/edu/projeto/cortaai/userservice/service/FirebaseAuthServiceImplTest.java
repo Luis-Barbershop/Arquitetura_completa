@@ -9,6 +9,9 @@ import ifsp.edu.projeto.cortaai.userservice.dto.BarbershopInfoDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileCustomerDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseAuthRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.OnboardingPageProgressDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.OnboardingProgressDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.OnboardingRoleProgressDTO;
 import ifsp.edu.projeto.cortaai.userservice.exception.ExternalServiceUnavailableException;
 import ifsp.edu.projeto.cortaai.userservice.exception.NotFoundException;
 import ifsp.edu.projeto.cortaai.userservice.exception.RoleConflictException;
@@ -30,6 +33,7 @@ import java.lang.reflect.Constructor;
 import java.time.LocalDate;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -243,6 +247,52 @@ class FirebaseAuthServiceImplTest {
 
         assertThat(response.barbershopId()).isEqualTo(barbershopId);
         assertThat(response.barbershopName()).isNull();
+    }
+
+    @Test
+    void shouldReturnDefaultOnboardingProgressWhenCustomerHasNoSnapshot() {
+        Customer customer = customer(UUID.randomUUID(), "customer-uid");
+        customer.setOnboardingProgressJson(null);
+        when(customerRepository.findByFirebaseUid("customer-uid")).thenReturn(Optional.of(customer));
+
+        OnboardingProgressDTO response = service.getOnboardingProgress("customer-uid");
+
+        assertThat(response.version()).isEqualTo(1);
+        assertThat(response.progressByRole()).isEmpty();
+    }
+
+    @Test
+    void shouldPersistAndReturnOnboardingProgressForCustomer() {
+        Customer customer = customer(UUID.randomUUID(), "customer-uid");
+        when(customerRepository.findByFirebaseUid("customer-uid")).thenReturn(Optional.of(customer));
+
+        Map<String, OnboardingRoleProgressDTO> progressByRole = new LinkedHashMap<>();
+        progressByRole.put("owner", new OnboardingRoleProgressDTO(Map.of(
+                "owner-manage-shop", new OnboardingPageProgressDTO("2026-06-03T21:00:00.000Z")
+        )));
+
+        OnboardingProgressDTO payload = new OnboardingProgressDTO(1, progressByRole);
+
+        OnboardingProgressDTO updated = service.updateOnboardingProgress("customer-uid", payload);
+
+        assertThat(updated.version()).isEqualTo(1);
+        assertThat(updated.progressByRole()).containsKey("owner");
+        assertThat(customer.getOnboardingProgressJson()).contains("owner-manage-shop");
+        verify(customerRepository).save(customer);
+    }
+
+    @Test
+    void shouldReadBarberOnboardingProgressFromStoredJson() {
+        Barber barber = barber(UUID.randomUUID(), "barber-uid");
+        barber.setOnboardingProgressJson("{\"version\":1,\"progressByRole\":{\"barber\":{\"completedPages\":{\"barber-home\":{\"completedAt\":\"2026-06-03T20:00:00.000Z\"}}}}}");
+        when(customerRepository.findByFirebaseUid("barber-uid")).thenReturn(Optional.empty());
+        when(barberRepository.findByFirebaseUid("barber-uid")).thenReturn(Optional.of(barber));
+
+        OnboardingProgressDTO response = service.getOnboardingProgress("barber-uid");
+
+        assertThat(response.version()).isEqualTo(1);
+        assertThat(response.progressByRole()).containsKey("barber");
+        assertThat(response.progressByRole().get("barber").completedPages()).containsKey("barber-home");
     }
 
     private Customer customer(UUID id, String uid) {

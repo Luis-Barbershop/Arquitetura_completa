@@ -4,6 +4,7 @@ import ifsp.edu.projeto.cortaai.userservice.dto.AuthResponseDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileBarberDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.CompleteProfileCustomerDTO;
 import ifsp.edu.projeto.cortaai.userservice.dto.FirebaseAuthRequestDTO;
+import ifsp.edu.projeto.cortaai.userservice.dto.OnboardingProgressDTO;
 
 /**
  * Serviço de autenticação Firebase para o user-service.
@@ -62,6 +63,10 @@ public interface FirebaseAuthService {
      * @return perfil do usuário
      */
     AuthResponseDTO getMe(String firebaseUid);
+
+    OnboardingProgressDTO getOnboardingProgress(String firebaseUid);
+
+    OnboardingProgressDTO updateOnboardingProgress(String firebaseUid, OnboardingProgressDTO dto);
 
     void setCustomUserClaims(String uid, String role, boolean isOwner);
 }
