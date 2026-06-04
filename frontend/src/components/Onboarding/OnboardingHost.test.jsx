@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -93,5 +93,46 @@ describe('OnboardingHost', () => {
         pageKey: 'owner-manage-shop',
       });
     });
+  });
+
+  it('nao abre automaticamente quando a pagina ja foi concluida', async () => {
+    onboardingApi.isPageOnboardingCompleted.mockReturnValue(true);
+
+    render(
+      <MemoryRouter initialEntries={['/barberHome/gerenciar-barbearia']}>
+        <OnboardingHost />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Pular onboarding' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('abre novamente ao disparar replay sem resetar conclusao', async () => {
+    onboardingApi.isPageOnboardingCompleted.mockReturnValue(true);
+
+    render(
+      <MemoryRouter initialEntries={['/barberHome/gerenciar-barbearia']}>
+        <OnboardingHost />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Pular onboarding' })).not.toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(onboardingApi.hydrateOnboardingFromRemote).toHaveBeenCalled();
+    });
+
+    act(() => {
+      window.dispatchEvent(new CustomEvent('cortaai:onboarding-replay', {
+        detail: { pageKey: 'owner-manage-shop' },
+      }));
+    });
+
+    expect(await screen.findByRole('button', { name: 'Pular onboarding' })).toBeInTheDocument();
+    expect(onboardingApi.markPageOnboardingCompleted).not.toHaveBeenCalled();
   });
 });

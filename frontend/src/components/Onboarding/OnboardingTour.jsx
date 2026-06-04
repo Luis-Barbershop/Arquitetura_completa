@@ -71,6 +71,14 @@ const calculatePositionByPlacement = ({ placement, targetRect, cardRect, offset 
   };
 };
 
+const getOverflowScore = ({ top, left }, cardRect) => {
+  const topOverflow = Math.max(0, VIEWPORT_PADDING - top);
+  const leftOverflow = Math.max(0, VIEWPORT_PADDING - left);
+  const bottomOverflow = Math.max(0, top + cardRect.height - (window.innerHeight - VIEWPORT_PADDING));
+  const rightOverflow = Math.max(0, left + cardRect.width - (window.innerWidth - VIEWPORT_PADDING));
+  return topOverflow + leftOverflow + bottomOverflow + rightOverflow;
+};
+
 const fitsViewport = ({ top, left }, cardRect) => (
   top >= VIEWPORT_PADDING
   && left >= VIEWPORT_PADDING
@@ -80,6 +88,8 @@ const fitsViewport = ({ top, left }, cardRect) => (
 
 const getCardPosition = ({ targetRect, cardRect, preferredPlacement, offset }) => {
   const placements = buildPlacementCandidates(preferredPlacement);
+  let bestCandidate = null;
+  let bestScore = Number.POSITIVE_INFINITY;
 
   for (const placement of placements) {
     const candidate = calculatePositionByPlacement({
@@ -89,6 +99,12 @@ const getCardPosition = ({ targetRect, cardRect, preferredPlacement, offset }) =
       offset,
     });
 
+    const score = getOverflowScore(candidate, cardRect);
+    if (score < bestScore) {
+      bestScore = score;
+      bestCandidate = candidate;
+    }
+
     if (fitsViewport(candidate, cardRect)) {
       return {
         top: candidate.top,
@@ -97,7 +113,7 @@ const getCardPosition = ({ targetRect, cardRect, preferredPlacement, offset }) =
     }
   }
 
-  const fallback = calculatePositionByPlacement({
+  const fallback = bestCandidate || calculatePositionByPlacement({
     placement: preferredPlacement || 'bottom',
     targetRect,
     cardRect,
@@ -305,6 +321,8 @@ function OnboardingTour({
 
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Onboarding da página">
+      <div className={styles.blurLayer} aria-hidden="true" />
+
       <svg className={styles.scrim} viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`} preserveAspectRatio="none" aria-hidden="true">
         <defs>
           <mask id={maskId}>

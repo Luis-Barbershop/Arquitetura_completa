@@ -5,6 +5,15 @@
   pointer-events: none;
 }
 
+.blurLayer {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 7, 10, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
 .scrim {
   position: absolute;
   inset: 0;
