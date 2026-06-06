@@ -374,6 +374,13 @@ function OnboardingTour({
           </div>
         </header>
 
+        <div className={styles.progressTrack} aria-hidden="true">
+          <span
+            className={styles.progressBar}
+            style={{ width: `${((currentStepIndex + 1) / totalSteps) * 100}%` }}
+          />
+        </div>
+
         <h3 className={styles.title}>{currentStep.title}</h3>
         <p className={styles.description}>{currentStep.description}</p>
 

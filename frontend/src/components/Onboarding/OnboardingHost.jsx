@@ -8,7 +8,7 @@ import {
   getCurrentUserScope,
   hydrateOnboardingFromRemote,
   isPageOnboardingCompleted,
-  markPageOnboardingCompleted,
+  markRoleOnboardingCompleted,
   resolvePageKeyFromLocation,
   syncOnboardingToRemote,
 } from '../../services/onboardingService';
@@ -105,7 +105,7 @@ function OnboardingHost() {
 
   const persistCompletion = () => {
     if (userScope && roleVariant && pageKey) {
-      markPageOnboardingCompleted({
+      markRoleOnboardingCompleted({
         userScope,
         roleVariant,
         pageKey,

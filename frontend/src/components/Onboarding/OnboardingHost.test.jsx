@@ -7,7 +7,7 @@ const onboardingApi = {
   getCurrentUserScope: vi.fn(),
   hydrateOnboardingFromRemote: vi.fn(),
   isPageOnboardingCompleted: vi.fn(),
-  markPageOnboardingCompleted: vi.fn(),
+  markRoleOnboardingCompleted: vi.fn(),
   resolvePageKeyFromLocation: vi.fn(),
   syncOnboardingToRemote: vi.fn(),
 };
@@ -24,7 +24,7 @@ vi.mock('../../services/onboardingService', () => ({
   getCurrentUserScope: (...args) => onboardingApi.getCurrentUserScope(...args),
   hydrateOnboardingFromRemote: (...args) => onboardingApi.hydrateOnboardingFromRemote(...args),
   isPageOnboardingCompleted: (...args) => onboardingApi.isPageOnboardingCompleted(...args),
-  markPageOnboardingCompleted: (...args) => onboardingApi.markPageOnboardingCompleted(...args),
+  markRoleOnboardingCompleted: (...args) => onboardingApi.markRoleOnboardingCompleted(...args),
   resolvePageKeyFromLocation: (...args) => onboardingApi.resolvePageKeyFromLocation(...args),
   syncOnboardingToRemote: (...args) => onboardingApi.syncOnboardingToRemote(...args),
 }));
@@ -66,7 +66,7 @@ describe('OnboardingHost', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pular onboarding' }));
 
     await waitFor(() => {
-      expect(onboardingApi.markPageOnboardingCompleted).toHaveBeenCalledWith({
+      expect(onboardingApi.markRoleOnboardingCompleted).toHaveBeenCalledWith({
         userScope: 'internal:owner-1',
         roleVariant: 'owner',
         pageKey: 'owner-manage-shop',
@@ -87,7 +87,7 @@ describe('OnboardingHost', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Fechar onboarding' }));
 
     await waitFor(() => {
-      expect(onboardingApi.markPageOnboardingCompleted).toHaveBeenCalledWith({
+      expect(onboardingApi.markRoleOnboardingCompleted).toHaveBeenCalledWith({
         userScope: 'internal:owner-1',
         roleVariant: 'owner',
         pageKey: 'owner-manage-shop',
@@ -133,6 +133,6 @@ describe('OnboardingHost', () => {
     });
 
     expect(await screen.findByRole('button', { name: 'Pular onboarding' })).toBeInTheDocument();
-    expect(onboardingApi.markPageOnboardingCompleted).not.toHaveBeenCalled();
+    expect(onboardingApi.markRoleOnboardingCompleted).not.toHaveBeenCalled();
   });
 });

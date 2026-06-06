@@ -4,6 +4,7 @@ import api from './api';
 const STORAGE_KEY = 'cortaai:onboarding-progress';
 const ONBOARDING_VERSION = 1;
 const REMOTE_PROGRESS_ENDPOINT = '/auth/me/onboarding-progress';
+const ROLE_COMPLETION_PAGE_KEY = '__role-onboarding-completed__';
 export const ONBOARDING_REPLAY_EVENT = 'cortaai:onboarding-replay';
 
 const hydratedUsers = new Set();
@@ -50,6 +51,18 @@ const ensureUserRoleState = (state, userScope, roleVariant) => {
   if (!state.users[userScope][roleVariant].completedPages) {
     state.users[userScope][roleVariant].completedPages = {};
   }
+};
+
+const getCompletedPages = (state, userScope, roleVariant) => (
+  state.users?.[userScope]?.[roleVariant]?.completedPages || {}
+);
+
+export const isRoleOnboardingCompleted = ({ userScope, roleVariant }) => {
+  if (!userScope || !roleVariant) return false;
+
+  const state = readState();
+  const completedPages = getCompletedPages(state, userScope, roleVariant);
+  return Object.keys(completedPages).length > 0;
 };
 
 const getLocalSnapshotForUser = (userScope) => {
@@ -157,7 +170,8 @@ export const isPageOnboardingCompleted = ({ userScope, roleVariant, pageKey }) =
 
   const state = readState();
   return Boolean(
-    state.users?.[userScope]?.[roleVariant]?.completedPages?.[pageKey]
+    isRoleOnboardingCompleted({ userScope, roleVariant })
+      || getCompletedPages(state, userScope, roleVariant)[pageKey]
   );
 };
 
@@ -170,6 +184,26 @@ export const markPageOnboardingCompleted = ({ userScope, roleVariant, pageKey })
   state.users[userScope][roleVariant].completedPages[pageKey] = {
     completedAt: new Date().toISOString(),
   };
+
+  writeState(state);
+};
+
+export const markRoleOnboardingCompleted = ({ userScope, roleVariant, pageKey }) => {
+  if (!userScope || !roleVariant) return;
+
+  const state = readState();
+  ensureUserRoleState(state, userScope, roleVariant);
+
+  const completedAt = new Date().toISOString();
+  state.users[userScope][roleVariant].completedPages[ROLE_COMPLETION_PAGE_KEY] = {
+    completedAt,
+  };
+
+  if (pageKey) {
+    state.users[userScope][roleVariant].completedPages[pageKey] = {
+      completedAt,
+    };
+  }
 
   writeState(state);
 };

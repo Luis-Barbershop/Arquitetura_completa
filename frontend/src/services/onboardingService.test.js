@@ -13,7 +13,9 @@ import {
   getCurrentUserScope,
   hydrateOnboardingFromRemote,
   isPageOnboardingCompleted,
+  isRoleOnboardingCompleted,
   markPageOnboardingCompleted,
+  markRoleOnboardingCompleted,
   resolvePageKeyFromLocation,
   syncOnboardingToRemote,
 } from './onboardingService';
@@ -67,6 +69,52 @@ describe('onboardingService', () => {
         pageKey: 'customer-home',
       })
     ).toBe(false);
+  });
+
+  it('marca onboarding como concluido para o papel inteiro', () => {
+    const ownerServices = {
+      userScope: 'internal:999',
+      roleVariant: 'owner',
+      pageKey: 'owner-services',
+    };
+
+    markRoleOnboardingCompleted(ownerServices);
+
+    expect(isRoleOnboardingCompleted(ownerServices)).toBe(true);
+    expect(isPageOnboardingCompleted(ownerServices)).toBe(true);
+    expect(
+      isPageOnboardingCompleted({
+        userScope: 'internal:999',
+        roleVariant: 'owner',
+        pageKey: 'owner-dashboard',
+      })
+    ).toBe(true);
+    expect(
+      isPageOnboardingCompleted({
+        userScope: 'internal:999',
+        roleVariant: 'barber',
+        pageKey: 'barber-services',
+      })
+    ).toBe(false);
+  });
+
+  it('trata progresso antigo por pagina como conclusao do papel', () => {
+    const legacyPage = {
+      userScope: 'internal:888',
+      roleVariant: 'owner',
+      pageKey: 'owner-services',
+    };
+
+    markPageOnboardingCompleted(legacyPage);
+
+    expect(isRoleOnboardingCompleted(legacyPage)).toBe(true);
+    expect(
+      isPageOnboardingCompleted({
+        userScope: 'internal:888',
+        roleVariant: 'owner',
+        pageKey: 'owner-dashboard',
+      })
+    ).toBe(true);
   });
 
   it('hidrata progresso remoto e reflete no estado local', async () => {
