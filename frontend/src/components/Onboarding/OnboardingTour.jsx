@@ -290,13 +290,42 @@ function OnboardingTour({
   if (!open || !currentStep || !currentTarget?.rect) return null;
 
   const spotlightPadding = currentStep.spotlightPadding ?? DEFAULT_SPOTLIGHT_PADDING;
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
   const spotlightRect = {
     top: Math.max(0, currentTarget.rect.top - spotlightPadding),
     left: Math.max(0, currentTarget.rect.left - spotlightPadding),
-    width: Math.min(window.innerWidth, currentTarget.rect.width + spotlightPadding * 2),
-    height: Math.min(window.innerHeight, currentTarget.rect.height + spotlightPadding * 2),
+    width: Math.min(viewportWidth, currentTarget.rect.width + spotlightPadding * 2),
+    height: Math.min(viewportHeight, currentTarget.rect.height + spotlightPadding * 2),
   };
   const spotlightRadius = currentStep.spotlightRadius ?? 14;
+
+  const blurSegments = [
+    {
+      top: 0,
+      left: 0,
+      width: viewportWidth,
+      height: spotlightRect.top,
+    },
+    {
+      top: spotlightRect.top,
+      left: 0,
+      width: spotlightRect.left,
+      height: spotlightRect.height,
+    },
+    {
+      top: spotlightRect.top,
+      left: spotlightRect.left + spotlightRect.width,
+      width: Math.max(0, viewportWidth - (spotlightRect.left + spotlightRect.width)),
+      height: spotlightRect.height,
+    },
+    {
+      top: spotlightRect.top + spotlightRect.height,
+      left: 0,
+      width: viewportWidth,
+      height: Math.max(0, viewportHeight - (spotlightRect.top + spotlightRect.height)),
+    },
+  ];
 
   const handleNext = () => {
     if (isLastStep) {
@@ -321,12 +350,24 @@ function OnboardingTour({
 
   return (
     <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Onboarding da página">
-      <div className={styles.blurLayer} aria-hidden="true" />
+      {blurSegments.map((segment, index) => (
+        <div
+          key={`blur-${index}`}
+          className={styles.blurSegment}
+          style={{
+            top: segment.top,
+            left: segment.left,
+            width: segment.width,
+            height: segment.height,
+          }}
+          aria-hidden="true"
+        />
+      ))}
 
-      <svg className={styles.scrim} viewBox={`0 0 ${window.innerWidth} ${window.innerHeight}`} preserveAspectRatio="none" aria-hidden="true">
+      <svg className={styles.scrim} viewBox={`0 0 ${viewportWidth} ${viewportHeight}`} preserveAspectRatio="none" aria-hidden="true">
         <defs>
           <mask id={maskId}>
-            <rect x="0" y="0" width={window.innerWidth} height={window.innerHeight} fill="white" />
+            <rect x="0" y="0" width={viewportWidth} height={viewportHeight} fill="white" />
             <rect
               x={spotlightRect.left}
               y={spotlightRect.top}
@@ -341,8 +382,8 @@ function OnboardingTour({
         <rect
           x="0"
           y="0"
-          width={window.innerWidth}
-          height={window.innerHeight}
+          width={viewportWidth}
+          height={viewportHeight}
           className={styles.scrimFill}
           mask={`url(#${maskId})`}
         />
