@@ -285,7 +285,7 @@ function BarberServicesPage() {
           barbershopId={barber?.barbershopId}
         />
 
-        <section className={`${styles.heroSection} ${styles.animateItem} ${styles.delay1}`}>
+        <section className={`${styles.heroSection} ${styles.animateItem} ${styles.delay1}`} data-onboarding-id="barber-services-hero">
           <p className={styles.heroKicker}>{isOwner ? 'GESTÃO DE SERVIÇOS' : 'HABILIDADES'}</p>
           <h1>{isOwner ? 'Cadastre e organize os serviços da sua barbearia' : 'Gerencie os serviços que você executa'}</h1>
           <p>
@@ -314,7 +314,7 @@ function BarberServicesPage() {
               </article>
             </section>
 
-            <section className={`${styles.managementGrid} ${styles.animateItem} ${styles.delay3}`}>
+            <section className={`${styles.managementGrid} ${styles.animateItem} ${styles.delay3}`} data-onboarding-id="barber-services-management">
               <article className={`${styles.panelCard} ${styles.servicesPanel}`}>
                 <div className={styles.panelHeader}>
                   <h2>Serviços Cadastrados</h2>
@@ -407,7 +407,7 @@ function BarberServicesPage() {
         )}
 
         {(barber?.barbershopId || getBarbershopId()) && (
-          <section className={styles.assignSection}>
+          <section className={styles.assignSection} data-onboarding-id="barber-services-skills">
             <article className={styles.panelCard}>
               <div className={styles.panelHeader}>
                 <h2>Atribuir serviços ao meu perfil</h2>

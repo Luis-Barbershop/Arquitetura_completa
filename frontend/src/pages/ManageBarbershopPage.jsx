@@ -210,7 +210,7 @@ function ManageBarbershopPage() {
                     barbershopId={barber?.barbershopId}
                 />
 
-                <section className={styles.heroSection}>
+                <section className={styles.heroSection} data-onboarding-id="owner-manage-shop-hero">
                     <p className={styles.heroKicker}>GESTÃO</p>
                     <h1>Gerenciar Barbearia</h1>
                     <p>Edite todas as informações públicas da sua barbearia.</p>
@@ -222,7 +222,11 @@ function ManageBarbershopPage() {
                     ) : (
                         <div className={styles.profileCard}>
                             {/* ── Banner ── */}
-                            <div className={styles.shopBannerPreview} style={{ position: 'relative', marginBottom: '1.5rem' }}>
+                            <div
+                                className={styles.shopBannerPreview}
+                                style={{ position: 'relative', marginBottom: '1.5rem' }}
+                                data-onboarding-id="owner-manage-shop-media"
+                            >
                                 {media.bannerUrl ? (
                                     <img
                                         src={media.bannerUrl}
@@ -277,7 +281,7 @@ function ManageBarbershopPage() {
                             </div>
 
                             {/* ── Formulário de dados ── */}
-                            <form onSubmit={handleSave} className={styles.shopEditForm}>
+                            <form onSubmit={handleSave} className={styles.shopEditForm} data-onboarding-id="owner-manage-shop-form">
                                 <label className={styles.shopField}>
                                     <span>Nome da barbearia</span>
                                     <input name="name" value={shopForm.name} onChange={handleChange} maxLength={80} required />

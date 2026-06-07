@@ -514,7 +514,7 @@ function BarberProfilePage() {
                     onTabChange={handleTabChange}
                 />
 
-                <section className={styles.heroSection}>
+                <section className={styles.heroSection} data-onboarding-id="barber-profile-hero">
                     <p className={styles.heroKicker}>MEU PERFIL</p>
                     <h1>Suas informações</h1>
                 </section>
@@ -524,7 +524,7 @@ function BarberProfilePage() {
                         <div className={styles.profileStack}>
 
                             {/* ── Dados pessoais ───────────────────────────────── */}
-                            <div className={styles.profileCard}>
+                            <div className={styles.profileCard} data-onboarding-id="barber-profile-card">
                                 {barber.imageUrl && (
                                     <img
                                         src={barber.imageUrl}
@@ -623,7 +623,7 @@ function BarberProfilePage() {
                             ) : null}
 
                             {/* ── Horário de trabalho (multi-bloco) ──────── */}
-                            <div className={styles.profileCard}>
+                            <div className={styles.profileCard} data-onboarding-id="barber-profile-schedule">
                                 <p className={styles.profileSectionTitle}>🕐 Horário de Trabalho</p>
                                 <p className={styles.profileMutedText}>
                                     Selecione os dias e adicione blocos de horário. Ex.: 9h–12h e 13h–18h.

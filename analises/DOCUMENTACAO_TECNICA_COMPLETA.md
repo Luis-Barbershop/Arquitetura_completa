@@ -1,6 +1,6 @@
 # CortaAi — Documentação Técnica Completa
 
-> **Versão:** 1.2 | **Data:** 27/05/2026  
+> **Versão:** 1.3 | **Data:** 07/06/2026  
 > **Branch:** `feature/migracao-microservicos`  
 > **Ambiente produção:** ZimaOS `10.147.19.1` | **Domínio:** `https://cortaai.shop`
 
@@ -26,6 +26,8 @@
 8. [Criptografia e LGPD](#8-criptografia-e-lgpd)
 9. [Diagrama geral de comunicação](#9-diagrama-geral)
 10. [Limites de recurso em produção](#10-limites-de-recurso)
+11. [Lacunas identificadas e próximos incrementos](#11-lacunas-identificadas-e-próximos-incrementos)
+12. [Perguntas prováveis da banca (com linha de defesa)](#12-perguntas-prováveis-da-banca-com-linha-de-defesa)
 
 ---
 
@@ -971,4 +973,131 @@ Portas externas (diferentes do padrão para não conflitar com ZimaOS):
 
 ---
 
-*Documento atualizado em 27/05/2026 com base em análise estática do código-fonte no branch `feature/migracao-microservicos`. Cobertura JaCoCo global: **85%** (533 testes, 3.861/25.938 instruções missed).*
+## 11. Lacunas Identificadas e Próximos Incrementos
+
+Apesar da arquitetura estar funcional e consistente com o modelo de microsserviços, estes pontos podem ser cobrados pela banca como "dívida técnica controlada":
+
+### 11.1 Observabilidade ponta a ponta
+
+**Estado atual:** logs por serviço e troubleshooting manual por container.  
+**Lacuna:** ausência de rastreamento distribuído e correlação explícita entre requisições HTTP, Feign e eventos RabbitMQ.  
+**Incremento recomendado:** padronizar `correlationId` (header + payload de evento), agregar logs centralizados e adicionar métricas de negócio (ex.: taxa de conversão de `PAYMENT_PENDING` para `SCHEDULED`).
+
+### 11.2 Resiliência de integração externa
+
+**Estado atual:** fallback em Feign e idempotência em partes críticas.  
+**Lacuna:** política de circuit breaker/retry/backoff não está documentada de forma uniforme para todos os clientes externos (Mercado Pago, provedores de IA).  
+**Incremento recomendado:** formalizar matriz por integração com timeout, retries máximos, janelas de cooldown e comportamento degradado esperado.
+
+### 11.3 Estratégia formal de backup e disaster recovery
+
+**Estado atual:** ambiente produtivo containerizado com limites de recurso claros.  
+**Lacuna:** falta de capítulo consolidando RPO/RTO, rotina de backup dos bancos, teste de restauração e procedimento de rollback operacional.  
+**Incremento recomendado:** adicionar runbook de continuidade com frequência de backup, retenção, teste mensal de restore e critérios de failover.
+
+### 11.4 Segurança operacional além da autenticação
+
+**Estado atual:** autenticação via Firebase e criptografia AES/GCM para dados sensíveis.  
+**Lacuna:** rotação de segredos/chaves e trilha de auditoria de ações administrativas não estão descritas de ponta a ponta.  
+**Incremento recomendado:** política de rotação de credenciais (Firebase, MP, chaves criptográficas), auditoria para endpoints críticos e checklist de hardening por ambiente.
+
+### 11.5 Governança de contratos entre serviços
+
+**Estado atual:** contratos REST e eventos já definidos na prática.  
+**Lacuna:** versionamento formal de eventos e compatibilidade retroativa não estão explicitados como política de evolução.  
+**Incremento recomendado:** estabelecer convenção de versionamento (`v1`, `v2`) para DTO/eventos e critérios de depreciação com janela mínima.
+
+### 11.6 Evidência de qualidade contínua (CI/CD)
+
+**Estado atual:** cobertura de testes consolidada (JaCoCo).  
+**Lacuna:** pipeline de quality gate, testes de contrato e smoke tests pós-deploy não estão descritos no documento principal.  
+**Incremento recomendado:** incluir fluxo de CI/CD com etapas obrigatórias (build, testes, análise estática, scan de segurança e deploy controlado).
+
+---
+
+## 12. Perguntas Prováveis da Banca (com Linha de Defesa)
+
+### 12.1 Arquitetura e decisões
+
+1. **Por que microsserviços e não monolito modular para este escopo?**  
+   Linha de defesa: isolamento por domínio, deploy independente e desacoplamento de falhas já trouxeram ganho real no projeto; a complexidade adicional foi tratada com gateway, discovery e mensageria.
+
+2. **Como vocês evitam acoplamento entre bancos se há referências cross-service?**  
+   Linha de defesa: cada serviço possui banco próprio; referências são UUIDs lógicos sem FK física entre bancos; integração ocorre por contrato (Feign/eventos).
+
+3. **Quando escolher Feign vs RabbitMQ?**  
+   Linha de defesa: consulta que bloqueia fluxo usa Feign; mudança de estado para reação assíncrona usa evento RabbitMQ; regra já aplicada nos fluxos de agendamento, pagamento e notificação.
+
+4. **Quais trade-offs de usar Eureka + Gateway em vez de roteamento estático?**  
+   Linha de defesa: ganho de descoberta dinâmica e escalabilidade de réplicas; custo de cold start e complexidade operacional foi assumido e documentado.
+
+### 12.2 Segurança, LGPD e conformidade
+
+5. **Como garantem que um serviço interno não seja acessado diretamente?**  
+   Linha de defesa: somente gateway exposto externamente; serviços internos ficam na rede privada Docker sem porta pública.
+
+6. **Por que confiar em headers `X-User-*` sem validar token em todo serviço?**  
+   Linha de defesa: modelo de perímetro controlado no gateway para reduzir custo de validação repetida; tráfego interno restrito e padronizado.
+
+7. **Como tratam LGPD no direito ao esquecimento sem quebrar histórico financeiro?**  
+   Linha de defesa: anonimização orientada a evento (`customer.deleted`) em serviços consumidores, preservando integridade operacional e removendo vínculo pessoal.
+
+8. **Como é feita a proteção de dados sensíveis em repouso e em trânsito?**  
+   Linha de defesa: AES/GCM para campos sensíveis e TLS nas comunicações externas; recomendação adicional é formalizar rotação de chaves no runbook.
+
+### 12.3 Consistência, resiliência e operação
+
+9. **Sem transação distribuída, como evitam inconsistência entre agendamento e pagamento?**  
+   Linha de defesa: arquitetura orientada a eventos com estados explícitos (`PAYMENT_PENDING`, `SCHEDULED`, `CANCELLED`) e compensações automáticas por scheduler.
+
+10. **Como lidam com mensagens duplicadas no RabbitMQ?**  
+    Linha de defesa: consumidores idempotentes com Redis para deduplicação por `eventId` e persistência de processamento.
+
+11. **Qual o comportamento quando Mercado Pago ou provedor de IA fica indisponível?**  
+    Linha de defesa: fallback e tentativa por múltiplos provedores (no caso da IA), além de fluxo degradado; recomendação é evoluir para matriz formal de circuit breaker/retry.
+
+12. **Como garantem que o scheduler não produza efeitos indevidos em massa?**  
+    Linha de defesa: transições de estado restritas por regra temporal e status atual; operação é determinística e auditável por logs/eventos.
+
+### 12.4 Escalabilidade e custo
+
+13. **Como provar que a solução escala sem aumentar custo linearmente?**  
+    Linha de defesa: escalabilidade seletiva por serviço (ex.: `schedule-service`) e limites por container definidos por perfil de carga.
+
+14. **Qual serviço é gargalo hoje e qual plano de mitigação?**  
+    Linha de defesa: agendamento e pagamento concentram maior criticidade; mitigação envolve cache, tuning de queries, observabilidade e scaling horizontal dedicado.
+
+15. **Com 3.6 GB de RAM total, como evitam degradação em pico?**  
+    Linha de defesa: limites de JVM por container, Redis/MySQL ajustados para footprint reduzido e controle de recursos no compose.
+
+### 12.5 Qualidade de software
+
+16. **Cobertura de 85% garante qualidade?**  
+    Linha de defesa: cobertura é indicador secundário; qualidade depende de testes de fluxo crítico, integração entre serviços e cenários de falha.
+
+17. **Que evidências de não regressão vocês apresentam?**  
+    Linha de defesa: suíte automatizada + testes de API dos fluxos críticos; próximo passo é ampliar testes de contrato entre serviços.
+
+18. **Como validar compatibilidade quando um evento evolui?**  
+    Linha de defesa: manter compatibilidade backward nos consumidores e versionar contratos; ponto já mapeado como incremento formal da governança.
+
+### 12.6 Produto e negócio
+
+19. **Qual risco de dependência de terceiros (Firebase, Mercado Pago, Cloudinary)?**  
+    Linha de defesa: dependência consciente com encapsulamento por serviço e fallback operacional; risco residual documentado com plano de contingência.
+
+20. **Qual foi o principal ganho de negócio após a migração para microsserviços?**  
+    Linha de defesa: maior velocidade de evolução por domínio (deploy e correções independentes) e melhor isolamento de falhas em fluxos críticos.
+
+### 12.7 Perguntas "de profundidade" que costumam aparecer
+
+21. **Mostre um fluxo completo, com request real, passando por 3 serviços e 1 evento.**  
+22. **Se o RabbitMQ cair por 10 minutos, o que perde e o que não perde?**  
+23. **Se o gateway cair, qual plano de retorno e tempo estimado?**  
+24. **Qual decisão técnica vocês tomariam diferente se começassem hoje?**
+
+Para essas perguntas, a melhor estratégia é responder com um caso real do sistema (agendamento + pagamento + notificação), citando status, evento e mecanismo de recuperação.
+
+---
+
+*Documento atualizado em 07/06/2026 com base em análise estática do código-fonte no branch `feature/migracao-microservicos`. Cobertura JaCoCo global: **85%** (533 testes, 3.861/25.938 instruções missed). Atualização desta versão inclui lacunas técnicas priorizadas e roteiro de perguntas prováveis da banca.*

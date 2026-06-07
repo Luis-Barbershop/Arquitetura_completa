@@ -240,14 +240,14 @@ function BarberBlockPage() {
           onTabChange={handleTabChange}
         />
 
-        <section className={styles.heroSection}>
+        <section className={styles.heroSection} data-onboarding-id="barber-unavailability-hero">
           <p className={styles.heroKicker}>INDISPONIBILIDADE</p>
           <h1>Bloqueie horários, folgas e períodos fora da agenda</h1>
           <p>Os bloqueios impedem novos agendamentos no intervalo escolhido, cancelam automaticamente atendimentos existentes na janela e aparecem por data para conferência rápida.</p>
         </section>
 
         <section className={styles.grid}>
-          <article className={styles.panel}>
+          <article className={styles.panel} data-onboarding-id="barber-unavailability-hour-form">
             <div className={styles.panelHeader}>
               <div>
                 <p className={styles.panelKicker}>Por horário</p>
@@ -381,7 +381,7 @@ function BarberBlockPage() {
           </article>
         </section>
 
-        <section className={styles.listPanel}>
+        <section className={styles.listPanel} data-onboarding-id="barber-unavailability-list">
           <div className={styles.listHeader}>
             <div>
               <p className={styles.panelKicker}>Bloqueios ativos</p>

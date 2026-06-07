@@ -54,8 +54,8 @@ spring:
         - name: RequestRateLimiter
           args:
             key-resolver: "#{@userOrIpRateLimitKeyResolver}"
-            redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH_RATE:10}
-            redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST_CAPACITY:20}
+            redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH_RATE:50}
+            redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST_CAPACITY:100}
             redis-rate-limiter.requestedTokens: 1
       discovery:
         locator:
@@ -125,8 +125,8 @@ spring:
             - name: RequestRateLimiter
               args:
                 key-resolver: "#{@authUserOrIpRateLimitKeyResolver}"
-                redis-rate-limiter.replenishRate: ${AUTH_RATE_LIMIT_REPLENISH_RATE:2}
-                redis-rate-limiter.burstCapacity: ${AUTH_RATE_LIMIT_BURST_CAPACITY:5}
+                redis-rate-limiter.replenishRate: ${AUTH_RATE_LIMIT_REPLENISH_RATE:10}
+                redis-rate-limiter.burstCapacity: ${AUTH_RATE_LIMIT_BURST_CAPACITY:20}
                 redis-rate-limiter.requestedTokens: 1
 
         - id: user-service
@@ -178,16 +178,16 @@ eureka:
 
 # ==================================================
 # RATE LIMIT — Gateway Redis token bucket
-# Default: 10 req/s, burst 20 por usuario autenticado ou IP.
+# Default: 50 req/s, burst 100 por usuario autenticado ou IP.
 # Ajuste via RATE_LIMIT_REPLENISH_RATE e RATE_LIMIT_BURST_CAPACITY.
-# Endpoints sensiveis de auth: 2 req/s, burst 5 por IP.
+# Endpoints sensiveis de auth: 10 req/s, burst 20 por IP.
 # ==================================================
 rate-limit:
-  replenish-rate: ${RATE_LIMIT_REPLENISH_RATE:10}
-  burst-capacity: ${RATE_LIMIT_BURST_CAPACITY:20}
+  replenish-rate: ${RATE_LIMIT_REPLENISH_RATE:50}
+  burst-capacity: ${RATE_LIMIT_BURST_CAPACITY:100}
   auth:
-    replenish-rate: ${AUTH_RATE_LIMIT_REPLENISH_RATE:2}
-    burst-capacity: ${AUTH_RATE_LIMIT_BURST_CAPACITY:5}
+    replenish-rate: ${AUTH_RATE_LIMIT_REPLENISH_RATE:10}
+    burst-capacity: ${AUTH_RATE_LIMIT_BURST_CAPACITY:20}
 
 # ==================================================
 # FIREBASE AUTHENTICATION

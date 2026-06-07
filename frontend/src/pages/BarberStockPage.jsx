@@ -276,7 +276,7 @@ function BarberStockPage() {
           barbershopId={barber?.barbershopId}
         />
 
-        <section className={`${styles.heroSection} ${styles.animateItem} ${styles.delay1}`}>
+        <section className={`${styles.heroSection} ${styles.animateItem} ${styles.delay1}`} data-onboarding-id="owner-stock-hero">
           <div>
             <p className={styles.heroKicker}>GESTAO DE ESTOQUE</p>
             <h1>Controle o estoque com categorias e baixas rastreaveis</h1>
@@ -328,7 +328,7 @@ function BarberStockPage() {
 
         {activePanel === 'products' ? (
           <section className={`${styles.managementGrid} ${styles.animateItem} ${styles.delay3}`}>
-            <aside className={`${styles.panelCard} ${styles.createPanel}`}>
+            <aside className={`${styles.panelCard} ${styles.createPanel}`} data-onboarding-id="owner-stock-form">
               <div className={styles.panelHeader}>
                 <h2>Novo produto</h2>
               </div>
@@ -416,7 +416,7 @@ function BarberStockPage() {
               <p className={styles.helperText}>Crie ao menos uma categoria antes de cadastrar produtos.</p>
             </aside>
 
-            <article className={`${styles.panelCard} ${styles.listPanel}`}>
+            <article className={`${styles.panelCard} ${styles.listPanel}`} data-onboarding-id="owner-stock-list">
               <div className={styles.panelHeader}>
                 <h2>Inventario de produtos</h2>
                 <span className={styles.lowStockBadge}>

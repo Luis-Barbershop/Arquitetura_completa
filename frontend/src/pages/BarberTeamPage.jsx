@@ -193,14 +193,14 @@ function BarberTeamPage() {
             <div className={styles.contentWrapper}>
                 <BarberHeader barber={barber} onLogout={handleLogout} activeTab="time" onTabChange={handleTabChange} isOwner={true} barbershopId={barber?.barbershopId} />
 
-                <section className={styles.heroSection}>
+                <section className={styles.heroSection} data-onboarding-id="owner-team-hero">
                     <p className={styles.heroKicker}>MEU TIME</p>
                     <h1>Equipe, comissões e remoção segura</h1>
                     <p>Convide barbeiros, acompanhe membros vinculados e defina percentuais por serviço.</p>
                 </section>
 
                 <section className={`${styles.dashboardSection} ${styles.teamManagementGrid} ${styles.animateItem} ${styles.delay2}`}>
-                    <article className={styles.teamPanel}>
+                    <article className={styles.teamPanel} data-onboarding-id="owner-team-members">
                         <div className={styles.teamPanelHeader}>
                             <h2>Equipe</h2>
                             <button onClick={handleOpenInviteModal} className={styles.teamInviteButtonInline}>
@@ -236,7 +236,7 @@ function BarberTeamPage() {
                         </div>
                     </article>
 
-                    <aside className={styles.teamPanel}>
+                    <aside className={styles.teamPanel} data-onboarding-id="owner-team-commissions">
                         <div className={styles.teamPanelHeader}>
                             <h2>Comissões</h2>
                         </div>

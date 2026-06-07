@@ -272,7 +272,7 @@ function BarberManualBookingPage() {
                     onTabChange={handleTabChange}
                 />
 
-                <section className={styles.heroSection}>
+                <section className={styles.heroSection} data-onboarding-id="barber-manual-booking-hero">
                     <p className={styles.heroKicker}>NOVO AGENDAMENTO</p>
                     <h1>Encaixe</h1>
                     <p>Registre um atendimento presencial sem precisar que o cliente tenha conta no app.</p>
@@ -288,7 +288,7 @@ function BarberManualBookingPage() {
                     <form onSubmit={handleSubmit} style={{ maxWidth: 700 }}>
 
                         {/* ── Dados do cliente ── */}
-                        <div style={cardStyle}>
+                        <div style={cardStyle} data-onboarding-id="barber-manual-booking-services">
                             <h3 style={{ margin: '0 0 16px', fontSize: 16, color: 'rgba(255,255,255,0.8)' }}>
                                 👤 Dados do cliente
                             </h3>
@@ -457,6 +457,7 @@ function BarberManualBookingPage() {
 
                         {/* ── Botão ── */}
                         <button
+                            data-onboarding-id="barber-manual-booking-submit"
                             type="submit"
                             disabled={submitting}
                             style={{

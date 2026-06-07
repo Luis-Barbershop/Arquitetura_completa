@@ -175,7 +175,7 @@ function BarberDashboardPage() {
             <div className={styles.contentWrapper}>
                 <BarberHeader barber={barber} onLogout={handleLogout} activeTab="dashboards" onTabChange={handleTabChange} isOwner={true} barbershopId={barbershopId} />
 
-                <section className={styles.heroSection}>
+                <section className={styles.heroSection} data-onboarding-id="owner-dashboard-hero">
                     <p className={styles.heroKicker}>DASHBOARD & RELATÓRIOS</p>
                     <h1>Análise da sua barbearia</h1>
                     <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
@@ -198,7 +198,7 @@ function BarberDashboardPage() {
                     </div>
                 </section>
 
-                <section className={styles.dashboardStatsGrid}>
+                <section className={styles.dashboardStatsGrid} data-onboarding-id="owner-dashboard-metrics">
                     <div className={styles.dashboardStatCard}>
                         <p className={styles.dashboardStatValue}>{asCurrency(grossRevenue)}</p>
                         <p className={styles.dashboardStatLabel}>Faturamento do mês</p>
@@ -217,7 +217,7 @@ function BarberDashboardPage() {
                     </div>
                 </section>
 
-                <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay2}`}>
+                <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay2}`} data-onboarding-id="owner-dashboard-reports">
 
                     <DashReportPanel
                         title="Performance dos Barbeiros"
