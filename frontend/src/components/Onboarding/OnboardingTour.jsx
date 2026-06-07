@@ -441,9 +441,6 @@ function OnboardingTour({
           </div>
 
           <div className={styles.rightActions}>
-            <button type="button" className={styles.button} onClick={onClose}>
-              Fechar
-            </button>
             <button type="button" className={styles.primaryButton} onClick={handleNext}>
               {isLastStep ? 'Concluir' : 'Próximo'}
             </button>
