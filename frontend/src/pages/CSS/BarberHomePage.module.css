@@ -324,7 +324,7 @@
 
 @media (max-width: 760px) {
     .withNavbar {
-        padding-bottom: calc(118px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(154px + env(safe-area-inset-bottom, 0px));
     }
 
     .pageContainer {
@@ -356,6 +356,14 @@
 
     .dashboardSection:last-of-type {
         margin-bottom: 0.4rem;
+    }
+
+    .teamManagementGrid {
+        margin-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .teamPanel {
+        padding-bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -1656,7 +1664,7 @@
     }
 
     .commissionForm {
-        margin-bottom: 0.25rem;
+        margin-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
     }
 
     .noBarbershopPanel {
