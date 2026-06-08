@@ -621,4 +621,66 @@
         padding-top: calc(12px + env(safe-area-inset-top, 0px));
         padding-bottom: calc(98px + env(safe-area-inset-bottom, 0px));
     }
+
+    .heroSection {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 14px;
+        border-radius: 18px;
+    }
+
+    .heroSection h1 {
+        font-size: clamp(1.4rem, 6.6vw, 1.9rem);
+        line-height: 1.12;
+    }
+
+    .heroSection p {
+        font-size: 0.93rem;
+    }
+
+    .heroInfoCard {
+        width: 100%;
+    }
+
+    .metricsGrid {
+        gap: 10px;
+    }
+
+    .managementGrid {
+        gap: 12px;
+        margin-bottom: 104px;
+    }
+
+    .panelCard {
+        padding: 14px;
+        border-radius: 18px;
+    }
+
+    .segmentedControl {
+        width: 100%;
+    }
+
+    .segmentedControl button {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .itemCard {
+        align-items: flex-start;
+    }
+
+    .itemRightInfo {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .itemCost {
+        min-width: 0;
+        text-align: left;
+    }
+
+    .inlineFields,
+    .categoryForm {
+        grid-template-columns: 1fr;
+    }
 }

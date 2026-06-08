@@ -313,6 +313,33 @@
     }
 }
 
+@media (max-width: 760px) {
+    .pageContainer {
+        padding: 12px;
+        padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    }
+
+    .heroSection {
+        margin-top: 0.7rem;
+        padding: 1rem 0.95rem;
+        border-radius: 16px;
+    }
+
+    .heroSection h1 {
+        font-size: clamp(1.42rem, 6.5vw, 1.95rem);
+        line-height: 1.12;
+    }
+
+    .heroSection p {
+        margin-top: 0.45rem;
+        font-size: 0.93rem;
+    }
+
+    .dashboardSection {
+        margin-top: 0.85rem;
+    }
+}
+
 .loadingContainer {
     color: white;
     text-align: center;
