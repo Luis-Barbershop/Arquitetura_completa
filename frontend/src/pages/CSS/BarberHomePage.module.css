@@ -209,7 +209,14 @@
 
 @media (max-width: 900px) {
     .teamManagementGrid {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .teamPanel {
+        width: 100%;
+        min-width: 0;
     }
 
     .teamMemberCard {
@@ -217,13 +224,92 @@
         flex-direction: column;
     }
 
+    .teamMemberMain {
+        width: 100%;
+    }
+
     .teamMemberActions {
-        justify-content: flex-start;
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .teamMemberActions button,
+    .commissionForm button,
+    .commissionList button {
+        width: 100%;
+    }
+
+    .teamInviteButtonInline {
+        width: 100%;
+    }
+
+    .teamPanelHeader {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .teamFlowText {
+        overflow-wrap: anywhere;
     }
 
     .commissionForm,
     .commissionList li {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .teamManagementGrid {
+        gap: 12px;
+        width: 100%;
+    }
+
+    .teamPanel {
+        width: 100%;
+        min-width: 0;
+        padding: 0.9rem;
+        border-radius: 14px;
+    }
+
+    .teamList,
+    .teamMemberCard,
+    .teamMemberMain,
+    .teamMemberActions,
+    .commissionForm,
+    .commissionList,
+    .commissionList li {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .teamPanelHeader {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .teamInviteButtonInline {
+        width: 100%;
+    }
+
+    .teamMemberCard {
+        padding: 10px;
+    }
+
+    .teamMemberActions,
+    .commissionForm,
+    .commissionList li {
+        width: 100%;
+    }
+
+    .teamMemberActions button,
+    .commissionForm button,
+    .commissionList button {
+        width: 100%;
+    }
+
+    .commissionList li {
+        grid-template-columns: 1fr;
+        justify-items: start;
     }
 }
 
