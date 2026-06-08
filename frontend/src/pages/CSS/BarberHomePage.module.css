@@ -209,9 +209,10 @@
 
 @media (max-width: 900px) {
     .teamManagementGrid {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: 1fr;
         gap: 12px;
+        align-items: stretch;
     }
 
     .teamPanel {
@@ -262,6 +263,8 @@
     .teamManagementGrid {
         gap: 12px;
         width: 100%;
+        grid-template-columns: 1fr;
+        align-items: stretch;
     }
 
     .teamPanel {
@@ -280,6 +283,12 @@
     .commissionList li {
         width: 100%;
         min-width: 0;
+    }
+
+    .teamPanelHeader,
+    .teamMemberActions,
+    .commissionList li {
+        justify-items: stretch;
     }
 
     .teamPanelHeader {
@@ -1588,6 +1597,52 @@
 
     .heroSection h1 {
         font-size: 1.5rem;
+    }
+
+    .teamManagementGrid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .teamPanel {
+        width: 100%;
+        min-width: 0;
+        padding: 0.95rem;
+    }
+
+    .teamPanelHeader {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .teamInviteButtonInline {
+        width: 100%;
+    }
+
+    .teamMemberCard {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .teamMemberMain {
+        width: 100%;
+    }
+
+    .teamMemberActions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .teamMemberActions button,
+    .commissionForm button,
+    .commissionList button {
+        width: 100%;
+    }
+
+    .commissionForm,
+    .commissionList li {
+        grid-template-columns: 1fr;
     }
 
     .noBarbershopPanel {
