@@ -160,7 +160,49 @@
     flex-shrink: 0;
 }
 
+.registerPrompt,
+.switchPortalPrompt {
+    margin: 0;
+    text-align: center;
+    font-family: 'Roboto', sans-serif;
+}
+
+.registerPrompt {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: rgb(255 255 255 / 60%);
+}
+
+.switchPortalPrompt {
+    margin-top: 0.55rem;
+    font-size: 0.82rem;
+    color: rgb(255 255 255 / 45%);
+}
+
+.inlineActionButton,
+.portalSwitchButton {
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0;
+}
+
+.inlineActionButton {
+    color: #e8a045;
+    font-size: 0.9rem;
+}
+
+.portalSwitchButton {
+    color: #a0c4ff;
+    font-size: 0.82rem;
+}
+
 @media (max-width: 768px) {
+    .Login_Inputs_container {
+        padding-top: 1rem;
+    }
+
     .Login_button {
         height: 52px;
     }

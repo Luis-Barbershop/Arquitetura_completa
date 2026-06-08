@@ -225,15 +225,67 @@
   }
 
   .loginShell {
+    width: 100%;
     border-radius: 16px;
+  }
+
+  .brandPanel {
+    order: 2;
+    padding: 1.35rem 1rem 1.1rem;
+  }
+
+  .brandPanel::after {
+    display: none;
+  }
+
+  .brandBadge {
+    padding: 0.45rem 0.72rem;
+  }
+
+  .brandBadge img {
+    width: 18px;
+    height: 18px;
+  }
+
+  .kicker {
+    margin-top: 1rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
   }
 
   .title_login {
     font-size: 1.8rem;
+    max-width: none;
+  }
+
+  .subtitle {
+    margin-top: 0.8rem;
+    font-size: 0.94rem;
+    max-width: none;
+  }
+
+  .tagRow {
+    margin-top: 1rem;
+    gap: 0.45rem;
+  }
+
+  .roleTag,
+  .softTag {
+    padding: 0.38rem 0.72rem;
+    font-size: 0.8rem;
+  }
+
+  .featuresList {
+    display: none;
   }
 
   .formPanel h2 {
     font-size: 1.55rem;
+  }
+
+  .formPanel {
+    order: 1;
+    padding: 1.4rem 1rem 1.6rem;
   }
 }
 

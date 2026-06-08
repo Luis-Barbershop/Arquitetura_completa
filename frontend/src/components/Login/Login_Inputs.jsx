@@ -231,25 +231,25 @@ function Login_Inputs() {
                 {loadingGoogle ? "Conectando..." : "Entrar com o Google"}
             </button>
 
-            <p style={{ textAlign: 'center', marginTop: 16, fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
+            <p className={Styles.registerPrompt}>
                 Não tem uma conta?{' '}
                 <button
                     type="button"
                     onClick={() => navigate('/signin', { state: { mode: 'register', role, prefillEmail: email } })}
-                    style={{ background: 'none', border: 'none', color: '#e8a045', cursor: 'pointer', fontWeight: 600, fontSize: 14, padding: 0 }}
+                    className={Styles.inlineActionButton}
                 >
                     Crie agora
                 </button>
             </p>
 
             {/* Alternância de perfil: permite trocar entre portal Barbeiro e portal Cliente */}
-            <p style={{ textAlign: 'center', marginTop: 8, fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
+            <p className={Styles.switchPortalPrompt}>
                 <button
                     type="button"
                     onClick={() => navigate('/login', {
                         state: { role: role === 'barber' ? 'customer' : 'barber' }
                     })}
-                    style={{ background: 'none', border: 'none', color: '#a0c4ff', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}
+                    className={Styles.portalSwitchButton}
                 >
                     {role === 'barber' ? 'Entrar como Cliente' : 'Entrar como Barbeiro'}
                 </button>
