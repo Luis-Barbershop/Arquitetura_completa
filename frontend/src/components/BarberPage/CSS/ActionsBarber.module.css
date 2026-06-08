@@ -26,3 +26,9 @@
     justify-content: space-between;
     gap: 14px;
 }
+
+@media (max-width: 760px) {
+    .ActionsBarberContent {
+        flex-direction: column;
+    }
+}

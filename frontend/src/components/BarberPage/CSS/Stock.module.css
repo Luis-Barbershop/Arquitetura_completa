@@ -59,3 +59,23 @@
     color: white;
     transition: 0.3s;
 }
+
+@media (max-width: 760px) {
+    .container {
+        width: 100%;
+        height: auto;
+        min-height: 220px;
+    }
+
+    .stockCard,
+    .stockNumber,
+    .stockDetails {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .stockButton {
+        width: calc(100% - 32px);
+        margin-bottom: 16px;
+    }
+}
