@@ -824,7 +824,7 @@ const MeusAgendamentosPage = () => {
 
                 {/* ── Stats bar ── */}
                 {!isCustomer && (
-                    <div className={Styles.statsBar}>
+                    <div className={Styles.statsBar} data-onboarding-id="appointments-status">
                         {[
                             { label: 'Hoje', value: stats.today, filter: 'TODAY', icon: <FiCalendar size={13} />, accent: '#c19006' },
                             { label: 'Ativos', value: stats.active, filter: 'SCHEDULED', icon: <FiClock size={13} />, accent: '#3b82f6' },
@@ -912,6 +912,7 @@ const MeusAgendamentosPage = () => {
                         {/* Seletor de período — Hoje, Semana e Mês */}
                         <div
                             className={`${Styles.viewToggle} ${activeFilter !== 'ALL' ? Styles.viewToggleDisabled : ''}`}
+                            data-onboarding-id="appointments-productivity"
                             title={activeFilter !== 'ALL' ? 'Filtro de data desativado: exibindo todo o histórico do status selecionado' : undefined}
                         >
                             {[{ key: 'day', label: 'Hoje' }, { key: 'week', label: 'Semana' }, { key: 'month', label: 'Mês' }].map(r => (

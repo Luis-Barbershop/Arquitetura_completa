@@ -132,7 +132,7 @@ function BarberHomePage() {
               data-onboarding-id="barber-home-hero"
             >
               <p className={styles.heroKicker}>HOME DO PROFISSIONAL</p>
-              <h1>Ola, {firstName}. Vamos fazer o dia render.</h1>
+              <h1>Olá, {firstName}. Vamos fazer o dia render.</h1>
               <p>Confira os numeros da barbearia, priorize os agendamentos e mantenha os servicos mais procurados em destaque.</p>
             </section>
 

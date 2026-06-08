@@ -318,7 +318,7 @@ function BarberServicesPage() {
               <article className={`${styles.panelCard} ${styles.servicesPanel}`}>
                 <div className={styles.panelHeader}>
                   <h2>Serviços Cadastrados</h2>
-                  <span className={styles.autoUpdateBadge}>Atualiza em segundo plano (15s)</span>
+                  <span className={styles.autoUpdateBadge}>Seus serviços atuais</span>
                 </div>
 
                 {loadingServices ? (

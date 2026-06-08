@@ -98,7 +98,7 @@ function BarberNavbar({ activeTab, onTabChange, onLogout }) {
 
     return (
         <>
-            <nav className={styles.navbarContainer}>
+            <nav className={styles.navbarContainer} data-onboarding-id="barber-main-nav">
                 <ul className={styles.navbarList}>
                     {mainItems.map(({ id, label, Icon }) => (
                         <li key={id}>

@@ -150,7 +150,7 @@ function BarberHeader({ barber, onLogout, activeTab, onTabChange }) {
             </div>
 
             {/* ── Nav central ─── */}
-            <nav className={styles.nav}>
+            <nav className={styles.nav} data-onboarding-id="barber-main-nav">
                 <button
                     className={activeTab === 'home' ? styles.navItemActive : styles.navItem}
                     onClick={() => onTabChange('home')}

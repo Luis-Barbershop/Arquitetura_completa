@@ -31,7 +31,7 @@ const PAGE_TARGETS = {
   'barber-home': [
     '[data-onboarding-id="barber-home-hero"]',
     '[data-onboarding-id="barber-home-actions"]',
-    '[data-onboarding-id="barber-home-next"]',
+    '[data-onboarding-id="barber-main-nav"]',
   ],
   'barber-home-unlinked': [
     '[data-onboarding-id="barber-home-unlinked-panel"]',
@@ -65,8 +65,8 @@ const PAGE_TARGETS = {
   ],
   'barber-appointments': [
     '[data-onboarding-id="appointments-hero"]',
-    '[data-onboarding-id="appointments-filters"]',
-    '[data-onboarding-id="appointments-list"]',
+    '[data-onboarding-id="appointments-status"]',
+    '[data-onboarding-id="appointments-productivity"]',
   ],
   'owner-stock': [
     '[data-onboarding-id="owner-stock-hero"]',
@@ -90,7 +90,7 @@ const PAGE_TARGETS = {
   ],
   'owner-team-agenda': [
     '[data-onboarding-id="appointments-hero"]',
-    '[data-onboarding-id="appointments-filters"]',
+    '[data-onboarding-id="appointments-status"]',
     '[data-onboarding-id="appointments-list"]',
   ],
   'barber-create-shop': [
