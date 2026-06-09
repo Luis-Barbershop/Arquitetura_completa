@@ -96,7 +96,7 @@ vi.mock('../../services/appointmentService', () => ({
 }));
 
 vi.mock('../../services/paymentService', () => ({
-  createAppointmentPayment: vi.fn(),
+  getPendingPaymentCheckoutUrl: vi.fn(),
 }));
 
 vi.mock('../../services/barbershopService', () => ({
@@ -112,11 +112,11 @@ import {
   getMyAppointments,
   rescheduleAppointment,
 } from '../../services/appointmentService';
-import { createAppointmentPayment } from '../../services/paymentService';
 import {
   createBarbershopReview,
   hasReviewedBarbershop,
 } from '../../services/barbershopService';
+import { getPendingPaymentCheckoutUrl } from '../../services/paymentService';
 import {
   getBarbershopId,
   isCustomer,
@@ -174,7 +174,7 @@ describe('MeusAgendamentosPage', () => {
     vi.mocked(concludeAppointment).mockReset();
     vi.mocked(rescheduleAppointment).mockReset();
     vi.mocked(getBarbershopSchedule).mockReset();
-    vi.mocked(createAppointmentPayment).mockReset();
+    vi.mocked(getPendingPaymentCheckoutUrl).mockReset();
     vi.mocked(createBarbershopReview).mockReset();
     vi.mocked(hasReviewedBarbershop).mockReset();
     vi.mocked(isCustomer).mockReset();
@@ -268,9 +268,8 @@ describe('MeusAgendamentosPage', () => {
   it('starts payment checkout from customer pending appointment', async () => {
     vi.mocked(getMyAppointments).mockResolvedValue(customerAppointments);
     vi.mocked(hasReviewedBarbershop).mockResolvedValue(false);
-    vi.mocked(createAppointmentPayment).mockResolvedValue({
-      id: 'tx-1',
-    });
+    vi.mocked(getPendingPaymentCheckoutUrl).mockResolvedValue('https://checkout.example/pending');
+    const locationAssignSpy = vi.spyOn(window.location, 'assign').mockImplementation(() => {});
 
     render(<MeusAgendamentosPage />);
 
@@ -278,8 +277,8 @@ describe('MeusAgendamentosPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /pagar agora/i }));
 
-    await waitFor(() => expect(createAppointmentPayment).toHaveBeenCalledWith('appt-3', 'CREDIT_CARD'));
-    expect(toastWarn).toHaveBeenCalledWith('Pagamento iniciado, mas o link de checkout não foi retornado.');
+    await waitFor(() => expect(getPendingPaymentCheckoutUrl).toHaveBeenCalledWith('appt-3'));
+    expect(locationAssignSpy).toHaveBeenCalledWith('https://checkout.example/pending');
   });
 
   it('redirects unauthenticated users and logs out from the customer header', async () => {

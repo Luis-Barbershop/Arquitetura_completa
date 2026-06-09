@@ -10,7 +10,7 @@ import {
     rescheduleAppointment,
     getBarbershopSchedule,
 } from '../services/appointmentService';
-import { createAppointmentPayment } from '../services/paymentService';
+import { getPendingPaymentCheckoutUrl } from '../services/paymentService';
 import { createBarbershopReview, hasReviewedBarbershop } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
@@ -353,17 +353,16 @@ const MeusAgendamentosPage = () => {
 
         try {
             setPayingAppointmentId(appointmentId);
-            const transaction = await createAppointmentPayment(appointmentId, 'CREDIT_CARD');
-            const checkoutUrl = transaction?.checkoutUrl;
+            const checkoutUrl = await getPendingPaymentCheckoutUrl(appointmentId);
 
             if (checkoutUrl) {
-                window.location.href = checkoutUrl;
+                window.location.assign(checkoutUrl);
                 return;
             }
 
-            toast.warn('Pagamento iniciado, mas o link de checkout não foi retornado.');
+            toast.warn('Não foi encontrado um pagamento pendente para este agendamento. Atualize a página e tente novamente.');
         } catch (error) {
-            const message = error?.response?.data?.message || 'Erro ao iniciar pagamento. Tente novamente.';
+            const message = error?.response?.data?.message || 'Erro ao abrir o pagamento pendente. Tente novamente.';
             toast.error(message);
         } finally {
             setPayingAppointmentId(null);
