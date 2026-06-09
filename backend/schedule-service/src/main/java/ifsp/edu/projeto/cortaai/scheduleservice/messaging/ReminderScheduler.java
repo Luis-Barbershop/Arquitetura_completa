@@ -108,11 +108,11 @@ public class ReminderScheduler {
         try {
             String timezone = (appTimezone == null || appTimezone.isBlank())
                     ? "America/Sao_Paulo"
-                    : appTimezone;
+                    : appTimezone.trim();
             return LocalDateTime.now(ZoneId.of(timezone));
         } catch (DateTimeException ex) {
-            log.warn("Timezone inválido em app.timezone='{}'; usando timezone padrão da JVM.", appTimezone);
-            return LocalDateTime.now();
+            log.warn("Timezone inválido em app.timezone='{}'; usando America/Sao_Paulo.", appTimezone);
+            return LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
         }
     }
 }

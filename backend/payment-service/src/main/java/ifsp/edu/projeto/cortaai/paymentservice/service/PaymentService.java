@@ -100,18 +100,26 @@ public class PaymentService {
      */
     @Transactional
     public TransactionDTO createPayment(UUID appointmentId, UUID customerId, String paymentMethod) {
-        // Verificar se já existe transação para este agendamento
-        transactionRepository.findByAppointmentId(appointmentId).ifPresent(tx -> {
-            if (tx.getStatus() == PaymentStatus.PENDING || tx.getStatus() == PaymentStatus.APPROVED) {
-                throw new RuntimeException("Já existe um pagamento para este agendamento");
-            }
-        });
-
         // Buscar dados do agendamento via Feign
         AppointmentInfoDTO appointment = scheduleServiceClient.getAppointmentById(appointmentId);
 
         if (!appointment.customerId().equals(customerId)) {
             throw new RuntimeException("Este agendamento não pertence ao usuário");
+        }
+
+        // Se já houver transação ativa, reutiliza o mesmo link de checkout.
+        var existingTransaction = transactionRepository.findByAppointmentId(appointmentId);
+        if (existingTransaction.isPresent()) {
+            Transaction tx = existingTransaction.get();
+            if (tx.getStatus() == PaymentStatus.PENDING || tx.getStatus() == PaymentStatus.IN_PROCESS) {
+                log.info("event=payment-reused txId={} appointmentId={}",
+                        maskIdentifier(tx.getId()),
+                        maskIdentifier(appointmentId));
+                return toDTO(tx);
+            }
+            if (tx.getStatus() == PaymentStatus.APPROVED) {
+                throw new RuntimeException("Pagamento deste agendamento já foi aprovado");
+            }
         }
 
         // Calcular taxas para o split
