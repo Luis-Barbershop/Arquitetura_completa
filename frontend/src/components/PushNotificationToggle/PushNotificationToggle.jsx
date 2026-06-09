@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { toast } from 'react-toastify'
 import {
   canPromptForPushNotifications,
   isPushRegisteredLocally,
@@ -32,8 +33,18 @@ export default function PushNotificationToggle() {
 
   const handleEnable = useCallback(async () => {
     setBusy(true)
-    await requestPushNotificationsPermissionAndRegister()
-    setState(await resolveState())
+    const enabled = await requestPushNotificationsPermissionAndRegister()
+    const nextState = await resolveState()
+    setState(nextState)
+
+    if (enabled && nextState === 'granted') {
+      toast.success('Notificações push ativadas no CortaAi.')
+    } else if (Notification.permission === 'denied') {
+      toast.warn('Notificações bloqueadas no navegador. Reative nas configurações do browser.')
+    } else {
+      toast.info('Não foi possível ativar agora. Tente novamente em alguns instantes.')
+    }
+
     setBusy(false)
   }, [])
 
@@ -41,6 +52,7 @@ export default function PushNotificationToggle() {
     setBusy(true)
     await unregisterPushNotificationsIfPossible()
     setState(Notification.permission === 'granted' ? 'granted-unregistered' : 'default')
+    toast.info('Notificações desativadas no CortaAi para este navegador.')
     setBusy(false)
   }, [])
 
