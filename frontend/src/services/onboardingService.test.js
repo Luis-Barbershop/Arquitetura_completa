@@ -17,11 +17,13 @@ import {
   markPageOnboardingCompleted,
   markRoleOnboardingCompleted,
   resolvePageKeyFromLocation,
+  resetOnboardingSession,
   syncOnboardingToRemote,
 } from './onboardingService';
 
 const clearAuthStorage = () => {
   localStorage.clear();
+  sessionStorage.clear();
 };
 
 describe('onboardingService', () => {
@@ -71,7 +73,7 @@ describe('onboardingService', () => {
     ).toBe(false);
   });
 
-  it('marca onboarding como concluido para o papel inteiro', () => {
+  it('marca onboarding apenas para a pagina atual, sem concluir o papel inteiro', () => {
     const ownerServices = {
       userScope: 'internal:999',
       roleVariant: 'owner',
@@ -88,7 +90,7 @@ describe('onboardingService', () => {
         roleVariant: 'owner',
         pageKey: 'owner-dashboard',
       })
-    ).toBe(true);
+    ).toBe(false);
     expect(
       isPageOnboardingCompleted({
         userScope: 'internal:999',
@@ -98,7 +100,7 @@ describe('onboardingService', () => {
     ).toBe(false);
   });
 
-  it('trata progresso antigo por pagina como conclusao do papel', () => {
+  it('trata progresso antigo por pagina como conclusao apenas daquela pagina', () => {
     const legacyPage = {
       userScope: 'internal:888',
       roleVariant: 'owner',
@@ -114,7 +116,43 @@ describe('onboardingService', () => {
         roleVariant: 'owner',
         pageKey: 'owner-dashboard',
       })
-    ).toBe(true);
+    ).toBe(false);
+  });
+
+  it('limpa apenas o cache de hidratacao ao reiniciar um novo login', async () => {
+    localStorage.setItem('token', 'token-valido');
+    const userScope = 'internal:321';
+
+    api.get.mockResolvedValueOnce({
+      data: {
+        version: 1,
+        progressByRole: {
+          customer: {
+            completedPages: {
+              'customer-home': {
+                completedAt: '2026-05-29T10:00:00.000Z',
+              },
+            },
+          },
+        },
+      },
+    });
+
+    await hydrateOnboardingFromRemote({ userScope, force: true });
+    expect(isPageOnboardingCompleted({ userScope, roleVariant: 'customer', pageKey: 'customer-home' })).toBe(true);
+
+    resetOnboardingSession();
+
+    api.get.mockResolvedValueOnce({
+      data: {
+        version: 1,
+        progressByRole: {},
+      },
+    });
+
+    await hydrateOnboardingFromRemote({ userScope });
+    expect(api.get).toHaveBeenCalledTimes(2);
+    expect(isPageOnboardingCompleted({ userScope, roleVariant: 'customer', pageKey: 'customer-home' })).toBe(true);
   });
 
   it('hidrata progresso remoto e reflete no estado local', async () => {

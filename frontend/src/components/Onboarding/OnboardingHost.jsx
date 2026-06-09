@@ -8,8 +8,9 @@ import {
   getCurrentUserScope,
   hydrateOnboardingFromRemote,
   isPageOnboardingCompleted,
-  markRoleOnboardingCompleted,
+  markPageOnboardingCompleted,
   resolvePageKeyFromLocation,
+  resetOnboardingSession,
   syncOnboardingToRemote,
 } from '../../services/onboardingService';
 
@@ -39,6 +40,7 @@ function OnboardingHost() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [hydrationReady, setHydrationReady] = useState(false);
+  const [sessionVersion, setSessionVersion] = useState(0);
 
   const userScope = getCurrentUserScope();
   const roleVariant = getCurrentRoleVariant();
@@ -56,14 +58,23 @@ function OnboardingHost() {
   useEffect(() => {
     let isMounted = true;
 
+    const handleSessionReset = () => {
+      resetOnboardingSession();
+      setSessionVersion((previousVersion) => previousVersion + 1);
+      setIsOpen(false);
+    };
+
+    window.addEventListener('cortaai:login-success', handleSessionReset);
+    window.addEventListener('cortaai:logout', handleSessionReset);
+
     const hydrate = async () => {
       if (!userScope) {
         if (isMounted) setHydrationReady(false);
         return;
       }
 
-      await hydrateOnboardingFromRemote({ userScope });
-      if (isMounted) setHydrationReady(true);
+      const hydrated = await hydrateOnboardingFromRemote({ userScope, force: sessionVersion > 0 });
+      if (isMounted) setHydrationReady(hydrated);
     };
 
     setHydrationReady(false);
@@ -71,8 +82,10 @@ function OnboardingHost() {
 
     return () => {
       isMounted = false;
+      window.removeEventListener('cortaai:login-success', handleSessionReset);
+      window.removeEventListener('cortaai:logout', handleSessionReset);
     };
-  }, [userScope]);
+  }, [sessionVersion, userScope]);
 
   useEffect(() => {
     if (!hydrationReady || !userScope || !roleVariant || !pageKey || steps.length === 0) {
@@ -105,7 +118,7 @@ function OnboardingHost() {
 
   const persistCompletion = () => {
     if (userScope && roleVariant && pageKey) {
-      markRoleOnboardingCompleted({
+      markPageOnboardingCompleted({
         userScope,
         roleVariant,
         pageKey,

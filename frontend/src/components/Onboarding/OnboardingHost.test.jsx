@@ -7,8 +7,9 @@ const onboardingApi = {
   getCurrentUserScope: vi.fn(),
   hydrateOnboardingFromRemote: vi.fn(),
   isPageOnboardingCompleted: vi.fn(),
-  markRoleOnboardingCompleted: vi.fn(),
+  markPageOnboardingCompleted: vi.fn(),
   resolvePageKeyFromLocation: vi.fn(),
+  resetOnboardingSession: vi.fn(),
   syncOnboardingToRemote: vi.fn(),
 };
 
@@ -24,8 +25,9 @@ vi.mock('../../services/onboardingService', () => ({
   getCurrentUserScope: (...args) => onboardingApi.getCurrentUserScope(...args),
   hydrateOnboardingFromRemote: (...args) => onboardingApi.hydrateOnboardingFromRemote(...args),
   isPageOnboardingCompleted: (...args) => onboardingApi.isPageOnboardingCompleted(...args),
-  markRoleOnboardingCompleted: (...args) => onboardingApi.markRoleOnboardingCompleted(...args),
+  markPageOnboardingCompleted: (...args) => onboardingApi.markPageOnboardingCompleted(...args),
   resolvePageKeyFromLocation: (...args) => onboardingApi.resolvePageKeyFromLocation(...args),
+  resetOnboardingSession: (...args) => onboardingApi.resetOnboardingSession(...args),
   syncOnboardingToRemote: (...args) => onboardingApi.syncOnboardingToRemote(...args),
 }));
 
@@ -55,7 +57,7 @@ describe('OnboardingHost', () => {
     onboardingApi.syncOnboardingToRemote.mockResolvedValue(true);
   });
 
-  it('marca onboarding como concluido ao clicar em pular', async () => {
+  it('marca apenas a pagina atual ao pular ou fechar', async () => {
     render(
       <MemoryRouter initialEntries={['/barberHome/gerenciar-barbearia']}>
         <OnboardingHost />
@@ -66,7 +68,7 @@ describe('OnboardingHost', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pular onboarding' }));
 
     await waitFor(() => {
-      expect(onboardingApi.markRoleOnboardingCompleted).toHaveBeenCalledWith({
+      expect(onboardingApi.markPageOnboardingCompleted).toHaveBeenCalledWith({
         userScope: 'internal:owner-1',
         roleVariant: 'owner',
         pageKey: 'owner-manage-shop',
@@ -76,27 +78,10 @@ describe('OnboardingHost', () => {
     expect(onboardingApi.syncOnboardingToRemote).toHaveBeenCalledWith({ userScope: 'internal:owner-1' });
   });
 
-  it('marca onboarding como concluido ao clicar em fechar', async () => {
-    render(
-      <MemoryRouter initialEntries={['/barberHome/gerenciar-barbearia']}>
-        <OnboardingHost />
-      </MemoryRouter>
-    );
-
-    await screen.findByRole('button', { name: 'Fechar onboarding' });
-    fireEvent.click(screen.getByRole('button', { name: 'Fechar onboarding' }));
-
-    await waitFor(() => {
-      expect(onboardingApi.markRoleOnboardingCompleted).toHaveBeenCalledWith({
-        userScope: 'internal:owner-1',
-        roleVariant: 'owner',
-        pageKey: 'owner-manage-shop',
-      });
-    });
-  });
-
-  it('nao abre automaticamente quando a pagina ja foi concluida', async () => {
-    onboardingApi.isPageOnboardingCompleted.mockReturnValue(true);
+  it('reinicia a sessao ao receber login-success e abre a tela atual novamente', async () => {
+    const completedPages = new Set(['owner-manage-shop']);
+    onboardingApi.isPageOnboardingCompleted.mockImplementation(({ pageKey }) => completedPages.has(pageKey));
+    onboardingApi.resetOnboardingSession.mockImplementation(() => completedPages.clear());
 
     render(
       <MemoryRouter initialEntries={['/barberHome/gerenciar-barbearia']}>
@@ -106,33 +91,18 @@ describe('OnboardingHost', () => {
 
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: 'Pular onboarding' })).not.toBeInTheDocument();
-    });
-  });
-
-  it('abre novamente ao disparar replay sem resetar conclusao', async () => {
-    onboardingApi.isPageOnboardingCompleted.mockReturnValue(true);
-
-    render(
-      <MemoryRouter initialEntries={['/barberHome/gerenciar-barbearia']}>
-        <OnboardingHost />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.queryByRole('button', { name: 'Pular onboarding' })).not.toBeInTheDocument();
-    });
-
-    await waitFor(() => {
-      expect(onboardingApi.hydrateOnboardingFromRemote).toHaveBeenCalled();
     });
 
     act(() => {
-      window.dispatchEvent(new CustomEvent('cortaai:onboarding-replay', {
-        detail: { pageKey: 'owner-manage-shop' },
-      }));
+      window.dispatchEvent(new Event('cortaai:login-success'));
     });
 
+    await waitFor(() => {
+      expect(onboardingApi.resetOnboardingSession).toHaveBeenCalledTimes(1);
+    });
+
+    onboardingApi.isPageOnboardingCompleted.mockImplementation(({ pageKey }) => completedPages.has(pageKey));
+
     expect(await screen.findByRole('button', { name: 'Pular onboarding' })).toBeInTheDocument();
-    expect(onboardingApi.markRoleOnboardingCompleted).not.toHaveBeenCalled();
   });
 });

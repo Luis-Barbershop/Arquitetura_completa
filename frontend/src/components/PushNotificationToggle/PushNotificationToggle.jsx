@@ -14,9 +14,10 @@ const resolveState = async () => {
   if (!('Notification' in window)) return 'unavailable'
   if (Notification.permission === 'denied') return 'denied'
   if (Notification.permission === 'granted') {
-    // Só exibe como ativo se o token foi efetivamente registrado no backend
-    return isPushRegisteredLocally() ? 'granted' : 'default'
+    // Permissão concedida no navegador, mas pode estar desativado no CortaAi.
+    return isPushRegisteredLocally() ? 'granted' : 'granted-unregistered'
   }
+
   const canPrompt = await canPromptForPushNotifications()
   return canPrompt ? 'default' : 'unavailable'
 }
@@ -31,15 +32,15 @@ export default function PushNotificationToggle() {
 
   const handleEnable = useCallback(async () => {
     setBusy(true)
-    const ok = await requestPushNotificationsPermissionAndRegister()
-    setState(ok ? 'granted' : Notification.permission === 'denied' ? 'denied' : 'default')
+    await requestPushNotificationsPermissionAndRegister()
+    setState(await resolveState())
     setBusy(false)
   }, [])
 
   const handleDisable = useCallback(async () => {
     setBusy(true)
     await unregisterPushNotificationsIfPossible()
-    setState('default')
+    setState(Notification.permission === 'granted' ? 'granted-unregistered' : 'default')
     setBusy(false)
   }, [])
 
@@ -53,6 +54,7 @@ export default function PushNotificationToggle() {
           <p className={styles.title}>Notificações push</p>
           <p className={styles.description}>
             {state === 'granted' && 'Ativadas — você recebe alertas mesmo com o app fechado.'}
+            {state === 'granted-unregistered' && 'Permissão do navegador concedida, mas alertas desativados no CortaAi.'}
             {state === 'denied' && 'Bloqueadas pelo navegador. Reative nas configurações do seu browser.'}
             {state === 'default' && 'Receba alertas de agendamentos e pagamentos mesmo com o app fechado.'}
           </p>
@@ -70,14 +72,14 @@ export default function PushNotificationToggle() {
         </button>
       )}
 
-      {state === 'default' && (
+      {(state === 'default' || state === 'granted-unregistered') && (
         <button
           type="button"
           className={styles.enableButton}
           onClick={handleEnable}
           disabled={busy}
         >
-          {busy ? 'Aguarde...' : 'Ativar'}
+          {busy ? 'Aguarde...' : state === 'granted-unregistered' ? 'Ativar novamente' : 'Ativar'}
         </button>
       )}
 

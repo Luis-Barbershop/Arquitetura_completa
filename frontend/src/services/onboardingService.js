@@ -4,7 +4,6 @@ import api from './api';
 const STORAGE_KEY = 'cortaai:onboarding-progress';
 const ONBOARDING_VERSION = 1;
 const REMOTE_PROGRESS_ENDPOINT = '/auth/me/onboarding-progress';
-const ROLE_COMPLETION_PAGE_KEY = '__role-onboarding-completed__';
 export const ONBOARDING_REPLAY_EVENT = 'cortaai:onboarding-replay';
 
 const hydratedUsers = new Set();
@@ -37,6 +36,10 @@ const readState = () => {
 
 const writeState = (state) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+};
+
+export const resetOnboardingSession = () => {
+  hydratedUsers.clear();
 };
 
 const ensureUserRoleState = (state, userScope, roleVariant) => {
@@ -169,10 +172,7 @@ export const isPageOnboardingCompleted = ({ userScope, roleVariant, pageKey }) =
   if (!userScope || !roleVariant || !pageKey) return false;
 
   const state = readState();
-  return Boolean(
-    isRoleOnboardingCompleted({ userScope, roleVariant })
-      || getCompletedPages(state, userScope, roleVariant)[pageKey]
-  );
+  return Boolean(getCompletedPages(state, userScope, roleVariant)[pageKey]);
 };
 
 export const markPageOnboardingCompleted = ({ userScope, roleVariant, pageKey }) => {
@@ -189,23 +189,7 @@ export const markPageOnboardingCompleted = ({ userScope, roleVariant, pageKey })
 };
 
 export const markRoleOnboardingCompleted = ({ userScope, roleVariant, pageKey }) => {
-  if (!userScope || !roleVariant) return;
-
-  const state = readState();
-  ensureUserRoleState(state, userScope, roleVariant);
-
-  const completedAt = new Date().toISOString();
-  state.users[userScope][roleVariant].completedPages[ROLE_COMPLETION_PAGE_KEY] = {
-    completedAt,
-  };
-
-  if (pageKey) {
-    state.users[userScope][roleVariant].completedPages[pageKey] = {
-      completedAt,
-    };
-  }
-
-  writeState(state);
+  markPageOnboardingCompleted({ userScope, roleVariant, pageKey });
 };
 
 export const resetPageOnboarding = ({ userScope, roleVariant, pageKey }) => {
