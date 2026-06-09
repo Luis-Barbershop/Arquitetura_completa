@@ -10,6 +10,7 @@ import {
     rescheduleAppointment,
     getBarbershopSchedule,
 } from '../services/appointmentService';
+import { createAppointmentPayment } from '../services/paymentService';
 import { createBarbershopReview, hasReviewedBarbershop } from '../services/barbershopService';
 import BarberHeader from '../components/BarberPage/BarberHeader';
 import BarberNavbar from '../components/BarberPage/BarberNavbar';
@@ -116,6 +117,7 @@ const MeusAgendamentosPage = () => {
     const [reschedulingAppointment, setReschedulingAppointment] = useState(null);
     const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
     const [isSubmittingReschedule, setIsSubmittingReschedule] = useState(false);
+    const [payingAppointmentId, setPayingAppointmentId] = useState(null);
     const [reviewingAppointment, setReviewingAppointment] = useState(null);
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -342,6 +344,30 @@ const MeusAgendamentosPage = () => {
         setReviewRating(5);
         setReviewComment('');
         setIsReviewModalOpen(true);
+    };
+
+    const canPayAppointment = (status) => ['PAYMENT_PENDING', 'EXPIRED'].includes(status);
+
+    const handlePayAppointment = async (appointmentId) => {
+        if (!appointmentId) return;
+
+        try {
+            setPayingAppointmentId(appointmentId);
+            const transaction = await createAppointmentPayment(appointmentId, 'CREDIT_CARD');
+            const checkoutUrl = transaction?.checkoutUrl;
+
+            if (checkoutUrl) {
+                window.location.href = checkoutUrl;
+                return;
+            }
+
+            toast.warn('Pagamento iniciado, mas o link de checkout não foi retornado.');
+        } catch (error) {
+            const message = error?.response?.data?.message || 'Erro ao iniciar pagamento. Tente novamente.';
+            toast.error(message);
+        } finally {
+            setPayingAppointmentId(null);
+        }
     };
 
     const handleCloseReviewModal = () => {
@@ -1103,11 +1129,21 @@ const MeusAgendamentosPage = () => {
                                             <button
                                                 className={Styles.cancelButton}
                                                 onClick={() => handleOpenCancelModal(app.id)}
-                                                disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule}
+                                                disabled={isSubmittingCancel || isSubmittingConclude || isSubmittingReschedule || payingAppointmentId === app.id}
                                             >
                                                 Cancelar
                                             </button>
                                         </div>
+                                    )}
+
+                                    {isCustomer && canPayAppointment(app.status) && (
+                                        <button
+                                            className={Styles.paymentButton}
+                                            onClick={() => handlePayAppointment(app.id)}
+                                            disabled={payingAppointmentId === app.id}
+                                        >
+                                            {payingAppointmentId === app.id ? 'Abrindo checkout...' : 'Pagar agora'}
+                                        </button>
                                     )}
 
                                     {isCustomer && app.status === 'COMPLETED' && !app.hasReviewed && (

@@ -95,6 +95,10 @@ vi.mock('../../services/appointmentService', () => ({
   getBarbershopSchedule: vi.fn(),
 }));
 
+vi.mock('../../services/paymentService', () => ({
+  createAppointmentPayment: vi.fn(),
+}));
+
 vi.mock('../../services/barbershopService', () => ({
   createBarbershopReview: vi.fn(),
   hasReviewedBarbershop: vi.fn(),
@@ -108,6 +112,7 @@ import {
   getMyAppointments,
   rescheduleAppointment,
 } from '../../services/appointmentService';
+import { createAppointmentPayment } from '../../services/paymentService';
 import {
   createBarbershopReview,
   hasReviewedBarbershop,
@@ -142,6 +147,16 @@ const customerAppointments = [
     barbershopName: 'Barbearia Central',
     activityNames: ['Barba'],
   },
+  {
+    id: 'appt-3',
+    status: 'PAYMENT_PENDING',
+    startTime: '2030-01-06T10:00:00',
+    endTime: '2030-01-06T10:30:00',
+    barberName: 'Marcos',
+    barbershopId: 'shop-1',
+    barbershopName: 'Barbearia Central',
+    activityNames: ['Degrade'],
+  },
 ];
 
 describe('MeusAgendamentosPage', () => {
@@ -159,6 +174,7 @@ describe('MeusAgendamentosPage', () => {
     vi.mocked(concludeAppointment).mockReset();
     vi.mocked(rescheduleAppointment).mockReset();
     vi.mocked(getBarbershopSchedule).mockReset();
+    vi.mocked(createAppointmentPayment).mockReset();
     vi.mocked(createBarbershopReview).mockReset();
     vi.mocked(hasReviewedBarbershop).mockReset();
     vi.mocked(isCustomer).mockReset();
@@ -185,7 +201,7 @@ describe('MeusAgendamentosPage', () => {
     expect(screen.getByText('Corte')).toBeInTheDocument();
     expect(screen.getByText('Barba')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /reagendar/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /reagendar/i })[1]);
     expect(screen.getByRole('dialog', { name: /remarcar agendamento/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /confirmar remarcacao/i }));
     await waitFor(() => expect(rescheduleAppointment).toHaveBeenCalledWith(
@@ -194,7 +210,7 @@ describe('MeusAgendamentosPage', () => {
       'barber-2',
     ));
 
-    fireEvent.click(screen.getByRole('button', { name: /^cancelar$/i }));
+    fireEvent.click(screen.getAllByRole('button', { name: /^cancelar$/i })[1]);
     fireEvent.click(screen.getByRole('button', { name: /confirmar cancelamento/i }));
     await waitFor(() => expect(cancelAppointment).toHaveBeenCalledWith('appt-1'));
 
@@ -247,6 +263,23 @@ describe('MeusAgendamentosPage', () => {
 
     fireEvent.click(screen.getByText('Novo agendamento nav'));
     expect(navigate).toHaveBeenCalledWith('/barberHome/novo-agendamento');
+  });
+
+  it('starts payment checkout from customer pending appointment', async () => {
+    vi.mocked(getMyAppointments).mockResolvedValue(customerAppointments);
+    vi.mocked(hasReviewedBarbershop).mockResolvedValue(false);
+    vi.mocked(createAppointmentPayment).mockResolvedValue({
+      id: 'tx-1',
+    });
+
+    render(<MeusAgendamentosPage />);
+
+    expect(await screen.findByText(/com: marcos/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /pagar agora/i }));
+
+    await waitFor(() => expect(createAppointmentPayment).toHaveBeenCalledWith('appt-3', 'CREDIT_CARD'));
+    expect(toastWarn).toHaveBeenCalledWith('Pagamento iniciado, mas o link de checkout não foi retornado.');
   });
 
   it('redirects unauthenticated users and logs out from the customer header', async () => {

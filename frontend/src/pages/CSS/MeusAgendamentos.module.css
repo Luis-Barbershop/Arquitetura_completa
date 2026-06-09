@@ -476,6 +476,30 @@
     transform: translateY(-1px);
 }
 
+.paymentButton {
+    background-color: #172c1d;
+    border: 1px solid #2f8f4e;
+    color: #b4f5c8;
+    padding: 0.54rem 0.84rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    font-family: 'Space Grotesk', sans-serif;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.paymentButton:hover {
+    background-color: #1e3f29;
+    transform: translateY(-1px);
+}
+
+.paymentButton:disabled,
+.paymentButton:disabled:hover {
+    opacity: 0.48;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .empty {
     text-align: center;
     color: #8c8c8c;
@@ -664,7 +688,8 @@
     .rescheduleButton,
     .concludeButton,
     .cancelButton,
-    .reviewButton {
+    .reviewButton,
+    .paymentButton {
         width: 100%;
     }
 
