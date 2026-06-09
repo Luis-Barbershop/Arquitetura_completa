@@ -20,7 +20,7 @@ function BannerSite() {
               </div>
               <div>
                 <strong>4.9</strong>
-                <span>avaliação mézdia</span>
+                <span>avaliação média</span>
               </div>
               <div>
                 <strong>24h</strong>

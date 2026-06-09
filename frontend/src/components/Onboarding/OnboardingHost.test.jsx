@@ -9,7 +9,6 @@ const onboardingApi = {
   isPageOnboardingCompleted: vi.fn(),
   markPageOnboardingCompleted: vi.fn(),
   resolvePageKeyFromLocation: vi.fn(),
-  resetOnboardingSession: vi.fn(),
   syncOnboardingToRemote: vi.fn(),
 };
 
@@ -27,7 +26,6 @@ vi.mock('../../services/onboardingService', () => ({
   isPageOnboardingCompleted: (...args) => onboardingApi.isPageOnboardingCompleted(...args),
   markPageOnboardingCompleted: (...args) => onboardingApi.markPageOnboardingCompleted(...args),
   resolvePageKeyFromLocation: (...args) => onboardingApi.resolvePageKeyFromLocation(...args),
-  resetOnboardingSession: (...args) => onboardingApi.resetOnboardingSession(...args),
   syncOnboardingToRemote: (...args) => onboardingApi.syncOnboardingToRemote(...args),
 }));
 
@@ -78,10 +76,9 @@ describe('OnboardingHost', () => {
     expect(onboardingApi.syncOnboardingToRemote).toHaveBeenCalledWith({ userScope: 'internal:owner-1' });
   });
 
-  it('reinicia a sessao ao receber login-success e abre a tela atual novamente', async () => {
+  it('nao reabre pagina ja concluida ao receber login-success', async () => {
     const completedPages = new Set(['owner-manage-shop']);
     onboardingApi.isPageOnboardingCompleted.mockImplementation(({ pageKey }) => completedPages.has(pageKey));
-    onboardingApi.resetOnboardingSession.mockImplementation(() => completedPages.clear());
 
     render(
       <MemoryRouter initialEntries={['/barberHome/gerenciar-barbearia']}>
@@ -98,11 +95,12 @@ describe('OnboardingHost', () => {
     });
 
     await waitFor(() => {
-      expect(onboardingApi.resetOnboardingSession).toHaveBeenCalledTimes(1);
+      expect(onboardingApi.hydrateOnboardingFromRemote).toHaveBeenLastCalledWith({
+        userScope: 'internal:owner-1',
+        force: true,
+      });
     });
 
-    onboardingApi.isPageOnboardingCompleted.mockImplementation(({ pageKey }) => completedPages.has(pageKey));
-
-    expect(await screen.findByRole('button', { name: 'Pular onboarding' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Pular onboarding' })).not.toBeInTheDocument();
   });
 });

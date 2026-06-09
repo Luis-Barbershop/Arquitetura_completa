@@ -10,7 +10,6 @@ import {
   isPageOnboardingCompleted,
   markPageOnboardingCompleted,
   resolvePageKeyFromLocation,
-  resetOnboardingSession,
   syncOnboardingToRemote,
 } from '../../services/onboardingService';
 
@@ -40,7 +39,7 @@ function OnboardingHost() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [hydrationReady, setHydrationReady] = useState(false);
-  const [sessionVersion, setSessionVersion] = useState(0);
+  const [authVersion, setAuthVersion] = useState(0);
 
   const userScope = getCurrentUserScope();
   const roleVariant = getCurrentRoleVariant();
@@ -58,14 +57,13 @@ function OnboardingHost() {
   useEffect(() => {
     let isMounted = true;
 
-    const handleSessionReset = () => {
-      resetOnboardingSession();
-      setSessionVersion((previousVersion) => previousVersion + 1);
+    const handleAuthContextChange = () => {
+      setAuthVersion((previousVersion) => previousVersion + 1);
       setIsOpen(false);
     };
 
-    window.addEventListener('cortaai:login-success', handleSessionReset);
-    window.addEventListener('cortaai:logout', handleSessionReset);
+    window.addEventListener('cortaai:login-success', handleAuthContextChange);
+    window.addEventListener('cortaai:logout', handleAuthContextChange);
 
     const hydrate = async () => {
       if (!userScope) {
@@ -73,7 +71,7 @@ function OnboardingHost() {
         return;
       }
 
-      const hydrated = await hydrateOnboardingFromRemote({ userScope, force: sessionVersion > 0 });
+      const hydrated = await hydrateOnboardingFromRemote({ userScope, force: authVersion > 0 });
       if (isMounted) setHydrationReady(hydrated);
     };
 
@@ -82,10 +80,10 @@ function OnboardingHost() {
 
     return () => {
       isMounted = false;
-      window.removeEventListener('cortaai:login-success', handleSessionReset);
-      window.removeEventListener('cortaai:logout', handleSessionReset);
+      window.removeEventListener('cortaai:login-success', handleAuthContextChange);
+      window.removeEventListener('cortaai:logout', handleAuthContextChange);
     };
-  }, [sessionVersion, userScope]);
+  }, [authVersion, userScope]);
 
   useEffect(() => {
     if (!hydrationReady || !userScope || !roleVariant || !pageKey || steps.length === 0) {
