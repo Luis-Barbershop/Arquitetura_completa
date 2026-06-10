@@ -1,6 +1,6 @@
 # CortaAi — Documentação Técnica Completa
 
-> **Versão:** 1.3 | **Data:** 07/06/2026  
+> **Versão:** 1.4 | **Data:** 10/06/2026  
 > **Branch:** `feature/migracao-microservicos`  
 > **Ambiente produção:** ZimaOS `10.147.19.1` | **Domínio:** `https://cortaai.shop`
 
@@ -614,6 +614,13 @@ SCHEDULER AUTOMÁTICO (a cada 5 minutos):
             → status = COMPLETED
             → publica: appointment.concluded
 
+SCHEDULER DE LEMBRETE (a cada 5 minutos):
+    ReminderScheduler:
+    ├─ timezone padrão de execução: UTC (configurável por `app.timezone`)
+    ├─ consulta janela: `now` até `now + 1 hora`
+    ├─ publica: appointment.reminder para appointments no recorte
+    └─ não dispara lembrete antes da janela de 1 hora
+
 WALK-IN:
 POST /api/appointments/walk-in
     body: { barberId, barbershopId, activityIds[] }
@@ -753,6 +760,16 @@ appointment.reminder     → cliente recebe: "Lembrete: seu horário está próx
 payment.approved         → cliente recebe: "Pagamento confirmado"
 join-request.created     → owner recebe: "Barbeiro solicitou entrar na equipe"
                          → barbeiro recebe: "Você recebeu um convite"
+
+TIPOS PERSISTIDOS EM `notification_db.notifications.type`:
+    APPOINTMENT_CREATED
+    APPOINTMENT_CANCELLED
+    APPOINTMENT_CONCLUDED
+    APPOINTMENT_RESCHEDULED
+    APPOINTMENT_REMINDER
+    PAYMENT_APPROVED
+    BARBERSHOP_JOIN_REQUEST_CREATED
+    BARBER_REMOVED
 
 IDEMPOTÊNCIA:
     notification-service → Redis.get("notif:{eventId}")
@@ -1100,4 +1117,4 @@ Para essas perguntas, a melhor estratégia é responder com um caso real do sist
 
 ---
 
-*Documento atualizado em 07/06/2026 com base em análise estática do código-fonte no branch `feature/migracao-microservicos`. Cobertura JaCoCo global: **85%** (533 testes, 3.861/25.938 instruções missed). Atualização desta versão inclui lacunas técnicas priorizadas e roteiro de perguntas prováveis da banca.*
+*Documento atualizado em 10/06/2026 com base em análise estática do código-fonte no branch `feature/migracao-microservicos`. Cobertura JaCoCo global: **85%** (533 testes, 3.861/25.938 instruções missed). Atualização desta versão inclui correções do lembrete de 1 hora (timezone UTC e janela operacional), adequação de enum de notificação (`APPOINTMENT_REMINDER`), além das lacunas técnicas priorizadas e roteiro de perguntas prováveis da banca.*
