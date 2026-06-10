@@ -943,7 +943,7 @@ WHERE active = 1
 | `transactions.status` | `APPROVED`, `CANCELLED`, `IN_PROCESS`, `PENDING`, `REFUNDED`, `REJECTED` ⚠️ `IN_PROCESS` não está na enum Java |
 | `products.category` | `ACCESSORY`, `AFTERSHAVE`, `BEARD_OIL`, `BRUSH`, `COMB`, `CONDITIONER`, `OIL`, `OTHER`, `POMADE`, `RAZOR`, `SCISSORS`, `SHAMPOO`, `WAX` |
 | `stock_movements.type` | `IN`, `LOSS`, `OUT`, `OUT_CONSUMPTION`, `OUT_SALE`, `RETURN` |
-| `notifications.type` | `APPOINTMENT_CANCELLED`, `APPOINTMENT_CONCLUDED`, `APPOINTMENT_CREATED`, `APPOINTMENT_RESCHEDULED`, `INVITE_RECEIVED`, `JOIN_REQUEST_RECEIVED`, `PAYMENT_APPROVED` |
+| `notifications.type` | `APPOINTMENT_CANCELLED`, `APPOINTMENT_CONCLUDED`, `APPOINTMENT_CREATED`, `APPOINTMENT_RESCHEDULED`, `APPOINTMENT_REMINDER`, `INVITE_RECEIVED`, `JOIN_REQUEST_RECEIVED`, `PAYMENT_APPROVED` |
 | `notifications.channel` | `EMAIL`, `IN_APP` ⚠️ `PUSH` não existe no banco |
 | `device_tokens.platform` | `WEB` ⚠️ `ANDROID`, `IOS` não existem no banco |
 

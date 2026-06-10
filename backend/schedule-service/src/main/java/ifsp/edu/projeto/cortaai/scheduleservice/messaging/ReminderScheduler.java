@@ -37,7 +37,7 @@ public class ReminderScheduler {
     private final RedisTemplate<String, String> stringRedisTemplate;
     private final Set<String> localReminderFallback = ConcurrentHashMap.newKeySet();
 
-    @Value("${app.timezone:America/Sao_Paulo}")
+    @Value("${app.timezone:UTC}")
     private String appTimezone;
 
     @Scheduled(fixedDelay = 300_000) // 5 minutos
@@ -107,12 +107,12 @@ public class ReminderScheduler {
     private LocalDateTime getNowInAppTimezone() {
         try {
             String timezone = (appTimezone == null || appTimezone.isBlank())
-                    ? "America/Sao_Paulo"
+                    ? "UTC"
                     : appTimezone.trim();
             return LocalDateTime.now(ZoneId.of(timezone));
         } catch (DateTimeException ex) {
-            log.warn("Timezone inválido em app.timezone='{}'; usando America/Sao_Paulo.", appTimezone);
-            return LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+            log.warn("Timezone inválido em app.timezone='{}'; usando UTC.", appTimezone);
+            return LocalDateTime.now(ZoneId.of("UTC"));
         }
     }
 }

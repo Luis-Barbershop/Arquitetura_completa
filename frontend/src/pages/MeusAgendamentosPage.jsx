@@ -1099,8 +1099,17 @@ const MeusAgendamentosPage = () => {
                                         </span>
                                     </div>
 
-                                    {canInteractWithAppointment(app.status) && (
+                                    {(canInteractWithAppointment(app.status) || (isCustomer && canPayAppointment(app.status))) && (
                                         <div className={Styles.cardActions}>
+                                            {isCustomer && canPayAppointment(app.status) && (
+                                                <button
+                                                    className={Styles.paymentButton}
+                                                    onClick={() => handlePayAppointment(app.id)}
+                                                    disabled={payingAppointmentId === app.id}
+                                                >
+                                                    {payingAppointmentId === app.id ? 'Abrindo checkout...' : 'Pagar agora'}
+                                                </button>
+                                            )}
                                             {canRescheduleAppointment(app.status) && (
                                                 <button
                                                     className={Styles.rescheduleButton}
@@ -1133,16 +1142,6 @@ const MeusAgendamentosPage = () => {
                                                 Cancelar
                                             </button>
                                         </div>
-                                    )}
-
-                                    {isCustomer && canPayAppointment(app.status) && (
-                                        <button
-                                            className={Styles.paymentButton}
-                                            onClick={() => handlePayAppointment(app.id)}
-                                            disabled={payingAppointmentId === app.id}
-                                        >
-                                            {payingAppointmentId === app.id ? 'Abrindo checkout...' : 'Pagar agora'}
-                                        </button>
                                     )}
 
                                     {isCustomer && app.status === 'COMPLETED' && !app.hasReviewed && (

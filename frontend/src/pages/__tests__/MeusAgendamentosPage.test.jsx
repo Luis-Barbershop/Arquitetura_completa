@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const navigate = vi.fn();
 let locationSearch = '';
@@ -160,6 +160,11 @@ const customerAppointments = [
 ];
 
 describe('MeusAgendamentosPage', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   beforeEach(() => {
     navigate.mockReset();
     toastError.mockReset();
@@ -269,7 +274,10 @@ describe('MeusAgendamentosPage', () => {
     vi.mocked(getMyAppointments).mockResolvedValue(customerAppointments);
     vi.mocked(hasReviewedBarbershop).mockResolvedValue(false);
     vi.mocked(getPendingPaymentCheckoutUrl).mockResolvedValue('https://checkout.example/pending');
-    const locationAssignSpy = vi.spyOn(window.location, 'assign').mockImplementation(() => {});
+    const locationAssignSpy = vi.fn();
+    vi.stubGlobal('location', {
+      assign: locationAssignSpy,
+    });
 
     render(<MeusAgendamentosPage />);
 
