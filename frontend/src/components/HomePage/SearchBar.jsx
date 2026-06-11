@@ -4,7 +4,7 @@ function SearchBar({ searchTerm, onSearchChange }) {
   return (
     <div className={Styles.search_bar_container}>
       <div className={Styles.search_box}>
-        <div className={Styles.search_icon_box}><img src="/Icons/search_icon.png" alt="Icone de Lupa" /></div>
+        <div className={Styles.search_icon_box}><img src="/Icons/search_icon.png" alt="Ícone de lupa" /></div>
         <input
           type="text"
           name="searchBar"

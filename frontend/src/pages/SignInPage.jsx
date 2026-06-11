@@ -13,7 +13,7 @@ function SignInPage() {
             <div className={Styles.registerShell}>
                 <aside className={Styles.brandPanel}>
                     <div className={Styles.brandBadge}>
-                        <img src="/Icons/scissors_icon.png" alt="Icone CortaAI" />
+                        <img src="/Icons/scissors_icon.png" alt="Ícone CortaAI" />
                         <span>CortaAI</span>
                     </div>
 

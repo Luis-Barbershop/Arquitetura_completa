@@ -228,7 +228,7 @@ function BarberServicesPage() {
       setDuration('30');
       await loadServices();
       setSkillsRefreshKey((prev) => prev + 1);
-      showToast('Servico adicionado com sucesso.', 'success');
+      showToast('Serviço adicionado com sucesso.', 'success');
     } catch (error) {
       console.error('Erro ao criar serviço:', error);
       const status = error?.response?.status;
@@ -238,7 +238,7 @@ function BarberServicesPage() {
         null;
 
       if (status === 403) {
-        showToast('Apenas o dono da barbearia pode cadastrar servicos.', 'error');
+        showToast('Apenas o dono da barbearia pode cadastrar serviços.', 'error');
       } else if (status === 400 && backendMessage) {
         showToast(`Não foi possível adicionar o serviço: ${backendMessage}`, 'error');
       } else {
@@ -260,7 +260,7 @@ function BarberServicesPage() {
       await deleteService(servicePendingDelete.id);
       await loadServices();
       setSkillsRefreshKey((prev) => prev + 1);
-      showToast('Servico excluido com sucesso.', 'success');
+      showToast('Serviço excluído com sucesso.', 'success');
     } catch (error) {
       console.error('Erro ao excluir serviço:', error);
       showToast('Não foi possível excluir o serviço.', 'error');
@@ -431,7 +431,7 @@ function BarberServicesPage() {
       {servicePendingDelete && (
         <div className={styles.confirmOverlay}>
           <div className={styles.confirmModal}>
-            <h3>Excluir servico</h3>
+            <h3>Excluir serviço</h3>
             <p>
               Deseja realmente excluir <strong>{servicePendingDelete.activityName}</strong>?
             </p>

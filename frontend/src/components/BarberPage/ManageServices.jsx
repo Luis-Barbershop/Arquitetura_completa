@@ -33,7 +33,7 @@ const ManageServices = () => {
         if (!name || !price || !duration) return;
 
         if (!isOwner) {
-            alert('Apenas o dono da barbearia pode cadastrar servicos.');
+            alert('Apenas o dono da barbearia pode cadastrar serviços.');
             return;
         }
 
@@ -64,9 +64,9 @@ const ManageServices = () => {
         } catch (error) {
             const status = error?.response?.status;
             if (status === 403) {
-                alert('Seu usuario nao tem permissao ativa de dono no token atual. Faca logout e login novamente.');
+                alert('Seu usuário não tem permissão ativa de dono no token atual. Faça logout e login novamente.');
             } else {
-                alert("Erro ao criar servico.");
+                alert("Erro ao criar serviço.");
             }
         }
     };
@@ -115,7 +115,7 @@ const ManageServices = () => {
                 {!isOwner && (
                     <p className={styles.emptyText}>
                         Apenas o dono pode cadastrar serviços. Se você acabou de criar a barbearia,
-                        faca logout e login para atualizar o token.
+                        faça logout e login para atualizar o token.
                     </p>
                 )}
                 <div className={styles.formGroupName}>

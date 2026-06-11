@@ -4,10 +4,10 @@ function Tutorial() {
   return (
     <div id="como-funciona" className={Style.Container}>
       <div className={Style.header}>
-        <p className={Style.title}>O FUTURO DA BAREARIA</p>
+        <p className={Style.title}>O FUTURO DA BARBEARIA</p>
         <h2>Simplicidade em Cada <span className={Style.highlight}>Movimento.</span></h2>
 
-        <p className={Style.description}>Desenvolvemos uma experiência fluida tanto para quem senta na cadeira quanto para quem segura a tesoura. Escolha seu Caminho abaixo.</p>
+        <p className={Style.description}>Desenvolvemos uma experiência fluida tanto para quem senta na cadeira quanto para quem segura a tesoura. Escolha seu caminho abaixo.</p>
       </div>
 
       
@@ -27,7 +27,7 @@ function Tutorial() {
 
           <div className={Style.ContentOption1Container}>
             <div className={Style.ContentImage}>
-              <img src="/Icons/Compass.png" alt="Bússula" />
+              <img src="/Icons/Compass.png" alt="bússola" />
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 01</p>
@@ -49,7 +49,7 @@ function Tutorial() {
 
           <div className={Style.ContentOption1Container}>
             <div className={Style.ContentImage}>
-              <img src="/Icons/Compass.png" alt="Bússula" />
+              <img src="/Icons/Compass.png" alt="bússola" />
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 03</p>
@@ -61,12 +61,12 @@ function Tutorial() {
 
           <div className={Style.ContentOption1Container}>
             <div className={Style.ContentImageFinal}>
-              <img src="/Icons/Check.png" alt="Bússula" />
+              <img src="/Icons/Check.png" alt="concluído" />
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 04</p>
               <h3>Pronto!</h3>
-              <p className={Style.ContentDescription}>Receba um lembrete automático via whatsapp antes do seu agendamento e vá renovar o seu estilo.</p>
+              <p className={Style.ContentDescription}>Receba um lembrete automático via WhatsApp antes do seu agendamento e vá renovar o seu estilo.</p>
             </div>
           </div>
 
@@ -86,7 +86,7 @@ function Tutorial() {
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 01</p>
-              <h3>Cadastre a Sua Barbearia e equipe.</h3>
+              <h3>Cadastre sua barbearia e equipe.</h3>
               <p className={Style.ContentDescription}>Crie o seu perfil digital em minutos e destaque a identidade do seu negócio.</p>
             </div>
           </div>
@@ -97,7 +97,7 @@ function Tutorial() {
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 02</p>
-              <h3>Configure seus serviços e Horários.</h3>
+              <h3>Configure seus serviços e horários.</h3>
               <p className={Style.ContentDescription}>Navegue pelo portfólio, preços e especialidades de cada mestre artesão.</p>
             </div>
           </div>
@@ -120,7 +120,7 @@ function Tutorial() {
             </div>
             <div className={Style.ContentText}>
               <p className={Style.ContentStep}>PASSO 04</p>
-              <h3>Acompanhe o seu Crescimento.</h3>
+              <h3>Acompanhe o seu crescimento.</h3>
               <p className={Style.ContentDescription}>Dashboards inteligentes que mostram sua evolução e faturamento em tempo real.</p>
             </div>
           </div> 

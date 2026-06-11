@@ -144,7 +144,7 @@ function Invoicing({ barber }) {
             </div>
 
             {seriesError ? (
-              <p className={Styles.seriesHint}>Nao foi possivel carregar a serie.</p>
+              <p className={Styles.seriesHint}>Não foi possível carregar a série.</p>
             ) : series.length ? (
               <div className={Styles.seriesBars}>
                 {series.map((point) => {
@@ -178,7 +178,7 @@ function Invoicing({ barber }) {
         </div>
 
         <div className={Styles.containerFaturamentoRight}>
-            <img src="/Icons/moneyIcon.png" alt="Icone de Dinheiro" />
+            <img src="/Icons/moneyIcon.png" alt="Ícone de dinheiro" />
         </div>
     </div>
   )

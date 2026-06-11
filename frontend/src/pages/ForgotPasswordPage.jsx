@@ -60,7 +60,7 @@ function ForgotPasswordPage() {
             <div className={Styles.loginShell}>
                 <aside className={Styles.brandPanel}>
                     <div className={Styles.brandBadge}>
-                        <img src="/Icons/scissors_icon.png" alt="Icone CortaAI" />
+                        <img src="/Icons/scissors_icon.png" alt="Ícone CortaAI" />
                         <span>CortaAI</span>
                     </div>
 
@@ -76,7 +76,7 @@ function ForgotPasswordPage() {
                     <ul className={Styles.featuresList}>
                         <li>Verifique sua caixa de entrada e spam</li>
                         <li>Se expirar, solicite o reenvio do link</li>
-                        <li>Apos redefinir, faca login normalmente</li>
+                        <li>Após redefinir, faça login normalmente</li>
                     </ul>
                 </aside>
 
@@ -85,8 +85,8 @@ function ForgotPasswordPage() {
                         <div className={FPStyles.successBox}>
                             <span className={FPStyles.successIcon}>✓</span>
                             <h2>E-mail enviado!</h2>
-                            <p>Verifique sua caixa de entrada em <strong>{email}</strong> e siga as instrucoes para redefinir sua senha.</p>
-                            <p className={FPStyles.spamHint}>Nao recebeu? Verifique a pasta de spam ou lixo eletronico.</p>
+                            <p>Verifique sua caixa de entrada em <strong>{email}</strong> e siga as instruções para redefinir sua senha.</p>
+                            <p className={FPStyles.spamHint}>Não recebeu? Verifique a pasta de spam ou lixo eletrônico.</p>
                             <button
                                 type="button"
                                 onClick={handleResend}
@@ -105,7 +105,7 @@ function ForgotPasswordPage() {
                     ) : (
                         <>
                             <h2>Esqueci minha senha</h2>
-                            <p>Informe o e-mail da sua conta para receber o link de recuperacao.</p>
+                            <p>Informe o e-mail da sua conta para receber o link de recuperação.</p>
 
                             <form onSubmit={handleSubmit} className={FPStyles.form}>
                                 <label className={FPStyles.fieldLabel}>
@@ -127,7 +127,7 @@ function ForgotPasswordPage() {
                                     disabled={loading}
                                     className={FPStyles.submitBtn}
                                 >
-                                    {loading ? "Enviando..." : "Enviar link de recuperacao"}
+                                    {loading ? "Enviando..." : "Enviar link de recuperação"}
                                 </button>
                             </form>
 

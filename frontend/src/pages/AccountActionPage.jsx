@@ -25,9 +25,9 @@ function AccountActionPage() {
             </div>
 
             <div className={`${Styles.card} ${Styles.errorCard}`}>
-                <h2 className={Styles.errorTitle}>Link indisponivel</h2>
+                <h2 className={Styles.errorTitle}>Link indisponível</h2>
                 <p className={Styles.errorText}>
-                    Este link de gerenciamento de conta e invalido ou expirou.
+                    Este link de gerenciamento de conta é inválido ou expirou.
                 </p>
                 <Link to="/login" className={Styles.ctaButton}>
                     Voltar para o login

@@ -47,7 +47,7 @@ function BarberNavbar({ activeTab, onTabChange, onLogout }) {
     };
 
     // â”€â”€ Bottom bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // Owner com barbearia: Home | Agenda | ServiÃ§os | Meu Time | GestÃ£o
+    // Owner com barbearia: Home | Agenda | Serviços | Meu Time | Gestão
     // Colaborador com barbearia: Home | Agenda | Habilidades | Mais
     // Sem barbearia: Home | Habilidades | Perfil
     const mainItems = hasShop
@@ -55,7 +55,7 @@ function BarberNavbar({ activeTab, onTabChange, onLogout }) {
             ? [
                 { id: 'home',    label: 'Home',     Icon: House },
                 { id: 'agenda',  label: 'Agenda',   Icon: CalendarBlank },
-                { id: 'servicos',label: 'ServiÃ§os',  Icon: Scissors },
+                { id: 'servicos',label: 'Serviços',  Icon: Scissors },
                 { id: 'time',    label: 'Meu Time',  Icon: Users },
             ]
             : [
@@ -70,9 +70,9 @@ function BarberNavbar({ activeTab, onTabChange, onLogout }) {
         ];
 
     // â”€â”€ Drawer items â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // Owner â†’ drawer chamado "GestÃ£o"
+    // Owner -> drawer chamado "Gestão"
     // Colaborador / sem barbearia â†’ drawer chamado "Mais"
-    const drawerLabel = isOwner && hasShop ? 'GestÃ£o' : 'Mais';
+    const drawerLabel = isOwner && hasShop ? 'Gestão' : 'Mais';
     const DrawerTriggerIcon = isOwner && hasShop ? ChartLineUp : Package;
 
     const drawerItems = isOwner && hasShop
@@ -125,7 +125,7 @@ function BarberNavbar({ activeTab, onTabChange, onLogout }) {
                         </div>
                     </li>
 
-                    {/* BotÃ£o GestÃ£o (owner) ou Mais (colaborador) */}
+                    {/* Botão Gestão (owner) ou Mais (colaborador) */}
                     <li>
                         <button
                             type="button"

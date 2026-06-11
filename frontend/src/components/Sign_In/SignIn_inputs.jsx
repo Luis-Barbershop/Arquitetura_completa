@@ -283,7 +283,7 @@ function SignIn_inputs() {
                                 type="password"
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
-                                placeholder="Mínimo 8 caracteres"
+                                placeholder="Mínimo de 8 caracteres"
                                 required
                             />
                             {password && (
@@ -298,7 +298,7 @@ function SignIn_inputs() {
                                         ))}
                                     </div>
                                     <p style={{ fontSize: 11, color: passwordStrength.color, marginTop: 4 }}>
-                                        {passwordStrength.label} — Min. 8 caracteres, 1 maiúscula, 1 número, 1 especial
+                                        {passwordStrength.label} — mínimo de 8 caracteres, 1 maiúscula, 1 número e 1 caractere especial
                                     </p>
                                 </div>
                             )}

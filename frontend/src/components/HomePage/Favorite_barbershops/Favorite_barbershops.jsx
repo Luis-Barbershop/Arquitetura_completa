@@ -49,7 +49,7 @@ function Favorite_barbershops({ favoriteIds = [] }) {
                 </div>
             ) : hasError ? (
                 <p className={`${Styles.info_text} ca-state ca-state--error`}>
-                    Nao foi possivel carregar suas favoritas agora. Tente novamente em instantes.
+                    Não foi possível carregar suas favoritas agora. Tente novamente em instantes.
                 </p>
             ) : favoriteBarbershops.length > 0 ? (
                 <div className={Styles.stories_list}>

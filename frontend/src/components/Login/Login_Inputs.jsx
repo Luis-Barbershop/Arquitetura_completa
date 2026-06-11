@@ -84,7 +84,7 @@ function Login_Inputs() {
             // ── E-mail não verificado → tela de espera ───────────────────────────
             if (err.code === 'VERIFICATION_REQUIRED' || err.verificationRequired || err.response?.data?.verificationRequired) {
                 navigate('/verify-email', {
-                    // Passa a senha para que o reenvio não precise pedí-la de novo
+                    // Passa a senha para que o reenvio não precise pedi-la de novo
                     state: { mode: 'waiting', email: err.verificationEmail || email, password, role }
                 });
                 return;
@@ -188,9 +188,9 @@ function Login_Inputs() {
         <div className={Styles.Login_Inputs_container}>
             <form onSubmit={handleLogin}>
                 <label className={Styles.label_email}>
-                    <p className={Styles.label_input}>Email</p>
+                    <p className={Styles.label_input}>E-mail</p>
                     <input type="email" name="email_area" id={Styles.email_input}
-                        placeholder="Digite seu Email" value={email}
+                        placeholder="Digite seu e-mail" value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required />
                 </label>
@@ -198,10 +198,10 @@ function Login_Inputs() {
                 <label className={Styles.label_password}>
                     <p className={Styles.label_input}>Senha</p>
                     <input type="password" name="password_area" id={Styles.password_input}
-                        placeholder="Digite a sua Senha" value={password}
+                        placeholder="Digite sua senha" value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required />
-                    <Link to="/forgot-password" className={Styles.forgot_password_text}>Esqueceu a Senha?</Link>
+                    <Link to="/forgot-password" className={Styles.forgot_password_text}>Esqueceu a senha?</Link>
                 </label>
 
                 {error && <p className={Styles.errorMessage}>{error}</p>}

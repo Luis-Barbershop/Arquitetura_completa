@@ -28,7 +28,7 @@ function RedirectionPage() {
       <div className={Styles.redirection_card}>
         <div className={Styles.title_redirection}>
           <div className={Styles.brandBadge}>
-            <img src="/Icons/scissors_icon.png" alt="Icone de Tesoura" />
+            <img src="/Icons/scissors_icon.png" alt="Ícone de tesoura" />
             <span>CortaAI</span>
           </div>
 
@@ -39,15 +39,15 @@ function RedirectionPage() {
 
         <div className={Styles.redirection_buttons_container}>
           <button className={Styles.redirection_buttons} onClick={() => handleProfileSelection('customer')}>
-            <img src="/Icons/user_icon.png" alt="Icone de Usuario" />
+            <img src="/Icons/user_icon.png" alt="Ícone de usuário" />
             <div>
               <p className={Styles.title_button}>{customerLabel}</p>
-              <p className={Styles.text_button}>Quero agendar um servico com rapidez.</p>
+              <p className={Styles.text_button}>Quero agendar um serviço com rapidez.</p>
             </div>
           </button>
 
           <button className={Styles.redirection_buttons} onClick={() => handleProfileSelection('barber')}>
-            <img src="/Icons/barber_icon.png" alt="Icone de Barbearia" />
+            <img src="/Icons/barber_icon.png" alt="Ícone de barbearia" />
             <div>
               <p className={Styles.title_button}>{barberLabel}</p>
               <p className={Styles.text_button}>Quero organizar agenda e atendimentos.</p>
@@ -56,7 +56,7 @@ function RedirectionPage() {
         </div>
 
         <button className={Styles.redirection_button_exit} onClick={handleNavigationHome}>
-          Voltar para a pagina inicial
+          Voltar para a página inicial
         </button>
       </div>
     </div>

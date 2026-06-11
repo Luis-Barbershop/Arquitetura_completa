@@ -5,7 +5,7 @@ const faqItems = [
   {
     question: 'Como faco para agendar um horario?',
     answer:
-      'Basta entrar na sua conta, escolher a barbearia, selecionar o servico e confirmar o melhor horario disponivel.',
+      'Basta entrar na sua conta, escolher a barbearia, selecionar o serviço e confirmar o melhor horário disponível.',
   },
   {
     question: 'Posso escolher um barbeiro especifico?',

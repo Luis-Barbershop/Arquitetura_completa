@@ -133,7 +133,7 @@ function BarberHomePage() {
             >
               <p className={styles.heroKicker}>HOME DO PROFISSIONAL</p>
               <h1>Olá, {firstName}. Vamos fazer o dia render.</h1>
-              <p>Confira os numeros da barbearia, priorize os agendamentos e mantenha os servicos mais procurados em destaque.</p>
+              <p>Confira os números da barbearia, priorize os agendamentos e mantenha os serviços mais procurados em destaque.</p>
             </section>
 
             <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay2}`}>

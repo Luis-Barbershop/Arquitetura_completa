@@ -77,7 +77,7 @@ function ChangePasswordPage() {
                 })
                 .catch(() => {
                     setResetCodeValid(false);
-                    setError("Link de redefinicao invalido ou expirado. Solicite um novo link.");
+                    setError("Link de redefinição inválido ou expirado. Solicite um novo link.");
                     setInitializing(false);
                 });
             return undefined;
@@ -130,12 +130,12 @@ function ChangePasswordPage() {
             return;
         }
         if (isPasswordResetFlow && !resetCodeValid) {
-            setError("Link de redefinicao invalido ou expirado. Solicite um novo link.");
+            setError("Link de redefinição inválido ou expirado. Solicite um novo link.");
             return;
         }
 
         if (!isPasswordResetFlow && !idToken) {
-            setError("Sessao expirada. Faca login novamente.");
+            setError("Sessão expirada. Faça login novamente.");
             navigate("/");
             return;
         }
@@ -183,7 +183,7 @@ function ChangePasswordPage() {
             <div className={Styles.loginShell}>
                 <aside className={Styles.brandPanel}>
                     <div className={Styles.brandBadge}>
-                        <img src="/Icons/scissors_icon.png" alt="Icone CortaAI" />
+                        <img src="/Icons/scissors_icon.png" alt="Ícone CortaAI" />
                         <span>CortaAI</span>
                     </div>
 
@@ -210,7 +210,7 @@ function ChangePasswordPage() {
                             <h2>Senha alterada!</h2>
                             <p>
                                 {isPasswordResetFlow
-                                    ? "Sua senha foi atualizada com sucesso. Faca login com a nova senha."
+                                    ? "Sua senha foi atualizada com sucesso. Faça login com a nova senha."
                                     : "Sua senha foi atualizada com sucesso. Você continua conectado."}
                             </p>
                             {isPasswordResetFlow && (
@@ -230,13 +230,13 @@ function ChangePasswordPage() {
                             {canChangePassword === null && !(isPasswordResetFlow && error) && (
                                 <div className={FPStyles.successBox}>
                                     <h2>{isPasswordResetFlow ? "Validando link..." : "Validando login..."}</h2>
-                                    <p>{isPasswordResetFlow ? "Conferindo o codigo de redefinicao." : "Identificando seu provedor de autenticação."}</p>
+                                    <p>{isPasswordResetFlow ? "Conferindo o código de redefinição." : "Identificando seu provedor de autenticação."}</p>
                                 </div>
                             )}
 
                             {isPasswordResetFlow && error && canChangePassword !== true && (
                                 <div className={FPStyles.successBox}>
-                                    <h2>Link indisponivel</h2>
+                                    <h2>Link indisponível</h2>
                                     <p className={FPStyles.errorMsg}>{error}</p>
                                     <Link to="/forgot-password" className={FPStyles.backBtn}>Solicitar novo link</Link>
                                 </div>

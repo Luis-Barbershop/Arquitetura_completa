@@ -56,7 +56,7 @@ function BarberTeamPage() {
             }
         } catch (error) {
             console.error('Erro ao carregar time:', error);
-            toast.error('Nao foi possivel carregar a equipe.');
+            toast.error('Não foi possível carregar a equipe.');
         }
     };
 
@@ -80,7 +80,7 @@ function BarberTeamPage() {
         e.preventDefault();
         const normalizedCpf = onlyDigits(inviteCpf);
         if (normalizedCpf.length !== 11) {
-            setInviteError('Informe um CPF valido com 11 numeros.');
+            setInviteError('Informe um CPF válido com 11 números.');
             return;
         }
         try {
@@ -109,10 +109,10 @@ function BarberTeamPage() {
             });
             setCommissionForm({ activityId: '', percentage: '' });
             await loadTeam();
-            toast.success('Comissao salva.');
+            toast.success('Comissão salva.');
         } catch (error) {
-            console.error('Erro ao salvar comissao:', error);
-            toast.error(error?.response?.data?.message || 'Nao foi possivel salvar a comissao.');
+            console.error('Erro ao salvar comissão:', error);
+            toast.error(error?.response?.data?.message || 'Não foi possível salvar a comissão.');
         }
     };
 
@@ -122,10 +122,10 @@ function BarberTeamPage() {
         try {
             await api.delete(`/barbershops/my-shop/team/${selectedMember.barberId}/commissions/${ruleId}`);
             await loadTeam();
-            toast.success('Comissao removida.');
+            toast.success('Comissão removida.');
         } catch (error) {
-            console.error('Erro ao remover comissao:', error);
-            toast.error('Nao foi possivel remover a comissao.');
+            console.error('Erro ao remover comissão:', error);
+            toast.error('Não foi possível remover a comissão.');
         }
     };
 
@@ -143,7 +143,7 @@ function BarberTeamPage() {
             });
         } catch (error) {
             console.error('Erro ao consultar conflitos:', error);
-            toast.error(error?.response?.data?.message || 'Nao foi possivel consultar conflitos.');
+            toast.error(error?.response?.data?.message || 'Não foi possível consultar conflitos.');
         } finally {
             setLoadingConflicts(false);
         }
@@ -164,7 +164,7 @@ function BarberTeamPage() {
             toast.success('Colaborador removido.');
         } catch (error) {
             console.error('Erro ao remover colaborador:', error);
-            toast.error(error?.response?.data?.message || 'Nao foi possivel remover o colaborador.');
+            toast.error(error?.response?.data?.message || 'Não foi possível remover o colaborador.');
         }
     };
 
@@ -219,12 +219,12 @@ function BarberTeamPage() {
                                         )}
                                         <div>
                                             <h3>{member.name}</h3>
-                                            <p>{member.email || 'Email indisponivel'}</p>
+                                            <p>{member.email || 'E-mail indisponível'}</p>
                                             <span>{member.isOwner ? 'Owner' : 'Colaborador'}</span>
                                         </div>
                                     </div>
                                     <div className={styles.teamMemberActions}>
-                                        <button type="button" onClick={() => setSelectedMember(member)}>Comissoes</button>
+                                        <button type="button" onClick={() => setSelectedMember(member)}>Comissões</button>
                                         {!member.isOwner && (
                                             <button type="button" className={styles.teamDangerButton} onClick={() => handleOpenRemoval(member)} disabled={loadingConflicts}>
                                                 {loadingConflicts ? 'Consultando...' : 'Remover'}
@@ -249,7 +249,7 @@ function BarberTeamPage() {
                                         value={commissionForm.activityId}
                                         onChange={(event) => setCommissionForm((prev) => ({ ...prev, activityId: event.target.value }))}
                                     >
-                                        <option value="">Servico</option>
+                                        <option value="">Serviço</option>
                                         {activities.map((activity) => (
                                             <option key={activity.id} value={activity.id}>{activity.activityName}</option>
                                         ))}

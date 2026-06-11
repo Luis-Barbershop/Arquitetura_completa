@@ -196,7 +196,7 @@ function BarberStockPage() {
       toast.success('Categoria criada.');
     } catch (error) {
       console.error('Erro ao criar categoria:', error);
-      toast.error(error?.response?.data?.message || 'Nao foi possivel criar a categoria.');
+      toast.error(error?.response?.data?.message || 'Não foi possível criar a categoria.');
     }
   };
 
@@ -216,7 +216,7 @@ function BarberStockPage() {
       toast.success('Categoria atualizada.');
     } catch (error) {
       console.error('Erro ao atualizar categoria:', error);
-      toast.error(error?.response?.data?.message || 'Nao foi possivel atualizar a categoria.');
+      toast.error(error?.response?.data?.message || 'Não foi possível atualizar a categoria.');
     }
   };
 
@@ -241,10 +241,10 @@ function BarberStockPage() {
       await api.post('/products/stock-movements', payload);
       await loadStock();
       setMovementProduct(null);
-      toast.success('Movimentacao registrada.');
+      toast.success('Movimentação registrada.');
     } catch (error) {
       console.error('Erro ao movimentar estoque:', error);
-      toast.error(error?.response?.data?.message || 'Nao foi possivel registrar a movimentacao.');
+      toast.error(error?.response?.data?.message || 'Não foi possível registrar a movimentação.');
     }
   };
 
@@ -256,7 +256,7 @@ function BarberStockPage() {
       setItems((prev) => prev.filter((item) => item.id !== itemId));
     } catch (error) {
       console.error('Erro ao excluir produto:', error);
-      toast.error('Nao foi possivel excluir o produto.');
+      toast.error('Não foi possível excluir o produto.');
     }
   };
 

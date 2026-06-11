@@ -122,7 +122,7 @@ function CreateBarbershopPage() {
                 <aside className={styles.brandPanel}>
                     <div>
                         <div className={styles.brandBadge}>
-                            <img src="/Icons/scissors_icon.png" alt="Icone CortaAI" />
+                            <img src="/Icons/scissors_icon.png" alt="Ícone CortaAI" />
                             <span>CortaAI</span>
                         </div>
 

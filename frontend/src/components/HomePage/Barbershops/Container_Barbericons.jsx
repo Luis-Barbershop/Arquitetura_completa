@@ -63,7 +63,7 @@ function Container_Barbericons({ name, address, image, id, isFavorite = false, o
         </div>
         {services.length > 0 && (
           <p className={Styles.services_summary}>
-            {services.length} servicos disponiveis
+            {services.length} serviços disponíveis
           </p>
         )}
         <p>{address}</p>

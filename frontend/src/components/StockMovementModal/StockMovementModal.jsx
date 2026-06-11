@@ -45,7 +45,7 @@ function StockMovementModal({ product, onClose, onConfirm }) {
       <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
         <div className={styles.header}>
           <div>
-            <p className={styles.kicker}>MOVIMENTACAO</p>
+            <p className={styles.kicker}>MOVIMENTAÇÃO</p>
             <h3>{product.name}</h3>
           </div>
           <button type="button" className={styles.closeButton} onClick={onClose} aria-label="Fechar">
@@ -101,7 +101,7 @@ function StockMovementModal({ product, onClose, onConfirm }) {
             className={styles.textarea}
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            placeholder={`Opcional para ${selectedFlag?.label || 'movimentacao'}`}
+            placeholder={`Opcional para ${selectedFlag?.label || 'movimentação'}`}
           />
 
           <div className={styles.actions}>

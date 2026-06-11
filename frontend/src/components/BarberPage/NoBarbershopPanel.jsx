@@ -11,7 +11,7 @@ function NoBarbershopPanel({ onCreateShop, onGoToProfile }) {
             <div className={styles.noBarbershopActions}>
                 <article className={styles.actionCard}>
                     <h3>Criar minha barbearia</h3>
-                    <p>Ideal para quem vai gerenciar equipe, servicos e agenda completa.</p>
+                    <p>Ideal para quem vai gerenciar equipe, serviços e agenda completa.</p>
                     <button onClick={onCreateShop} className={styles.createShopButton}>
                         Criar agora
                     </button>

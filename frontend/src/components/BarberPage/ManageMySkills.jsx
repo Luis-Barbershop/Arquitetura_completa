@@ -28,7 +28,7 @@ const ManageMySkills = ({ shopId, refreshKey = 0 }) => {
                 setMyServicesIds((myActivities || []).map((id) => normalizeServiceId(id)).filter(Boolean));
             } catch (error) {
                 console.error("Erro ao carregar habilidades:", error);
-                setErrorMessage('Nao foi possivel carregar os servicos do perfil.');
+                setErrorMessage('Não foi possível carregar os serviços do perfil.');
             } finally {
                 setLoading(false);
             }
@@ -103,7 +103,7 @@ const ManageMySkills = ({ shopId, refreshKey = 0 }) => {
             )}
 
             {!loading && shopServices.length === 0 && (
-                <p className={styles.loadingText}>Nao ha servicos cadastrados na barbearia ainda.</p>
+                <p className={styles.loadingText}>Não há serviços cadastrados na barbearia ainda.</p>
             )}
 
             <button onClick={handleSave} className={styles.saveButton} disabled={saving || loading}>
