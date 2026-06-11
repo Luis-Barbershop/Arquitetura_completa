@@ -73,6 +73,10 @@
     margin-top: var(--ca-space-4);
 }
 
+.servicesHomeSection {
+    margin-bottom: 0;
+}
+
 .teamSectionNarrow {
     max-width: 720px;
 }
@@ -356,6 +360,10 @@
 
     .dashboardSection:last-of-type {
         margin-bottom: 0.4rem;
+    }
+
+    .servicesHomeSection {
+        margin-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
     }
 
     .teamManagementGrid {

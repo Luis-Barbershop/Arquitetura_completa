@@ -168,7 +168,7 @@ function BarberHomePage() {
             <NextScheduling onViewAll={() => navigate('/meus-agendamentos')} />
             </section>
 
-            <section className={`${styles.dashboardSection} ${styles.animateItem} ${styles.delay6}`}>
+            <section className={`${styles.dashboardSection} ${styles.servicesHomeSection} ${styles.animateItem} ${styles.delay6}`}>
             <ServicesHomeBarber onNavigateToServices={() => navigate('/barberHome/servicos')} />
             </section>
 
