@@ -233,10 +233,13 @@
 /* ---- Table (shared report view) ---- */
 .tableWrapper {
     overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
 }
 
 .table {
     width: 100%;
+    min-width: 520px;
     border-collapse: collapse;
     font-size: 0.78rem;
 }
@@ -273,6 +276,13 @@
 .chartContainer {
     width: 100%;
     padding: 4px 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.chartContainer :global(.recharts-responsive-container) {
+    min-width: 520px;
 }
 
 .chartSubtitle {
@@ -291,6 +301,7 @@
 
 .pieContainer {
     width: 100%;
+    min-width: 0;
 }
 
 /* BarberSkillMatrix: tab selector per barber */
@@ -328,4 +339,33 @@
     padding: 3px 12px;
     cursor: pointer;
     font-family: 'Space Grotesk', sans-serif;
+}
+
+@media (max-width: 768px) {
+    .chartContainer {
+        padding-bottom: 8px;
+    }
+
+    .chartContainer :global(.recharts-responsive-container) {
+        min-width: 500px;
+    }
+
+    .pieContainer :global(.recharts-responsive-container) {
+        min-width: 280px;
+    }
+
+    .table {
+        min-width: 560px;
+        font-size: 0.76rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .chartContainer :global(.recharts-responsive-container) {
+        min-width: 460px;
+    }
+
+    .table {
+        min-width: 500px;
+    }
 }

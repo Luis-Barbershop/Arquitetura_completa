@@ -212,6 +212,11 @@
 }
 
 @media (max-width: 900px) {
+
+    .dashboardCtaSection{
+        margin-bottom: 90px;
+    }
+
     .teamManagementGrid {
         display: grid;
         grid-template-columns: 1fr;
@@ -269,6 +274,12 @@
         width: 100%;
         grid-template-columns: 1fr;
         align-items: stretch;
+    }
+
+   
+
+     .dashboardCtaSection{
+        margin-bottom: 90px;
     }
 
     .teamPanel {
@@ -331,9 +342,17 @@
         padding-bottom: calc(154px + env(safe-area-inset-bottom, 0px));
     }
 
+     .dashboardCtaSection{
+        margin-bottom: 90px;
+    }
+
     .pageContainer {
         padding: 12px;
         padding-top: calc(12px + env(safe-area-inset-top, 0px));
+    }
+
+     .dashboardCtaSection{
+        margin-bottom: 90px;
     }
 
     .heroSection {
@@ -1559,6 +1578,10 @@
         font-size: 0.77rem;
     }
 
+     .dashboardCtaSection{
+        margin-bottom: 90px;
+    }
+
     .headerRight {
         gap: 6px;
         flex-wrap: wrap;
@@ -1578,6 +1601,10 @@
         padding: 0.9rem;
         border-radius: 14px;
         gap: 0;
+    }
+
+     .dashboardCtaSection{
+        margin-bottom: 90px;
     }
 
     .headerNav {

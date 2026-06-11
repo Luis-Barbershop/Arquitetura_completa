@@ -4,6 +4,8 @@
     padding: 20px;
     margin-bottom: 24px;
     border: 1px solid var(--color-border, #2a2a2a);
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .panelHeader {
@@ -87,11 +89,13 @@
     display: flex;
     gap: 16px;
     align-items: flex-start;
+    min-width: 0;
 }
 
 .pane {
     flex: 1;
     min-width: 0;
+    max-width: 100%;
     transition: flex 0.3s ease;
 }
 
@@ -109,7 +113,30 @@
 }
 
 @media (max-width: 768px) {
+    .panelWrapper {
+        padding: 16px 14px;
+        margin-bottom: 18px;
+        border-radius: 10px;
+    }
+
+    .panelHeader {
+        align-items: flex-start;
+        margin-bottom: 14px;
+    }
+
+    .panelTitle {
+        max-width: calc(100% - 92px);
+        font-size: 0.96rem;
+        line-height: 1.25;
+    }
+
     .panelBody {
         flex-direction: column;
+        width: 100%;
+        gap: 18px;
+    }
+
+    .pane {
+        width: 100%;
     }
 }
