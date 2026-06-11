@@ -866,12 +866,13 @@
 
 .bannerHero {
     position: relative;
-    width: 100%;
+    width: 95%;
     height: 220px;
     border-radius: 16px;
     overflow: hidden;
     margin-bottom: 24px;
     background: #1a1a1a;
+    margin: auto;
 }
 
 .bannerHeroImg {
