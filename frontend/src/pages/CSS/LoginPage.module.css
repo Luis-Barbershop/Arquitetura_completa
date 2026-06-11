@@ -230,7 +230,7 @@
   }
 
   .brandPanel {
-    order: 2;
+    order: 1;
     padding: 1.35rem 1rem 1.1rem;
   }
 
@@ -284,7 +284,7 @@
   }
 
   .formPanel {
-    order: 1;
+    order: 2;
     padding: 1.4rem 1rem 1.6rem;
   }
 }
