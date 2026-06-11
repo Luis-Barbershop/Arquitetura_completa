@@ -41,12 +41,12 @@ const ManageServices = () => {
         const parsedDuration = Number(duration);
 
         if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-            alert('Informe um preco valido maior que zero.');
+            alert('Informe um preço valido maior que zero.');
             return;
         }
 
         if (!Number.isFinite(parsedDuration) || parsedDuration <= 0) {
-            alert('Informe uma duracao valida em minutos.');
+            alert('Informe uma duração valida em minutos.');
             return;
         }
 
