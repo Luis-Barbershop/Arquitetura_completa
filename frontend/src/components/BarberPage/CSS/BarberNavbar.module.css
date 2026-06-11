@@ -18,6 +18,7 @@
 @media (max-width: 760px) {
     .navbarContainer {
         display: block;
+        z-index: 9999;
     }
 }
 

@@ -238,14 +238,18 @@
     background: linear-gradient(to top, #0a0a0a 70%, transparent);
     display: flex;
     justify-content: center;
-    z-index: 999;
+    z-index: 9999;
 }
 
 @media (max-width: 760px) {
     .ctaBar {
         bottom: calc(76px + env(safe-area-inset-bottom, 0px));
         padding: 0.75rem 1rem;
-        z-index: 90;
+        z-index: 9999;
+    }
+
+    .banner {
+        margin-top: 8px;
     }
 }
 
