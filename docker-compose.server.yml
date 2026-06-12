@@ -12,7 +12,7 @@ services:
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - /DATA/cortaai/mysql:/var/lib/mysql
-    ports:
+    ports: !reset
       - "3307:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -33,7 +33,7 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: cortaai-rabbitmq
-    ports:
+    ports: !reset
       - "5673:5672"
       - "15673:15672"
     environment:
@@ -54,7 +54,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: cortaai-redis
-    ports:
+    ports: !reset
       - "6380:6379"
     command: redis-server --maxmemory 96mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD}
     healthcheck:
@@ -76,6 +76,9 @@ services:
       dockerfile: discovery-service/Dockerfile
     image: cortaai/discovery-service:latest
     container_name: discovery-service
+    command: !reset null
+    working_dir: !reset null
+    volumes: !reset []
     ports: ["8761:8761"]
     environment:
       - EUREKA_HOST=discovery
@@ -96,9 +99,11 @@ services:
       dockerfile: api-gateway/Dockerfile
     image: cortaai/api-gateway:latest
     container_name: api-gateway
-    ports: ["8082:8080"]
-    volumes:
+    command: !reset null
+    working_dir: !reset null
+    volumes: !reset
       - ./firebase-service-account.json:/app/firebase-service-account.json:ro
+    ports: !reset ["8082:8080"]
     environment:
       - EUREKA_HOST=discovery
       - REDIS_HOST=redis
@@ -130,7 +135,9 @@ services:
     build: { context: ./backend, dockerfile: user-service/Dockerfile }
     image: cortaai/user-service:latest
     container_name: user-service
-    volumes:
+    command: !reset null
+    working_dir: !reset null
+    volumes: !reset
       - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/user_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
@@ -160,6 +167,9 @@ services:
     build: { context: ./backend, dockerfile: barbershop-service/Dockerfile }
     image: cortaai/barbershop-service:latest
     container_name: barbershop-service
+    command: !reset null
+    working_dir: !reset null
+    volumes: !reset []
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/barbershop_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
@@ -190,6 +200,9 @@ services:
     build: { context: ./backend, dockerfile: schedule-service/Dockerfile }
     image: cortaai/schedule-service:latest
     container_name: schedule-service
+    command: !reset null
+    working_dir: !reset null
+    volumes: !reset []
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/schedule_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
@@ -228,6 +241,9 @@ services:
     build: { context: ./backend, dockerfile: payment-service/Dockerfile }
     image: cortaai/payment-service:latest
     container_name: payment-service
+    command: !reset null
+    working_dir: !reset null
+    volumes: !reset []
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/payment_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
@@ -263,7 +279,9 @@ services:
     build: { context: ./backend, dockerfile: notification-service/Dockerfile }
     image: cortaai/notification-service:latest
     container_name: notification-service
-    volumes:
+    command: !reset null
+    working_dir: !reset null
+    volumes: !reset
       - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/notification_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
@@ -301,6 +319,9 @@ services:
     build: { context: ./backend, dockerfile: product-service/Dockerfile }
     image: cortaai/product-service:latest
     container_name: product-service
+    command: !reset null
+    working_dir: !reset null
+    volumes: !reset []
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/product_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
       - SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
@@ -380,7 +401,10 @@ services:
         - VITE_FIREBASE_APP_ID=${VITE_FIREBASE_APP_ID}
     image: cortaai/frontend:latest
     container_name: cortaai-web
-    ports: ["5173:80"]
+    command: !reset null
+    working_dir: !reset null
+    volumes: !reset []
+    ports: !reset ["5173:80"]
     depends_on:
       - gateway
     deploy:
