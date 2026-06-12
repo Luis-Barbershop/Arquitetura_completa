@@ -13,12 +13,13 @@
     font-family: 'Space Grotesk', sans-serif;
     backdrop-filter: blur(8px);
     display: none;
+    z-index: 10000;
 }
 
 @media (max-width: 760px) {
     .navbarContainer {
         display: block;
-        z-index: 9999;
+        z-index: 10000;
     }
 }
 
