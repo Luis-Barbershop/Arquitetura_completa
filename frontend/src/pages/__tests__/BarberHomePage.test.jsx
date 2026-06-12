@@ -138,7 +138,7 @@ describe('BarberHomePage', () => {
 
     render(<BarberHomePage />);
 
-    expect(await screen.findByText(/ola, dono/i)).toBeInTheDocument();
+    expect(await screen.findByText(/olá, dono/i)).toBeInTheDocument();
     expect(screen.getByText('Invoicing widget')).toBeInTheDocument();
     expect(localStorage.getItem('isOwner')).toBe('true');
     expect(localStorage.getItem('barbershopId')).toBe('shop-1');

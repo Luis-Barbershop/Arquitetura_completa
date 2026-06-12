@@ -10,7 +10,7 @@ function Invoicing({ barber }) {
   const [series, setSeries] = useState([]);
   const [seriesError, setSeriesError] = useState(false);
 
-  const barbershopId = barber?.barbershopId;
+  const barbershopId = barber?.barbershopId || localStorage.getItem('barbershopId');
   const isOwner = useMemo(() => {
     const ownerFlag = barber?.isOwner ?? barber?.owner;
     const ownerFromProfile = ownerFlag === true || ownerFlag === 'true';
@@ -18,12 +18,21 @@ function Invoicing({ barber }) {
     const ownerFromRole = Array.isArray(role)
       ? role.some((item) => String(item).toUpperCase().includes('OWNER'))
       : String(role || '').toUpperCase().includes('OWNER');
+    const hasProfileOwnerSignal = barber && (
+      Object.prototype.hasOwnProperty.call(barber, 'isOwner') ||
+      Object.prototype.hasOwnProperty.call(barber, 'owner') ||
+      Object.prototype.hasOwnProperty.call(barber, 'role')
+    );
 
     const ownerFromStorage =
       localStorage.getItem('isOwner') === 'true' ||
       String(localStorage.getItem('userRole') || '').toUpperCase().includes('OWNER');
 
-    return ownerFromProfile || ownerFromRole || ownerFromStorage;
+    if (hasProfileOwnerSignal) {
+      return ownerFromProfile || ownerFromRole;
+    }
+
+    return ownerFromStorage;
   }, [barber]);
 
   useEffect(() => {
