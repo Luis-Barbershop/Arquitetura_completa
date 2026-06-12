@@ -11,6 +11,19 @@ import {
 } from "../../services/authService"
 import { maskCpf, maskPhone, onlyDigits } from "../../utils/inputMasks"
 
+const LEGAL_DOCUMENTS = {
+    terms: {
+        label: "Termos de Uso",
+        title: "Termos e Condições de Uso",
+        src: "/legal/termos-e-condicoes-de-uso.pdf",
+    },
+    privacy: {
+        label: "Política de Privacidade",
+        title: "Política de Privacidade",
+        src: "/legal/politicas-de-privacidade.pdf",
+    },
+};
+
 // ─── Avalia força da senha ────────────────────────────────────────────────────
 function evaluatePasswordStrength(pwd) {
     if (!pwd) return { score: 0, label: '', color: '' };
@@ -55,6 +68,8 @@ function SignIn_inputs() {
     const [cpf, setCpf]             = useState("");
     const [birthDate, setBirthDate] = useState("");
     const [consentChecked, setConsentChecked] = useState(false);
+    const [legalModalOpen, setLegalModalOpen] = useState(false);
+    const [activeLegalDocument, setActiveLegalDocument] = useState("terms");
 
     // Quando o navigate() é chamado dentro da própria rota /signin (ex: USER_NOT_FOUND
     // ou PROFILE_INCOMPLETE do Google), o componente NÃO re-monta — só o location muda.
@@ -70,6 +85,16 @@ function SignIn_inputs() {
     const [loadingGoogle, setLoadingGoogle] = useState(false);
 
     const passwordStrength = useMemo(() => evaluatePasswordStrength(password), [password]);
+    const currentLegalDocument = LEGAL_DOCUMENTS[activeLegalDocument];
+
+    const openLegalModal = (documentKey) => {
+        setActiveLegalDocument(documentKey);
+        setLegalModalOpen(true);
+    };
+
+    const closeLegalModal = () => {
+        setLegalModalOpen(false);
+    };
 
     // Retorna a rota certa após login Google bem-sucedido
     function getRedirectPath() {
@@ -415,9 +440,27 @@ function SignIn_inputs() {
                             />
                             <span>
                                 Li e aceito os{" "}
-                                <a href="https://cortaai.shop/termos" target="_blank" rel="noreferrer">
-                                    Termos de Uso e Política de Privacidade
-                                </a>{" "}
+                                <button
+                                    type="button"
+                                    className={Styles.legalLinkButton}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        openLegalModal("terms");
+                                    }}
+                                >
+                                    Termos de Uso
+                                </button>{" "}
+                                e a{" "}
+                                <button
+                                    type="button"
+                                    className={Styles.legalLinkButton}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        openLegalModal("privacy");
+                                    }}
+                                >
+                                    Política de Privacidade
+                                </button>{" "}
                                 do CortaAI.
                             </span>
                         </label>
@@ -440,6 +483,52 @@ function SignIn_inputs() {
                     </>
                 )}
             </form>
+
+            {legalModalOpen && (
+                <div
+                    className={Styles.legalModalOverlay}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="legal-modal-title"
+                    onClick={closeLegalModal}
+                >
+                    <div className={Styles.legalModal} onClick={e => e.stopPropagation()}>
+                        <div className={Styles.legalModalHeader}>
+                            <div>
+                                <p className={Styles.legalModalEyebrow}>Documentos legais</p>
+                                <h4 id="legal-modal-title">{currentLegalDocument.title}</h4>
+                            </div>
+                            <button
+                                type="button"
+                                className={Styles.legalModalClose}
+                                onClick={closeLegalModal}
+                                aria-label="Fechar modal"
+                            >
+                                X
+                            </button>
+                        </div>
+
+                        <div className={Styles.legalTabs} aria-label="Escolha o documento">
+                            {Object.entries(LEGAL_DOCUMENTS).map(([key, document]) => (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    className={activeLegalDocument === key ? Styles.activeLegalTab : Styles.legalTab}
+                                    onClick={() => setActiveLegalDocument(key)}
+                                >
+                                    {document.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <iframe
+                            className={Styles.legalFrame}
+                            src={currentLegalDocument.src}
+                            title={currentLegalDocument.title}
+                        />
+                    </div>
+                </div>
+            )}
 
         </div>
     );

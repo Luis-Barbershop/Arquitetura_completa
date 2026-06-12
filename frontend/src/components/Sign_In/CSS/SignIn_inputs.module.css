@@ -126,8 +126,9 @@
     gap: 0.75rem;
 }
 
-.consentLabel {
+.SignIn_inputs_container .consentLabel {
     display: flex;
+    flex-direction: row;
     align-items: flex-start;
     gap: 0.5rem;
     font-size: 0.8rem;
@@ -137,16 +138,133 @@
     cursor: pointer;
 }
 
-.consentLabel input[type="checkbox"] {
+.SignIn_inputs_container .consentLabel input[type="checkbox"] {
     margin-top: 2px;
     flex-shrink: 0;
     accent-color: #e09b3d;
     cursor: pointer;
 }
 
-.consentLabel a {
+.legalLinkButton {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: #e09b3d;
     text-decoration: underline;
+    font: inherit;
+    cursor: pointer;
+}
+
+.legalLinkButton:hover,
+.legalLinkButton:focus-visible {
+    color: #f0bf66;
+}
+
+.legalModalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.2rem;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(5px);
+}
+
+.legalModal {
+    width: min(920px, 100%);
+    height: min(780px, 88vh);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #37322a;
+    border-radius: 14px;
+    background: #121212;
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55);
+}
+
+.legalModalHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem 0.85rem;
+    border-bottom: 1px solid #29241d;
+}
+
+.legalModalEyebrow {
+    margin: 0 0 0.25rem;
+    color: #a68f61;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.legalModalHeader h4 {
+    margin: 0;
+    color: #f3e8cf;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.08rem;
+}
+
+.legalModalClose {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border: 1px solid #3a3a3a;
+    border-radius: 10px;
+    background: #181818;
+    color: #d6d0c2;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.legalModalClose:hover {
+    border-color: #c19006;
+    color: #f3e8cf;
+}
+
+.legalTabs {
+    display: flex;
+    gap: 0.55rem;
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid #242424;
+    background: #151515;
+}
+
+.legalTab,
+.activeLegalTab {
+    min-height: 38px;
+    border-radius: 10px;
+    padding: 0 0.85rem;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.86rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.legalTab {
+    border: 1px solid #303030;
+    background: #181818;
+    color: #bdbdbd;
+}
+
+.activeLegalTab {
+    border: 1px solid #80651d;
+    background: #221b0e;
+    color: #f3e8cf;
+}
+
+.legalFrame {
+    width: 100%;
+    flex: 1;
+    border: 0;
+    background: #222;
 }
 
 .secondaryButton {
@@ -208,6 +326,24 @@
 @media (max-width: 460px) {
     .actionsRow {
         grid-template-columns: 1fr;
+    }
+
+    .legalModalOverlay {
+        padding: 0.6rem;
+    }
+
+    .legalModal {
+        height: 92vh;
+        border-radius: 12px;
+    }
+
+    .legalModalHeader {
+        padding: 0.85rem;
+    }
+
+    .legalTabs {
+        flex-direction: column;
+        padding: 0.75rem 0.85rem;
     }
 }
 /* -- Botao Google -------------------------------------------- */
