@@ -101,7 +101,7 @@ services:
     container_name: api-gateway
     command: !reset null
     working_dir: !reset null
-    volumes: !reset
+    volumes: !override
       - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     ports: !override
       - "8082:8080"
@@ -138,7 +138,7 @@ services:
     container_name: user-service
     command: !reset null
     working_dir: !reset null
-    volumes: !reset
+    volumes: !override
       - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/user_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
@@ -282,7 +282,7 @@ services:
     container_name: notification-service
     command: !reset null
     working_dir: !reset null
-    volumes: !reset
+    volumes: !override
       - ./firebase-service-account.json:/app/firebase-service-account.json:ro
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/notification_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
