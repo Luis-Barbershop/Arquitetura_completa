@@ -91,7 +91,7 @@ export default function PushNotificationToggle() {
           onClick={handleEnable}
           disabled={busy}
         >
-          {busy ? 'Aguarde...' : state === 'granted-unregistered' ? 'Ativar novamente' : 'Ativar'}
+          {busy ? 'Aguarde...' : state === 'granted-unregistered' ? 'Reativar' : 'Ativar'}
         </button>
       )}
 

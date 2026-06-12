@@ -63,7 +63,7 @@ describe('PushNotificationToggle', () => {
       expect(pushApi.unregisterPushNotificationsIfPossible).toHaveBeenCalledTimes(1)
     })
 
-    expect(await screen.findByRole('button', { name: 'Ativar novamente' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Reativar' })).toBeInTheDocument()
     expect(screen.getByText(/Permissão do navegador concedida, mas alertas desativados no CortaAi/i)).toBeInTheDocument()
   })
 

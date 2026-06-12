@@ -744,7 +744,7 @@ function BarberProfilePage() {
             </div>
 
             <div className={styles.mainContent}>
-                <section className={styles.card}>
+                <section className={`${styles.card} ${styles.notificationsCard}`}>
                     <div className={styles.sectionHeader}>
                         <h2 className={styles.sectionTitle}>Notificações</h2>
                         <p className={styles.sectionSubtitle}>Gerencie como você recebe alertas do CortaAi.</p>

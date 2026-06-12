@@ -1020,6 +1020,16 @@
     max-width: 640px;
 }
 
+.mainContent {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.notificationsCard {
+    width: min(640px, 100%);
+}
+
 .profileCard {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid #2f2f2f;
@@ -1081,6 +1091,12 @@
 
 .profileSectionTitleOwner {
     color: #d4af37;
+}
+
+@media (max-width: 760px) {
+    .mainContent {
+        padding-bottom: calc(9rem + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 .profileMutedText {
