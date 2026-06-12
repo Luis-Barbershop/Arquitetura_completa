@@ -1012,6 +1012,90 @@
     gap: 0.1rem;
 }
 
+@media (max-width: 760px) {
+    .controlsWrapper {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.55rem;
+        overflow-x: visible;
+        margin-bottom: 1rem;
+    }
+
+    .controlsWrapper > .viewToggle {
+        width: 100%;
+        justify-content: space-between;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .controlsWrapper > .viewToggle .viewToggleBtn,
+    .controlsWrapper > .viewToggle .viewToggleBtnActive {
+        flex: 1;
+        justify-content: center;
+        min-height: 38px;
+        padding: 0.48rem 0.62rem;
+        white-space: nowrap;
+    }
+
+    .dateNavRow {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) 34px;
+        width: 100%;
+        margin-left: 0;
+        border-radius: 18px;
+        padding: 0.45rem;
+        gap: 0.35rem;
+    }
+
+    .dateNavBtn {
+        width: 34px;
+        height: 34px;
+    }
+
+    .dateNavLabel {
+        min-width: 0;
+        font-size: 0.82rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .dateNavActions {
+        grid-column: 1 / -1;
+        width: 100%;
+        margin-left: 0;
+        padding-top: 0.4rem;
+        border-top: 1px solid #2a2a2a;
+        justify-content: space-between;
+    }
+
+    .dateNavDivider {
+        display: none;
+    }
+
+    .dateNavRefreshBtn {
+        width: 36px;
+        height: 36px;
+        border: 1px solid #333;
+        background: #151515;
+    }
+
+    .dateNavActions .viewToggle {
+        flex: 1;
+        min-width: 0;
+        justify-content: space-between;
+    }
+
+    .dateNavActions .viewToggle .viewToggleBtn,
+    .dateNavActions .viewToggle .viewToggleBtnActive {
+        flex: 1;
+        justify-content: center;
+        min-height: 36px;
+        padding: 0.42rem 0.5rem;
+        font-size: 0.78rem;
+        white-space: nowrap;
+    }
+}
+
 /* ────────────────────────────────────────────────
    Duration badge (dentro do card)
 ──────────────────────────────────────────────── */
