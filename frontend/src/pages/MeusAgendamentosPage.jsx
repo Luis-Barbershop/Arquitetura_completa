@@ -285,13 +285,24 @@ const MeusAgendamentosPage = () => {
 
     const handleConfirmConclude = async () => {
         if (!concludingAppointmentId) return;
+        const completedAppointmentId = concludingAppointmentId;
 
         try {
             setIsSubmittingConclude(true);
-            await concludeAppointment(concludingAppointmentId);
+            await concludeAppointment(completedAppointmentId);
+            setAppointments((current) => current.map((appointment) => (
+                appointment.id === completedAppointmentId
+                    ? { ...appointment, status: 'COMPLETED', hasReviewed: Boolean(appointment.hasReviewed) }
+                    : appointment
+            )));
             setIsConcludeModalOpen(false);
             setConcludingAppointmentId(null);
             await carregarAgendamentos();
+            setAppointments((current) => current.map((appointment) => (
+                appointment.id === completedAppointmentId
+                    ? { ...appointment, status: 'COMPLETED', hasReviewed: Boolean(appointment.hasReviewed) }
+                    : appointment
+            )));
             toast.success('Agendamento concluido com sucesso.');
         } catch (error) {
             const message = error?.response?.data?.message || 'Erro ao concluir. Tente novamente.';
@@ -1223,7 +1234,7 @@ const MeusAgendamentosPage = () => {
                         <div className={Styles.modalCard} onClick={(e) => e.stopPropagation()}>
                             <p className={Styles.modalKicker}>AVALIAR BARBEARIA</p>
                             <h3 className={Styles.modalTitle}>Como foi seu atendimento?</h3>
-                            <p className={Styles.modalSubtitle}>Sua opiniao ajuda outros clientes a escolher melhor.</p>
+                            <p className={Styles.modalSubtitle}>Escolha uma nota de 1 a 5 estrelas.</p>
 
                             <div className={Styles.reviewFormGroup}>
                                 <label className={Styles.reviewLabel}>Sua avaliação</label>
