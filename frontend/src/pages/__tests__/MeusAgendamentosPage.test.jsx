@@ -220,14 +220,10 @@ describe('MeusAgendamentosPage', () => {
     await waitFor(() => expect(cancelAppointment).toHaveBeenCalledWith('appt-1'));
 
     fireEvent.click(screen.getByRole('button', { name: /avaliar/i }));
-    fireEvent.change(screen.getByLabelText(/comentario/i), {
-      target: { value: 'Atendimento excelente' },
-    });
     fireEvent.click(screen.getByRole('button', { name: /enviar avaliação/i }));
 
     await waitFor(() => expect(createBarbershopReview).toHaveBeenCalledWith('shop-1', {
       rating: 5,
-      comment: 'Atendimento excelente',
     }));
     expect(toastSuccess).toHaveBeenCalledWith('Avaliacao enviada com sucesso!');
   });

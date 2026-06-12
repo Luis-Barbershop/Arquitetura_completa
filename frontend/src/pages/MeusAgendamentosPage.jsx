@@ -122,7 +122,6 @@ const MeusAgendamentosPage = () => {
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [isSubmittingReview, setIsSubmittingReview] = useState(false);
     const [reviewRating, setReviewRating] = useState(5);
-    const [reviewComment, setReviewComment] = useState('');
     const [offlineTransactionalNotice, setOfflineTransactionalNotice] = useState('');
     const [viewMode, setViewMode] = useState('list'); // 'list' | 'timeline'
     const [dateFilter, setDateFilter] = useState(new Date().toLocaleDateString('en-CA'));
@@ -342,7 +341,6 @@ const MeusAgendamentosPage = () => {
     const handleOpenReviewModal = (appointment) => {
         setReviewingAppointment(appointment);
         setReviewRating(5);
-        setReviewComment('');
         setIsReviewModalOpen(true);
     };
 
@@ -385,7 +383,6 @@ const MeusAgendamentosPage = () => {
             setIsSubmittingReview(true);
             await createBarbershopReview(reviewingAppointment.barbershopId, {
                 rating: Number(reviewRating),
-                comment: reviewComment.trim() || null,
             });
 
             setIsReviewModalOpen(false);
@@ -1255,18 +1252,6 @@ const MeusAgendamentosPage = () => {
                                     {reviewRating === 4 && '😊 Bom'}
                                     {reviewRating === 5 && '🤩 Excelente!'}
                                 </p>
-                            </div>
-
-                            <div className={Styles.reviewFormGroup}>
-                                <label className={Styles.reviewLabel} htmlFor="review-comment">Comentario (opcional)</label>
-                                <textarea
-                                    id="review-comment"
-                                    className={Styles.reviewTextarea}
-                                    value={reviewComment}
-                                    onChange={(e) => setReviewComment(e.target.value)}
-                                    maxLength={500}
-                                    placeholder="Conte como foi sua experiência"
-                                />
                             </div>
 
                             <div className={Styles.modalActions}>
