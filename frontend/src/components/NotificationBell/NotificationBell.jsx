@@ -223,8 +223,17 @@ function NotificationBell({ userType = 'barber', visibility = 'all' }) {
         return null;
     }
 
+    const keepDropdownInteractionInside = (event) => {
+        event.stopPropagation();
+    };
+
     return (
-        <div className={styles.bellWrapper} ref={dropdownRef}>
+        <div
+            className={styles.bellWrapper}
+            ref={dropdownRef}
+            onMouseDown={keepDropdownInteractionInside}
+            onTouchStart={keepDropdownInteractionInside}
+        >
             <button
                 className={styles.bellButton}
                 onClick={handleToggle}

@@ -25,6 +25,7 @@ vi.mock('react-toastify', () => ({
 
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import { useNotificationStream } from '../../hooks/useNotificationStream'
 
 const notifications = [
   {
@@ -45,9 +46,9 @@ const notifications = [
   },
 ]
 
-const renderBell = () => render(
+const renderBell = (props = {}) => render(
   <MemoryRouter>
-    <NotificationBell userType="customer" />
+    <NotificationBell userType="customer" {...props} />
   </MemoryRouter>,
 )
 
@@ -69,6 +70,7 @@ describe('NotificationBell', () => {
       return Promise.resolve({ data: {} })
     })
     vi.mocked(api.delete).mockResolvedValue({})
+    vi.mocked(useNotificationStream).mockImplementation(() => {})
   })
 
   it('limpa todas as notificações pelo botão fixo do dropdown', async () => {
@@ -102,5 +104,24 @@ describe('NotificationBell', () => {
       expect(toast.error).toHaveBeenCalledWith('Não foi possível limpar as notificações agora.')
     })
     expect(screen.getByText('Agendamento confirmado')).toBeInTheDocument()
+  })
+
+  it('mostra notificações do barbeiro na versão mobile', async () => {
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })
+
+    renderBell({ userType: 'barber', visibility: 'mobile' })
+
+    expect(await screen.findByText('1')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Notificações' }))
+
+    await waitFor(() => {
+      expect(api.get).toHaveBeenCalledWith('/notifications/my-notifications')
+    })
+    expect(await screen.findByText('Agendamento confirmado')).toBeInTheDocument()
+    expect(screen.getByText('Pagamento aprovado')).toBeInTheDocument()
   })
 })
