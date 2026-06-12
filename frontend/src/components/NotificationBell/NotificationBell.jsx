@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { Bell } from '@phosphor-icons/react';
 import { toast } from 'react-toastify';
@@ -29,6 +30,7 @@ function NotificationBell({ userType = 'barber', visibility = 'all' }) {
     const [isMobileViewport, setIsMobileViewport] = useState(() => (
         typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches
     ));
+    const wrapperRef = useRef(null);
     const dropdownRef = useRef(null);
     const buttonRef = useRef(null);
     const openRef = useRef(false);
@@ -110,7 +112,9 @@ function NotificationBell({ userType = 'barber', visibility = 'all' }) {
     // Fecha dropdown ao clicar fora
     useEffect(() => {
         const handler = (e) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+            const clickedWrapper = wrapperRef.current?.contains(e.target);
+            const clickedDropdown = dropdownRef.current?.contains(e.target);
+            if (!clickedWrapper && !clickedDropdown) {
                 setOpen(false);
             }
         };
@@ -227,10 +231,62 @@ function NotificationBell({ userType = 'barber', visibility = 'all' }) {
         event.stopPropagation();
     };
 
+    const dropdown = open ? (
+        <div
+            className={styles.dropdown}
+            style={{ top: dropdownPos.top, right: dropdownPos.right, maxHeight: dropdownPos.maxHeight }}
+            ref={dropdownRef}
+            onMouseDown={keepDropdownInteractionInside}
+            onTouchStart={keepDropdownInteractionInside}
+        >
+            <div className={styles.dropdownHeader}>
+                <span>Notificações</span>
+                {unreadCount > 0 && (
+                    <span className={styles.unreadLabel}>{unreadCount} não lida(s)</span>
+                )}
+            </div>
+
+            {loading ? (
+                <p className={styles.empty}>Carregando...</p>
+            ) : notifications.length === 0 ? (
+                <p className={styles.empty}>Nenhuma notificação.</p>
+            ) : (
+                <ul className={styles.list}>
+                    {notifications.map((n) => (
+                        <li
+                            key={n.id}
+                            className={`${styles.item} ${n.read ? styles.read : styles.unread}`}
+                            onClick={() => handleNotificationClick(n)}
+                            title={getRedirectPath(n) ? 'Clique para ver detalhes' : 'Clique para marcar como lida'}
+                        >
+                            <p className={styles.itemTitle}>{n.title}</p>
+                            <p className={styles.itemMessage}>{n.message}</p>
+                            <span className={styles.itemDate}>{formatDate(n.createdAt)}</span>
+                            {!n.read && <span className={styles.dot} aria-label="não lida" />}
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+            {notifications.length > 0 && (
+                <div className={styles.footer}>
+                    <button
+                        type="button"
+                        className={styles.clearAllButton}
+                        onClick={handleClearAll}
+                        disabled={clearing}
+                    >
+                        {clearing ? 'Limpando...' : 'Limpar todas'}
+                    </button>
+                </div>
+            )}
+        </div>
+    ) : null;
+
     return (
         <div
             className={styles.bellWrapper}
-            ref={dropdownRef}
+            ref={wrapperRef}
             onMouseDown={keepDropdownInteractionInside}
             onTouchStart={keepDropdownInteractionInside}
         >
@@ -247,54 +303,7 @@ function NotificationBell({ userType = 'barber', visibility = 'all' }) {
                 )}
             </button>
 
-            {open && (
-                <div
-                    className={styles.dropdown}
-                    style={{ top: dropdownPos.top, right: dropdownPos.right, maxHeight: dropdownPos.maxHeight }}
-                >
-                    <div className={styles.dropdownHeader}>
-                        <span>Notificações</span>
-                        {unreadCount > 0 && (
-                            <span className={styles.unreadLabel}>{unreadCount} não lida(s)</span>
-                        )}
-                    </div>
-
-                    {loading ? (
-                        <p className={styles.empty}>Carregando...</p>
-                    ) : notifications.length === 0 ? (
-                        <p className={styles.empty}>Nenhuma notificação.</p>
-                    ) : (
-                        <ul className={styles.list}>
-                            {notifications.map((n) => (
-                                <li
-                                    key={n.id}
-                                    className={`${styles.item} ${n.read ? styles.read : styles.unread}`}
-                                    onClick={() => handleNotificationClick(n)}
-                                    title={getRedirectPath(n) ? 'Clique para ver detalhes' : 'Clique para marcar como lida'}
-                                >
-                                    <p className={styles.itemTitle}>{n.title}</p>
-                                    <p className={styles.itemMessage}>{n.message}</p>
-                                    <span className={styles.itemDate}>{formatDate(n.createdAt)}</span>
-                                    {!n.read && <span className={styles.dot} aria-label="não lida" />}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-
-                    {notifications.length > 0 && (
-                        <div className={styles.footer}>
-                            <button
-                                type="button"
-                                className={styles.clearAllButton}
-                                onClick={handleClearAll}
-                                disabled={clearing}
-                            >
-                                {clearing ? 'Limpando...' : 'Limpar todas'}
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
+            {typeof document !== 'undefined' && dropdown ? createPortal(dropdown, document.body) : dropdown}
         </div>
     );
 }
