@@ -1020,14 +1020,32 @@
     max-width: 640px;
 }
 
+.barberProfilePage .profileStack {
+    width: 100%;
+    max-width: none;
+}
+
 .mainContent {
     width: 100%;
     display: flex;
     justify-content: center;
 }
 
+.barberProfilePage .mainContent {
+    max-width: 1180px;
+    margin: 1.8rem auto 0;
+}
+
 .notificationsCard {
     width: min(640px, 100%);
+}
+
+.barberProfilePage .notificationsCard {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid #2f2f2f;
+    border-radius: 16px;
+    padding: 1.1rem;
 }
 
 .profileCard {
@@ -1055,10 +1073,12 @@
 }
 
 .profilePhoto {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
+    width: 88px;
+    height: 88px;
+    border-radius: 18px;
+    border: 1px solid #3b3b3b;
+    background: #111111;
+    object-fit: contain;
     margin-bottom: 4px;
 }
 

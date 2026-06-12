@@ -501,7 +501,7 @@ function BarberProfilePage() {
 
     return (
         <div
-            className={`${styles.pageContainer} ${hasLinkedBarbershop ? styles.withNavbar : styles.withoutNavbar}`}
+            className={`${styles.pageContainer} ${styles.barberProfilePage} ${hasLinkedBarbershop ? styles.withNavbar : styles.withoutNavbar}`}
             data-onboarding-id="barber-profile-page"
         >
             <div className={styles.contentWrapper}>
