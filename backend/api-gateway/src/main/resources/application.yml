@@ -13,7 +13,7 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
-      timeout: 2s
+      timeout: ${REDIS_TIMEOUT:5s}
   cloud:
     loadbalancer:
       cache:
@@ -21,6 +21,9 @@ spring:
         caffeine:
           spec: maximumSize=1000,expireAfterWrite=5s
     gateway:
+      httpclient:
+        connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:10000}
+        response-timeout: ${GATEWAY_RESPONSE_TIMEOUT:120s}
       # Desabilita o filtro JSON-to-gRPC que causa ClassNotFoundException
       # (Firebase traz grpc-api transitivo mas não grpc-netty)
       filter:
@@ -54,8 +57,8 @@ spring:
         - name: RequestRateLimiter
           args:
             key-resolver: "#{@userOrIpRateLimitKeyResolver}"
-            redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH_RATE:50}
-            redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST_CAPACITY:100}
+            redis-rate-limiter.replenishRate: ${RATE_LIMIT_REPLENISH_RATE:200}
+            redis-rate-limiter.burstCapacity: ${RATE_LIMIT_BURST_CAPACITY:400}
             redis-rate-limiter.requestedTokens: 1
       discovery:
         locator:
@@ -125,8 +128,8 @@ spring:
             - name: RequestRateLimiter
               args:
                 key-resolver: "#{@authUserOrIpRateLimitKeyResolver}"
-                redis-rate-limiter.replenishRate: ${AUTH_RATE_LIMIT_REPLENISH_RATE:10}
-                redis-rate-limiter.burstCapacity: ${AUTH_RATE_LIMIT_BURST_CAPACITY:20}
+                redis-rate-limiter.replenishRate: ${AUTH_RATE_LIMIT_REPLENISH_RATE:30}
+                redis-rate-limiter.burstCapacity: ${AUTH_RATE_LIMIT_BURST_CAPACITY:60}
                 redis-rate-limiter.requestedTokens: 1
 
         - id: user-service
@@ -178,16 +181,16 @@ eureka:
 
 # ==================================================
 # RATE LIMIT — Gateway Redis token bucket
-# Default: 50 req/s, burst 100 por usuario autenticado ou IP.
+# Default: 200 req/s, burst 400 por usuario autenticado ou IP.
 # Ajuste via RATE_LIMIT_REPLENISH_RATE e RATE_LIMIT_BURST_CAPACITY.
-# Endpoints sensiveis de auth: 10 req/s, burst 20 por IP.
+# Endpoints sensiveis de auth: 30 req/s, burst 60 por IP.
 # ==================================================
 rate-limit:
-  replenish-rate: ${RATE_LIMIT_REPLENISH_RATE:50}
-  burst-capacity: ${RATE_LIMIT_BURST_CAPACITY:100}
+  replenish-rate: ${RATE_LIMIT_REPLENISH_RATE:200}
+  burst-capacity: ${RATE_LIMIT_BURST_CAPACITY:400}
   auth:
-    replenish-rate: ${AUTH_RATE_LIMIT_REPLENISH_RATE:10}
-    burst-capacity: ${AUTH_RATE_LIMIT_BURST_CAPACITY:20}
+    replenish-rate: ${AUTH_RATE_LIMIT_REPLENISH_RATE:30}
+    burst-capacity: ${AUTH_RATE_LIMIT_BURST_CAPACITY:60}
 
 # ==================================================
 # FIREBASE AUTHENTICATION
