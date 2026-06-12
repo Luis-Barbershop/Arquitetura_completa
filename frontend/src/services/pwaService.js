@@ -159,3 +159,27 @@ export const requestPwaInstall = async () => {
 
   return accepted
 }
+
+export const simulatePushNotificationForTesting = async (payload = {}) => {
+  if (!(import.meta.env.DEV || import.meta.env.MODE === 'test')) {
+    return false
+  }
+
+  if (!('serviceWorker' in navigator)) {
+    return false
+  }
+
+  const registration = await navigator.serviceWorker.ready
+  const worker = registration?.active || navigator.serviceWorker.controller
+
+  if (!worker?.postMessage) {
+    return false
+  }
+
+  worker.postMessage({
+    type: 'SIMULATE_PUSH_NOTIFICATION',
+    payload,
+  })
+
+  return true
+}

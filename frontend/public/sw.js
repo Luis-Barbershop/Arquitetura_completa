@@ -131,6 +131,9 @@ const readPushPayload = (event) => {
   }
 }
 
+const isLocalSimulationAllowed = () =>
+  ['localhost', '127.0.0.1', '[::1]'].includes(self.location.hostname)
+
 const resolveNotificationDeepLink = (data = {}) => {
   const deepLink = data.deepLink || data.link || '/'
 
@@ -170,6 +173,30 @@ const focusOrOpenAppWindow = async (targetUrl) => {
   }
 
   return self.clients.openWindow(targetUrl)
+}
+
+const showPushNotificationFromPayload = (payload = {}) => {
+  const notificationPayload = payload.notification || {}
+  const dataPayload = {
+    ...(payload.data || {}),
+  }
+
+  if (payload.fcmOptions?.link && !dataPayload.deepLink) {
+    dataPayload.deepLink = payload.fcmOptions.link
+  }
+
+  const title = notificationPayload.title || dataPayload.title || payload.title || 'CortaAi'
+  const body = notificationPayload.body || dataPayload.body || payload.body || 'Voce tem uma nova notificacao.'
+
+  return self.registration.showNotification(title, {
+    body,
+    icon: NOTIFICATION_ICON,
+    badge: NOTIFICATION_ICON,
+    data: {
+      ...dataPayload,
+      deepLink: dataPayload.deepLink || '/',
+    },
+  })
 }
 
 self.addEventListener('fetch', (event) => {
@@ -226,6 +253,14 @@ self.addEventListener('message', (event) => {
     return
   }
 
+  if (event.data?.type === 'SIMULATE_PUSH_NOTIFICATION' && isLocalSimulationAllowed()) {
+    const notificationPromise = showPushNotificationFromPayload(event.data.payload)
+    if (event.waitUntil) {
+      event.waitUntil(notificationPromise)
+    }
+    return
+  }
+
   if (event.data === 'GET_SW_VERSION') {
     event.source?.postMessage({ type: 'SW_VERSION', version: SW_VERSION })
   }
@@ -233,29 +268,7 @@ self.addEventListener('message', (event) => {
 
 self.addEventListener('push', (event) => {
   const payload = readPushPayload(event)
-  const notificationPayload = payload.notification || {}
-  const dataPayload = {
-    ...(payload.data || {}),
-  }
-
-  if (payload.fcmOptions?.link && !dataPayload.deepLink) {
-    dataPayload.deepLink = payload.fcmOptions.link
-  }
-
-  const title = notificationPayload.title || dataPayload.title || payload.title || 'CortaAi'
-  const body = notificationPayload.body || dataPayload.body || payload.body || 'Voce tem uma nova notificacao.'
-
-  event.waitUntil(
-    self.registration.showNotification(title, {
-      body,
-      icon: NOTIFICATION_ICON,
-      badge: NOTIFICATION_ICON,
-      data: {
-        ...dataPayload,
-        deepLink: dataPayload.deepLink || '/',
-      },
-    }),
-  )
+  event.waitUntil(showPushNotificationFromPayload(payload))
 })
 
 self.addEventListener('notificationclick', (event) => {

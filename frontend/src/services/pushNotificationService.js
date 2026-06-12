@@ -6,44 +6,65 @@ const ENABLE_PUSH = import.meta.env.VITE_ENABLE_PUSH === 'true'
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || ''
 const PUSH_TOKEN_STORAGE_KEY = 'pushToken'
 
-const canAttemptPushRegistration = async () => {
-  if (!ENABLE_PUSH) return false
-  if (!localStorage.getItem('token')) return false
-  if (!('Notification' in window)) return false
-  if (!('serviceWorker' in navigator)) return false
-  if (!VAPID_KEY) return false
-  return isSupported()
+export const PUSH_REGISTRATION_FAILURE = {
+  DISABLED: 'disabled',
+  UNAUTHENTICATED: 'unauthenticated',
+  NOTIFICATION_UNSUPPORTED: 'notification-unsupported',
+  SERVICE_WORKER_UNSUPPORTED: 'service-worker-unsupported',
+  MISSING_VAPID_KEY: 'missing-vapid-key',
+  FIREBASE_UNSUPPORTED: 'firebase-unsupported',
+  PERMISSION_NOT_REQUESTED: 'permission-not-requested',
+  PERMISSION_DENIED: 'permission-denied',
+  NO_DEVICE_TOKEN: 'no-device-token',
+  REGISTRATION_FAILED: 'registration-failed',
+}
+
+export const getPushRegistrationReadiness = async () => {
+  if (!ENABLE_PUSH) return { ready: false, reason: PUSH_REGISTRATION_FAILURE.DISABLED }
+  if (!localStorage.getItem('token')) return { ready: false, reason: PUSH_REGISTRATION_FAILURE.UNAUTHENTICATED }
+  if (!('Notification' in window)) return { ready: false, reason: PUSH_REGISTRATION_FAILURE.NOTIFICATION_UNSUPPORTED }
+  if (!('serviceWorker' in navigator)) return { ready: false, reason: PUSH_REGISTRATION_FAILURE.SERVICE_WORKER_UNSUPPORTED }
+  if (!VAPID_KEY) return { ready: false, reason: PUSH_REGISTRATION_FAILURE.MISSING_VAPID_KEY }
+
+  const firebaseSupported = await isSupported()
+  if (!firebaseSupported) return { ready: false, reason: PUSH_REGISTRATION_FAILURE.FIREBASE_UNSUPPORTED }
+
+  return { ready: true, reason: null }
 }
 
 export const isPushRegisteredLocally = () =>
-  Notification.permission === 'granted' && !!localStorage.getItem(PUSH_TOKEN_STORAGE_KEY)
+  'Notification' in window
+  && Notification.permission === 'granted'
+  && !!localStorage.getItem(PUSH_TOKEN_STORAGE_KEY)
 
 export const canPromptForPushNotifications = async () => {
-  if (!(await canAttemptPushRegistration())) {
+  const readiness = await getPushRegistrationReadiness()
+  if (!readiness.ready) {
     return false
   }
 
   return Notification.permission === 'default'
 }
 
-export const registerPushNotificationsIfPossible = async ({ requestPermission = false } = {}) => {
-  if (!(await canAttemptPushRegistration())) {
-    return false
+export const registerPushNotifications = async ({ requestPermission = false } = {}) => {
+  const readiness = await getPushRegistrationReadiness()
+  if (!readiness.ready) {
+    return { ok: false, reason: readiness.reason }
   }
 
   if (Notification.permission === 'default') {
     if (!requestPermission) {
-      return false
+      return { ok: false, reason: PUSH_REGISTRATION_FAILURE.PERMISSION_NOT_REQUESTED }
     }
 
     const permission = await Notification.requestPermission()
     if (permission !== 'granted') {
-      return false
+      return { ok: false, reason: PUSH_REGISTRATION_FAILURE.PERMISSION_DENIED }
     }
   }
 
   if (Notification.permission !== 'granted') {
-    return false
+    return { ok: false, reason: PUSH_REGISTRATION_FAILURE.PERMISSION_DENIED }
   }
 
   try {
@@ -55,12 +76,12 @@ export const registerPushNotificationsIfPossible = async ({ requestPermission = 
     })
 
     if (!deviceToken) {
-      return false
+      return { ok: false, reason: PUSH_REGISTRATION_FAILURE.NO_DEVICE_TOKEN }
     }
 
     const previousToken = localStorage.getItem(PUSH_TOKEN_STORAGE_KEY)
     if (previousToken === deviceToken) {
-      return true
+      return { ok: true, token: deviceToken }
     }
 
     await api.post('/notifications/device-tokens', {
@@ -69,14 +90,23 @@ export const registerPushNotificationsIfPossible = async ({ requestPermission = 
     })
 
     localStorage.setItem(PUSH_TOKEN_STORAGE_KEY, deviceToken)
-    return true
-  } catch {
-    return false
+    return { ok: true, token: deviceToken }
+  } catch (error) {
+    return {
+      ok: false,
+      reason: PUSH_REGISTRATION_FAILURE.REGISTRATION_FAILED,
+      message: error?.message,
+    }
   }
 }
 
+export const registerPushNotificationsIfPossible = async (options) => {
+  const result = await registerPushNotifications(options)
+  return result.ok
+}
+
 export const requestPushNotificationsPermissionAndRegister = () =>
-  registerPushNotificationsIfPossible({ requestPermission: true })
+  registerPushNotifications({ requestPermission: true })
 
 export const unregisterPushNotificationsIfPossible = async () => {
   const token = localStorage.getItem(PUSH_TOKEN_STORAGE_KEY)

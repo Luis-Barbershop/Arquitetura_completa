@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import {
-  canPromptForPushNotifications,
+  getPushRegistrationReadiness,
   isPushRegisteredLocally,
+  PUSH_REGISTRATION_FAILURE,
   requestPushNotificationsPermissionAndRegister,
   unregisterPushNotificationsIfPossible,
 } from '../../services/pushNotificationService'
@@ -15,12 +16,35 @@ const resolveState = async () => {
   if (!('Notification' in window)) return 'unavailable'
   if (Notification.permission === 'denied') return 'denied'
   if (Notification.permission === 'granted') {
-    // Permissão concedida no navegador, mas pode estar desativado no CortaAi.
     return isPushRegisteredLocally() ? 'granted' : 'granted-unregistered'
   }
 
-  const canPrompt = await canPromptForPushNotifications()
-  return canPrompt ? 'default' : 'unavailable'
+  const readiness = await getPushRegistrationReadiness()
+  return readiness.ready ? 'default' : 'unavailable'
+}
+
+const activationFailureMessage = (result) => {
+  if (Notification.permission === 'denied' || result?.reason === PUSH_REGISTRATION_FAILURE.PERMISSION_DENIED) {
+    return 'Notificações bloqueadas no navegador. Reative nas configurações do browser.'
+  }
+
+  if (result?.reason === PUSH_REGISTRATION_FAILURE.MISSING_VAPID_KEY) {
+    return 'Chave VAPID de push não configurada para este ambiente.'
+  }
+
+  if (
+    result?.reason === PUSH_REGISTRATION_FAILURE.SERVICE_WORKER_UNSUPPORTED
+    || result?.reason === PUSH_REGISTRATION_FAILURE.FIREBASE_UNSUPPORTED
+    || result?.reason === PUSH_REGISTRATION_FAILURE.NOTIFICATION_UNSUPPORTED
+  ) {
+    return 'Este navegador não suporta notificações push do CortaAi.'
+  }
+
+  if (result?.reason === PUSH_REGISTRATION_FAILURE.UNAUTHENTICATED) {
+    return 'Faça login novamente para ativar notificações push.'
+  }
+
+  return 'Não foi possível ativar agora. Tente novamente em alguns instantes.'
 }
 
 export default function PushNotificationToggle() {
@@ -33,27 +57,31 @@ export default function PushNotificationToggle() {
 
   const handleEnable = useCallback(async () => {
     setBusy(true)
-    const enabled = await requestPushNotificationsPermissionAndRegister()
-    const nextState = await resolveState()
-    setState(nextState)
+    try {
+      const result = await requestPushNotificationsPermissionAndRegister()
+      const nextState = await resolveState()
+      setState(nextState)
 
-    if (enabled && nextState === 'granted') {
-      toast.success('Notificações push ativadas no CortaAi.')
-    } else if (Notification.permission === 'denied') {
-      toast.warn('Notificações bloqueadas no navegador. Reative nas configurações do browser.')
-    } else {
-      toast.info('Não foi possível ativar agora. Tente novamente em alguns instantes.')
+      if (result.ok && nextState === 'granted') {
+        toast.success('Notificações push ativadas no CortaAi.')
+      } else {
+        toast.warn(activationFailureMessage(result))
+      }
+    } finally {
+      setBusy(false)
     }
-
-    setBusy(false)
   }, [])
 
   const handleDisable = useCallback(async () => {
     setBusy(true)
-    await unregisterPushNotificationsIfPossible()
-    setState(Notification.permission === 'granted' ? 'granted-unregistered' : 'default')
-    toast.info('Notificações desativadas no CortaAi para este navegador.')
-    setBusy(false)
+    try {
+      await unregisterPushNotificationsIfPossible()
+      const nextState = await resolveState()
+      setState(nextState === 'granted' ? 'granted-unregistered' : nextState)
+      toast.info('Notificações desativadas no CortaAi para este navegador.')
+    } finally {
+      setBusy(false)
+    }
   }, [])
 
   if (state === 'loading' || state === 'unavailable') return null
@@ -65,8 +93,8 @@ export default function PushNotificationToggle() {
         <div>
           <p className={styles.title}>Notificações push</p>
           <p className={styles.description}>
-            {state === 'granted' && 'Ativadas — você recebe alertas mesmo com o app fechado.'}
-            {state === 'granted-unregistered' && 'Permissão do navegador concedida, mas alertas desativados no CortaAi.'}
+            {state === 'granted' && 'Ativadas neste navegador para alertas de agendamentos e pagamentos.'}
+            {state === 'granted-unregistered' && 'Desativadas no CortaAi para este navegador. A permissão do browser continua concedida.'}
             {state === 'denied' && 'Bloqueadas pelo navegador. Reative nas configurações do seu browser.'}
             {state === 'default' && 'Receba alertas de agendamentos e pagamentos mesmo com o app fechado.'}
           </p>
@@ -91,7 +119,7 @@ export default function PushNotificationToggle() {
           onClick={handleEnable}
           disabled={busy}
         >
-          {busy ? 'Aguarde...' : state === 'granted-unregistered' ? 'Reativar' : 'Ativar'}
+          {busy ? 'Aguarde...' : 'Ativar'}
         </button>
       )}
 

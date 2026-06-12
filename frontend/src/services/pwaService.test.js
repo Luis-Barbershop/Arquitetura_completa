@@ -62,4 +62,42 @@ describe('pwaService', () => {
     expect(prompt).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenLastCalledWith(false);
   });
+
+  it('posts a simulated push notification to the active service worker in test mode', async () => {
+    const postMessage = vi.fn();
+    vi.stubGlobal('navigator', {
+      serviceWorker: {
+        ready: Promise.resolve({
+          active: { postMessage },
+        }),
+      },
+    });
+    const { simulatePushNotificationForTesting } = await importPwaService('true');
+
+    await expect(simulatePushNotificationForTesting({
+      title: 'Teste CortaAi',
+      body: 'Notificação simulada',
+      data: { deepLink: '/notificacoes' },
+    })).resolves.toBe(true);
+
+    expect(postMessage).toHaveBeenCalledWith({
+      type: 'SIMULATE_PUSH_NOTIFICATION',
+      payload: {
+        title: 'Teste CortaAi',
+        body: 'Notificação simulada',
+        data: { deepLink: '/notificacoes' },
+      },
+    });
+  });
+
+  it('does not simulate push when there is no active service worker', async () => {
+    vi.stubGlobal('navigator', {
+      serviceWorker: {
+        ready: Promise.resolve({}),
+      },
+    });
+    const { simulatePushNotificationForTesting } = await importPwaService('true');
+
+    await expect(simulatePushNotificationForTesting({ title: 'Teste' })).resolves.toBe(false);
+  });
 });
