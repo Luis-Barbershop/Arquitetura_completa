@@ -356,6 +356,22 @@ public class NotificationService {
     }
 
     @Transactional
+    public void clearMyNotifications(UUID userId) {
+        notificationRepository.deleteByUserId(userId);
+
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    sseEmitterService.sendUnreadCount(userId, 0L);
+                }
+            });
+        } else {
+            sseEmitterService.sendUnreadCount(userId, 0L);
+        }
+    }
+
+    @Transactional
     public NotificationDTO markAsRead(UUID notificationId, UUID userId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Notificação não encontrada: " + notificationId));

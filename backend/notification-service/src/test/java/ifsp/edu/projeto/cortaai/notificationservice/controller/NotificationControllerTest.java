@@ -63,6 +63,17 @@ class NotificationControllerTest {
     }
 
     @Test
+    void shouldClearNotificationsForResolvedUser() {
+        UUID userId = UUID.randomUUID();
+        when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(user(userId));
+
+        ResponseEntity<Void> response = controller.clearMyNotifications("firebase-uid");
+
+        assertThat(response.getStatusCode().value()).isEqualTo(204);
+        verify(notificationService).clearMyNotifications(userId);
+    }
+
+    @Test
     void shouldReturnUnreadCountForResolvedUser() {
         UUID userId = UUID.randomUUID();
         when(userServiceClient.getUserByFirebaseUid("firebase-uid")).thenReturn(user(userId));

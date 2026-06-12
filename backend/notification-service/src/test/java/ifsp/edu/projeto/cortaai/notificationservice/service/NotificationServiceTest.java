@@ -360,6 +360,16 @@ class NotificationServiceTest {
     }
 
     @Test
+    void shouldClearMyNotificationsAndSendZeroUnreadCount() {
+        UUID userId = UUID.randomUUID();
+
+        notificationService.clearMyNotifications(userId);
+
+        verify(notificationRepository).deleteByUserId(userId);
+        verify(sseEmitterService).sendUnreadCount(userId, 0L);
+    }
+
+    @Test
     void shouldMarkNotificationAsReadAndSendUnreadCount() {
         UUID userId = UUID.randomUUID();
         UUID notificationId = UUID.randomUUID();

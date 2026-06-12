@@ -63,6 +63,16 @@ public class NotificationController {
         return ResponseEntity.ok(notificationService.getMyNotifications(userId));
     }
 
+    @Operation(summary = "Limpar minhas notificações",
+               description = "Remove todas as notificações do usuário logado e zera o badge de não lidas.")
+    @DeleteMapping("/my-notifications")
+    public ResponseEntity<Void> clearMyNotifications(
+            @Parameter(hidden = true) @RequestHeader("X-User-UID") String firebaseUid) {
+        UUID userId = resolveUserId(firebaseUid);
+        notificationService.clearMyNotifications(userId);
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Marcar notificação como lida",
                description = "Atualiza o status de uma notificação específica para 'lida'.")
     @ApiResponses(value = {

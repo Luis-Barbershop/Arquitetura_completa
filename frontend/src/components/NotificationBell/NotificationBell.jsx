@@ -24,6 +24,7 @@ function NotificationBell({ userType = 'barber', visibility = 'all' }) {
     const [notifications, setNotifications] = useState([]);
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [clearing, setClearing] = useState(false);
     const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0, maxHeight: 420 });
     const [isMobileViewport, setIsMobileViewport] = useState(() => (
         typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches
@@ -151,6 +152,22 @@ function NotificationBell({ userType = 'barber', visibility = 'all' }) {
         }
     };
 
+    const handleClearAll = async () => {
+        if (clearing || notifications.length === 0) return;
+
+        setClearing(true);
+        try {
+            await api.delete('/notifications/my-notifications');
+            setNotifications([]);
+            setUnreadCount(0);
+            toast.success('Notificações limpas.');
+        } catch {
+            toast.error('Não foi possível limpar as notificações agora.');
+        } finally {
+            setClearing(false);
+        }
+    };
+
     const isOwner = () => (
         localStorage.getItem('isOwner') === 'true' ||
         String(localStorage.getItem('userRole') || '').toUpperCase().includes('OWNER')
@@ -253,6 +270,19 @@ function NotificationBell({ userType = 'barber', visibility = 'all' }) {
                                 </li>
                             ))}
                         </ul>
+                    )}
+
+                    {notifications.length > 0 && (
+                        <div className={styles.footer}>
+                            <button
+                                type="button"
+                                className={styles.clearAllButton}
+                                onClick={handleClearAll}
+                                disabled={clearing}
+                            >
+                                {clearing ? 'Limpando...' : 'Limpar todas'}
+                            </button>
+                        </div>
                     )}
                 </div>
             )}
