@@ -220,7 +220,7 @@ function ManageBarbershopPage() {
                     {loadingShop ? (
                         <p className={styles.profileMutedText}>Carregando dados...</p>
                     ) : (
-                        <div className={styles.profileCard}>
+                        <div className={`${styles.profileCard} ${styles.manageShopCard}`}>
                             {/* ── Banner ── */}
                             <div
                                 className={styles.shopBannerPreview}
@@ -260,14 +260,16 @@ function ManageBarbershopPage() {
                             </div>
 
                             {/* ── Miniatura ── */}
-                            <div className={styles.shopMediaGrid} style={{ marginBottom: '1.5rem' }}>
-                                <div className={styles.shopMediaCard}>
-                                    <span className={styles.shopMediaLabel}>Miniatura</span>
+                            <div className={styles.shopThumbnailRow}>
+                                <div className={styles.shopThumbnailPreview}>
                                     {media.logoUrl ? (
                                         <img src={media.logoUrl} alt="Miniatura" className={styles.shopMediaImage} />
                                     ) : (
                                         <div className={styles.shopMediaPlaceholder}>Sem miniatura</div>
                                     )}
+                                </div>
+                                <div className={styles.shopThumbnailActions}>
+                                    <span className={styles.shopMediaLabel}>Miniatura</span>
                                     <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoChange} className={styles.hiddenFileInput} />
                                     <button
                                         type="button"

@@ -1050,6 +1050,10 @@
     border-color: #4a3a17;
 }
 
+.manageShopCard {
+    margin-bottom: 1.4rem;
+}
+
 .profilePhoto {
     width: 80px;
     height: 80px;
@@ -1734,6 +1738,36 @@
     .expenseModeGroup {
         grid-template-columns: 1fr;
     }
+
+    .manageShopCard {
+        margin-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .shopEditForm {
+        padding-bottom: calc(2.4rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .shopThumbnailRow {
+        align-items: stretch;
+        flex-direction: column;
+        margin-bottom: 1.2rem;
+    }
+
+    .shopThumbnailPreview {
+        width: 100%;
+        height: auto;
+        flex-basis: auto;
+        aspect-ratio: 1 / 1;
+        max-height: 280px;
+    }
+
+    .shopThumbnailActions {
+        width: 100%;
+    }
+
+    .shopThumbnailActions .shopMediaButton {
+        width: 100%;
+    }
 }
 
 .hiddenFileInput {
@@ -1776,6 +1810,7 @@
     margin-top: 0.9rem;
     display: grid;
     gap: 0.7rem;
+    padding-bottom: 1.1rem;
 }
 
 .shopField {
@@ -1854,6 +1889,40 @@
     display: grid;
     gap: 0.6rem;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.shopThumbnailRow {
+    display: flex;
+    align-items: center;
+    gap: 0.95rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #363636;
+    border-radius: 12px;
+    background: #151515;
+    padding: 0.75rem;
+}
+
+.shopThumbnailPreview {
+    width: 128px;
+    height: 128px;
+    flex: 0 0 128px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #111111;
+}
+
+.shopThumbnailPreview .shopMediaImage,
+.shopThumbnailPreview .shopMediaPlaceholder {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+}
+
+.shopThumbnailActions {
+    min-width: 0;
+    display: grid;
+    gap: 0.65rem;
+    align-content: center;
 }
 
 .shopMediaCard {
