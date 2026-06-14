@@ -1,0 +1,222 @@
+erDiagram
+    USUARIO {
+        uuid id
+        string nome
+        string email
+        string telefone
+        string cpf
+        string autenticacao
+    }
+
+    CLIENTE {
+        uuid usuario_id
+        string preferencias
+    }
+
+    BARBEIRO {
+        uuid usuario_id
+        boolean dono
+        boolean atua_como_barbeiro
+        string conta_pagamento
+    }
+
+    BARBEARIA {
+        uuid id
+        uuid dono_id
+        string nome
+        string cnpj
+        string endereco
+        string localizacao
+    }
+
+    SERVICO {
+        uuid id
+        uuid barbearia_id
+        string nome
+        decimal preco
+        int duracao_minutos
+    }
+
+    FAVORITO_BARBEARIA {
+        uuid cliente_id
+        uuid barbearia_id
+    }
+
+    SOLICITACAO_ENTRADA {
+        uuid id
+        uuid barbeiro_id
+        uuid barbearia_id
+        string status
+        string tipo
+    }
+
+    AVALIACAO_BARBEARIA {
+        uuid id
+        uuid cliente_id
+        uuid barbearia_id
+        int nota
+        string comentario
+    }
+
+    DESTAQUE_BARBEARIA {
+        uuid id
+        uuid barbearia_id
+        string imagem
+    }
+
+    ATIVIDADE_ATRIBUIDA {
+        uuid barbeiro_id
+        uuid servico_id
+    }
+
+    JORNADA_BARBEIRO {
+        uuid id
+        uuid barbeiro_id
+        string dia_semana
+        time inicio
+        time fim
+    }
+
+    BLOQUEIO_AGENDA {
+        uuid id
+        uuid barbeiro_id
+        datetime inicio
+        datetime fim
+        string motivo
+    }
+
+    AGENDAMENTO {
+        uuid id
+        uuid cliente_id
+        uuid barbeiro_id
+        uuid barbearia_id
+        datetime inicio
+        datetime fim
+        string status
+    }
+
+    ATIVIDADE_AGENDAMENTO {
+        uuid id
+        uuid agendamento_id
+        uuid servico_id
+        decimal preco_contratado
+        int duracao_minutos
+    }
+
+    TRANSACAO {
+        uuid id
+        uuid agendamento_id
+        decimal valor
+        decimal taxas
+        string metodo
+        string status
+    }
+
+    REGRA_COMISSAO {
+        uuid id
+        uuid barbearia_id
+        uuid barbeiro_id
+        uuid servico_id
+        decimal percentual
+    }
+
+    DESPESA_FIXA {
+        uuid id
+        uuid barbearia_id
+        string categoria
+        decimal valor
+        int mes
+        int ano
+    }
+
+    KPI_DIARIO {
+        uuid id
+        uuid barbearia_id
+        date data
+        decimal receita_aprovada
+        int qtd_transacoes
+    }
+
+    CATEGORIA_PRODUTO {
+        uuid id
+        uuid barbearia_id
+        string nome
+    }
+
+    PRODUTO {
+        uuid id
+        uuid barbearia_id
+        uuid categoria_id
+        string nome
+        decimal preco
+        int estoque
+    }
+
+    MOVIMENTACAO_ESTOQUE {
+        uuid id
+        uuid produto_id
+        string tipo
+        int quantidade
+        string motivo
+    }
+
+    NOTIFICACAO {
+        uuid id
+        uuid usuario_id
+        string tipo
+        string canal
+        boolean lida
+    }
+
+    TOKEN_DISPOSITIVO {
+        uuid id
+        uuid usuario_id
+        string plataforma
+        string token
+        boolean ativo
+    }
+
+    USUARIO ||--o| CLIENTE : "possui perfil"
+    USUARIO ||--o| BARBEIRO : "possui perfil"
+
+    BARBEIRO ||--o| BARBEARIA : "pode ser dono"
+    BARBEARIA ||--o{ SERVICO : "oferece"
+
+    CLIENTE ||--o{ FAVORITO_BARBEARIA : "favorita"
+    BARBEARIA ||--o{ FAVORITO_BARBEARIA : "e favoritada"
+
+    BARBEIRO ||--o{ SOLICITACAO_ENTRADA : "participa"
+    BARBEARIA ||--o{ SOLICITACAO_ENTRADA : "recebe"
+
+    CLIENTE ||--o{ AVALIACAO_BARBEARIA : "faz"
+    BARBEARIA ||--o{ AVALIACAO_BARBEARIA : "recebe"
+    BARBEARIA ||--o{ DESTAQUE_BARBEARIA : "possui"
+
+    BARBEIRO ||--o{ ATIVIDADE_ATRIBUIDA : "executa"
+    SERVICO ||--o{ ATIVIDADE_ATRIBUIDA : "pode ser executado"
+
+    BARBEIRO ||--o{ JORNADA_BARBEIRO : "define"
+    BARBEIRO ||--o{ BLOQUEIO_AGENDA : "possui"
+
+    CLIENTE ||--o{ AGENDAMENTO : "realiza"
+    BARBEIRO ||--o{ AGENDAMENTO : "atende"
+    BARBEARIA ||--o{ AGENDAMENTO : "sedia"
+    AGENDAMENTO ||--o{ ATIVIDADE_AGENDAMENTO : "inclui"
+    SERVICO ||--o{ ATIVIDADE_AGENDAMENTO : "origina"
+
+    AGENDAMENTO ||--o| TRANSACAO : "gera"
+
+    BARBEARIA ||--o{ REGRA_COMISSAO : "configura"
+    BARBEIRO ||--o{ REGRA_COMISSAO : "recebe"
+    SERVICO ||--o{ REGRA_COMISSAO : "baseia"
+
+    BARBEARIA ||--o{ DESPESA_FIXA : "possui"
+    BARBEARIA ||--o{ KPI_DIARIO : "consolida"
+
+    BARBEARIA ||--o{ CATEGORIA_PRODUTO : "define"
+    CATEGORIA_PRODUTO ||--o{ PRODUTO : "classifica"
+    BARBEARIA ||--o{ PRODUTO : "mantem"
+    PRODUTO ||--o{ MOVIMENTACAO_ESTOQUE : "movimenta"
+
+    USUARIO ||--o{ NOTIFICACAO : "recebe"
+    USUARIO ||--o{ TOKEN_DISPOSITIVO : "usa"

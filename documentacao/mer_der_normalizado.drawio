@@ -1,0 +1,388 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" agent="Codex" modified="2026-06-14T15:03:07Z" version="24.7.17" type="device">
+  <diagram id="mer-normalizado" name="MER Normalizado">
+    <mxGraphModel dx="1800" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2700" pageHeight="1700" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="mer_title" parent="1" value="MER Normalizado - CortaAi" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=22;fontStyle=1;" vertex="1">
+          <mxGeometry x="760" y="20" width="1180" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="mer_note" parent="1" value="Modelo conceitual em 3FN: dados comuns ficam em Usuario; N:N viram entidades associativas; campos historicos de preco no agendamento representam o valor contratado no momento da reserva." style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=12;spacing=8;" vertex="1">
+          <mxGeometry x="80" y="80" width="760" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="USUARIO" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;USUARIO&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;nome&lt;/div&gt;&lt;div&gt;email&lt;/div&gt;&lt;div&gt;telefone&lt;/div&gt;&lt;div&gt;cpf&lt;/div&gt;&lt;div&gt;auth&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="1040" y="110" width="230" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="CLIENTE" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;CLIENTE&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;usuario_id&lt;/div&gt;&lt;div&gt;preferencias&lt;/div&gt;&lt;div&gt;favoritos&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="770" y="260" width="220" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="BARBEIRO" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;BARBEIRO&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;usuario_id&lt;/div&gt;&lt;div&gt;agenda&lt;/div&gt;&lt;div&gt;conta_pagamento&lt;/div&gt;&lt;div&gt;atua_como_barbeiro&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="1310" y="260" width="220" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="BARBEARIA" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;BARBEARIA&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;dono&lt;/div&gt;&lt;div&gt;nome&lt;/div&gt;&lt;div&gt;cnpj&lt;/div&gt;&lt;div&gt;endereco&lt;/div&gt;&lt;div&gt;localizacao&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1">
+          <mxGeometry x="1040" y="430" width="230" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="SERVICO" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;SERVICO&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;barbearia&lt;/div&gt;&lt;div&gt;nome&lt;/div&gt;&lt;div&gt;preco&lt;/div&gt;&lt;div&gt;duracao&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1">
+          <mxGeometry x="1310" y="610" width="220" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="FAVORITO_BARBEARIA" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;FAVORITO_BARBEARIA&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;cliente&lt;/div&gt;&lt;div&gt;barbearia&lt;/div&gt;&lt;div&gt;UK(cliente, barbearia)&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="500" y="430" width="230" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="SOLICITACAO_ENTRADA" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;SOLICITACAO_ENTRADA&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;barbeiro&lt;/div&gt;&lt;div&gt;barbearia&lt;/div&gt;&lt;div&gt;status&lt;/div&gt;&lt;div&gt;tipo&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="500" y="610" width="230" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="AVALIACAO_BARBEARIA" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;AVALIACAO_BARBEARIA&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;cliente&lt;/div&gt;&lt;div&gt;barbearia&lt;/div&gt;&lt;div&gt;nota&lt;/div&gt;&lt;div&gt;comentario&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="230" y="430" width="230" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="DESTAQUE_BARBEARIA" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;DESTAQUE_BARBEARIA&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;barbearia&lt;/div&gt;&lt;div&gt;imagem&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="230" y="610" width="230" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="ATIVIDADE_ATRIBUIDA" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;ATIVIDADE_ATRIBUIDA&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;barbeiro&lt;/div&gt;&lt;div&gt;servico&lt;/div&gt;&lt;div&gt;UK(barbeiro, servico)&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="1580" y="610" width="230" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="JORNADA_BARBEIRO" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;JORNADA_BARBEIRO&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;barbeiro&lt;/div&gt;&lt;div&gt;dia_semana&lt;/div&gt;&lt;div&gt;inicio&lt;/div&gt;&lt;div&gt;fim&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="1580" y="260" width="230" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="BLOQUEIO_AGENDA" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;BLOQUEIO_AGENDA&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;barbeiro&lt;/div&gt;&lt;div&gt;inicio&lt;/div&gt;&lt;div&gt;fim&lt;/div&gt;&lt;div&gt;motivo&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="1580" y="430" width="230" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="AGENDAMENTO" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;AGENDAMENTO&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;cliente&lt;/div&gt;&lt;div&gt;barbeiro&lt;/div&gt;&lt;div&gt;barbearia&lt;/div&gt;&lt;div&gt;inicio/fim&lt;/div&gt;&lt;div&gt;status&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1">
+          <mxGeometry x="770" y="790" width="230" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="ATIVIDADE_AGENDAMENTO" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;ATIVIDADE_AGENDAMENTO&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;agendamento&lt;/div&gt;&lt;div&gt;servico&lt;/div&gt;&lt;div&gt;preco_contratado&lt;/div&gt;&lt;div&gt;duracao&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1">
+          <mxGeometry x="770" y="1010" width="230" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="TRANSACAO" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;TRANSACAO&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;agendamento&lt;/div&gt;&lt;div&gt;valor&lt;/div&gt;&lt;div&gt;taxas&lt;/div&gt;&lt;div&gt;metodo&lt;/div&gt;&lt;div&gt;status&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1">
+          <mxGeometry x="500" y="1010" width="230" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="REGRA_COMISSAO" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;REGRA_COMISSAO&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;barbearia&lt;/div&gt;&lt;div&gt;barbeiro&lt;/div&gt;&lt;div&gt;servico&lt;/div&gt;&lt;div&gt;percentual&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1">
+          <mxGeometry x="1310" y="1010" width="230" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="DESPESA_FIXA" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;DESPESA_FIXA&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;barbearia&lt;/div&gt;&lt;div&gt;categoria&lt;/div&gt;&lt;div&gt;valor&lt;/div&gt;&lt;div&gt;mes/ano&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1">
+          <mxGeometry x="1040" y="1010" width="230" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="KPI_DIARIO" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;KPI_DIARIO&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;barbearia&lt;/div&gt;&lt;div&gt;data&lt;/div&gt;&lt;div&gt;receita_aprovada&lt;/div&gt;&lt;div&gt;qtd_transacoes&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1">
+          <mxGeometry x="1040" y="1230" width="230" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="CATEGORIA_PRODUTO" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;CATEGORIA_PRODUTO&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;barbearia&lt;/div&gt;&lt;div&gt;nome&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1">
+          <mxGeometry x="1310" y="1230" width="230" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="PRODUTO" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;PRODUTO&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;barbearia&lt;/div&gt;&lt;div&gt;categoria&lt;/div&gt;&lt;div&gt;nome&lt;/div&gt;&lt;div&gt;preco&lt;/div&gt;&lt;div&gt;estoque&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1">
+          <mxGeometry x="1580" y="1230" width="230" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="MOVIMENTACAO_ESTOQUE" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;MOVIMENTACAO_ESTOQUE&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;produto&lt;/div&gt;&lt;div&gt;tipo&lt;/div&gt;&lt;div&gt;quantidade&lt;/div&gt;&lt;div&gt;motivo&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1">
+          <mxGeometry x="1850" y="1230" width="230" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="NOTIFICACAO" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;NOTIFICACAO&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;usuario&lt;/div&gt;&lt;div&gt;tipo&lt;/div&gt;&lt;div&gt;canal&lt;/div&gt;&lt;div&gt;lida&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1">
+          <mxGeometry x="500" y="1230" width="230" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="TOKEN_DISPOSITIVO" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;TOKEN_DISPOSITIVO&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id&lt;/div&gt;&lt;div&gt;usuario&lt;/div&gt;&lt;div&gt;plataforma&lt;/div&gt;&lt;div&gt;token&lt;/div&gt;&lt;div&gt;ativo&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1">
+          <mxGeometry x="230" y="1230" width="230" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="r_user_customer" parent="1" value="eh cliente" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=block;endFill=0;" edge="1" source="USUARIO" target="CLIENTE">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_user_barber" parent="1" value="eh barbeiro" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=block;endFill=0;" edge="1" source="USUARIO" target="BARBEIRO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_owner_shop" parent="1" value="dono 0..1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERzeroToOne;" edge="1" source="BARBEIRO" target="BARBEARIA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_shop_service" parent="1" value="oferece" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEARIA" target="SERVICO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_customer_fav" parent="1" value="favorita" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="CLIENTE" target="FAVORITO_BARBEARIA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_shop_fav" parent="1" value="e favoritada" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEARIA" target="FAVORITO_BARBEARIA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_join_barber" parent="1" value="participa" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEIRO" target="SOLICITACAO_ENTRADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_join_shop" parent="1" value="recebe" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEARIA" target="SOLICITACAO_ENTRADA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_review_customer" parent="1" value="avalia" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="CLIENTE" target="AVALIACAO_BARBEARIA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_review_shop" parent="1" value="recebe" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEARIA" target="AVALIACAO_BARBEARIA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_highlight_shop" parent="1" value="possui" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEARIA" target="DESTAQUE_BARBEARIA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_assign_barber" parent="1" value="executa" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEIRO" target="ATIVIDADE_ATRIBUIDA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_assign_service" parent="1" value="atribuido" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="SERVICO" target="ATIVIDADE_ATRIBUIDA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_work_barber" parent="1" value="define" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEIRO" target="JORNADA_BARBEIRO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_block_barber" parent="1" value="bloqueia" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEIRO" target="BLOQUEIO_AGENDA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_appt_customer" parent="1" value="agenda" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="CLIENTE" target="AGENDAMENTO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_appt_barber" parent="1" value="atende" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEIRO" target="AGENDAMENTO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_appt_shop" parent="1" value="sedia" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEARIA" target="AGENDAMENTO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_appt_item" parent="1" value="inclui" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="AGENDAMENTO" target="ATIVIDADE_AGENDAMENTO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_service_appt_item" parent="1" value="origina" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="SERVICO" target="ATIVIDADE_AGENDAMENTO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_transaction_appt" parent="1" value="gera 0..1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERzeroToOne;" edge="1" source="AGENDAMENTO" target="TRANSACAO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_comm_shop" parent="1" value="configura" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEARIA" target="REGRA_COMISSAO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_comm_barber" parent="1" value="recebe" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEIRO" target="REGRA_COMISSAO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_comm_service" parent="1" value="baseia" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="SERVICO" target="REGRA_COMISSAO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_exp_shop" parent="1" value="possui" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEARIA" target="DESPESA_FIXA">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_kpi_shop" parent="1" value="consolida" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEARIA" target="KPI_DIARIO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_cat_shop" parent="1" value="define" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEARIA" target="CATEGORIA_PRODUTO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_prod_cat" parent="1" value="classifica" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="CATEGORIA_PRODUTO" target="PRODUTO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_prod_shop" parent="1" value="mantem" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBEARIA" target="PRODUTO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_stock_prod" parent="1" value="movimenta" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="PRODUTO" target="MOVIMENTACAO_ESTOQUE">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_not_user" parent="1" value="recebe" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="USUARIO" target="NOTIFICACAO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="r_token_user" parent="1" value="usa" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="USUARIO" target="TOKEN_DISPOSITIVO">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="der-normalizado" name="DER Normalizado">
+    <mxGraphModel dx="1800" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3350" pageHeight="2100" background="#FFFFFF" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="der_title" parent="1" value="DER Normalizado - CortaAi (logico em 3FN)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=22;fontStyle=1;" vertex="1">
+          <mxGeometry x="950" y="20" width="1320" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="der_note" parent="1" value="Legenda: PK = chave primaria, FK = chave estrangeira fisica, UK = chave unica, REF = referencia logica entre bancos/microsservicos. Agregados analiticos ficam separados." style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=12;spacing=8;" vertex="1">
+          <mxGeometry x="70" y="70" width="950" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_user" parent="1" value="user_db / user-service" style="swimlane;whiteSpace=wrap;html=1;startSize=30;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=0;collapsible=0;" vertex="1">
+          <mxGeometry x="40" y="160" width="1180" height="560" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_barbershop" parent="1" value="barbershop_db / barbershop-service" style="swimlane;whiteSpace=wrap;html=1;startSize=30;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=0;collapsible=0;" vertex="1">
+          <mxGeometry x="1270" y="160" width="1810" height="690" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_schedule" parent="1" value="schedule_db / schedule-service" style="swimlane;whiteSpace=wrap;html=1;startSize=30;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=0;collapsible=0;" vertex="1">
+          <mxGeometry x="40" y="800" width="1180" height="470" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_payment" parent="1" value="payment_db / payment-service" style="swimlane;whiteSpace=wrap;html=1;startSize=30;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=0;collapsible=0;" vertex="1">
+          <mxGeometry x="1270" y="920" width="1180" height="480" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_product" parent="1" value="product_db / product-service" style="swimlane;whiteSpace=wrap;html=1;startSize=30;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=0;collapsible=0;" vertex="1">
+          <mxGeometry x="40" y="1360" width="1180" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_notification" parent="1" value="notification_db / notification-service" style="swimlane;whiteSpace=wrap;html=1;startSize=30;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=0;collapsible=0;" vertex="1">
+          <mxGeometry x="1270" y="1490" width="880" height="360" as="geometry" />
+        </mxCell>
+        <mxCell id="lane_analytics" parent="1" value="analytics / views ou tabelas materializadas" style="swimlane;whiteSpace=wrap;html=1;startSize=30;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;container=0;collapsible=0;" vertex="1">
+          <mxGeometry x="2210" y="1490" width="870" height="360" as="geometry" />
+        </mxCell>
+        <mxCell id="USERS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;USERS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;name varchar(70)&lt;/div&gt;&lt;div&gt;tell varchar(128) UK NULL&lt;/div&gt;&lt;div&gt;email varchar(256) UK&lt;/div&gt;&lt;div&gt;email_hash varchar(64) UK&lt;/div&gt;&lt;div&gt;document_cpf varchar(128) UK&lt;/div&gt;&lt;div&gt;password varchar(255)&lt;/div&gt;&lt;div&gt;firebase_uid varchar(128) UK&lt;/div&gt;&lt;div&gt;auth_provider varchar(30)&lt;/div&gt;&lt;div&gt;role varchar(20)&lt;/div&gt;&lt;div&gt;image_url varchar(255)&lt;/div&gt;&lt;div&gt;birth_date varchar(128)&lt;/div&gt;&lt;div&gt;date_created datetime&lt;/div&gt;&lt;div&gt;last_updated datetime&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="70" y="220" width="270" height="310" as="geometry" />
+        </mxCell>
+        <mxCell id="CUSTOMERS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;CUSTOMERS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;user_id uuid PK/FK -&gt; USERS.id&lt;/div&gt;&lt;div&gt;onboarding_progress_json longtext&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="390" y="220" width="270" height="92" as="geometry" />
+        </mxCell>
+        <mxCell id="BARBERS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;BARBERS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;user_id uuid PK/FK -&gt; USERS.id&lt;/div&gt;&lt;div&gt;is_owner boolean&lt;/div&gt;&lt;div&gt;act_as_barber boolean&lt;/div&gt;&lt;div&gt;barbershop_id uuid REF BARBERSHOPS.id&lt;/div&gt;&lt;div&gt;work_start_time time&lt;/div&gt;&lt;div&gt;work_end_time time&lt;/div&gt;&lt;div&gt;mp_access_token text&lt;/div&gt;&lt;div&gt;mp_refresh_token text&lt;/div&gt;&lt;div&gt;mp_user_id varchar(256)&lt;/div&gt;&lt;div&gt;mp_public_key varchar(100)&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1">
+          <mxGeometry x="390" y="380" width="290" height="225" as="geometry" />
+        </mxCell>
+        <mxCell id="CUSTOMER_FAVORITES" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;CUSTOMER_FAVORITE_BARBERSHOPS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;customer_id uuid PK/FK -&gt; CUSTOMERS.user_id&lt;/div&gt;&lt;div&gt;barbershop_id uuid PK REF BARBERSHOPS.id&lt;/div&gt;&lt;div&gt;UK(customer_id, barbershop_id)&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="760" y="220" width="330" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="BARBER_ASSIGNED" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;BARBER_ASSIGNED_ACTIVITIES&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;barber_id uuid PK/FK -&gt; BARBERS.user_id&lt;/div&gt;&lt;div&gt;activity_id uuid PK REF ACTIVITIES.id&lt;/div&gt;&lt;div&gt;UK(barber_id, activity_id)&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="760" y="370" width="330" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="BARBER_WORK_BLOCKS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;BARBER_WORK_BLOCKS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;barber_id uuid FK -&gt; BARBERS.user_id&lt;/div&gt;&lt;div&gt;day_of_week varchar(10)&lt;/div&gt;&lt;div&gt;start_time time&lt;/div&gt;&lt;div&gt;end_time time&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="760" y="520" width="330" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="BARBERSHOPS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;BARBERSHOPS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;owner_id uuid REF BARBERS.user_id&lt;/div&gt;&lt;div&gt;name varchar(255)&lt;/div&gt;&lt;div&gt;cnpj varchar(128) UK&lt;/div&gt;&lt;div&gt;address varchar(255)&lt;/div&gt;&lt;div&gt;logo_url varchar(255)&lt;/div&gt;&lt;div&gt;banner_url varchar(255)&lt;/div&gt;&lt;div&gt;latitude double&lt;/div&gt;&lt;div&gt;longitude double&lt;/div&gt;&lt;div&gt;date_created datetime&lt;/div&gt;&lt;div&gt;last_updated datetime&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1">
+          <mxGeometry x="1300" y="220" width="290" height="245" as="geometry" />
+        </mxCell>
+        <mxCell id="ACTIVITIES" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;ACTIVITIES&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;barbershop_id uuid FK -&gt; BARBERSHOPS.id&lt;/div&gt;&lt;div&gt;activity_name varchar(255)&lt;/div&gt;&lt;div&gt;price decimal(10,2)&lt;/div&gt;&lt;div&gt;duration_minutes int&lt;/div&gt;&lt;div&gt;image_url varchar(255)&lt;/div&gt;&lt;div&gt;date_created datetime&lt;/div&gt;&lt;div&gt;last_updated datetime&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1">
+          <mxGeometry x="1640" y="220" width="310" height="185" as="geometry" />
+        </mxCell>
+        <mxCell id="JOIN_REQUESTS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;BARBERSHOP_JOIN_REQUESTS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;barber_id uuid REF BARBERS.user_id&lt;/div&gt;&lt;div&gt;barbershop_id uuid FK -&gt; BARBERSHOPS.id&lt;/div&gt;&lt;div&gt;status varchar(50)&lt;/div&gt;&lt;div&gt;request_type varchar(20)&lt;/div&gt;&lt;div&gt;date_created datetime&lt;/div&gt;&lt;div&gt;UK(barber_id, barbershop_id)&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="2000" y="220" width="330" height="165" as="geometry" />
+        </mxCell>
+        <mxCell id="HIGHLIGHTS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;BARBERSHOP_HIGHLIGHTS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;barbershop_id uuid FK -&gt; BARBERSHOPS.id&lt;/div&gt;&lt;div&gt;image_url varchar(255)&lt;/div&gt;&lt;div&gt;image_url_public_id varchar(255)&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="2380" y="220" width="310" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="REVIEWS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;BARBERSHOP_REVIEWS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;customer_id uuid REF CUSTOMERS.user_id&lt;/div&gt;&lt;div&gt;barbershop_id uuid FK -&gt; BARBERSHOPS.id&lt;/div&gt;&lt;div&gt;rating int&lt;/div&gt;&lt;div&gt;comment varchar(500)&lt;/div&gt;&lt;div&gt;created_at datetime&lt;/div&gt;&lt;div&gt;UK(customer_id, barbershop_id)&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="2380" y="380" width="330" height="165" as="geometry" />
+        </mxCell>
+        <mxCell id="COMMISSION_RULES" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;BARBER_COMMISSION_RULES&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;barbershop_id uuid REF BARBERSHOPS.id&lt;/div&gt;&lt;div&gt;barber_id uuid REF BARBERS.user_id&lt;/div&gt;&lt;div&gt;activity_id uuid FK -&gt; ACTIVITIES.id&lt;/div&gt;&lt;div&gt;percentage decimal(5,2)&lt;/div&gt;&lt;div&gt;created_at datetime&lt;/div&gt;&lt;div&gt;UK(barbershop_id, barber_id, activity_id)&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1">
+          <mxGeometry x="1640" y="480" width="340" height="165" as="geometry" />
+        </mxCell>
+        <mxCell id="FIXED_EXPENSES" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;FIXED_EXPENSES&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;barbershop_id uuid REF BARBERSHOPS.id&lt;/div&gt;&lt;div&gt;category varchar(30)&lt;/div&gt;&lt;div&gt;custom_name varchar(80)&lt;/div&gt;&lt;div&gt;amount decimal(10,2)&lt;/div&gt;&lt;div&gt;month int&lt;/div&gt;&lt;div&gt;year int&lt;/div&gt;&lt;div&gt;recurring_monthly boolean&lt;/div&gt;&lt;div&gt;created_at datetime&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1">
+          <mxGeometry x="2000" y="480" width="330" height="205" as="geometry" />
+        </mxCell>
+        <mxCell id="APPOINTMENTS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;APPOINTMENTS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;customer_id uuid REF CUSTOMERS.user_id&lt;/div&gt;&lt;div&gt;barber_id uuid REF BARBERS.user_id&lt;/div&gt;&lt;div&gt;barbershop_id uuid REF BARBERSHOPS.id&lt;/div&gt;&lt;div&gt;start_time datetime&lt;/div&gt;&lt;div&gt;end_time datetime&lt;/div&gt;&lt;div&gt;total_price decimal(10,2)&lt;/div&gt;&lt;div&gt;status varchar(50)&lt;/div&gt;&lt;div&gt;date_created datetime&lt;/div&gt;&lt;div&gt;last_updated datetime&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1">
+          <mxGeometry x="70" y="860" width="330" height="225" as="geometry" />
+        </mxCell>
+        <mxCell id="APPOINTMENT_ACTIVITIES" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;APPOINTMENT_ACTIVITIES&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;appointment_id uuid FK -&gt; APPOINTMENTS.id&lt;/div&gt;&lt;div&gt;activity_id uuid REF ACTIVITIES.id&lt;/div&gt;&lt;div&gt;price_at_booking decimal(10,2)&lt;/div&gt;&lt;div&gt;duration_minutes int&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1">
+          <mxGeometry x="470" y="860" width="340" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="BARBER_BLOCKS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;BARBER_BLOCKS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;barber_id uuid REF BARBERS.user_id&lt;/div&gt;&lt;div&gt;start_time datetime&lt;/div&gt;&lt;div&gt;end_time datetime&lt;/div&gt;&lt;div&gt;reason varchar(255)&lt;/div&gt;&lt;div&gt;date_created datetime&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1">
+          <mxGeometry x="870" y="860" width="300" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="TRANSACTIONS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;TRANSACTIONS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;appointment_id uuid REF APPOINTMENTS.id&lt;/div&gt;&lt;div&gt;amount decimal(10,2)&lt;/div&gt;&lt;div&gt;gross_amount decimal(10,2)&lt;/div&gt;&lt;div&gt;net_amount decimal(10,2)&lt;/div&gt;&lt;div&gt;mp_fee_amount decimal(10,2)&lt;/div&gt;&lt;div&gt;platform_fee_amount decimal(10,2)&lt;/div&gt;&lt;div&gt;payment_method varchar(30)&lt;/div&gt;&lt;div&gt;status varchar(50)&lt;/div&gt;&lt;div&gt;mp_preference_id varchar UK&lt;/div&gt;&lt;div&gt;mp_payment_id varchar&lt;/div&gt;&lt;div&gt;checkout_url text&lt;/div&gt;&lt;div&gt;created_at datetime&lt;/div&gt;&lt;div&gt;updated_at datetime&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1">
+          <mxGeometry x="1300" y="980" width="350" height="305" as="geometry" />
+        </mxCell>
+        <mxCell id="WEBHOOK_LOGS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;WEBHOOK_LOGS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;mp_resource_id varchar UK&lt;/div&gt;&lt;div&gt;event_type varchar&lt;/div&gt;&lt;div&gt;raw_payload text&lt;/div&gt;&lt;div&gt;processed boolean&lt;/div&gt;&lt;div&gt;received_at datetime&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1">
+          <mxGeometry x="1710" y="980" width="300" height="145" as="geometry" />
+        </mxCell>
+        <mxCell id="CATEGORIES" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;PRODUCT_CATEGORIES&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;barbershop_id uuid REF BARBERSHOPS.id&lt;/div&gt;&lt;div&gt;name varchar(80)&lt;/div&gt;&lt;div&gt;created_at datetime&lt;/div&gt;&lt;div&gt;UK(name, barbershop_id)&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1">
+          <mxGeometry x="70" y="1420" width="310" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="PRODUCTS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;PRODUCTS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;barbershop_id uuid REF BARBERSHOPS.id&lt;/div&gt;&lt;div&gt;category_id uuid FK -&gt; PRODUCT_CATEGORIES.id&lt;/div&gt;&lt;div&gt;name varchar&lt;/div&gt;&lt;div&gt;description text&lt;/div&gt;&lt;div&gt;price decimal&lt;/div&gt;&lt;div&gt;stock_quantity int&lt;/div&gt;&lt;div&gt;min_stock_quantity int&lt;/div&gt;&lt;div&gt;image_url varchar&lt;/div&gt;&lt;div&gt;active boolean&lt;/div&gt;&lt;div&gt;created_at datetime&lt;/div&gt;&lt;div&gt;updated_at datetime&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1">
+          <mxGeometry x="450" y="1420" width="350" height="265" as="geometry" />
+        </mxCell>
+        <mxCell id="STOCK_MOVEMENTS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;STOCK_MOVEMENTS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;product_id uuid FK -&gt; PRODUCTS.id&lt;/div&gt;&lt;div&gt;type varchar&lt;/div&gt;&lt;div&gt;quantity int&lt;/div&gt;&lt;div&gt;unit_sale_price decimal(10,2)&lt;/div&gt;&lt;div&gt;notes varchar(500)&lt;/div&gt;&lt;div&gt;reason varchar&lt;/div&gt;&lt;div&gt;created_at datetime&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1">
+          <mxGeometry x="870" y="1420" width="300" height="185" as="geometry" />
+        </mxCell>
+        <mxCell id="NOTIFICATIONS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;NOTIFICATIONS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;user_id uuid REF USERS.id&lt;/div&gt;&lt;div&gt;type varchar&lt;/div&gt;&lt;div&gt;title varchar&lt;/div&gt;&lt;div&gt;message text&lt;/div&gt;&lt;div&gt;channel varchar&lt;/div&gt;&lt;div&gt;is_read boolean&lt;/div&gt;&lt;div&gt;created_at datetime&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1">
+          <mxGeometry x="1300" y="1550" width="310" height="185" as="geometry" />
+        </mxCell>
+        <mxCell id="DEVICE_TOKENS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;DEVICE_TOKENS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;user_id uuid REF USERS.id&lt;/div&gt;&lt;div&gt;platform varchar&lt;/div&gt;&lt;div&gt;token varchar(512) UK&lt;/div&gt;&lt;div&gt;active boolean&lt;/div&gt;&lt;div&gt;created_at datetime&lt;/div&gt;&lt;div&gt;updated_at datetime&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1">
+          <mxGeometry x="1700" y="1550" width="310" height="165" as="geometry" />
+        </mxCell>
+        <mxCell id="KPI_DAILY" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;DASHBOARD_KPI_DAILY&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;id uuid PK&lt;/div&gt;&lt;div&gt;barbershop_id uuid REF BARBERSHOPS.id&lt;/div&gt;&lt;div&gt;reference_date date&lt;/div&gt;&lt;div&gt;approved_revenue decimal(12,2)&lt;/div&gt;&lt;div&gt;approved_transactions_count int&lt;/div&gt;&lt;div&gt;updated_at datetime&lt;/div&gt;&lt;div&gt;UK(barbershop_id, reference_date)&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1">
+          <mxGeometry x="2240" y="1550" width="360" height="165" as="geometry" />
+        </mxCell>
+        <mxCell id="ANALYTIC_VIEWS" parent="1" value="&lt;div style='font-size:11px;line-height:1.25'&gt;&lt;div style='font-size:13px;font-weight:bold;text-align:center;margin-bottom:4px'&gt;VIEWS ANALITICAS&lt;/div&gt;&lt;hr style='border:0;border-top:1px solid #666;margin:3px 0 5px 0'&gt;&lt;div&gt;v_barber_financial_performance&lt;/div&gt;&lt;div&gt;v_barber_skill_matrix&lt;/div&gt;&lt;div&gt;v_agenda_thermometer&lt;/div&gt;&lt;div&gt;v_stock_health_alert&lt;/div&gt;&lt;div&gt;v_customer_acquisition&lt;/div&gt;&lt;div&gt;v_customer_retention&lt;/div&gt;&lt;div&gt;v_avg_ticket&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4d4d4d;fontSize=11;align=left;verticalAlign=top;spacing=8;shadow=0;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1">
+          <mxGeometry x="2650" y="1550" width="360" height="165" as="geometry" />
+        </mxCell>
+        <mxCell id="d_users_customers" parent="1" value="1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERzeroToOne;" edge="1" source="USERS" target="CUSTOMERS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_users_barbers" parent="1" value="1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERzeroToOne;" edge="1" source="USERS" target="BARBERS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_customer_fav" parent="1" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="CUSTOMERS" target="CUSTOMER_FAVORITES">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_barber_assign" parent="1" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBERS" target="BARBER_ASSIGNED">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_barber_work" parent="1" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBERS" target="BARBER_WORK_BLOCKS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_shop_activity" parent="1" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBERSHOPS" target="ACTIVITIES">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_shop_join" parent="1" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBERSHOPS" target="JOIN_REQUESTS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_shop_high" parent="1" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBERSHOPS" target="HIGHLIGHTS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_shop_review" parent="1" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="BARBERSHOPS" target="REVIEWS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_activity_comm" parent="1" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="ACTIVITIES" target="COMMISSION_RULES">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_appt_items" parent="1" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="APPOINTMENTS" target="APPOINTMENT_ACTIVITIES">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_cat_prod" parent="1" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="CATEGORIES" target="PRODUCTS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_prod_mov" parent="1" value="1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=ERone;endArrow=ERmany;" edge="1" source="PRODUCTS" target="STOCK_MOVEMENTS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_barber_shop_ref" parent="1" value="REF dono/barbearia" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="BARBERS" target="BARBERSHOPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_fav_shop_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="CUSTOMER_FAVORITES" target="BARBERSHOPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_assign_act_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="BARBER_ASSIGNED" target="ACTIVITIES">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_join_barber_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="JOIN_REQUESTS" target="BARBERS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_review_customer_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="REVIEWS" target="CUSTOMERS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_comm_barber_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="COMMISSION_RULES" target="BARBERS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_comm_shop_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="COMMISSION_RULES" target="BARBERSHOPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_fixed_shop_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="FIXED_EXPENSES" target="BARBERSHOPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_appt_customer_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="APPOINTMENTS" target="CUSTOMERS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_appt_barber_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="APPOINTMENTS" target="BARBERS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_appt_shop_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="APPOINTMENTS" target="BARBERSHOPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_appt_act_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="APPOINTMENT_ACTIVITIES" target="ACTIVITIES">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_block_barber_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="BARBER_BLOCKS" target="BARBERS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_trx_appt_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="TRANSACTIONS" target="APPOINTMENTS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_cat_shop_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="CATEGORIES" target="BARBERSHOPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_prod_shop_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="PRODUCTS" target="BARBERSHOPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_not_user_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="NOTIFICATIONS" target="USERS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_token_user_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="DEVICE_TOKENS" target="USERS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d_kpi_shop_ref" parent="1" value="REF" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1.4;fontSize=11;startArrow=none;endArrow=open;endFill=0;dashed=1;" edge="1" source="KPI_DAILY" target="BARBERSHOPS">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,282 @@
+erDiagram
+    USERS {
+        uuid id PK
+        varchar_70 name
+        varchar_128 tell UK
+        varchar_256 email UK
+        varchar_64 email_hash UK
+        varchar_128 document_cpf UK
+        varchar_255 password
+        varchar_128 firebase_uid UK
+        varchar_30 auth_provider
+        varchar_20 role
+        varchar_255 image_url
+        varchar_128 birth_date
+        datetime date_created
+        datetime last_updated
+    }
+
+    CUSTOMERS {
+        uuid user_id PK,FK
+        longtext onboarding_progress_json
+    }
+
+    BARBERS {
+        uuid user_id PK,FK
+        boolean is_owner
+        boolean act_as_barber
+        uuid barbershop_id "REF BARBERSHOPS"
+        time work_start_time
+        time work_end_time
+        text mp_access_token
+        text mp_refresh_token
+        varchar_256 mp_user_id
+        varchar_100 mp_public_key
+    }
+
+    CUSTOMER_FAVORITE_BARBERSHOPS {
+        uuid customer_id PK,FK
+        uuid barbershop_id PK "REF BARBERSHOPS"
+    }
+
+    BARBER_ASSIGNED_ACTIVITIES {
+        uuid barber_id PK,FK
+        uuid activity_id PK "REF ACTIVITIES"
+    }
+
+    BARBER_WORK_BLOCKS {
+        uuid id PK
+        uuid barber_id FK
+        varchar_10 day_of_week
+        time start_time
+        time end_time
+    }
+
+    BARBERSHOPS {
+        uuid id PK
+        uuid owner_id "REF BARBERS"
+        varchar_255 name
+        varchar_128 cnpj UK
+        varchar_255 address
+        varchar_255 logo_url
+        varchar_255 banner_url
+        double latitude
+        double longitude
+        datetime date_created
+        datetime last_updated
+    }
+
+    ACTIVITIES {
+        uuid id PK
+        uuid barbershop_id FK
+        varchar_255 activity_name
+        decimal_10_2 price
+        int duration_minutes
+        varchar_255 image_url
+        datetime date_created
+        datetime last_updated
+    }
+
+    BARBERSHOP_JOIN_REQUESTS {
+        uuid id PK
+        uuid barber_id "REF BARBERS"
+        uuid barbershop_id FK
+        varchar_50 status
+        varchar_20 request_type
+        datetime date_created
+    }
+
+    BARBERSHOP_HIGHLIGHTS {
+        uuid id PK
+        uuid barbershop_id FK
+        varchar_255 image_url
+        varchar_255 image_url_public_id
+    }
+
+    BARBERSHOP_REVIEWS {
+        uuid id PK
+        uuid customer_id "REF CUSTOMERS"
+        uuid barbershop_id FK
+        int rating
+        varchar_500 comment
+        datetime created_at
+    }
+
+    BARBER_COMMISSION_RULES {
+        uuid id PK
+        uuid barbershop_id "REF BARBERSHOPS"
+        uuid barber_id "REF BARBERS"
+        uuid activity_id FK
+        decimal_5_2 percentage
+        datetime created_at
+    }
+
+    FIXED_EXPENSES {
+        uuid id PK
+        uuid barbershop_id "REF BARBERSHOPS"
+        varchar_30 category
+        varchar_80 custom_name
+        decimal_10_2 amount
+        int month
+        int year
+        boolean recurring_monthly
+        datetime created_at
+    }
+
+    APPOINTMENTS {
+        uuid id PK
+        uuid customer_id "REF CUSTOMERS"
+        uuid barber_id "REF BARBERS"
+        uuid barbershop_id "REF BARBERSHOPS"
+        datetime start_time
+        datetime end_time
+        decimal_10_2 total_price
+        varchar_50 status
+        datetime date_created
+        datetime last_updated
+    }
+
+    APPOINTMENT_ACTIVITIES {
+        uuid id PK
+        uuid appointment_id FK
+        uuid activity_id "REF ACTIVITIES"
+        decimal_10_2 price_at_booking
+        int duration_minutes
+    }
+
+    BARBER_BLOCKS {
+        uuid id PK
+        uuid barber_id "REF BARBERS"
+        datetime start_time
+        datetime end_time
+        varchar_255 reason
+        datetime date_created
+    }
+
+    TRANSACTIONS {
+        uuid id PK
+        uuid appointment_id "REF APPOINTMENTS"
+        decimal_10_2 amount
+        decimal_10_2 gross_amount
+        decimal_10_2 net_amount
+        decimal_10_2 mp_fee_amount
+        decimal_10_2 platform_fee_amount
+        varchar_30 payment_method
+        varchar_50 status
+        varchar mp_preference_id UK
+        varchar mp_payment_id
+        text checkout_url
+        datetime created_at
+        datetime updated_at
+    }
+
+    WEBHOOK_LOGS {
+        uuid id PK
+        varchar mp_resource_id UK
+        varchar event_type
+        text raw_payload
+        boolean processed
+        datetime received_at
+    }
+
+    DASHBOARD_KPI_DAILY {
+        uuid id PK
+        uuid barbershop_id "REF BARBERSHOPS"
+        date reference_date
+        decimal_12_2 approved_revenue
+        int approved_transactions_count
+        datetime updated_at
+    }
+
+    PRODUCT_CATEGORIES {
+        uuid id PK
+        uuid barbershop_id "REF BARBERSHOPS"
+        varchar_80 name
+        datetime created_at
+    }
+
+    PRODUCTS {
+        uuid id PK
+        uuid barbershop_id "REF BARBERSHOPS"
+        uuid category_id FK
+        varchar name
+        text description
+        decimal price
+        int stock_quantity
+        int min_stock_quantity
+        varchar image_url
+        boolean active
+        datetime created_at
+        datetime updated_at
+    }
+
+    STOCK_MOVEMENTS {
+        uuid id PK
+        uuid product_id FK
+        varchar type
+        int quantity
+        decimal_10_2 unit_sale_price
+        varchar_500 notes
+        varchar reason
+        datetime created_at
+    }
+
+    NOTIFICATIONS {
+        uuid id PK
+        uuid user_id "REF USERS"
+        varchar type
+        varchar title
+        text message
+        varchar channel
+        boolean is_read
+        datetime created_at
+    }
+
+    DEVICE_TOKENS {
+        uuid id PK
+        uuid user_id "REF USERS"
+        varchar platform
+        varchar_512 token UK
+        boolean active
+        datetime created_at
+        datetime updated_at
+    }
+
+    USERS ||--o| CUSTOMERS : "perfil"
+    USERS ||--o| BARBERS : "perfil"
+    CUSTOMERS ||--o{ CUSTOMER_FAVORITE_BARBERSHOPS : "favorita"
+    BARBERS ||--o{ BARBER_ASSIGNED_ACTIVITIES : "executa"
+    BARBERS ||--o{ BARBER_WORK_BLOCKS : "define jornada"
+
+    BARBERS ||..o| BARBERSHOPS : "REF dono"
+    CUSTOMER_FAVORITE_BARBERSHOPS }o..|| BARBERSHOPS : "REF"
+    BARBER_ASSIGNED_ACTIVITIES }o..|| ACTIVITIES : "REF"
+
+    BARBERSHOPS ||--o{ ACTIVITIES : "oferece"
+    BARBERSHOPS ||--o{ BARBERSHOP_JOIN_REQUESTS : "recebe"
+    BARBERS ||..o{ BARBERSHOP_JOIN_REQUESTS : "REF participa"
+    BARBERSHOPS ||--o{ BARBERSHOP_HIGHLIGHTS : "possui"
+    BARBERSHOPS ||--o{ BARBERSHOP_REVIEWS : "recebe"
+    CUSTOMERS ||..o{ BARBERSHOP_REVIEWS : "REF avalia"
+    ACTIVITIES ||--o{ BARBER_COMMISSION_RULES : "parametriza"
+    BARBERSHOPS ||..o{ BARBER_COMMISSION_RULES : "REF configura"
+    BARBERS ||..o{ BARBER_COMMISSION_RULES : "REF recebe"
+    BARBERSHOPS ||..o{ FIXED_EXPENSES : "REF possui"
+
+    CUSTOMERS ||..o{ APPOINTMENTS : "REF agenda"
+    BARBERS ||..o{ APPOINTMENTS : "REF atende"
+    BARBERSHOPS ||..o{ APPOINTMENTS : "REF sedia"
+    APPOINTMENTS ||--o{ APPOINTMENT_ACTIVITIES : "inclui"
+    ACTIVITIES ||..o{ APPOINTMENT_ACTIVITIES : "REF origina"
+    BARBERS ||..o{ BARBER_BLOCKS : "REF bloqueia"
+
+    APPOINTMENTS ||..o| TRANSACTIONS : "REF gera"
+    BARBERSHOPS ||..o{ DASHBOARD_KPI_DAILY : "REF consolida"
+
+    BARBERSHOPS ||..o{ PRODUCT_CATEGORIES : "REF define"
+    PRODUCT_CATEGORIES ||--o{ PRODUCTS : "classifica"
+    BARBERSHOPS ||..o{ PRODUCTS : "REF mantem"
+    PRODUCTS ||--o{ STOCK_MOVEMENTS : "movimenta"
+
+    USERS ||..o{ NOTIFICATIONS : "REF recebe"
+    USERS ||..o{ DEVICE_TOKENS : "REF usa"
