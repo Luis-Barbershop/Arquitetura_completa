@@ -106,7 +106,7 @@
     letter-spacing: 0.02em;
 }
 
-/* ── Drawer overlay ─────────────────────────────────────────────── */
+/* ─ Drawer overlay ─────────────────────────────────────────────── */
 .drawerOverlay {
     position: fixed;
     inset: 0;
